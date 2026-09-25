@@ -241,6 +241,11 @@ async function handle(message, sender) {
     }
     return {...settings,holdOrigins};
   }
+  if (message.type === 'collection.active') {
+    const state = await serial(readState);
+    const active = state.collections.find(c => c.id === state.activeCollectionId);
+    return {name:active?.name || '',count:active?.links.length || 0};
+  }
   if (message.type === 'capture.commit') return commitCapture(message,sender);
   if (message.type === 'capture.copy') {
     if (!sender.tab?.id) throw new Error('Copy must originate from a webpage.');

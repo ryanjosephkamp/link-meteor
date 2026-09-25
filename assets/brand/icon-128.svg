@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <title>Link Meteor</title>
+  <defs>
+    <linearGradient id="trail" x1="82.4" y1="45.6" x2="37.6" y2="90.4" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#c3f344"/>
+      <stop offset="1" stop-color="#c3f344" stop-opacity=".18"/>
+    </linearGradient>
+  </defs>
+  <rect x="16" y="16" width="96" height="96" rx="24" fill="#161d2d"/>
+  <g transform="translate(64 64) scale(.8) translate(-64 -64)">
+    <path d="M71.3 34.1 L95.9 58.7 L29.9 102.1 Q25.9 98.1 29.9 94.1 Z" fill="url(#trail)"/>
+    <circle cx="83.6" cy="46.4" r="17.4" fill="#c3f344"/>
+  </g>
+</svg>

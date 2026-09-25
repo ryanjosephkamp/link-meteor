@@ -11,6 +11,12 @@ const start = source.indexOf('async function runCapture() {');
 const end = source.indexOf('\nasync function download()', start);
 assert.ok(start >= 0 && end > start, 'The product runCapture function must be available to this harness');
 const runCaptureSource = source.slice(start, end);
+// Formatting helpers used by runCapture's status messages, taken from the same product file.
+const helperSource = ['function count(', 'function plural('].map((signature) => {
+  const at = source.indexOf(signature);
+  assert.ok(at >= 0, `${signature} must be available to this harness`);
+  return source.slice(at, source.indexOf('\n', at));
+}).join('\n');
 
 const tab = (id, windowId, url) => ({ id, windowId, url });
 function originOf(value) {
@@ -30,6 +36,7 @@ function simulate({ scope, initialTabs, afterPermissionTabs, selectedIds = [] })
     scope,
     inventory: { tabs: initialTabs, currentWindowId: 7 },
     selectedTabs: new Set(selectedIds),
+    originAccess: new Map(),
     state: null,
   };
   const dependencies = {
@@ -40,6 +47,7 @@ function simulate({ scope, initialTabs, afterPermissionTabs, selectedIds = [] })
     show() {},
     render() {},
     captureReport() {},
+    renderCaptureButton() {},
     $: () => captureButton,
     chrome: {
       permissions: {
@@ -57,7 +65,7 @@ function simulate({ scope, initialTabs, afterPermissionTabs, selectedIds = [] })
       return { state: {}, report: { capturedCount: 0, results: [] } };
     },
   };
-  const runCapture = runInNewContext(`${runCaptureSource}\nrunCapture`, dependencies);
+  const runCapture = runInNewContext(`${helperSource}\n${runCaptureSource}\nrunCapture`, dependencies);
   return { runCapture, ui, captureButton, messages, permissionCalls };
 }
 

@@ -6,6 +6,14 @@
   const normalize = value => String(value || '').replace(/\s+/gu,' ').trim();
   const intersect = (a,b) => ({left:Math.max(a.left,b.left),top:Math.max(a.top,b.top),right:Math.min(a.right,b.right),bottom:Math.min(a.bottom,b.bottom)});
   const positive = r => r.right > r.left && r.bottom > r.top;
+  const svg = body => `<svg viewBox="0 0 20 20" aria-hidden="true" focusable="false">${body}</svg>`;
+  const mark = id => `<svg class="mark" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><defs><linearGradient id="lm-${id}" x1="15.7" y1="8.3" x2="4" y2="20" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#c3f344"/><stop offset="1" stop-color="#c3f344" stop-opacity=".2"/></linearGradient></defs><path d="M13.2 4.6 19.4 10.8 4.6 20.4Q3.6 19.4 4.6 18.4Z" fill="url(#lm-${id})"/><circle cx="16.3" cy="7.7" r="4.4" fill="#c3f344"/></svg>`;
+  const ICON_X = svg('<path d="m5.5 5.5 9 9M14.5 5.5l-9 9"/>');
+  const ICON_COPY = svg('<rect x="7" y="7" width="10" height="10.5" rx="1.5"/><path d="M13 7V4a1.5 1.5 0 0 0-1.5-1.5h-7A1.5 1.5 0 0 0 3 4v8.5A1.5 1.5 0 0 0 4.5 14H7"/>');
+  const ICON_PLUS = svg('<path d="M10 4.5v11M4.5 10h11"/>');
+  const ICON_CHECK = svg('<path d="m4.5 10.5 3.5 3.5 7.5-8"/>');
+  const ICON_LIST = svg('<path d="M7.5 5.5h9M7.5 10h9M7.5 14.5h9M3.5 5.5h.1M3.5 10h.1M3.5 14.5h.1"/>');
+  const ICON_REGION = svg('<rect x="2.5" y="2.5" width="11" height="11" rx="1.5" stroke-dasharray="2.4 2.1"/><path d="M11 11l6.3 2.3-2.8 1.2-1.2 2.8Z" fill="currentColor"/>');
 
   function visible(element) {
     for (let node=element;node?.nodeType===1;node=node.parentElement || node.getRootNode()?.host) {
@@ -110,12 +118,50 @@
     host.style.cssText='all:initial!important;position:fixed!important;inset:0!important;z-index:2147483647!important;pointer-events:none!important;';
     const shadow=host.attachShadow({mode:'open'});
     shadow.innerHTML=`<style>
-      :host{color-scheme:light dark}*{box-sizing:border-box}button{font:600 13px/1.2 system-ui;border:1px solid #827d76;border-radius:7px;padding:10px 12px;background:#fff;color:#252522;cursor:pointer;min-height:38px}button:hover{background:#f1eee8}button:focus-visible{outline:3px solid #e7653c;outline-offset:2px}button:disabled{opacity:.5;cursor:default}.shield{position:fixed;inset:0;pointer-events:auto;cursor:crosshair;touch-action:none}.rect{position:fixed;border:2px solid #ec683d;background:#ec683d14;pointer-events:none}.hit{position:fixed;border:1px solid #e05b31;background:#f8ab552f;pointer-events:none}.hint,.bar{position:fixed;pointer-events:auto;box-shadow:0 8px 35px #0003;border:1px solid #d4cdc2;background:#fffcf5;color:#252522;font:13px/1.5 system-ui;border-radius:12px;padding:12px 14px;max-width:calc(100vw - 24px)}.hint{top:12px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:12px}.bar{right:14px;bottom:14px;width:420px;display:none}.actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}.primary{background:#282824;color:#fff}.count{font-size:17px;font-weight:700}.status{font-size:12px;margin-top:6px;overflow-wrap:anywhere}.badge{position:fixed;pointer-events:none;background:#252522;color:white;border-radius:6px;padding:4px 8px;font:700 12px system-ui}.warning{color:#7b3e20} @media(prefers-color-scheme:dark){.hint,.bar{background:#242522;color:#f9f6ee;border-color:#57584f}button{background:#353730;color:#fff;border-color:#696b60}button:hover{background:#44473c}.primary{background:#ed8b64;color:#201f1d}.warning{color:#f5b995}}@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto}}
-      [hidden]{display:none!important}</style><div class="shield"></div><div class="hits"></div><div class="rect" hidden></div><div class="badge" hidden></div><div class="hint"><span>Drag a region to collect links · Scroll to extend · Esc to cancel</span><button class="cancel" aria-label="Cancel link selection">Cancel</button></div><div class="bar" role="dialog" aria-label="Captured links"><div class="count" aria-live="polite"></div><div class="warning"></div><div class="actions"><button class="copy primary">Copy text + URL</button><button class="add">Add to collection</button><button class="review">Review</button><button class="more">Add another region</button><button class="dismiss" aria-label="Close captured links">Close</button></div><div class="status" role="status" aria-live="polite"></div></div>`;
+      :host{color-scheme:light dark}
+      *{box-sizing:border-box}
+      .shield{position:fixed;inset:0;pointer-events:auto;cursor:crosshair;touch-action:none}
+      .rect{position:fixed;border:1.5px solid #c3f344;background:rgba(195,243,68,.08);box-shadow:0 0 0 1px rgba(22,29,45,.55),inset 0 0 0 1px rgba(22,29,45,.3);border-radius:3px;pointer-events:none}
+      .hit{position:fixed;background:rgba(195,243,68,.38);outline:1px solid rgba(126,168,27,.95);box-shadow:0 0 0 1px rgba(22,29,45,.22);border-radius:3px;pointer-events:none}
+      .badge{position:fixed;display:flex;align-items:center;gap:6px;pointer-events:none;background:#161d2d;color:#fff;border-radius:999px;padding:4px 10px 4px 8px;font:700 12px/1.2 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;box-shadow:0 4px 14px rgba(0,0,0,.25);white-space:nowrap}
+      .badge::before{content:"";width:7px;height:7px;border-radius:50%;background:#c3f344;box-shadow:0 0 0 3px rgba(195,243,68,.22)}
+      .panel{position:fixed;pointer-events:auto;background:#161d2d;color:#eef0f4;border:1px solid rgba(255,255,255,.1);box-shadow:0 18px 50px rgba(8,11,20,.45),0 2px 6px rgba(8,11,20,.25);font:400 13px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;border-radius:14px;max-width:calc(100vw - 24px);-webkit-font-smoothing:antialiased}
+      .hint{top:14px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:12px;padding:8px 8px 8px 12px}
+      .hint strong{font-weight:650;color:#fff}.hint span{color:#a2a8b5}
+      .mark{width:22px;height:22px;flex:none;display:block}
+      .bar{right:16px;bottom:16px;width:400px;display:none;padding:14px;animation:rise .18s cubic-bezier(.22,1,.36,1)}
+      .head{display:flex;align-items:flex-start;gap:10px}
+      .titles{flex:1;min-width:0}
+      .count{font-size:16px;font-weight:700;line-height:1.3;color:#fff;font-variant-numeric:tabular-nums}
+      .dest{margin-top:1px;color:#a2a8b5;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+      .dest b{color:#dfe3ea;font-weight:600}
+      .preview{list-style:none;margin:12px 0 0;padding:8px 10px;border-radius:9px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.07);display:grid;gap:3px}
+      .preview li{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#eef0f4;font-size:12.5px}
+      .preview li.empty{color:#a2a8b5;font-style:italic}
+      .preview li.more{color:#a2a8b5;font-size:12px}
+      .warning{margin-top:10px;color:#f4c26a;font-size:12px;overflow-wrap:anywhere}
+      .warning:empty,.status:empty,.preview:empty,.dest:empty{display:none}
+      .actions{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:12px}
+      button{display:inline-flex;align-items:center;justify-content:center;gap:6px;font:600 12.5px/1.2 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;border:1px solid rgba(255,255,255,.16);border-radius:8px;padding:0 12px;min-height:34px;background:rgba(255,255,255,.07);color:#fff;cursor:pointer;transition:background-color .15s,border-color .15s}
+      button:hover:not(:disabled){background:rgba(255,255,255,.14);border-color:rgba(255,255,255,.28)}
+      button:focus-visible{outline:2px solid #c3f344;outline-offset:2px}
+      button:disabled{opacity:.45;cursor:default}
+      button svg{width:15px;height:15px;flex:none;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+      .primary{background:#c3f344;border-color:#c3f344;color:#161d2d}
+      .primary:hover:not(:disabled){background:#d4f86f;border-color:#d4f86f}
+      .icon{width:30px;min-height:30px;padding:0;border-color:transparent;background:transparent;color:#a2a8b5}
+      .icon:hover:not(:disabled){background:rgba(255,255,255,.1);border-color:transparent;color:#fff}
+      .cancel{min-height:30px}
+      .status{margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,.1);font-size:12px;color:#dfe3ea;overflow-wrap:anywhere}
+      @keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+      @media(max-width:460px){.bar{left:12px;right:12px;bottom:12px;width:auto}.hint span{display:none}}
+      @media(prefers-reduced-motion:reduce){.bar{animation:none}*{transition:none!important}}
+      @media(forced-colors:active){.panel,button{border:1px solid CanvasText}.hit,.rect{outline:2px solid Highlight}}
+      [hidden]{display:none!important}</style><div class="shield"></div><div class="hits"></div><div class="rect" hidden></div><div class="badge" hidden></div><div class="panel hint">${mark('hint')}<div><strong>Drag across the links you want</strong> <span>· Scroll to extend · Esc to cancel</span></div><button class="cancel" aria-label="Cancel link selection">Cancel</button></div><div class="panel bar" role="dialog" aria-label="Captured links"><div class="head">${mark('bar')}<div class="titles"><div class="count" aria-live="polite"></div><div class="dest"></div></div><button class="dismiss icon" aria-label="Close captured links">${ICON_X}</button></div><ul class="preview" aria-label="First captured links"></ul><div class="warning"></div><div class="actions"><button class="copy primary">${ICON_COPY}Copy text + URL</button><button class="add">${ICON_PLUS}Add to collection</button><button class="review">${ICON_LIST}Review</button><button class="more">${ICON_REGION}Add another region</button></div><div class="status" role="status" aria-live="polite"></div></div>`;
     document.documentElement.append(host);
     const $=selector=>shadow.querySelector(selector);
     const shield=$('.shield'), box=$('.rect'), badge=$('.badge'), hits=$('.hits');
-    let dragging=false, start=null, pointer=null, frame=null, entries=[], selected=[], warnings=[],inaccessibleFrames=0,committed=false;
+    let dragging=false, start=null, pointer=null, frame=null, entries=[], selected=[], warnings=[],inaccessibleFrames=0,committed=false,destination='';
     const swept=new Map();
     const state={close};active=state;
 
@@ -168,13 +214,32 @@
     shield.addEventListener('pointerup',event=>{
       if(!dragging)return;event.preventDefault();event.stopImmediatePropagation();dragging=false;if(frame)cancelAnimationFrame(frame);refresh(true);shield.releasePointerCapture?.(event.pointerId);shield.style.pointerEvents='none';box.hidden=true;badge.hidden=true;$('.hint').hidden=true;$('.bar').style.display='block';
       $('.count').textContent=`${selected.length} link${selected.length===1?'':'s'} selected`;
+      renderPreview();
       $('.warning').textContent=warnings.join(' ');for(const cls of ['copy','add','review','more'])$('.'+cls).disabled=!selected.length;
       if(!selected.length)$('.status').textContent='No links in this region. Close and select another area.';
       $('.copy').focus();
     });
+    function renderDest() {
+      const dest=$('.dest');dest.replaceChildren();
+      if(!destination)return;
+      const name=document.createElement('b');name.textContent=destination;
+      dest.append(committed?'Saved to ':'Adds to ',name);dest.title=destination;
+    }
+    function renderPreview() {
+      const list=$('.preview');list.replaceChildren();
+      for(const {link} of selected.slice(0,3)){
+        const item=document.createElement('li');
+        item.textContent=link.anchorText || (link.accessibleLabel?`No anchor text (labeled “${link.accessibleLabel}”)`:'No anchor text');
+        if(!link.anchorText)item.className='empty';
+        item.title=link.url;list.append(item);
+      }
+      if(selected.length>3){const more=document.createElement('li');more.className='more';more.textContent=`and ${selected.length-3} more`;list.append(more);}
+    }
+    request({type:'collection.active'}).then(active=>{destination=active?.name || '';renderDest();}).catch(()=>{});
     async function save(review=false){
       if(committed){if(review)await request({type:'ui.open'});return;}
-      const result=await request({type:'capture.commit',links:selected.map(entry=>entry.link),inaccessibleFrames,review});committed=true;$('.add').disabled=true;$('.status').textContent=`Saved ${result.count} links to your active collection. ${result.warning || ''}`.trim();
+      const result=await request({type:'capture.commit',links:selected.map(entry=>entry.link),inaccessibleFrames,review});committed=true;$('.add').disabled=true;$('.add').innerHTML=`${ICON_CHECK}Added`;renderDest();
+      $('.status').textContent=`Saved ${result.count} link${result.count===1?'':'s'} to ${destination?`“${destination}”`:'your active collection'}. ${result.warning || ''}`.trim();
     }
     function action(cls,fn){$('.'+cls).onclick=async()=>{const button=$('.'+cls);button.disabled=true;try{await fn();}catch(error){$('.status').textContent=String(error.message || error);}finally{if(host.isConnected)button.disabled=cls==='add'&&committed;}};}
     action('add',()=>save());action('review',()=>save(true));action('more',async()=>{await save();arm();});

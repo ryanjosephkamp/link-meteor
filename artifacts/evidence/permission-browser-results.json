@@ -1,5 +1,5 @@
 {
-  "started": "2026-09-25T18:35:37.523Z",
+  "started": "2026-09-25T19:51:21.336Z",
   "checks": [
     "Actual host permission revocation prunes saved hold origin and dynamic content registration",
     "Already loaded page no longer starts the revoked hold-key gesture",
@@ -9,5 +9,5 @@
   "limits": [
     "Native Deny button was not verified. Automated permission re-requests were granted by the test browser; actual missing/revoked access was verified separately."
   ],
-  "finished": "2026-09-25T18:35:42.273Z"
+  "finished": "2026-09-25T19:51:24.372Z"
 }

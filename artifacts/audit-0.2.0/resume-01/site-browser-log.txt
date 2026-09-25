@@ -1,0 +1,9 @@
+PASS reading 7
+PASS results 9
+PASS tickets 10
+PASS products 12
+PASS tricky 7
+PASS archive 15
+PASS embedded 3
+PASS components 5
+{"result":"PASS","sections":[{"id":"reading","expected":7,"actual":7},{"id":"results","expected":9,"actual":9},{"id":"tickets","expected":10,"actual":10},{"id":"products","expected":12,"actual":12},{"id":"tricky","expected":7,"actual":7},{"id":"archive","expected":15,"actual":15},{"id":"embedded","expected":3,"actual":3},{"id":"components","expected":5,"actual":5}],"wholePageCount":85,"screenshots":["site-overlay-drag.png","site-overlay-card.png","site-workbench.png","site-panel.png","site-panel-dark.png","site-practice.png","site-report.png"]}

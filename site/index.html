@@ -1,0 +1,338 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Link Meteor · Capture links with their real labels and sources</title>
+  <meta name="description" content="A free Chrome extension for researchers: drag across a page to collect links with their real anchor text, exact URLs and source pages, then export to Excel, CSV, Markdown or JSON. No account, no tracking.">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#0e1526">
+  <meta property="og:title" content="Link Meteor">
+  <meta property="og:description" content="Capture the trail. Keep the source. A free, private Chrome extension for collecting links with their real labels and sources.">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="assets/img/social-card.png">
+  <link rel="icon" href="assets/img/icon.svg" type="image/svg+xml">
+  <link rel="icon" href="assets/img/icon-32.png" sizes="32x32" type="image/png">
+  <link rel="apple-touch-icon" href="assets/img/icon-128.png">
+  <link rel="preload" href="assets/fonts/atkinson-hyperlegible-next.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="assets/css/site.css">
+  <script type="module" src="assets/js/site.js"></script>
+</head>
+<body>
+  <!-- site-header -->
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="site-header">
+    <div class="wrap">
+      <a class="logo" href="./" aria-label="Link Meteor home">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><defs><linearGradient id="logo-trail" x1="15.7" y1="8.3" x2="4" y2="20" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#c3f344"/><stop offset="1" stop-color="#c3f344" stop-opacity=".2"/></linearGradient></defs><rect width="24" height="24" rx="6.5" fill="#1b2336"/><g transform="translate(12 12) scale(.78) translate(-12 -12)"><path d="M13.2 4.6 19.4 10.8 4.6 20.4Q3.6 19.4 4.6 18.4Z" fill="url(#logo-trail)"/><circle cx="16.3" cy="7.7" r="4.4" fill="#c3f344"/></g></svg>
+        <span>Link Meteor</span>
+      </a>
+      <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-nav"><svg aria-hidden="true"><use href="assets/img/icons.svg#menu"/></svg>Menu</button>
+      <nav class="nav" id="site-nav" aria-label="Main">
+        <ul>
+          <li><a href="./#how">How it works</a></li>
+          <li><a href="install.html">Install</a></li>
+          <li><a href="guide.html">Guide</a></li>
+          <li><a href="practice.html">Practice page</a></li>
+          <li><a href="privacy.html">Privacy</a></li>
+          <li><a class="gh" href="https://github.com/ryanjosephkamp/link-meteor">Source<svg aria-hidden="true"><use href="assets/img/icons.svg#external"/></svg><span class="sr-only"> (GitHub)</span></a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+  <!-- /site-header -->
+
+  <main id="main">
+    <section class="hero night" aria-labelledby="hero-title">
+      <div class="wrap">
+        <div class="hero-title">
+          <p class="status-chip">Free Chrome extension · Development build</p>
+          <h1 id="hero-title">Capture the trail. <span class="lime">Keep the source.</span></h1>
+        </div>
+        <div class="hero-copy">
+          <p class="lede">Drag across any part of a webpage to collect its links. Each one keeps its real anchor text, its exact URL and the page it came from, ready for a spreadsheet, a document or your bookmarks.</p>
+          <div class="btn-row">
+            <a class="btn btn-lime" href="install.html"><svg aria-hidden="true"><use href="assets/img/icons.svg#download"/></svg>Get the development build</a>
+            <a class="btn btn-ghost" href="practice.html">Open the practice page</a>
+          </div>
+          <ul class="promise" aria-label="Promises">
+            <li><svg aria-hidden="true"><use href="assets/img/icons.svg#check"/></svg>Free forever</li>
+            <li><svg aria-hidden="true"><use href="assets/img/icons.svg#check"/></svg>No account</li>
+            <li><svg aria-hidden="true"><use href="assets/img/icons.svg#check"/></svg>No tracking</li>
+            <li><svg aria-hidden="true"><use href="assets/img/icons.svg#check"/></svg>Stays in your browser</li>
+          </ul>
+        </div>
+
+        <figure class="demo" aria-labelledby="demo-caption">
+          <div class="demo-stage">
+            <div class="demo-page" id="demo-page">
+              <p class="demo-site"><span></span><span></span><span></span>journal.example.org/reading-lists/uhi</p>
+              <h2>Reading list: urban heat islands</h2>
+              <ol class="demo-list" id="demo-list">
+                <li><span class="n">01</span><span><a href="https://doi.org/10.5555/uhi.2024.0142">Surface temperature and tree canopy in 40 mid-sized cities</a> <span class="meta">Ortega &amp; Lin, 2024</span></span></li>
+                <li><span class="n">02</span><span><a href="https://journal.example.org/articles/uhi-2024-0142.pdf">Download PDF</a> <span class="meta">2.1 MB</span></span></li>
+                <li><span class="n">03</span><span><a href="https://doi.org/10.5555/uhi.2023.0877">Night-time heat retention in dense street canyons</a> <span class="meta">Achebe et al., 2023</span></span></li>
+                <li><span class="n">04</span><span><a href="https://journal.example.org/figures/canopy-map" aria-label="Canopy coverage map"><span class="thumb" role="img" aria-label="Canopy coverage map"></span></a> <span class="meta">Figure 2, image link</span></span></li>
+                <li><span class="n">05</span><span><a href="https://doi.org/10.5555/uhi.2022.0310">Cool roofs: a ten-year field comparison</a> <span class="meta">Varga, 2022</span></span></li>
+                <li><span class="n">06</span><span><a href="https://data.example.com/datasets/station-hourly.xlsx">Hourly station temperatures, 2015–2025</a> <span class="meta">Dataset</span></span></li>
+              </ol>
+              <div class="demo-layer" id="demo-layer" aria-hidden="true"></div>
+            </div>
+            <div class="demo-result" id="demo-result">
+              <div class="demo-result-head">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><defs><linearGradient id="demo-trail" x1="15.7" y1="8.3" x2="4" y2="20" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#c3f344"/><stop offset="1" stop-color="#c3f344" stop-opacity=".2"/></linearGradient></defs><path d="M13.2 4.6 19.4 10.8 4.6 20.4Q3.6 19.4 4.6 18.4Z" fill="url(#demo-trail)"/><circle cx="16.3" cy="7.7" r="4.4" fill="#c3f344"/></svg>
+                <div><p class="demo-count" id="demo-count" aria-live="polite">Drag across the list</p><p class="demo-dest">Anchor text and URL, kept in separate columns</p></div>
+              </div>
+              <table class="demo-table" id="demo-table" hidden>
+                <thead><tr><th scope="col">Anchor text</th><th scope="col">URL</th></tr></thead>
+                <tbody></tbody>
+              </table>
+              <p class="demo-empty" id="demo-empty">Press and drag over the reading list to select links, the way the extension does on a real page.</p>
+              <div class="demo-actions">
+                <button class="btn btn-lime" type="button" id="demo-copy" disabled><svg aria-hidden="true"><use href="assets/img/icons.svg#copy"/></svg>Copy text + URL</button>
+                <button class="btn btn-ghost" type="button" id="demo-all"><svg aria-hidden="true"><use href="assets/img/icons.svg#select"/></svg>Select all</button>
+                <button class="btn btn-ghost" type="button" id="demo-replay"><svg aria-hidden="true"><use href="assets/img/icons.svg#replay"/></svg>Replay</button>
+              </div>
+              <p class="demo-status" id="demo-status" role="status"></p>
+            </div>
+          </div>
+          <figcaption class="demo-caption" id="demo-caption"><strong>Interactive demo.</strong> It runs entirely in this page and sends nothing anywhere. The extension does the same thing on real sites, including links inside scrolling areas and same-origin frames.</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section class="section" id="how" aria-labelledby="fields-title">
+      <div class="wrap">
+        <div class="section-head">
+          <h2 id="fields-title">Two fields. <mark>Never merged.</mark></h2>
+          <p>Most link tools flatten a link into one string, or swap its label for the destination's title. Link Meteor keeps exactly what the page showed, and exactly where it pointed.</p>
+        </div>
+        <div class="specimen">
+          <div class="specimen-source">
+            <p class="specimen-label">On the page</p>
+            <div class="specimen-rendered"><a href="#how" tabindex="-1">Download PDF</a></div>
+            <p class="specimen-label">In the page source</p>
+            <pre><code><span class="t">&lt;a</span> <span class="a">href</span>=<span class="v">"/articles/uhi-2024-0142.pdf"</span><span class="t">&gt;</span>Download PDF<span class="t">&lt;/a&gt;</span></code></pre>
+          </div>
+          <svg class="specimen-arrow" aria-hidden="true"><use href="assets/img/icons.svg#arrow-long"/></svg>
+          <div>
+            <p class="specimen-label" style="margin-bottom:10px">What Link Meteor saves</p>
+            <dl class="fields">
+              <div class="key"><dt>Anchor text</dt><dd>Download PDF</dd></div>
+              <div class="key"><dt>URL</dt><dd class="exact">https://journal.example.org/articles/uhi-2024-0142.pdf</dd></div>
+              <div><dt>Original href</dt><dd class="exact">/articles/uhi-2024-0142.pdf</dd></div>
+              <div><dt>Source page</dt><dd>Reading list: urban heat islands<br><span class="muted exact" style="font-family:var(--mono);font-size:.84rem">journal.example.org/reading-lists/uhi</span></dd></div>
+              <div><dt>Captured</dt><dd>25 Sep 2026, 14:12 · with its capture batch</dd></div>
+              <div><dt>Your notes</dt><dd class="muted">Notes and tags you add, kept apart from what was captured</dd></div>
+            </dl>
+          </div>
+        </div>
+        <ul class="rules">
+          <li>
+            <div class="rule-figure" aria-hidden="true"><span class="pill"><small>Anchor text</small><span>Download PDF</span></span><span class="x">≠</span><span class="pill"><small>Page title</small><span>Surface temperature…</span></span></div>
+            <h3>A label is what the link says</h3>
+            <p>“Download PDF” stays “Download PDF”. It is never replaced by the destination's title, and Link Meteor never visits the destination to look one up.</p>
+          </li>
+          <li>
+            <div class="rule-figure" aria-hidden="true"><span class="pill"><small>Anchor text</small><span class="nil">empty</span></span><span class="pill"><small>Accessible label</small><span>Canopy coverage map</span></span></div>
+            <h3>Empty stays empty</h3>
+            <p>An image-only link has no anchor text, so that field is left empty. Its alt text or ARIA label is saved in a separate, clearly named field.</p>
+          </li>
+          <li>
+            <div class="rule-figure" aria-hidden="true"><span class="pill"><small>Occurrence 1</small><span>Surface temperature…</span></span><span class="pill"><small>Occurrence 2</small><span>the canopy study</span></span></div>
+            <h3>Duplicates are kept</h3>
+            <p>The same URL linked twice with different labels is two occurrences. Group by URL when you want to, ungroup any time; nothing is merged or thrown away.</p>
+          </li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="section alt" aria-labelledby="scope-title">
+      <div class="wrap">
+        <div class="section-head">
+          <h2 id="scope-title">From one paragraph to every open tab</h2>
+          <p>Choose exactly how much to collect. Link Meteor shows the scope before it captures, and asks Chrome for access only when a feature needs it.</p>
+        </div>
+        <div class="scopes">
+          <div class="scope-diagram" aria-hidden="true">
+            <svg viewBox="0 0 500 400" id="scope-svg">
+              <g data-scope="all"><rect x="8" y="8" width="484" height="384" rx="22"/><text x="28" y="36">All windows</text></g>
+              <g data-scope="window"><rect x="36" y="52" width="428" height="318" rx="18"/><text x="56" y="80">This window</text></g>
+              <g data-scope="tabs"><rect x="64" y="96" width="372" height="252" rx="15"/><text x="84" y="124">Picked tabs</text></g>
+              <g data-scope="page"><rect x="92" y="140" width="316" height="186" rx="12"/><text x="112" y="168">This page</text></g>
+              <g data-scope="region"><rect x="150" y="192" width="200" height="104" rx="8"/><text x="170" y="220">Region</text>
+                <rect class="glyph" x="170" y="236" width="120" height="8" rx="4" style="stroke:none"/><rect class="glyph" x="170" y="254" width="150" height="8" rx="4" style="stroke:none"/><rect class="glyph" x="170" y="272" width="96" height="8" rx="4" style="stroke:none"/></g>
+            </svg>
+          </div>
+          <ul class="scope-list" id="scope-list">
+            <li class="scope-item" data-scope="region" tabindex="0">
+              <span class="ico"><svg aria-hidden="true"><use href="assets/img/icons.svg#region"/></svg></span>
+              <div><h3>A region</h3><p>Press <kbd>⌥</kbd> <kbd>⇧</kbd> <kbd>L</kbd> on a Mac or <kbd>Alt</kbd> <kbd>Shift</kbd> <kbd>L</kbd> on Windows and Linux, then drag. Matching links light up with a live count. Scroll while dragging to reach more, or add another region.</p>
+              <p class="perm"><svg aria-hidden="true"><use href="assets/img/icons.svg#lock"/></svg>Uses temporary access to the page you invoke it on.</p></div>
+            </li>
+            <li class="scope-item" data-scope="region" tabindex="0">
+              <span class="ico"><svg aria-hidden="true"><use href="assets/img/icons.svg#key"/></svg></span>
+              <div><h3>Hold a key and drag</h3><p>On sites you choose, hold a letter key and drag without opening Link Meteor first. Typing in a text field never triggers it.</p>
+              <p class="perm"><svg aria-hidden="true"><use href="assets/img/icons.svg#lock"/></svg>Optional. Asks for access to that one site; stops if you remove it.</p></div>
+            </li>
+            <li class="scope-item" data-scope="page" tabindex="0">
+              <span class="ico"><svg aria-hidden="true"><use href="assets/img/icons.svg#page"/></svg></span>
+              <div><h3>This page</h3><p>Every loaded link on the page, including links inside open shadow roots and same-origin frames.</p>
+              <p class="perm"><svg aria-hidden="true"><use href="assets/img/icons.svg#lock"/></svg>Uses temporary access to the page you invoke it on.</p></div>
+            </li>
+            <li class="scope-item" data-scope="tabs" tabindex="0">
+              <span class="ico"><svg aria-hidden="true"><use href="assets/img/icons.svg#tabs"/></svg></span>
+              <div><h3>Tabs you pick</h3><p>Choose exact open tabs from a list grouped by window. Tabs opened after you start are left out.</p>
+              <p class="perm"><svg aria-hidden="true"><use href="assets/img/icons.svg#lock"/></svg>Optional. Asks to see your tab list, and for access to the sites you pick.</p></div>
+            </li>
+            <li class="scope-item" data-scope="window" tabindex="0">
+              <span class="ico"><svg aria-hidden="true"><use href="assets/img/icons.svg#windows"/></svg></span>
+              <div><h3>This window, or all windows</h3><p>Every ordinary tab, up to 100 per capture, each with its own result. Browser pages, the Chrome Web Store and incognito windows are left out and named as such.</p>
+              <p class="perm"><svg aria-hidden="true"><use href="assets/img/icons.svg#lock"/></svg>Optional. Same tab-list and site access requests as picked tabs.</p></div>
+            </li>
+          </ul>
+        </div>
+        <figure class="shot wide-shot">
+          <img src="assets/img/shot-overlay.webp" width="1600" height="1222" loading="lazy" alt="The practice page's reading list with seven links highlighted in lime, including an image link and a link that wraps over three lines. A dark card in the corner says 7 links selected, adds to Urban heat islands: sources, previews the first three labels and offers Copy text + URL, Add to collection, Review and Add another region.">
+          <figcaption>Actual screenshot: the extension after a region drag across the reading list on this site's <a href="practice.html">practice page</a>.</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section class="section" aria-labelledby="report-title">
+      <div class="wrap split">
+        <div>
+          <div class="section-head" style="margin-bottom:0">
+            <h2 id="report-title">When a page can't be read, it says so</h2>
+            <p>A multi-tab capture reports every page separately. A page with no links is not the same as a page Link Meteor wasn't allowed to read, and it never pretends otherwise.</p>
+          </div>
+          <ul class="statuses">
+            <li class="ok"><svg aria-hidden="true"><use href="assets/img/icons.svg#check"/></svg><div><strong>Captured</strong><span>With the exact count, plus any coverage notes such as frames it could not enter.</span></div></li>
+            <li class="none"><svg aria-hidden="true"><use href="assets/img/icons.svg#minus"/></svg><div><strong>No links</strong><span>The page loaded and genuinely has no links it can read.</span></div></li>
+            <li class="warn"><svg aria-hidden="true"><use href="assets/img/icons.svg#ban"/></svg><div><strong>Access denied or unsupported</strong><span>Site access was declined, or Chrome doesn't allow extensions there.</span></div></li>
+            <li class="bad"><svg aria-hidden="true"><use href="assets/img/icons.svg#alert"/></svg><div><strong>Failed</strong><span>The tab closed or changed during capture. Everything that succeeded is still kept.</span></div></li>
+          </ul>
+        </div>
+        <figure class="shot">
+          <img src="assets/img/shot-report.webp" width="940" height="628" loading="lazy" alt="Link Meteor capture report for five tabs: three pages captured with 85, 28 and 22 links, one page marked Access denied with an explanation and Chrome's own message, and one browser page marked Unsupported.">
+          <figcaption>Actual screenshot: a five-tab capture of pages on this site, with one site deliberately not allowed and one Chrome page.</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section class="section alt" aria-labelledby="curate-title">
+      <div class="wrap split flip">
+        <div>
+          <div class="section-head" style="margin-bottom:0">
+            <h2 id="curate-title">Curate without losing anything</h2>
+            <p>Captures land in named collections saved on your computer. Review them beside the page in Chrome's side panel, or open the full workbench in a tab.</p>
+          </div>
+          <ul class="checks">
+            <li><svg aria-hidden="true"><use href="assets/img/icons.svg#check"/></svg><span>Search anchor text, URLs, source pages, notes and tags.</span></li>
+            <li><svg aria-hidden="true"><use href="assets/img/icons.svg#check"/></svg><span>Filter by domain, file type, or links that stay on the source site.</span></li>
+            <li><svg aria-hidden="true"><use href="assets/img/icons.svg#check"/></svg><span>Group by URL to see every label and page that points to it, then switch back.</span></li>
+            <li><svg aria-hidden="true"><use href="assets/img/icons.svg#check"/></svg><span>Open any link to see its full provenance and add notes and tags.</span></li>
+            <li><svg aria-hidden="true"><use href="assets/img/icons.svg#check"/></svg><span>Remove what you don't need, with undo that restores the original order.</span></li>
+          </ul>
+        </div>
+        <figure class="shot">
+          <img src="assets/img/shot-workbench.webp" width="1600" height="1111" loading="lazy" alt="The Link Meteor workbench in a browser tab: collections on the left; in the middle, links grouped by URL, with one link shown four times and also labeled “the canopy study”, expanded to show its anchor text, URL, original href, source page, capture time and IDs; export options on the right.">
+          <figcaption>Actual screenshot: the full workbench after capturing the practice page, grouped by URL, with one group's four occurrences expanded.</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section class="section" aria-labelledby="export-title">
+      <div class="wrap">
+        <div class="section-head">
+          <h2 id="export-title">Take it anywhere</h2>
+          <p>Copy two clean columns straight into a spreadsheet, or download a file. Choose which fields to include and in what order. This preview uses the extension's own export code on the links you selected in the demo above.</p>
+        </div>
+        <div class="exporter" id="exporter">
+          <div class="exporter-tabs" role="tablist" aria-label="Export formats">
+            <button role="tab" type="button" aria-selected="true" aria-controls="exporter-panel" data-format="xlsx">Excel</button>
+            <button role="tab" type="button" aria-selected="false" aria-controls="exporter-panel" data-format="csv" tabindex="-1">CSV</button>
+            <button role="tab" type="button" aria-selected="false" aria-controls="exporter-panel" data-format="markdown" tabindex="-1">Markdown</button>
+            <button role="tab" type="button" aria-selected="false" aria-controls="exporter-panel" data-format="json" tabindex="-1">JSON</button>
+            <button role="tab" type="button" aria-selected="false" aria-controls="exporter-panel" data-format="html" tabindex="-1">HTML</button>
+            <button role="tab" type="button" aria-selected="false" aria-controls="exporter-panel" data-format="text" tabindex="-1">URL list</button>
+          </div>
+          <div class="exporter-body" id="exporter-panel" role="tabpanel" aria-live="polite">
+            <div class="exporter-output" id="exporter-output"></div>
+            <div class="exporter-notes">
+              <h3 id="exporter-note-title">Excel workbook</h3>
+              <p id="exporter-note">Every cell is stored as text, so nothing is reinterpreted as a formula, number or date.</p>
+              <button class="btn btn-line btn-sm" type="button" id="exporter-download"><svg aria-hidden="true"><use href="assets/img/icons.svg#download"/></svg>Download this sample</button>
+            </div>
+          </div>
+        </div>
+        <ul class="formats" aria-label="All output options">
+          <li>Excel .xlsx</li><li>CSV</li><li>TSV</li><li>Markdown links</li><li>HTML table</li><li>JSON with full provenance</li><li>URL list</li><li>Clipboard</li><li>Chrome bookmark folder</li><li>Open up to 20 in tabs</li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="section night" aria-labelledby="privacy-title">
+      <div class="wrap">
+        <div class="section-head">
+          <h2 id="privacy-title">Private by construction</h2>
+          <p>Link Meteor has no server to send anything to. Your collections are stored by Chrome on your computer, the extension contains no code that contacts a server, and its security policy forbids its pages from making network requests.</p>
+        </div>
+        <ul class="never">
+          <li><strong>No account</strong><span>Nothing to sign up for, nothing to sign in to.</span></li>
+          <li><strong>No servers</strong><span>No backend, no sync service, no cloud copy.</span></li>
+          <li><strong>No tracking</strong><span>No analytics, telemetry or ads, in the extension or on this site.</span></li>
+          <li><strong>No paid tier</strong><span>Every feature is free, with no limits to unlock.</span></li>
+        </ul>
+        <p class="btn-row" style="margin-top:32px"><a class="btn btn-ghost" href="privacy.html">Read the privacy details<svg aria-hidden="true"><use href="assets/img/icons.svg#arrow-right"/></svg></a></p>
+      </div>
+    </section>
+
+    <section class="section" aria-labelledby="limits-title">
+      <div class="wrap">
+        <div class="section-head">
+          <h2 id="limits-title">What it doesn't do, yet</h2>
+          <p>Plain limits, so you know what to expect before you rely on it.</p>
+        </div>
+        <ul class="limits">
+          <li><svg aria-hidden="true"><use href="assets/img/icons.svg#minus"/></svg><div><strong>Only what's loaded</strong><span>It doesn't scroll infinite feeds, follow pagination or crawl sites. Links that haven't loaded yet aren't there to capture.</span></div></li>
+          <li><svg aria-hidden="true"><use href="assets/img/icons.svg#minus"/></svg><div><strong>Some parts of pages are closed to it</strong><span>Frames from other sites and closed shadow roots can't be read. Captures say when frames were skipped.</span></div></li>
+          <li><svg aria-hidden="true"><use href="assets/img/icons.svg#minus"/></svg><div><strong>No PDF text or button scripts</strong><span>A link to a PDF is captured; links inside the PDF are not. JavaScript-only buttons without a real link aren't links.</span></div></li>
+          <li><svg aria-hidden="true"><use href="assets/img/icons.svg#minus"/></svg><div><strong>Desktop Chrome only, for now</strong><span>There's no Firefox, Safari or mobile version. Chrome's own pages, the Web Store and incognito are off limits.</span></div></li>
+          <li><svg aria-hidden="true"><use href="assets/img/icons.svg#minus"/></svg><div><strong>No citations or titles invented</strong><span>It never fetches destinations, so it won't look up authors, dates or DOIs for you.</span></div></li>
+          <li><svg aria-hidden="true"><use href="assets/img/icons.svg#minus"/></svg><div><strong>No import or cloud backup</strong><span>Collections live in this browser profile. Export anything you want to keep elsewhere.</span></div></li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="section" aria-labelledby="try-title" style="padding-top:0;border-top:0">
+      <div class="wrap">
+        <div class="install-band">
+          <div>
+            <h2 id="try-title">Try the development build</h2>
+            <p>Link Meteor isn't in the Chrome Web Store yet. You can load the current build into desktop Chrome yourself in a couple of minutes, then practice on a page made for it.</p>
+          </div>
+          <div class="btn-row">
+            <a class="btn btn-lime" href="install.html">Installation steps<svg aria-hidden="true"><use href="assets/img/icons.svg#arrow-right"/></svg></a>
+            <a class="btn btn-ghost" href="practice.html">Practice page</a>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- site-footer -->
+  <footer class="site-footer">
+    <div class="wrap">
+      <div>
+        <a class="logo" href="./" aria-label="Link Meteor home"><svg viewBox="0 0 24 24" aria-hidden="true"><defs><linearGradient id="foot-trail" x1="15.7" y1="8.3" x2="4" y2="20" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#c3f344"/><stop offset="1" stop-color="#c3f344" stop-opacity=".2"/></linearGradient></defs><rect width="24" height="24" rx="6.5" fill="#1b2336"/><g transform="translate(12 12) scale(.78) translate(-12 -12)"><path d="M13.2 4.6 19.4 10.8 4.6 20.4Q3.6 19.4 4.6 18.4Z" fill="url(#foot-trail)"/><circle cx="16.3" cy="7.7" r="4.4" fill="#c3f344"/></g></svg><span>Link Meteor</span></a>
+        <p>Capture the trail. Keep the source. A free Chrome extension with no account, no servers and no tracking.</p>
+      </div>
+      <div><h2>Use it</h2><ul><li><a href="install.html">Install</a></li><li><a href="guide.html">Guide</a></li><li><a href="practice.html">Practice page</a></li></ul></div>
+      <div><h2>About</h2><ul><li><a href="privacy.html">Privacy</a></li><li><a href="https://github.com/ryanjosephkamp/link-meteor">Source on GitHub</a></li><li><a href="https://github.com/ryanjosephkamp/link-meteor/issues">Report a problem</a></li></ul></div>
+      <p class="fine">Development build. Not yet published in the Chrome Web Store. This site uses no cookies, analytics or third-party requests; its fonts are Atkinson Hyperlegible Next and Mono, served from this site under the SIL Open Font License.</p>
+    </div>
+  </footer>
+  <!-- /site-footer -->
+</body>
+</html>

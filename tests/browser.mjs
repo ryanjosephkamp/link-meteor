@@ -1,0 +1,134 @@
+import assert from 'node:assert/strict';
+import {readFile,writeFile,mkdir} from 'node:fs/promises';
+import {resolve} from 'node:path';
+import {fixtureServer,launch,rpc,until,evidence} from './helpers/browser.mjs';
+
+const result={started:new Date().toISOString(),browser:'Installed Chrome for Testing via Playwright; real unpacked extension',checks:[],limitations:['Optional grants established separately through product UI in an isolated automated profile; not native Allow/Deny evidence.','Not acceptance in the everyday Chrome profile or other operating systems.']};
+const check=(name,detail={})=>{result.checks.push({name,status:'pass',...detail});console.log('PASS',name);};
+const fixture=await fixtureServer();let context;
+const profile=process.env.LINK_METEOR_TEST_PROFILE || 'acceptance-final';
+const headed=process.env.LINK_METEOR_HEADED!=='0';
+await mkdir(resolve(evidence,'exports'),{recursive:true});
+try {
+  let run=await launch(profile,{headless:!headed});context=run.context;
+  const errors=[];
+  for(const old of context.pages())await old.close();
+  const page=await context.newPage();page.on('pageerror',e=>errors.push(e.message));
+  await page.goto(fixture.base+'/index.html');await page.locator('#same-frame').waitFor();
+  let ui=await context.newPage();ui.on('pageerror',e=>errors.push(e.message));
+  const uiURL=`chrome-extension://${run.id}/ui/workbench.html`;
+  await ui.goto(uiURL);await ui.locator('#collection-heading').waitFor();
+  // Only our synthetic test profile is reset; optional grants remain available for reproducible runs.
+  await ui.evaluate(()=>chrome.storage.local.clear());await ui.reload();
+  const active=async()=>{const s=await rpc(ui,{type:'state.get'});return s.collections.find(c=>c.id===s.activeCollectionId);};
+  const initial=await rpc(ui,{type:'state.get'});assert.equal(initial.schemaVersion,1);check('Loaded actual extension and initialized state');
+  const grants=await ui.evaluate(()=>chrome.permissions.getAll());result.initialGrants=grants;
+  assert.ok(grants.origins?.some(o=>o.includes('127.0.0.1')),'Run optional site grant preparation first');
+  await ui.locator('#new-collection').fill('Browser acceptance');await ui.locator('#create-collection button').click();
+  await until(async()=>(await active()).name==='Browser acceptance','Collection creation');check('Collection created through UI');
+  await ui.locator('input[name=scope][value=selected]').check();
+  await until(async()=>await ui.locator('#tab-options input').count()>0,'Optional tabs permission / inventory',10000);
+  const inv=await rpc(ui,{type:'tabs.list'});const tab=inv.tabs.find(t=>t.url===fixture.base+'/index.html');assert.ok(tab);
+  for(const checkbox of await ui.locator('#tab-options input').all())await checkbox.uncheck();
+  await ui.getByRole('checkbox',{name:'Include Meteor Research Lab — deterministic fixture',exact:true}).check();
+  await ui.locator('#capture').click();
+  await until(async()=>(await active()).links.length>0,'Real page capture',15000);
+  const original=(await active()).links;assert.equal(original.length,37);
+  assert.equal(original.find(l=>l.originalHref==='/appendix').anchorText,'');
+  assert.equal(original.find(l=>l.originalHref==='/appendix').accessibleLabel,'Open illustrated appendix');
+  assert.equal(original.find(l=>l.originalHref==='/visible').anchorText,'Visible label');
+  assert.equal(original.filter(l=>l.originalHref==='/papers/attention.pdf').length,2);
+  assert.equal(original.find(l=>l.originalHref==='/frame-source').frameUrl,fixture.base+'/frame.html');
+  assert.ok(original.find(l=>l.originalHref==='/shadow'));
+  assert.ok(original.every(l=>l.id&&l.batchId&&l.capturedAt&&l.sourceUrl===fixture.base+'/index.html'));
+  assert.ok(!original.some(l=>l.anchorText.includes('HIDDEN SECRET')||l.originalHref==='/never'||l.url.startsWith('javascript:')));
+  assert.match(await ui.locator('#capture-report').innerText(),/inaccessible frame/);
+  check('37 faithful occurrences including duplicates, empty anchor, shadow root, frame provenance and explicit partial coverage');
+  await ui.locator('input[name=scope][value=current]').check();
+  await until(async()=>(await ui.locator('#site-origin').innerText()).includes('127.0.0.1'),'Remembered page target');
+  await ui.locator('#capture').click();
+  await until(async()=>(await active()).links.length===74,'Current page capture');check('Current page resolves the invoking page from full workbench');
+  const reset=async()=>{await rpc(ui,{type:'state.mutate',action:{type:'links.remove',ids:(await active()).links.map(l=>l.id)}});};
+  await reset();
+  await page.bringToFront();await page.evaluate(()=>scrollTo(0,0));
+  const overlay=page.locator('#link-meteor-overlay');
+  const arm=async()=>{await rpc(ui,{type:'capture.arm',tabId:tab.id});await overlay.waitFor();};
+  await arm();await page.keyboard.press('Escape');await until(async()=>await overlay.count()===0,'Escape cleanup');assert.equal((await active()).links.length,0);check('Region Escape leaves collection unchanged');
+  await arm();const rect=await page.locator('#bibliography').boundingBox();
+  await page.mouse.move(rect.x+4,rect.y+4);await page.mouse.down();await page.mouse.move(rect.x+rect.width-4,rect.y+rect.height-4,{steps:12});
+  // Pointer moves are frame-aligned; wait for the live badge to catch up with the final synthetic move.
+  await until(async()=>/^5 links$/.test(await overlay.locator('.badge').innerText()),'Live badge reaches exactly 5 links',2000);await page.screenshot({path:resolve(evidence,'region-drag.png')});await page.mouse.up();
+  assert.equal(await overlay.locator('.count').innerText(),'5 links selected');
+  await overlay.getByRole('button',{name:'Copy text + URL',exact:true}).click();await until(async()=>(await overlay.locator('.status').innerText()).startsWith('Copied'),'Regional clipboard');check('Regional quick-copy reports successful two-column clipboard write');
+  await overlay.getByRole('button',{name:'Add to collection',exact:true}).click();await until(async()=>(await active()).links.length===5,'Regional save');
+  assert.equal(page.url(),fixture.base+'/index.html');check('Real rectangle pointer drag highlights and saves exactly 5 links without navigating');
+  await overlay.getByRole('button',{name:'Add another region',exact:true}).click();await page.keyboard.press('Escape');assert.equal((await active()).links.length,5);check('Add-another-region does not duplicate an already saved region');
+  await page.locator('#wrapped').scrollIntoViewIfNeeded();
+  const wrapped=await page.locator('#wrapped').evaluate(a=>[...a.getClientRects()].map(r=>({left:r.left,top:r.top,right:r.right,bottom:r.bottom})));
+  assert.ok(wrapped.length>1);await arm();const r=wrapped[1];
+  await page.mouse.move(r.left-1,r.top+2);await page.mouse.down();await page.mouse.move(r.left+1,r.top+6);await page.mouse.up();
+  assert.equal(await overlay.locator('.count').innerText(),'1 link selected');await overlay.getByRole('button',{name:'Add to collection',exact:true}).click();await until(async()=>(await active()).links.length===6,'Wrapped save');
+  assert.equal((await active()).links.at(-1).originalHref,'/wrapped');await page.keyboard.press('Escape');check('Positive-area 1px overlap of a wrapped line captures the actual anchor');
+  await page.locator('#nested').scrollIntoViewIfNeeded();await page.locator('#nested').evaluate(e=>e.scrollTop=0);await arm();
+  const n=await page.locator('#nested').boundingBox();await page.mouse.move(n.x+6,n.y+8);await page.mouse.down();await page.mouse.move(n.x+n.width-16,n.y+n.height-55,{steps:4});
+  await page.mouse.wheel(0,350);await new Promise(r=>setTimeout(r,150));await page.mouse.up();
+  assert.ok(await page.locator('#nested').evaluate(e=>e.scrollTop)>0);
+  const selectedCount=parseInt(await overlay.locator('.count').innerText());assert.ok(selectedCount>=4);
+  await overlay.getByRole('button',{name:'Add to collection',exact:true}).click();await until(async()=>(await active()).links.length===6+selectedCount,'Scrolled save');await page.keyboard.press('Escape');check('Nested wheel scrolling extends the selection and retains earlier matches',{selectedCount});
+  await page.evaluate(()=>scrollTo(0,0));await arm();await page.mouse.move(250,340);await page.mouse.down();await page.mouse.move(950,800,{steps:4});await page.mouse.wheel(0,420);await new Promise(r=>setTimeout(r,120));assert.ok(await page.evaluate(()=>scrollY)>0);await page.mouse.up();assert.ok(parseInt(await overlay.locator('.count').innerText())>0);await page.keyboard.press('Escape');check('Page scrolling during a drag retains selected links');
+  await page.locator('#same-frame').scrollIntoViewIfNeeded();const f=await page.frameLocator('#same-frame').locator('a').boundingBox();await arm();await page.mouse.move(f.x+2,f.y+2);await page.mouse.down();await page.mouse.move(f.x+10,f.y+10);await page.mouse.up();assert.equal(await overlay.locator('.count').innerText(),'1 link selected');await page.keyboard.press('Escape');check('Regional geometry includes an accessible same-origin frame');
+  await page.locator('#load-dynamic').click();const dyn=await rpc(ui,{type:'capture.run',tabIds:[tab.id]});assert.equal(dyn.report.capturedCount,38);check('Loaded dynamic links captured on next scan');
+  const edge=await context.newPage();await edge.goto(fixture.base+'/empty.html');await edge.evaluate(()=>{for(const [text,href] of [['Normal','/normal'],['Email subject','mailto:?subject=Hello'],['Compose email','mailto:'],['Malformed phone','tel:'],['Malformed email','mailto:a b@example.org']]){const a=document.createElement('a');a.textContent=text;a.href=href;document.body.append(a);}});
+  const edgeTab=(await rpc(ui,{type:'tabs.list'})).tabs.find(t=>t.url===edge.url());const edgeReport=(await rpc(ui,{type:'capture.run',tabIds:[edgeTab.id]})).report;assert.equal(edgeReport.capturedCount,3);assert.match(edgeReport.results[0].warning,/2 malformed link destinations/);await edge.close();check('Recipientless mail links retained while malformed destinations are skipped with an explicit count');
+  await ui.bringToFront();await ui.locator('#edit-collection').click();await ui.locator('#collection-notes').fill('Synthetic research notes');await ui.locator('#collection-tags').fill('research, fixture');await ui.locator('#collection-details button[type=submit]').click();
+  await until(async()=>(await active()).notes==='Synthetic research notes','Collection notes save');assert.deepEqual((await active()).tags,['research','fixture']);check('Collection notes and tags saved through UI');
+  await ui.locator('#search').fill('Attention in small systems');await until(async()=>await ui.locator('.link-row').count()===2,'Search occurrences');
+  await ui.locator('#filters-toggle').click();await ui.locator('#dedupe').selectOption('url');assert.equal(await ui.locator('.link-row').count(),1);assert.match(await ui.locator('.row-details summary').innerText(),/2 source occurrences/);
+  await ui.locator('#dedupe').selectOption('none');assert.equal(await ui.locator('.link-row').count(),2);check('Search and reversible grouped view preserve occurrences');
+  await ui.locator('.row-select').first().check();const beforeRemove=(await active()).links.map(l=>l.id);await ui.locator('#remove').click();await until(async()=>(await active()).links.length===beforeRemove.length-1,'Removal');await ui.locator('#undo').click();await until(async()=>(await active()).links.length===beforeRemove.length,'Undo');assert.deepEqual((await active()).links.map(l=>l.id),beforeRemove);check('Removal and positional undo through UI');
+  await ui.locator('#search').fill('');await ui.locator('#file-type').fill('pdf');assert.ok(await ui.locator('.link-row').count()>=3);await ui.locator('#file-type').fill('');await ui.locator('#domain').fill('example.org');assert.ok(await ui.locator('.link-row').count()>=1);await ui.locator('#domain').fill('');await ui.locator('#sort').selectOption('newest');assert.equal(await ui.locator('#direction').inputValue(),'desc');await ui.locator('#sort').selectOption('page');await ui.locator('#direction').selectOption('asc');check('Domain, PDF filters and newest sort controls');
+  const exportExpected=(await active()).links.length;
+  for(const format of ['csv','tsv','xlsx','markdown','html','json','text']){
+    await ui.locator('#format').selectOption(format);const pending=ui.waitForEvent('download');await ui.locator('#download').click();const download=await pending;
+    const path=resolve(evidence,'exports',`browser.${format==='markdown'?'md':format==='text'?'txt':format}`);await download.saveAs(path);const bytes=await readFile(path);assert.ok(bytes.length>0);
+    if(format==='json'){const rows=JSON.parse(bytes);assert.equal(rows.length,exportExpected);assert.ok(rows.every(r=>r.occurrences.length===1));assert.equal(rows.find(r=>r.originalHref==='/appendix').anchorText,'');}
+    if(format==='csv'){assert.ok(bytes.toString().startsWith('Anchor text,URL\r\n'));assert.ok(bytes.toString().includes("'=SUM(1,2)"));}
+    if(format==='html'){assert.ok(bytes.toString().includes('&lt;img'));assert.ok(!bytes.toString().includes('<img'));}
+    if(format==='markdown')assert.ok(bytes.toString().includes(`[](${fixture.base}/appendix)`));
+    if(format==='xlsx')assert.equal(bytes.subarray(0,2).toString(),'PK');
+  }
+  check('Seven actual downloaded formats checked, with separate fields, safe labels and preserved JSON provenance',{rows:exportExpected});
+  await ui.getByRole('button',{name:'Move URL up',exact:true}).click();await ui.locator('#format').selectOption('csv');const reversed=ui.waitForEvent('download');await ui.locator('#download').click();const dl=await reversed;assert.ok((await readFile(await dl.path(),'utf8')).startsWith('URL,Anchor text'));await ui.getByRole('button',{name:'Move URL down',exact:true}).click();check('Export column order follows UI settings');
+  await ui.locator('#search').fill('Attention in small systems');
+  await ui.locator('#copy-table').click();await until(async()=>(await ui.locator('#notice').innerText()).includes('Copied'),'Clipboard write');
+  // Verify an actual paste without requesting clipboard-read access or inspecting pre-existing clipboard data.
+  await ui.locator('#collection-notes').focus();await ui.keyboard.press(process.platform==='darwin'?'Meta+V':'Control+V');assert.ok((await ui.locator('#collection-notes').inputValue()).includes('Anchor text\tURL'));check('Clipboard output verified by paste of task-generated text');
+  await ui.reload();await ui.locator('#collection-heading').waitFor();
+  const empty=await context.newPage();await empty.goto(fixture.base+'/empty.html');
+  const denied=await context.newPage();await denied.goto(fixture.base.replace('127.0.0.1','localhost')+'/empty.html');
+  const restricted=await context.newPage();await restricted.goto('chrome://version');
+  const tabs=(await rpc(ui,{type:'tabs.list'})).tabs;
+  const emptyId=tabs.find(t=>t.url===empty.url()).id,deniedId=tabs.find(t=>t.url===denied.url()).id,restrictedId=tabs.find(t=>t.url===restricted.url()).id;
+  const report=(await rpc(ui,{type:'capture.run',tabIds:[tab.id,emptyId,deniedId,restrictedId,987654321]})).report;
+  assert.deepEqual(report.results.map(r=>r.status),['success','success','denied','unsupported','error']);assert.equal(report.results[1].count,0);assert.equal(report.capturedCount,38);
+  await ui.reload();await until(async()=>(await ui.locator('#capture-report').innerText()).includes('denied'),'Persisted capture report');check('Mixed batch preserves success and distinctly reports empty, denied, restricted and closed tabs');
+  await denied.close();await restricted.close();
+  const win=await ui.evaluate(url=>chrome.windows.create({url,type:'normal',focused:false}),fixture.base+'/frame.html');
+  const inventory=await rpc(ui,{type:'tabs.list'});assert.ok(new Set(inventory.tabs.map(t=>t.windowId)).size>=2);
+  await ui.bringToFront();await ui.locator('input[name=scope][value=window]').check();await ui.locator('#capture').click();await until(async()=>(await ui.locator('#notice').innerText()).includes('Capture finished'),'Window capture');
+  await ui.locator('input[name=scope][value=all]').check();await ui.locator('#capture').click();await until(async()=>(await ui.locator('#capture-report').innerText()).includes('Embedded fixture'),'All window capture');
+  await ui.evaluate(id=>chrome.windows.remove(id),win.id);await empty.close();check('Current-window and all-ordinary-window capture through UI with two actual windows');
+  await ui.bringToFront();
+  await rpc(ui,{type:'hold.configure',origin:fixture.base,enabled:true,key:'q'});
+  await page.bringToFront();await page.locator('#typing').fill('');await page.locator('#typing').focus();await page.keyboard.down('q');await page.mouse.click(50,60);await page.keyboard.up('q');assert.equal(await overlay.count(),0);
+  await page.evaluate(()=>scrollTo(0,0));await page.mouse.click(50,50);await page.keyboard.down('q');await page.mouse.move(250,350);await page.mouse.down();await page.mouse.move(900,520,{steps:5});await page.mouse.up();await page.keyboard.up('q');await overlay.waitFor();await page.keyboard.press('Escape');check('Configured permitted hold-key gesture works and ignores editable-field typing');
+  await rpc(ui,{type:'hold.configure',origin:fixture.base,enabled:false,key:'q'});
+  const saved=await rpc(ui,{type:'state.get'});await context.close();context=null;
+  run=await launch(profile,{headless:!headed});context=run.context;ui=await context.newPage();await ui.goto(uiURL);assert.deepEqual(await rpc(ui,{type:'state.get'}),saved);check('Exact collection state survives full test-browser and background-worker restart');
+  await ui.setViewportSize({width:390,height:844});await ui.screenshot({path:resolve(evidence,'workbench-narrow.png')});assert.equal(await ui.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);check('390px workbench has no document-wide horizontal overflow');
+  await ui.setViewportSize({width:1440,height:1000});await ui.screenshot({path:resolve(evidence,'workbench-desktop.png')});
+  await ui.emulateMedia({colorScheme:'dark',reducedMotion:'reduce'});await ui.screenshot({path:resolve(evidence,'workbench-dark.png')});
+  assert.deepEqual(errors,[]);check('No uncaught fixture or workbench errors');
+  result.result='PASS';
+} catch(error) {if(context){const failureUI=context.pages().find(p=>p.url().includes('/ui/workbench.html'));if(failureUI){result.failureUI=await failureUI.locator('body').innerText().catch(()=>'(unavailable)');result.failureSession=await failureUI.evaluate(()=>chrome.storage.session.get(null)).catch(()=>null);await failureUI.screenshot({path:resolve(evidence,'browser-failure.png')}).catch(()=>{});}}result.result='FAIL';result.error=error.stack;console.error(error);process.exitCode=1;}
+finally{if(context)await context.close();await fixture.close();result.finished=new Date().toISOString();await writeFile(resolve(evidence,'browser-results.json'),JSON.stringify(result,null,2)+'\n');}

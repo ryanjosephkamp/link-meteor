@@ -1,0 +1,6767 @@
+[
+  {
+    "accessibleLabel": "",
+    "anchorText": "Alpha 0",
+    "batchId": "batch-a",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-0",
+    "notes": "",
+    "originalHref": "/0",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/0",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Alpha 0",
+        "batchId": "batch-a",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-0",
+        "notes": "",
+        "originalHref": "/0",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/0"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-0"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Alpha 1",
+    "batchId": "batch-a",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-1",
+    "notes": "",
+    "originalHref": "/1",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/1",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Alpha 1",
+        "batchId": "batch-a",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-1",
+        "notes": "",
+        "originalHref": "/1",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/1"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-1"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Alpha 2",
+    "batchId": "batch-a",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-2",
+    "notes": "",
+    "originalHref": "/2",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/2",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Alpha 2",
+        "batchId": "batch-a",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-2",
+        "notes": "",
+        "originalHref": "/2",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/2"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-2"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Alpha 3",
+    "batchId": "batch-a",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-3",
+    "notes": "",
+    "originalHref": "/3",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/3",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Alpha 3",
+        "batchId": "batch-a",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-3",
+        "notes": "",
+        "originalHref": "/3",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/3"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-3"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Alpha 4",
+    "batchId": "batch-a",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-4",
+    "notes": "",
+    "originalHref": "/4",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/4",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Alpha 4",
+        "batchId": "batch-a",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-4",
+        "notes": "",
+        "originalHref": "/4",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/4"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-4"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Alpha 5",
+    "batchId": "batch-a",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-5",
+    "notes": "",
+    "originalHref": "/5",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/5",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Alpha 5",
+        "batchId": "batch-a",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-5",
+        "notes": "",
+        "originalHref": "/5",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/5"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-5"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Alpha 6",
+    "batchId": "batch-a",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-6",
+    "notes": "",
+    "originalHref": "/6",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/6",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Alpha 6",
+        "batchId": "batch-a",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-6",
+        "notes": "",
+        "originalHref": "/6",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/6"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-6"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Alpha 7",
+    "batchId": "batch-a",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-7",
+    "notes": "",
+    "originalHref": "/7",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/7",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Alpha 7",
+        "batchId": "batch-a",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-7",
+        "notes": "",
+        "originalHref": "/7",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/7"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-7"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Alpha 8",
+    "batchId": "batch-a",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-8",
+    "notes": "",
+    "originalHref": "/8",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/8",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Alpha 8",
+        "batchId": "batch-a",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-8",
+        "notes": "",
+        "originalHref": "/8",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/8"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-8"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Alpha 9",
+    "batchId": "batch-a",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-9",
+    "notes": "",
+    "originalHref": "/9",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/9",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Alpha 9",
+        "batchId": "batch-a",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-9",
+        "notes": "",
+        "originalHref": "/9",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/9"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-9"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Alpha 10",
+    "batchId": "batch-a",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-10",
+    "notes": "",
+    "originalHref": "/10",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/10",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Alpha 10",
+        "batchId": "batch-a",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-10",
+        "notes": "",
+        "originalHref": "/10",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/10"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-10"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Alpha 11",
+    "batchId": "batch-a",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-11",
+    "notes": "",
+    "originalHref": "/11",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/11",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Alpha 11",
+        "batchId": "batch-a",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-11",
+        "notes": "",
+        "originalHref": "/11",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/11"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-11"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Alpha 12",
+    "batchId": "batch-a",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-12",
+    "notes": "",
+    "originalHref": "/12",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/12",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Alpha 12",
+        "batchId": "batch-a",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-12",
+        "notes": "",
+        "originalHref": "/12",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/12"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-12"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Alpha 13",
+    "batchId": "batch-a",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-13",
+    "notes": "",
+    "originalHref": "/13",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/13",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Alpha 13",
+        "batchId": "batch-a",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-13",
+        "notes": "",
+        "originalHref": "/13",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/13"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-13"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Alpha 14",
+    "batchId": "batch-a",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-14",
+    "notes": "",
+    "originalHref": "/14",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/14",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Alpha 14",
+        "batchId": "batch-a",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-14",
+        "notes": "",
+        "originalHref": "/14",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/14"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-14"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Alpha 15",
+    "batchId": "batch-a",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-15",
+    "notes": "",
+    "originalHref": "/15",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/15",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Alpha 15",
+        "batchId": "batch-a",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-15",
+        "notes": "",
+        "originalHref": "/15",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/15"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-15"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Alpha 16",
+    "batchId": "batch-a",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-16",
+    "notes": "",
+    "originalHref": "/16",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/16",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Alpha 16",
+        "batchId": "batch-a",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-16",
+        "notes": "",
+        "originalHref": "/16",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/16"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-16"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Alpha 17",
+    "batchId": "batch-a",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-17",
+    "notes": "",
+    "originalHref": "/17",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/17",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Alpha 17",
+        "batchId": "batch-a",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-17",
+        "notes": "",
+        "originalHref": "/17",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/17"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-17"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Alpha 18",
+    "batchId": "batch-a",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-18",
+    "notes": "",
+    "originalHref": "/18",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/18",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Alpha 18",
+        "batchId": "batch-a",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-18",
+        "notes": "",
+        "originalHref": "/18",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/18"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-18"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Alpha 19",
+    "batchId": "batch-a",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-19",
+    "notes": "",
+    "originalHref": "/19",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/19",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Alpha 19",
+        "batchId": "batch-a",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-19",
+        "notes": "",
+        "originalHref": "/19",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/19"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-19"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Alpha 20",
+    "batchId": "batch-a",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-20",
+    "notes": "",
+    "originalHref": "/20",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/20",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Alpha 20",
+        "batchId": "batch-a",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-20",
+        "notes": "",
+        "originalHref": "/20",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/20"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-20"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Alpha 21",
+    "batchId": "batch-a",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-21",
+    "notes": "",
+    "originalHref": "/21",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/21",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Alpha 21",
+        "batchId": "batch-a",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-21",
+        "notes": "",
+        "originalHref": "/21",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/21"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-21"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Alpha 22",
+    "batchId": "batch-a",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-22",
+    "notes": "",
+    "originalHref": "/22",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/22",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Alpha 22",
+        "batchId": "batch-a",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-22",
+        "notes": "",
+        "originalHref": "/22",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/22"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-22"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Alpha 23",
+    "batchId": "batch-a",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-23",
+    "notes": "",
+    "originalHref": "/23",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/23",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Alpha 23",
+        "batchId": "batch-a",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-23",
+        "notes": "",
+        "originalHref": "/23",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/23"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-23"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Alpha 24",
+    "batchId": "batch-a",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-24",
+    "notes": "",
+    "originalHref": "/24",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/24",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Alpha 24",
+        "batchId": "batch-a",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-24",
+        "notes": "",
+        "originalHref": "/24",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/24"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-24"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Alpha 25",
+    "batchId": "batch-a",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-25",
+    "notes": "",
+    "originalHref": "/25",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/25",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Alpha 25",
+        "batchId": "batch-a",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-25",
+        "notes": "",
+        "originalHref": "/25",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/25"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-25"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Alpha 26",
+    "batchId": "batch-a",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-26",
+    "notes": "",
+    "originalHref": "/26",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/26",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Alpha 26",
+        "batchId": "batch-a",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-26",
+        "notes": "",
+        "originalHref": "/26",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/26"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-26"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Alpha 27",
+    "batchId": "batch-a",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-27",
+    "notes": "",
+    "originalHref": "/27",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/27",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Alpha 27",
+        "batchId": "batch-a",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-27",
+        "notes": "",
+        "originalHref": "/27",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/27"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-27"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Alpha 28",
+    "batchId": "batch-a",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-28",
+    "notes": "",
+    "originalHref": "/28",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/28",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Alpha 28",
+        "batchId": "batch-a",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-28",
+        "notes": "",
+        "originalHref": "/28",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/28"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-28"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Alpha 29",
+    "batchId": "batch-a",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-29",
+    "notes": "",
+    "originalHref": "/29",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/29",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Alpha 29",
+        "batchId": "batch-a",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-29",
+        "notes": "",
+        "originalHref": "/29",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/29"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-29"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Alpha 30",
+    "batchId": "batch-a",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-30",
+    "notes": "",
+    "originalHref": "/30",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/30",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Alpha 30",
+        "batchId": "batch-a",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-30",
+        "notes": "",
+        "originalHref": "/30",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/30"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-30"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Alpha 31",
+    "batchId": "batch-a",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-31",
+    "notes": "",
+    "originalHref": "/31",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/31",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Alpha 31",
+        "batchId": "batch-a",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-31",
+        "notes": "",
+        "originalHref": "/31",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/31"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-31"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Alpha 32",
+    "batchId": "batch-a",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-32",
+    "notes": "",
+    "originalHref": "/32",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/32",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Alpha 32",
+        "batchId": "batch-a",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-32",
+        "notes": "",
+        "originalHref": "/32",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/32"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-32"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Alpha 33",
+    "batchId": "batch-a",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-33",
+    "notes": "",
+    "originalHref": "/33",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/33",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Alpha 33",
+        "batchId": "batch-a",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-33",
+        "notes": "",
+        "originalHref": "/33",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/33"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-33"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Alpha 34",
+    "batchId": "batch-a",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-34",
+    "notes": "",
+    "originalHref": "/34",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/34",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Alpha 34",
+        "batchId": "batch-a",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-34",
+        "notes": "",
+        "originalHref": "/34",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/34"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-34"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Alpha 35",
+    "batchId": "batch-a",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-35",
+    "notes": "",
+    "originalHref": "/35",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/35",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Alpha 35",
+        "batchId": "batch-a",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-35",
+        "notes": "",
+        "originalHref": "/35",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/35"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-35"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Alpha 36",
+    "batchId": "batch-a",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-36",
+    "notes": "",
+    "originalHref": "/36",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/36",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Alpha 36",
+        "batchId": "batch-a",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-36",
+        "notes": "",
+        "originalHref": "/36",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/36"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-36"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Alpha 37",
+    "batchId": "batch-a",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-37",
+    "notes": "",
+    "originalHref": "/37",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/37",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Alpha 37",
+        "batchId": "batch-a",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-37",
+        "notes": "",
+        "originalHref": "/37",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/37"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-37"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Alpha 38",
+    "batchId": "batch-a",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-38",
+    "notes": "",
+    "originalHref": "/38",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/38",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Alpha 38",
+        "batchId": "batch-a",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-38",
+        "notes": "",
+        "originalHref": "/38",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/38"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-38"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Alpha 39",
+    "batchId": "batch-a",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-39",
+    "notes": "",
+    "originalHref": "/39",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/39",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Alpha 39",
+        "batchId": "batch-a",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-39",
+        "notes": "",
+        "originalHref": "/39",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/39"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-39"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Alpha 40",
+    "batchId": "batch-a",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-40",
+    "notes": "",
+    "originalHref": "/40",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/40",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Alpha 40",
+        "batchId": "batch-a",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-40",
+        "notes": "",
+        "originalHref": "/40",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/40"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-40"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Alpha 41",
+    "batchId": "batch-a",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-41",
+    "notes": "",
+    "originalHref": "/41",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/41",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Alpha 41",
+        "batchId": "batch-a",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-41",
+        "notes": "",
+        "originalHref": "/41",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/41"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-41"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Alpha 42",
+    "batchId": "batch-a",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-42",
+    "notes": "",
+    "originalHref": "/42",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/42",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Alpha 42",
+        "batchId": "batch-a",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-42",
+        "notes": "",
+        "originalHref": "/42",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/42"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-42"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Alpha 43",
+    "batchId": "batch-a",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-43",
+    "notes": "",
+    "originalHref": "/43",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/43",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Alpha 43",
+        "batchId": "batch-a",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-43",
+        "notes": "",
+        "originalHref": "/43",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/43"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-43"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Alpha 44",
+    "batchId": "batch-a",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-44",
+    "notes": "",
+    "originalHref": "/44",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/44",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Alpha 44",
+        "batchId": "batch-a",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-44",
+        "notes": "",
+        "originalHref": "/44",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/44"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-44"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Alpha 45",
+    "batchId": "batch-a",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-45",
+    "notes": "",
+    "originalHref": "/45",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/45",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Alpha 45",
+        "batchId": "batch-a",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-45",
+        "notes": "",
+        "originalHref": "/45",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/45"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-45"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Alpha 46",
+    "batchId": "batch-a",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-46",
+    "notes": "",
+    "originalHref": "/46",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/46",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Alpha 46",
+        "batchId": "batch-a",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-46",
+        "notes": "",
+        "originalHref": "/46",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/46"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-46"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Alpha 47",
+    "batchId": "batch-a",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-47",
+    "notes": "",
+    "originalHref": "/47",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/47",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Alpha 47",
+        "batchId": "batch-a",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-47",
+        "notes": "",
+        "originalHref": "/47",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/47"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-47"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Alpha 48",
+    "batchId": "batch-a",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-48",
+    "notes": "",
+    "originalHref": "/48",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/48",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Alpha 48",
+        "batchId": "batch-a",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-48",
+        "notes": "",
+        "originalHref": "/48",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/48"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-48"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Alpha 49",
+    "batchId": "batch-a",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-49",
+    "notes": "",
+    "originalHref": "/49",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/49",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Alpha 49",
+        "batchId": "batch-a",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-49",
+        "notes": "",
+        "originalHref": "/49",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/49"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-49"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Alpha 50",
+    "batchId": "batch-a",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-50",
+    "notes": "",
+    "originalHref": "/50",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/50",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Alpha 50",
+        "batchId": "batch-a",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-50",
+        "notes": "",
+        "originalHref": "/50",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/50"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-50"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Alpha 51",
+    "batchId": "batch-a",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-51",
+    "notes": "",
+    "originalHref": "/51",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/51",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Alpha 51",
+        "batchId": "batch-a",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-51",
+        "notes": "",
+        "originalHref": "/51",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/51"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-51"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Alpha 52",
+    "batchId": "batch-a",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-52",
+    "notes": "",
+    "originalHref": "/52",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/52",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Alpha 52",
+        "batchId": "batch-a",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-52",
+        "notes": "",
+        "originalHref": "/52",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/52"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-52"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Alpha 53",
+    "batchId": "batch-a",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-53",
+    "notes": "",
+    "originalHref": "/53",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/53",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Alpha 53",
+        "batchId": "batch-a",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-53",
+        "notes": "",
+        "originalHref": "/53",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/53"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-53"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Alpha 54",
+    "batchId": "batch-a",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-54",
+    "notes": "",
+    "originalHref": "/54",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/54",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Alpha 54",
+        "batchId": "batch-a",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-54",
+        "notes": "",
+        "originalHref": "/54",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/54"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-54"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Alpha 55",
+    "batchId": "batch-a",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-55",
+    "notes": "",
+    "originalHref": "/55",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/55",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Alpha 55",
+        "batchId": "batch-a",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-55",
+        "notes": "",
+        "originalHref": "/55",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/55"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-55"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Alpha 56",
+    "batchId": "batch-a",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-56",
+    "notes": "",
+    "originalHref": "/56",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/56",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Alpha 56",
+        "batchId": "batch-a",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-56",
+        "notes": "",
+        "originalHref": "/56",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/56"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-56"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Alpha 57",
+    "batchId": "batch-a",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-57",
+    "notes": "",
+    "originalHref": "/57",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/57",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Alpha 57",
+        "batchId": "batch-a",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-57",
+        "notes": "",
+        "originalHref": "/57",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/57"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-57"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Alpha 58",
+    "batchId": "batch-a",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-58",
+    "notes": "",
+    "originalHref": "/58",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/58",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Alpha 58",
+        "batchId": "batch-a",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-58",
+        "notes": "",
+        "originalHref": "/58",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/58"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-58"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Alpha 59",
+    "batchId": "batch-a",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-59",
+    "notes": "",
+    "originalHref": "/59",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/59",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Alpha 59",
+        "batchId": "batch-a",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-59",
+        "notes": "",
+        "originalHref": "/59",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/59"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-59"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Alpha 60",
+    "batchId": "batch-a",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-60",
+    "notes": "",
+    "originalHref": "/60",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/60",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Alpha 60",
+        "batchId": "batch-a",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-60",
+        "notes": "",
+        "originalHref": "/60",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/60"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-60"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Alpha 61",
+    "batchId": "batch-a",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-61",
+    "notes": "",
+    "originalHref": "/61",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/61",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Alpha 61",
+        "batchId": "batch-a",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-61",
+        "notes": "",
+        "originalHref": "/61",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/61"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-61"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Alpha 62",
+    "batchId": "batch-a",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-62",
+    "notes": "",
+    "originalHref": "/62",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/62",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Alpha 62",
+        "batchId": "batch-a",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-62",
+        "notes": "",
+        "originalHref": "/62",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/62"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-62"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Alpha 63",
+    "batchId": "batch-a",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-63",
+    "notes": "",
+    "originalHref": "/63",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/63",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Alpha 63",
+        "batchId": "batch-a",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-63",
+        "notes": "",
+        "originalHref": "/63",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/63"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-63"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Alpha 64",
+    "batchId": "batch-a",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-64",
+    "notes": "",
+    "originalHref": "/64",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/64",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Alpha 64",
+        "batchId": "batch-a",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-64",
+        "notes": "",
+        "originalHref": "/64",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/64"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-64"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Alpha 65",
+    "batchId": "batch-a",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-65",
+    "notes": "",
+    "originalHref": "/65",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/65",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Alpha 65",
+        "batchId": "batch-a",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-65",
+        "notes": "",
+        "originalHref": "/65",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/65"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-65"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Alpha 66",
+    "batchId": "batch-a",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-66",
+    "notes": "",
+    "originalHref": "/66",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/66",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Alpha 66",
+        "batchId": "batch-a",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-66",
+        "notes": "",
+        "originalHref": "/66",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/66"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-66"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Alpha 67",
+    "batchId": "batch-a",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-67",
+    "notes": "",
+    "originalHref": "/67",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/67",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Alpha 67",
+        "batchId": "batch-a",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-67",
+        "notes": "",
+        "originalHref": "/67",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/67"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-67"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Alpha 68",
+    "batchId": "batch-a",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-68",
+    "notes": "",
+    "originalHref": "/68",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/68",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Alpha 68",
+        "batchId": "batch-a",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-68",
+        "notes": "",
+        "originalHref": "/68",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/68"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-68"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Alpha 69",
+    "batchId": "batch-a",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-69",
+    "notes": "",
+    "originalHref": "/69",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/69",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Alpha 69",
+        "batchId": "batch-a",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-69",
+        "notes": "",
+        "originalHref": "/69",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/69"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-69"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Alpha 70",
+    "batchId": "batch-a",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-70",
+    "notes": "",
+    "originalHref": "/70",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/70",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Alpha 70",
+        "batchId": "batch-a",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-70",
+        "notes": "",
+        "originalHref": "/70",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/70"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-70"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Alpha 71",
+    "batchId": "batch-a",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-71",
+    "notes": "",
+    "originalHref": "/71",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/71",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Alpha 71",
+        "batchId": "batch-a",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-71",
+        "notes": "",
+        "originalHref": "/71",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/71"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-71"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Alpha 72",
+    "batchId": "batch-a",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-72",
+    "notes": "",
+    "originalHref": "/72",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/72",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Alpha 72",
+        "batchId": "batch-a",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-72",
+        "notes": "",
+        "originalHref": "/72",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/72"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-72"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Alpha 73",
+    "batchId": "batch-a",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-73",
+    "notes": "",
+    "originalHref": "/73",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/73",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Alpha 73",
+        "batchId": "batch-a",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-73",
+        "notes": "",
+        "originalHref": "/73",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/73"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-73"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Alpha 74",
+    "batchId": "batch-a",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-74",
+    "notes": "",
+    "originalHref": "/74",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/74",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Alpha 74",
+        "batchId": "batch-a",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-74",
+        "notes": "",
+        "originalHref": "/74",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/74"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-74"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Alpha 75",
+    "batchId": "batch-a",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-75",
+    "notes": "",
+    "originalHref": "/75",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/75",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Alpha 75",
+        "batchId": "batch-a",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-75",
+        "notes": "",
+        "originalHref": "/75",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/75"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-75"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Alpha 76",
+    "batchId": "batch-a",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-76",
+    "notes": "",
+    "originalHref": "/76",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/76",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Alpha 76",
+        "batchId": "batch-a",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-76",
+        "notes": "",
+        "originalHref": "/76",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/76"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-76"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Alpha 77",
+    "batchId": "batch-a",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-77",
+    "notes": "",
+    "originalHref": "/77",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/77",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Alpha 77",
+        "batchId": "batch-a",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-77",
+        "notes": "",
+        "originalHref": "/77",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/77"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-77"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Alpha 78",
+    "batchId": "batch-a",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-78",
+    "notes": "",
+    "originalHref": "/78",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/78",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Alpha 78",
+        "batchId": "batch-a",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-78",
+        "notes": "",
+        "originalHref": "/78",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/78"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-78"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Alpha 79",
+    "batchId": "batch-a",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-79",
+    "notes": "",
+    "originalHref": "/79",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/79",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Alpha 79",
+        "batchId": "batch-a",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-79",
+        "notes": "",
+        "originalHref": "/79",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/79"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-79"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Alpha 80",
+    "batchId": "batch-a",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-80",
+    "notes": "",
+    "originalHref": "/80",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/80",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Alpha 80",
+        "batchId": "batch-a",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-80",
+        "notes": "",
+        "originalHref": "/80",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/80"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-80"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Alpha 81",
+    "batchId": "batch-a",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-81",
+    "notes": "",
+    "originalHref": "/81",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/81",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Alpha 81",
+        "batchId": "batch-a",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-81",
+        "notes": "",
+        "originalHref": "/81",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/81"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-81"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Alpha 82",
+    "batchId": "batch-a",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-82",
+    "notes": "",
+    "originalHref": "/82",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/82",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Alpha 82",
+        "batchId": "batch-a",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-82",
+        "notes": "",
+        "originalHref": "/82",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/82"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-82"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Alpha 83",
+    "batchId": "batch-a",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-83",
+    "notes": "",
+    "originalHref": "/83",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/83",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Alpha 83",
+        "batchId": "batch-a",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-83",
+        "notes": "",
+        "originalHref": "/83",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/83"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-83"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Alpha 84",
+    "batchId": "batch-a",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-84",
+    "notes": "",
+    "originalHref": "/84",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/84",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Alpha 84",
+        "batchId": "batch-a",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-84",
+        "notes": "",
+        "originalHref": "/84",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/84"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-84"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Alpha 85",
+    "batchId": "batch-a",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-85",
+    "notes": "",
+    "originalHref": "/85",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/85",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Alpha 85",
+        "batchId": "batch-a",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-85",
+        "notes": "",
+        "originalHref": "/85",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/85"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-85"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Alpha 86",
+    "batchId": "batch-a",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-86",
+    "notes": "",
+    "originalHref": "/86",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/86",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Alpha 86",
+        "batchId": "batch-a",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-86",
+        "notes": "",
+        "originalHref": "/86",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/86"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-86"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Alpha 87",
+    "batchId": "batch-a",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-87",
+    "notes": "",
+    "originalHref": "/87",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/87",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Alpha 87",
+        "batchId": "batch-a",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-87",
+        "notes": "",
+        "originalHref": "/87",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/87"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-87"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Alpha 88",
+    "batchId": "batch-a",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-88",
+    "notes": "",
+    "originalHref": "/88",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/88",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Alpha 88",
+        "batchId": "batch-a",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-88",
+        "notes": "",
+        "originalHref": "/88",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/88"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-88"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Alpha 89",
+    "batchId": "batch-a",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-89",
+    "notes": "",
+    "originalHref": "/89",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/89",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Alpha 89",
+        "batchId": "batch-a",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-89",
+        "notes": "",
+        "originalHref": "/89",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/89"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-89"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Alpha 90",
+    "batchId": "batch-a",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-90",
+    "notes": "",
+    "originalHref": "/90",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/90",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Alpha 90",
+        "batchId": "batch-a",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-90",
+        "notes": "",
+        "originalHref": "/90",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/90"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-90"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Alpha 91",
+    "batchId": "batch-a",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-91",
+    "notes": "",
+    "originalHref": "/91",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/91",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Alpha 91",
+        "batchId": "batch-a",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-91",
+        "notes": "",
+        "originalHref": "/91",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/91"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-91"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Alpha 92",
+    "batchId": "batch-a",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-92",
+    "notes": "",
+    "originalHref": "/92",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/92",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Alpha 92",
+        "batchId": "batch-a",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-92",
+        "notes": "",
+        "originalHref": "/92",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/92"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-92"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Alpha 93",
+    "batchId": "batch-a",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-93",
+    "notes": "",
+    "originalHref": "/93",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/93",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Alpha 93",
+        "batchId": "batch-a",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-93",
+        "notes": "",
+        "originalHref": "/93",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/93"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-93"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Alpha 94",
+    "batchId": "batch-a",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-94",
+    "notes": "",
+    "originalHref": "/94",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/94",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Alpha 94",
+        "batchId": "batch-a",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-94",
+        "notes": "",
+        "originalHref": "/94",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/94"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-94"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Alpha 95",
+    "batchId": "batch-a",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-95",
+    "notes": "",
+    "originalHref": "/95",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/95",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Alpha 95",
+        "batchId": "batch-a",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-95",
+        "notes": "",
+        "originalHref": "/95",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/95"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-95"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Alpha 96",
+    "batchId": "batch-a",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-96",
+    "notes": "",
+    "originalHref": "/96",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/96",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Alpha 96",
+        "batchId": "batch-a",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-96",
+        "notes": "",
+        "originalHref": "/96",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/96"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-96"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Alpha 97",
+    "batchId": "batch-a",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-97",
+    "notes": "",
+    "originalHref": "/97",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/97",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Alpha 97",
+        "batchId": "batch-a",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-97",
+        "notes": "",
+        "originalHref": "/97",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/97"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-97"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Alpha 98",
+    "batchId": "batch-a",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-98",
+    "notes": "",
+    "originalHref": "/98",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/98",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Alpha 98",
+        "batchId": "batch-a",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-98",
+        "notes": "",
+        "originalHref": "/98",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/98"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-98"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Alpha 99",
+    "batchId": "batch-a",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-99",
+    "notes": "",
+    "originalHref": "/99",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/99",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Alpha 99",
+        "batchId": "batch-a",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-99",
+        "notes": "",
+        "originalHref": "/99",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/99"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-99"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Alpha 100",
+    "batchId": "batch-a",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-100",
+    "notes": "",
+    "originalHref": "/100",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/100",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Alpha 100",
+        "batchId": "batch-a",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-100",
+        "notes": "",
+        "originalHref": "/100",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/100"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-100"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Alpha 101",
+    "batchId": "batch-a",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-101",
+    "notes": "",
+    "originalHref": "/101",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/101",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Alpha 101",
+        "batchId": "batch-a",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-101",
+        "notes": "",
+        "originalHref": "/101",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/101"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-101"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Alpha 102",
+    "batchId": "batch-a",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-102",
+    "notes": "",
+    "originalHref": "/102",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/102",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Alpha 102",
+        "batchId": "batch-a",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-102",
+        "notes": "",
+        "originalHref": "/102",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/102"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-102"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Alpha 103",
+    "batchId": "batch-a",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-103",
+    "notes": "",
+    "originalHref": "/103",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/103",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Alpha 103",
+        "batchId": "batch-a",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-103",
+        "notes": "",
+        "originalHref": "/103",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/103"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-103"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Alpha 104",
+    "batchId": "batch-a",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-104",
+    "notes": "",
+    "originalHref": "/104",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/104",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Alpha 104",
+        "batchId": "batch-a",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-104",
+        "notes": "",
+        "originalHref": "/104",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/104"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-104"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Beta 105",
+    "batchId": "batch-b",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-105",
+    "notes": "",
+    "originalHref": "/105",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/105",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Beta 105",
+        "batchId": "batch-b",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-105",
+        "notes": "",
+        "originalHref": "/105",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/105"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-105"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Beta 106",
+    "batchId": "batch-b",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-106",
+    "notes": "",
+    "originalHref": "/106",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/106",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Beta 106",
+        "batchId": "batch-b",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-106",
+        "notes": "",
+        "originalHref": "/106",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/106"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-106"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Beta 107",
+    "batchId": "batch-b",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-107",
+    "notes": "",
+    "originalHref": "/107",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/107",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Beta 107",
+        "batchId": "batch-b",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-107",
+        "notes": "",
+        "originalHref": "/107",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/107"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-107"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Beta 108",
+    "batchId": "batch-b",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-108",
+    "notes": "",
+    "originalHref": "/108",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/108",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Beta 108",
+        "batchId": "batch-b",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-108",
+        "notes": "",
+        "originalHref": "/108",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/108"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-108"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Beta 109",
+    "batchId": "batch-b",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-109",
+    "notes": "",
+    "originalHref": "/109",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/109",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Beta 109",
+        "batchId": "batch-b",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-109",
+        "notes": "",
+        "originalHref": "/109",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/109"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-109"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Beta 110",
+    "batchId": "batch-b",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-110",
+    "notes": "",
+    "originalHref": "/110",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/110",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Beta 110",
+        "batchId": "batch-b",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-110",
+        "notes": "",
+        "originalHref": "/110",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/110"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-110"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Beta 111",
+    "batchId": "batch-b",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-111",
+    "notes": "",
+    "originalHref": "/111",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/111",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Beta 111",
+        "batchId": "batch-b",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-111",
+        "notes": "",
+        "originalHref": "/111",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/111"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-111"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Beta 112",
+    "batchId": "batch-b",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-112",
+    "notes": "",
+    "originalHref": "/112",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/112",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Beta 112",
+        "batchId": "batch-b",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-112",
+        "notes": "",
+        "originalHref": "/112",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/112"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-112"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Beta 113",
+    "batchId": "batch-b",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-113",
+    "notes": "",
+    "originalHref": "/113",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/113",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Beta 113",
+        "batchId": "batch-b",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-113",
+        "notes": "",
+        "originalHref": "/113",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/113"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-113"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Beta 114",
+    "batchId": "batch-b",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-114",
+    "notes": "",
+    "originalHref": "/114",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/114",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Beta 114",
+        "batchId": "batch-b",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-114",
+        "notes": "",
+        "originalHref": "/114",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/114"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-114"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Beta 115",
+    "batchId": "batch-b",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-115",
+    "notes": "",
+    "originalHref": "/115",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/115",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Beta 115",
+        "batchId": "batch-b",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-115",
+        "notes": "",
+        "originalHref": "/115",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/115"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-115"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Beta 116",
+    "batchId": "batch-b",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-116",
+    "notes": "",
+    "originalHref": "/116",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/116",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Beta 116",
+        "batchId": "batch-b",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-116",
+        "notes": "",
+        "originalHref": "/116",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/116"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-116"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Beta 117",
+    "batchId": "batch-b",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-117",
+    "notes": "",
+    "originalHref": "/117",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/117",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Beta 117",
+        "batchId": "batch-b",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-117",
+        "notes": "",
+        "originalHref": "/117",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/117"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-117"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Beta 118",
+    "batchId": "batch-b",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-118",
+    "notes": "",
+    "originalHref": "/118",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/118",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Beta 118",
+        "batchId": "batch-b",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-118",
+        "notes": "",
+        "originalHref": "/118",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/118"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-118"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Beta 119",
+    "batchId": "batch-b",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-119",
+    "notes": "",
+    "originalHref": "/119",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/119",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Beta 119",
+        "batchId": "batch-b",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-119",
+        "notes": "",
+        "originalHref": "/119",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/119"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-119"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Beta 120",
+    "batchId": "batch-b",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-120",
+    "notes": "",
+    "originalHref": "/120",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/120",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Beta 120",
+        "batchId": "batch-b",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-120",
+        "notes": "",
+        "originalHref": "/120",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/120"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-120"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Beta 121",
+    "batchId": "batch-b",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-121",
+    "notes": "",
+    "originalHref": "/121",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/121",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Beta 121",
+        "batchId": "batch-b",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-121",
+        "notes": "",
+        "originalHref": "/121",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/121"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-121"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Beta 122",
+    "batchId": "batch-b",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-122",
+    "notes": "",
+    "originalHref": "/122",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/122",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Beta 122",
+        "batchId": "batch-b",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-122",
+        "notes": "",
+        "originalHref": "/122",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/122"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-122"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Beta 123",
+    "batchId": "batch-b",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-123",
+    "notes": "",
+    "originalHref": "/123",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/123",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Beta 123",
+        "batchId": "batch-b",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-123",
+        "notes": "",
+        "originalHref": "/123",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/123"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-123"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Beta 124",
+    "batchId": "batch-b",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-124",
+    "notes": "",
+    "originalHref": "/124",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/124",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Beta 124",
+        "batchId": "batch-b",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-124",
+        "notes": "",
+        "originalHref": "/124",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/124"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-124"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Beta 125",
+    "batchId": "batch-b",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-125",
+    "notes": "",
+    "originalHref": "/125",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/125",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Beta 125",
+        "batchId": "batch-b",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-125",
+        "notes": "",
+        "originalHref": "/125",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/125"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-125"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Beta 126",
+    "batchId": "batch-b",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-126",
+    "notes": "",
+    "originalHref": "/126",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/126",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Beta 126",
+        "batchId": "batch-b",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-126",
+        "notes": "",
+        "originalHref": "/126",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/126"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-126"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Beta 127",
+    "batchId": "batch-b",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-127",
+    "notes": "",
+    "originalHref": "/127",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/127",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Beta 127",
+        "batchId": "batch-b",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-127",
+        "notes": "",
+        "originalHref": "/127",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/127"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-127"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Beta 128",
+    "batchId": "batch-b",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-128",
+    "notes": "",
+    "originalHref": "/128",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/128",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Beta 128",
+        "batchId": "batch-b",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-128",
+        "notes": "",
+        "originalHref": "/128",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/128"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-128"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Beta 129",
+    "batchId": "batch-b",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-129",
+    "notes": "",
+    "originalHref": "/129",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/129",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Beta 129",
+        "batchId": "batch-b",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-129",
+        "notes": "",
+        "originalHref": "/129",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/129"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-129"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Beta 130",
+    "batchId": "batch-b",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-130",
+    "notes": "",
+    "originalHref": "/130",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/130",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Beta 130",
+        "batchId": "batch-b",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-130",
+        "notes": "",
+        "originalHref": "/130",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/130"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-130"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Beta 131",
+    "batchId": "batch-b",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-131",
+    "notes": "",
+    "originalHref": "/131",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/131",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Beta 131",
+        "batchId": "batch-b",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-131",
+        "notes": "",
+        "originalHref": "/131",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/131"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-131"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Beta 132",
+    "batchId": "batch-b",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-132",
+    "notes": "",
+    "originalHref": "/132",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/132",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Beta 132",
+        "batchId": "batch-b",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-132",
+        "notes": "",
+        "originalHref": "/132",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/132"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-132"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Beta 133",
+    "batchId": "batch-b",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-133",
+    "notes": "",
+    "originalHref": "/133",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/133",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Beta 133",
+        "batchId": "batch-b",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-133",
+        "notes": "",
+        "originalHref": "/133",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/133"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-133"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Beta 134",
+    "batchId": "batch-b",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-134",
+    "notes": "",
+    "originalHref": "/134",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/134",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Beta 134",
+        "batchId": "batch-b",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-134",
+        "notes": "",
+        "originalHref": "/134",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/134"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-134"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Beta 135",
+    "batchId": "batch-b",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-135",
+    "notes": "",
+    "originalHref": "/135",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/135",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Beta 135",
+        "batchId": "batch-b",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-135",
+        "notes": "",
+        "originalHref": "/135",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/135"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-135"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Beta 136",
+    "batchId": "batch-b",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-136",
+    "notes": "",
+    "originalHref": "/136",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/136",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Beta 136",
+        "batchId": "batch-b",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-136",
+        "notes": "",
+        "originalHref": "/136",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/136"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-136"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Beta 137",
+    "batchId": "batch-b",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-137",
+    "notes": "",
+    "originalHref": "/137",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/137",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Beta 137",
+        "batchId": "batch-b",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-137",
+        "notes": "",
+        "originalHref": "/137",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/137"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-137"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Beta 138",
+    "batchId": "batch-b",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-138",
+    "notes": "",
+    "originalHref": "/138",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/138",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Beta 138",
+        "batchId": "batch-b",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-138",
+        "notes": "",
+        "originalHref": "/138",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/138"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-138"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Beta 139",
+    "batchId": "batch-b",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-139",
+    "notes": "",
+    "originalHref": "/139",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/139",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Beta 139",
+        "batchId": "batch-b",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-139",
+        "notes": "",
+        "originalHref": "/139",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/139"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-139"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Beta 140",
+    "batchId": "batch-b",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-140",
+    "notes": "",
+    "originalHref": "/140",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/140",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Beta 140",
+        "batchId": "batch-b",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-140",
+        "notes": "",
+        "originalHref": "/140",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/140"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-140"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Beta 141",
+    "batchId": "batch-b",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-141",
+    "notes": "",
+    "originalHref": "/141",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/141",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Beta 141",
+        "batchId": "batch-b",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-141",
+        "notes": "",
+        "originalHref": "/141",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/141"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-141"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Beta 142",
+    "batchId": "batch-b",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-142",
+    "notes": "",
+    "originalHref": "/142",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/142",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Beta 142",
+        "batchId": "batch-b",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-142",
+        "notes": "",
+        "originalHref": "/142",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/142"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-142"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Beta 143",
+    "batchId": "batch-b",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-143",
+    "notes": "",
+    "originalHref": "/143",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/143",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Beta 143",
+        "batchId": "batch-b",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-143",
+        "notes": "",
+        "originalHref": "/143",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/143"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-143"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Beta 144",
+    "batchId": "batch-b",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-144",
+    "notes": "",
+    "originalHref": "/144",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/144",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Beta 144",
+        "batchId": "batch-b",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-144",
+        "notes": "",
+        "originalHref": "/144",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/144"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-144"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Beta 145",
+    "batchId": "batch-b",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-145",
+    "notes": "",
+    "originalHref": "/145",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/145",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Beta 145",
+        "batchId": "batch-b",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-145",
+        "notes": "",
+        "originalHref": "/145",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/145"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-145"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Beta 146",
+    "batchId": "batch-b",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-146",
+    "notes": "",
+    "originalHref": "/146",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/146",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Beta 146",
+        "batchId": "batch-b",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-146",
+        "notes": "",
+        "originalHref": "/146",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/146"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-146"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Beta 147",
+    "batchId": "batch-b",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-147",
+    "notes": "",
+    "originalHref": "/147",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/147",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Beta 147",
+        "batchId": "batch-b",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-147",
+        "notes": "",
+        "originalHref": "/147",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/147"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-147"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Beta 148",
+    "batchId": "batch-b",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-148",
+    "notes": "",
+    "originalHref": "/148",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/148",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Beta 148",
+        "batchId": "batch-b",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-148",
+        "notes": "",
+        "originalHref": "/148",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/148"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-148"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Beta 149",
+    "batchId": "batch-b",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-149",
+    "notes": "",
+    "originalHref": "/149",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/149",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Beta 149",
+        "batchId": "batch-b",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-149",
+        "notes": "",
+        "originalHref": "/149",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/149"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-149"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Beta 150",
+    "batchId": "batch-b",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-150",
+    "notes": "",
+    "originalHref": "/150",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/150",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Beta 150",
+        "batchId": "batch-b",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-150",
+        "notes": "",
+        "originalHref": "/150",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/150"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-150"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Beta 151",
+    "batchId": "batch-b",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-151",
+    "notes": "",
+    "originalHref": "/151",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/151",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Beta 151",
+        "batchId": "batch-b",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-151",
+        "notes": "",
+        "originalHref": "/151",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/151"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-151"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Beta 152",
+    "batchId": "batch-b",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-152",
+    "notes": "",
+    "originalHref": "/152",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/152",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Beta 152",
+        "batchId": "batch-b",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-152",
+        "notes": "",
+        "originalHref": "/152",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/152"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-152"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Beta 153",
+    "batchId": "batch-b",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-153",
+    "notes": "",
+    "originalHref": "/153",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/153",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Beta 153",
+        "batchId": "batch-b",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-153",
+        "notes": "",
+        "originalHref": "/153",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/153"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-153"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Beta 154",
+    "batchId": "batch-b",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-154",
+    "notes": "",
+    "originalHref": "/154",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/154",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Beta 154",
+        "batchId": "batch-b",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-154",
+        "notes": "",
+        "originalHref": "/154",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/154"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-154"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Beta 155",
+    "batchId": "batch-b",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-155",
+    "notes": "",
+    "originalHref": "/155",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/155",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Beta 155",
+        "batchId": "batch-b",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-155",
+        "notes": "",
+        "originalHref": "/155",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/155"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-155"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Beta 156",
+    "batchId": "batch-b",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-156",
+    "notes": "",
+    "originalHref": "/156",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/156",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Beta 156",
+        "batchId": "batch-b",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-156",
+        "notes": "",
+        "originalHref": "/156",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/156"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-156"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Beta 157",
+    "batchId": "batch-b",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-157",
+    "notes": "",
+    "originalHref": "/157",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/157",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Beta 157",
+        "batchId": "batch-b",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-157",
+        "notes": "",
+        "originalHref": "/157",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/157"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-157"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Beta 158",
+    "batchId": "batch-b",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-158",
+    "notes": "",
+    "originalHref": "/158",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/158",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Beta 158",
+        "batchId": "batch-b",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-158",
+        "notes": "",
+        "originalHref": "/158",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/158"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-158"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Beta 159",
+    "batchId": "batch-b",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-159",
+    "notes": "",
+    "originalHref": "/159",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/159",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Beta 159",
+        "batchId": "batch-b",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-159",
+        "notes": "",
+        "originalHref": "/159",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/159"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-159"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Beta 160",
+    "batchId": "batch-b",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-160",
+    "notes": "",
+    "originalHref": "/160",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/160",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Beta 160",
+        "batchId": "batch-b",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-160",
+        "notes": "",
+        "originalHref": "/160",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/160"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-160"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Beta 161",
+    "batchId": "batch-b",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-161",
+    "notes": "",
+    "originalHref": "/161",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/161",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Beta 161",
+        "batchId": "batch-b",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-161",
+        "notes": "",
+        "originalHref": "/161",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/161"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-161"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Beta 162",
+    "batchId": "batch-b",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-162",
+    "notes": "",
+    "originalHref": "/162",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/162",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Beta 162",
+        "batchId": "batch-b",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-162",
+        "notes": "",
+        "originalHref": "/162",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/162"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-162"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Beta 163",
+    "batchId": "batch-b",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-163",
+    "notes": "",
+    "originalHref": "/163",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/163",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Beta 163",
+        "batchId": "batch-b",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-163",
+        "notes": "",
+        "originalHref": "/163",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/163"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-163"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Beta 164",
+    "batchId": "batch-b",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-164",
+    "notes": "",
+    "originalHref": "/164",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/164",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Beta 164",
+        "batchId": "batch-b",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-164",
+        "notes": "",
+        "originalHref": "/164",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/164"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-164"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Beta 165",
+    "batchId": "batch-b",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-165",
+    "notes": "",
+    "originalHref": "/165",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/165",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Beta 165",
+        "batchId": "batch-b",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-165",
+        "notes": "",
+        "originalHref": "/165",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/165"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-165"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Beta 166",
+    "batchId": "batch-b",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-166",
+    "notes": "",
+    "originalHref": "/166",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/166",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Beta 166",
+        "batchId": "batch-b",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-166",
+        "notes": "",
+        "originalHref": "/166",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/166"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-166"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Beta 167",
+    "batchId": "batch-b",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-167",
+    "notes": "",
+    "originalHref": "/167",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/167",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Beta 167",
+        "batchId": "batch-b",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-167",
+        "notes": "",
+        "originalHref": "/167",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/167"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-167"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Beta 168",
+    "batchId": "batch-b",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-168",
+    "notes": "",
+    "originalHref": "/168",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/168",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Beta 168",
+        "batchId": "batch-b",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-168",
+        "notes": "",
+        "originalHref": "/168",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/168"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-168"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Beta 169",
+    "batchId": "batch-b",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-169",
+    "notes": "",
+    "originalHref": "/169",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/169",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Beta 169",
+        "batchId": "batch-b",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-169",
+        "notes": "",
+        "originalHref": "/169",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/169"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-169"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Beta 170",
+    "batchId": "batch-b",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-170",
+    "notes": "",
+    "originalHref": "/170",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/170",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Beta 170",
+        "batchId": "batch-b",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-170",
+        "notes": "",
+        "originalHref": "/170",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/170"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-170"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Beta 171",
+    "batchId": "batch-b",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-171",
+    "notes": "",
+    "originalHref": "/171",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/171",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Beta 171",
+        "batchId": "batch-b",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-171",
+        "notes": "",
+        "originalHref": "/171",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/171"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-171"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Beta 172",
+    "batchId": "batch-b",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-172",
+    "notes": "",
+    "originalHref": "/172",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/172",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Beta 172",
+        "batchId": "batch-b",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-172",
+        "notes": "",
+        "originalHref": "/172",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/172"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-172"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Beta 173",
+    "batchId": "batch-b",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-173",
+    "notes": "",
+    "originalHref": "/173",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/173",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Beta 173",
+        "batchId": "batch-b",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-173",
+        "notes": "",
+        "originalHref": "/173",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/173"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-173"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Beta 174",
+    "batchId": "batch-b",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-174",
+    "notes": "",
+    "originalHref": "/174",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/174",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Beta 174",
+        "batchId": "batch-b",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-174",
+        "notes": "",
+        "originalHref": "/174",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/174"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-174"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Beta 175",
+    "batchId": "batch-b",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-175",
+    "notes": "",
+    "originalHref": "/175",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/175",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Beta 175",
+        "batchId": "batch-b",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-175",
+        "notes": "",
+        "originalHref": "/175",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/175"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-175"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Beta 176",
+    "batchId": "batch-b",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-176",
+    "notes": "",
+    "originalHref": "/176",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/176",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Beta 176",
+        "batchId": "batch-b",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-176",
+        "notes": "",
+        "originalHref": "/176",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/176"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-176"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Beta 177",
+    "batchId": "batch-b",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-177",
+    "notes": "",
+    "originalHref": "/177",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/177",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Beta 177",
+        "batchId": "batch-b",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-177",
+        "notes": "",
+        "originalHref": "/177",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/177"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-177"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Beta 178",
+    "batchId": "batch-b",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-178",
+    "notes": "",
+    "originalHref": "/178",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/178",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Beta 178",
+        "batchId": "batch-b",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-178",
+        "notes": "",
+        "originalHref": "/178",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/178"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-178"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Beta 179",
+    "batchId": "batch-b",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-179",
+    "notes": "",
+    "originalHref": "/179",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/179",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Beta 179",
+        "batchId": "batch-b",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-179",
+        "notes": "",
+        "originalHref": "/179",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/179"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-179"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Beta 180",
+    "batchId": "batch-b",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-180",
+    "notes": "",
+    "originalHref": "/180",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/180",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Beta 180",
+        "batchId": "batch-b",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-180",
+        "notes": "",
+        "originalHref": "/180",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/180"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-180"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Beta 181",
+    "batchId": "batch-b",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-181",
+    "notes": "",
+    "originalHref": "/181",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/181",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Beta 181",
+        "batchId": "batch-b",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-181",
+        "notes": "",
+        "originalHref": "/181",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/181"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-181"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Beta 182",
+    "batchId": "batch-b",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-182",
+    "notes": "",
+    "originalHref": "/182",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/182",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Beta 182",
+        "batchId": "batch-b",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-182",
+        "notes": "",
+        "originalHref": "/182",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/182"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-182"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Beta 183",
+    "batchId": "batch-b",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-183",
+    "notes": "",
+    "originalHref": "/183",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/183",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Beta 183",
+        "batchId": "batch-b",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-183",
+        "notes": "",
+        "originalHref": "/183",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/183"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-183"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Beta 184",
+    "batchId": "batch-b",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-184",
+    "notes": "",
+    "originalHref": "/184",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/184",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Beta 184",
+        "batchId": "batch-b",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-184",
+        "notes": "",
+        "originalHref": "/184",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/184"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-184"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Beta 185",
+    "batchId": "batch-b",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-185",
+    "notes": "",
+    "originalHref": "/185",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/185",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Beta 185",
+        "batchId": "batch-b",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-185",
+        "notes": "",
+        "originalHref": "/185",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/185"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-185"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Beta 186",
+    "batchId": "batch-b",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-186",
+    "notes": "",
+    "originalHref": "/186",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/186",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Beta 186",
+        "batchId": "batch-b",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-186",
+        "notes": "",
+        "originalHref": "/186",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/186"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-186"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Beta 187",
+    "batchId": "batch-b",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-187",
+    "notes": "",
+    "originalHref": "/187",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/187",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Beta 187",
+        "batchId": "batch-b",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-187",
+        "notes": "",
+        "originalHref": "/187",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/187"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-187"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Beta 188",
+    "batchId": "batch-b",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-188",
+    "notes": "",
+    "originalHref": "/188",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/188",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Beta 188",
+        "batchId": "batch-b",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-188",
+        "notes": "",
+        "originalHref": "/188",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/188"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-188"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Beta 189",
+    "batchId": "batch-b",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-189",
+    "notes": "",
+    "originalHref": "/189",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/189",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Beta 189",
+        "batchId": "batch-b",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-189",
+        "notes": "",
+        "originalHref": "/189",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/189"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-189"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Beta 190",
+    "batchId": "batch-b",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-190",
+    "notes": "",
+    "originalHref": "/190",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/190",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Beta 190",
+        "batchId": "batch-b",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-190",
+        "notes": "",
+        "originalHref": "/190",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/190"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-190"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Beta 191",
+    "batchId": "batch-b",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-191",
+    "notes": "",
+    "originalHref": "/191",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/191",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Beta 191",
+        "batchId": "batch-b",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-191",
+        "notes": "",
+        "originalHref": "/191",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/191"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-191"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Beta 192",
+    "batchId": "batch-b",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-192",
+    "notes": "",
+    "originalHref": "/192",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/192",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Beta 192",
+        "batchId": "batch-b",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-192",
+        "notes": "",
+        "originalHref": "/192",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/192"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-192"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Beta 193",
+    "batchId": "batch-b",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-193",
+    "notes": "",
+    "originalHref": "/193",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/193",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Beta 193",
+        "batchId": "batch-b",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-193",
+        "notes": "",
+        "originalHref": "/193",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/193"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-193"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Beta 194",
+    "batchId": "batch-b",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-194",
+    "notes": "",
+    "originalHref": "/194",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/194",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Beta 194",
+        "batchId": "batch-b",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-194",
+        "notes": "",
+        "originalHref": "/194",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/194"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-194"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Beta 195",
+    "batchId": "batch-b",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-195",
+    "notes": "",
+    "originalHref": "/195",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/195",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Beta 195",
+        "batchId": "batch-b",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-195",
+        "notes": "",
+        "originalHref": "/195",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/195"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-195"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Beta 196",
+    "batchId": "batch-b",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-196",
+    "notes": "",
+    "originalHref": "/196",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/196",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Beta 196",
+        "batchId": "batch-b",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-196",
+        "notes": "",
+        "originalHref": "/196",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/196"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-196"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Beta 197",
+    "batchId": "batch-b",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-197",
+    "notes": "",
+    "originalHref": "/197",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/197",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Beta 197",
+        "batchId": "batch-b",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-197",
+        "notes": "",
+        "originalHref": "/197",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/197"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-197"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Beta 198",
+    "batchId": "batch-b",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-198",
+    "notes": "",
+    "originalHref": "/198",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/198",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Beta 198",
+        "batchId": "batch-b",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-198",
+        "notes": "",
+        "originalHref": "/198",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/198"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-198"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Beta 199",
+    "batchId": "batch-b",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-199",
+    "notes": "",
+    "originalHref": "/199",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/199",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Beta 199",
+        "batchId": "batch-b",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-199",
+        "notes": "",
+        "originalHref": "/199",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/199"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-199"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Beta 200",
+    "batchId": "batch-b",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-200",
+    "notes": "",
+    "originalHref": "/200",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/200",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Beta 200",
+        "batchId": "batch-b",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-200",
+        "notes": "",
+        "originalHref": "/200",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/200"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-200"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Beta 201",
+    "batchId": "batch-b",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-201",
+    "notes": "",
+    "originalHref": "/201",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/201",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Beta 201",
+        "batchId": "batch-b",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-201",
+        "notes": "",
+        "originalHref": "/201",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/201"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-201"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Beta 202",
+    "batchId": "batch-b",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-202",
+    "notes": "",
+    "originalHref": "/202",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/202",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Beta 202",
+        "batchId": "batch-b",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-202",
+        "notes": "",
+        "originalHref": "/202",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/202"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-202"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Beta 203",
+    "batchId": "batch-b",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-203",
+    "notes": "",
+    "originalHref": "/203",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/203",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Beta 203",
+        "batchId": "batch-b",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-203",
+        "notes": "",
+        "originalHref": "/203",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/203"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-203"
+    ]
+  },
+  {
+    "accessibleLabel": "",
+    "anchorText": "Beta 204",
+    "batchId": "batch-b",
+    "capturedAt": "2026-09-25T21:00:00Z",
+    "frameUrl": "https://source.test/",
+    "id": "audit-204",
+    "notes": "",
+    "originalHref": "/204",
+    "sourceTitle": "Audit fixture",
+    "sourceUrl": "https://source.test/",
+    "tags": [],
+    "url": "https://example.test/204",
+    "occurrences": [
+      {
+        "accessibleLabel": "",
+        "anchorText": "Beta 204",
+        "batchId": "batch-b",
+        "capturedAt": "2026-09-25T21:00:00Z",
+        "frameUrl": "https://source.test/",
+        "id": "audit-204",
+        "notes": "",
+        "originalHref": "/204",
+        "sourceTitle": "Audit fixture",
+        "sourceUrl": "https://source.test/",
+        "tags": [],
+        "url": "https://example.test/204"
+      }
+    ],
+    "occurrenceIds": [
+      "audit-204"
+    ]
+  }
+]

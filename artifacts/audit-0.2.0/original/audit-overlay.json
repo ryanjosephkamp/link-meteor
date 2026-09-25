@@ -1,0 +1,31 @@
+{
+  "started": "2026-09-25T21:15:54.287Z",
+  "checks": [
+    {
+      "name": "Open overlay reflects a changed active collection",
+      "result": "FAIL",
+      "error": "The input did not match the regular expression /Destination Beta/. Input:\n\n'Adds to Destination Alpha'\n"
+    },
+    {
+      "name": "Saved receipt names the actual destination",
+      "result": "FAIL",
+      "error": "The input did not match the regular expression /Destination Beta/. Input:\n\n'Saved 5 links to “Destination Alpha”.'\n"
+    },
+    {
+      "name": "Saved destination is stable after later collection changes",
+      "result": "FAIL",
+      "error": "The input did not match the regular expression /Saved to Destination Beta/. Input:\n\n'Saved to Destination Alpha'\n"
+    },
+    {
+      "name": "Overlapping Add and Review save the region once",
+      "result": "FAIL",
+      "error": "Expected values to be strictly equal:\n\n10 !== 5\n"
+    }
+  ],
+  "limits": [
+    "Actual packaged content code and real Chrome storage/messages, hosted on an extension page with synthetic links.",
+    "Not evidence of an ordinary webpage grant, native activation, or the main geometry suites."
+  ],
+  "result": "DEFECTS OBSERVED",
+  "finished": "2026-09-25T21:15:55.995Z"
+}

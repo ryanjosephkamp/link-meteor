@@ -1,0 +1,37 @@
+{
+  "auditStarted": "2026-09-25T21:02:57Z",
+  "closeoutPlanning": "2026-09-26T02:32:57Z",
+  "softLimit": "2026-09-26T03:02:57Z",
+  "handbackHead": "41f82e58066d57aa19c44b00dc8bb07c8cf81407",
+  "protectedBranch": "claude/design-v1",
+  "baselineBranchHead": "499c3ab1551a09338529f9f7ecabbf5c3048df38",
+  "protectedTagObject": "91811fe331616b4aaaef502d4dcade5f24aca9a1",
+  "main": "9efb43350a0115c15b059b428f7cc8bffcbd59b1",
+  "pr": {
+    "url": "https://github.com/ryanjosephkamp/link-meteor/pull/1",
+    "draft": true,
+    "base": "main",
+    "head": "claude/design-v1"
+  },
+  "build": {
+    "path": "artifacts/link-meteor-0.2.0.zip",
+    "sha256": "1cb1b778a91180709455e273eb9b0f1cbefe758a6e43d01156729c14330fc197",
+    "bytes": 191513,
+    "zipAndSourceExact": true
+  },
+  "protectedUnpackedFiles": {
+    "background.js": "ef7b37ef72c64d8ab780365ce8c811a83c97082875cd4e492764b16b84dc9098",
+    "manifest.json": "1b127c1581cb810b977e4a90000b0e605a97c6f6937215abbe54699d19ebf4a9",
+    "ui/workbench.html": "97692651dea5143a4aec38e560c9ee8403f94420a75ccea2c86613d211b96345",
+    "ui/workbench.js": "869804a25e8d305c9ecdcf519f448ef47a4964af29b92b4be8e789fb0697d7e6",
+    "ui/workbench.css": "dc7f11d8c1a3fda48cb9ba44d86c10fe6d08f2ae54bfbbe73fa8d59dd0a0c2d4",
+    "core/export.js": "9822512212602a5bac64405d6a65d9694b722b7a5adc38a0485f19fe74ea0978",
+    "core/model.js": "066ec58bf6c647d8b6abb5a48a26a1decd67c6df31cb2d27677996a2ce880edd",
+    "core/xlsx.js": "32a8a9ba365b1866c7d957d6149e156eb50294bbf5365c60b17dd38f756da72b",
+    "content/capture.js": "6c2acf7048317e90fa341839a866d7b14ba8870e0bc8b0fb87d38514e29f68b1",
+    "icons/48.png": "6f33c5d61124d84636da3b3c650e6664e5de8564b013354d49483e0f5e02e0a5",
+    "icons/128.png": "f19d094c0c128b5e78e07e6916dfc51aaf730f8839b0e54c3234999b0510e07f",
+    "icons/16.png": "0951c895a07be571c8f625ebfbd705e96e313e86bdafa012fe9670178175d148",
+    "icons/32.png": "87a081dc2c356a718cad319b9587ecaae4959ecd8d33a026ccece95e477a6549"
+  }
+}

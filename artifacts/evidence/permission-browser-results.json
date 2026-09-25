@@ -1,0 +1,13 @@
+{
+  "started": "2026-09-25T20:14:44.919Z",
+  "checks": [
+    "Actual host permission revocation prunes saved hold origin and dynamic content registration",
+    "Already loaded page no longer starts the revoked hold-key gesture",
+    "Capture after grant revocation is a denied result, not successful zero"
+  ],
+  "result": "PASS",
+  "limits": [
+    "Native Deny button was not verified. Automated permission re-requests were granted by the test browser; actual missing/revoked access was verified separately."
+  ],
+  "finished": "2026-09-25T20:14:46.497Z"
+}

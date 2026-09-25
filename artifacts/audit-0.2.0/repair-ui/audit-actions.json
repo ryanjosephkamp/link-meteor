@@ -1,0 +1,20 @@
+{
+  "started": "2026-09-25T21:20:15.222Z",
+  "checks": [
+    "Collection creation, notes and tags save through the UI",
+    "Both UI and background reject 21 links before opening tabs",
+    "Changing the target invalidates inline confirmation without opening a tab",
+    "Explicit inline confirmation opens exactly the selected local URL",
+    "Visible removal and positional Undo preserve all occurrence fields",
+    "Reversible URL grouping keeps separately labeled occurrences",
+    "Per-link note draft survives a state update and leaves anchor text untouched",
+    "Real missing-grant and closed-tab failures preserve the existing collection",
+    "Exact schema-v1 state survives a full isolated browser and worker restart"
+  ],
+  "limits": [
+    "Synthetic occurrences are inserted via the real reducer; this does not establish webpage capture or bookmark/host grants.",
+    "No native permission prompt or everyday Chrome profile is exercised."
+  ],
+  "result": "PASS",
+  "finished": "2026-09-25T21:20:18.596Z"
+}

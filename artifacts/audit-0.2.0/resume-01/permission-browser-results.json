@@ -1,0 +1,13 @@
+{
+  "started": "2026-09-25T21:44:02.615Z",
+  "checks": [
+    "Actual host permission revocation prunes saved hold origin and dynamic content registration",
+    "Already loaded page no longer starts the revoked hold-key gesture",
+    "Capture after grant revocation is a denied result, not successful zero"
+  ],
+  "result": "PASS",
+  "limits": [
+    "Native Deny button was not verified. This suite removes an existing test-origin grant through chrome.permissions.remove and verifies actual revoked access. Grant preparation and any user-reported approvals are recorded separately."
+  ],
+  "finished": "2026-09-25T21:44:04.240Z"
+}

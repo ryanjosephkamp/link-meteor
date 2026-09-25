@@ -1,0 +1,55 @@
+{
+  "started": "2026-09-25T18:50:10.337Z",
+  "canonicalBodyParity": true,
+  "opusPromptFileParity": true,
+  "widths": [
+    {
+      "width": 320,
+      "overflow": false
+    },
+    {
+      "width": 390,
+      "overflow": false
+    },
+    {
+      "width": 412,
+      "overflow": false
+    },
+    {
+      "width": 1440,
+      "overflow": false
+    }
+  ],
+  "limits": [
+    "Desktop Chromium rendering only; actual Android preview untested.",
+    "Copy behavior intentionally not tested or investigated."
+  ],
+  "exactEmbeddedPrompt": true,
+  "media": [
+    {
+      "loaded": true,
+      "alt": "A rectangular selection highlights five bibliography links with a live count of five.",
+      "embedded": true
+    },
+    {
+      "loaded": true,
+      "alt": "Link Meteor review rows show anchor text and destination URLs with filtering and export controls.",
+      "embedded": true
+    },
+    {
+      "loaded": true,
+      "alt": "The Link Meteor workbench in a narrow 390 CSS pixel viewport.",
+      "embedded": true
+    },
+    {
+      "loaded": true,
+      "alt": "Link Meteor's dark presentation for a research collection.",
+      "embedded": true
+    }
+  ],
+  "externalRequests": 0,
+  "keyboardFocus": true,
+  "readableWithoutJavaScript": true,
+  "result": "PASS",
+  "finished": "2026-09-25T18:50:11.756Z"
+}

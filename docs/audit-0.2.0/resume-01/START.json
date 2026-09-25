@@ -1,0 +1,16 @@
+{
+  "startedAt": "2026-09-25T21:37:50Z",
+  "closeoutPlanningAt": "2026-09-26T03:07:50Z",
+  "softLimitAt": "2026-09-26T03:37:50Z",
+  "entryCommit": "7ce68674dcf04f714831948e49706fac909f43d6",
+  "branch": "codex/audit-0.2.0",
+  "cleanAtEntry": true,
+  "archiveVerified": {
+    "path": "artifacts/link-meteor-0.2.1.zip",
+    "bytes": 193346,
+    "sha256": "231f454f60a7aba45ad6834b559268e1ddaabc66304ce55be4a9e783a7d219e9"
+  },
+  "all13MembersMatchSourceReceiptAndExtractedCopy": true,
+  "protectedUnpacked13FilesUnchanged": true,
+  "oldTimerNotReused": true
+}

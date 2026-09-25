@@ -1,0 +1,10 @@
+node_modules/
+.scratch/
+.report-preview/
+dist/
+artifacts/runtime/
+artifacts/test-results/
+*.log
+.DS_Store
+# Unpacked development builds loaded into Chrome for manual testing (user-owned).
+artifacts/link-meteor-*/

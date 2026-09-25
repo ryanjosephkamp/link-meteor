@@ -1,0 +1,11 @@
+{
+  "started": "2026-09-25T21:28:35.814Z",
+  "checks": [],
+  "limits": [
+    "Full automated browser checks only; no mobile preview/device acceptance.",
+    "Copy and clipboard behavior deliberately not investigated."
+  ],
+  "result": "FAIL",
+  "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\nfalse !== true\n\n    at file:///Users/noir/Documents/link-meteor/tests/audit-handback.mjs:24:10\n    at runNextTicks (node:internal/process/task_queues:64:5)\n    at process.processImmediate (node:internal/timers:472:9)",
+  "finished": "2026-09-25T21:28:36.197Z"
+}

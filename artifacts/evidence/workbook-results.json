@@ -1,0 +1,18 @@
+{
+  "result": "PASS",
+  "reader": "openpyxl 3.0.10",
+  "source": "actual files downloaded by tests/browser.mjs",
+  "header": [
+    "Anchor text",
+    "URL"
+  ],
+  "actual_download_rows": 59,
+  "csv_rows": 59,
+  "json_rows": 59,
+  "exact_anchor_url_pairs": true,
+  "csv_matches_json_after_formula_prefix": true,
+  "empty_anchor_rows": 2,
+  "formula_like_rows": 4,
+  "xlsx_all_string_cells": true,
+  "excel_application_tested": false
+}

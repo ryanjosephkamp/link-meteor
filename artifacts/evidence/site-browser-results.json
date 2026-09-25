@@ -1,0 +1,71 @@
+{
+  "started": "2026-09-25T20:14:17.835Z",
+  "browser": "Chrome for Testing via Playwright; real unpacked extension",
+  "sections": [
+    {
+      "id": "reading",
+      "expected": 7,
+      "actual": 7
+    },
+    {
+      "id": "results",
+      "expected": 9,
+      "actual": 9
+    },
+    {
+      "id": "tickets",
+      "expected": 10,
+      "actual": 10
+    },
+    {
+      "id": "products",
+      "expected": 12,
+      "actual": 12
+    },
+    {
+      "id": "tricky",
+      "expected": 7,
+      "actual": 7
+    },
+    {
+      "id": "archive",
+      "expected": 15,
+      "actual": 15
+    },
+    {
+      "id": "embedded",
+      "expected": 3,
+      "actual": 3
+    },
+    {
+      "id": "components",
+      "expected": 5,
+      "actual": 5
+    }
+  ],
+  "screenshots": [
+    "site-overlay-drag.png",
+    "site-overlay-card.png",
+    "site-workbench.png",
+    "site-panel.png",
+    "site-panel-dark.png",
+    "site-practice.png",
+    "site-report.png"
+  ],
+  "limits": [
+    "Practice-page counts were checked with synthetic pointer drags in automated Chrome for Testing.",
+    "Side-panel-width images render the workbench page in a tab at panel width; the native side-panel frame is not captured."
+  ],
+  "readingListFields": "7 occurrences; empty anchor with separate accessible label; duplicate label and duplicate URL kept",
+  "wholePageCount": 85,
+  "pageFieldChecks": "formula and markup labels kept as text; icon-only link empty with ARIA label; hidden text and hidden/script links excluded; frame and shadow-root links present",
+  "reportStatuses": [
+    "success",
+    "success",
+    "success",
+    "denied",
+    "unsupported"
+  ],
+  "result": "PASS",
+  "finished": "2026-09-25T20:14:28.913Z"
+}

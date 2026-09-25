@@ -1,0 +1,60 @@
+Anchor text	URL
+Attention in small systems	http://127.0.0.1:52478/papers/attention.pdf
+Geometry, “frames” & 雪	http://127.0.0.1:52478/papers/geometry.pdf?edition=2
+Download PDF	http://127.0.0.1:52478/papers/attention.pdf
+	http://127.0.0.1:52478/appendix
+Visible label	http://127.0.0.1:52478/visible
+A long wrapped anchor with several lines of visible text	http://127.0.0.1:52478/wrapped
+A long wrapped anchor with several lines of visible text	http://127.0.0.1:52478/wrapped
+'=SUM(1,2)	http://127.0.0.1:52478/formula?value=(literal)
+<img src=x onerror=alert(1)>	http://127.0.0.1:52478/html
+Email the research team	mailto:research@example.org
+Call the lab	tel:+15550123
+Open shadow source	http://127.0.0.1:52478/shadow
+Catalog source 0	http://127.0.0.1:52478/catalog/0
+Catalog source 1	http://127.0.0.1:52478/catalog/1
+Catalog source 2	http://127.0.0.1:52478/catalog/2
+Catalog source 15	http://127.0.0.1:52478/catalog/15
+Catalog source 16	http://127.0.0.1:52478/catalog/16
+Catalog source 17	http://127.0.0.1:52478/catalog/17
+Attention in small systems	http://127.0.0.1:52478/papers/attention.pdf
+Geometry, “frames” & 雪	http://127.0.0.1:52478/papers/geometry.pdf?edition=2
+Download PDF	http://127.0.0.1:52478/papers/attention.pdf
+	http://127.0.0.1:52478/appendix
+Visible label	http://127.0.0.1:52478/visible
+Atlas notebook — field edition	http://127.0.0.1:52478/products/atlas
+Open-sky telescope	https://example.org/telescope
+OBS-42	http://127.0.0.1:52478/tickets/42
+OBS-43	http://127.0.0.1:52478/tickets/43
+A long wrapped anchor with several lines of visible text	http://127.0.0.1:52478/wrapped
+'=SUM(1,2)	http://127.0.0.1:52478/formula?value=(literal)
+<img src=x onerror=alert(1)>	http://127.0.0.1:52478/html
+Email the research team	mailto:research@example.org
+Call the lab	tel:+15550123
+Open shadow source	http://127.0.0.1:52478/shadow
+Loaded after the page	http://127.0.0.1:52478/dynamic
+Catalog source 0	http://127.0.0.1:52478/catalog/0
+Catalog source 1	http://127.0.0.1:52478/catalog/1
+Catalog source 2	http://127.0.0.1:52478/catalog/2
+Catalog source 3	http://127.0.0.1:52478/catalog/3
+Catalog source 4	http://127.0.0.1:52478/catalog/4
+Catalog source 5	http://127.0.0.1:52478/catalog/5
+Catalog source 6	http://127.0.0.1:52478/catalog/6
+Catalog source 7	http://127.0.0.1:52478/catalog/7
+Catalog source 8	http://127.0.0.1:52478/catalog/8
+Catalog source 9	http://127.0.0.1:52478/catalog/9
+Catalog source 10	http://127.0.0.1:52478/catalog/10
+Catalog source 11	http://127.0.0.1:52478/catalog/11
+Catalog source 12	http://127.0.0.1:52478/catalog/12
+Catalog source 13	http://127.0.0.1:52478/catalog/13
+Catalog source 14	http://127.0.0.1:52478/catalog/14
+Catalog source 15	http://127.0.0.1:52478/catalog/15
+Catalog source 16	http://127.0.0.1:52478/catalog/16
+Catalog source 17	http://127.0.0.1:52478/catalog/17
+Catalog source 18	http://127.0.0.1:52478/catalog/18
+Catalog source 19	http://127.0.0.1:52478/catalog/19
+Source inside a frame	http://127.0.0.1:52478/frame-source
+The final source	http://127.0.0.1:52478/bottom
+Normal	http://127.0.0.1:52478/normal
+Email subject	mailto:?subject=Hello
+Compose email	mailto:

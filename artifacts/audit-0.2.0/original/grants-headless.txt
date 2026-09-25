@@ -1,0 +1,3 @@
+{"step":"ready","extension":"cjfigjmbedncennnjdajijfnakpaaddl","fixture":"http://127.0.0.1:52478"}
+{"step":"awaiting-native-allow","permission":"tabs","via":"Pick tabs scope"}
+{"step":"failed","error":"tabs grant (timed out)","uiError":"","uiNotice":"","grants":{"origins":[],"permissions":["activeTab","clipboardWrite","contextMenus","storage","scripting","sidePanel"]}}

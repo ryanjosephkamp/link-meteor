@@ -1,0 +1,27 @@
+{
+  "started": "2026-09-25T21:16:41.689Z",
+  "checks": [
+    {
+      "name": "Open overlay reflects a changed active collection",
+      "result": "PASS"
+    },
+    {
+      "name": "Saved receipt names the actual destination",
+      "result": "PASS"
+    },
+    {
+      "name": "Saved destination is stable after later collection changes",
+      "result": "PASS"
+    },
+    {
+      "name": "Overlapping Add and Review save the region once",
+      "result": "PASS"
+    }
+  ],
+  "limits": [
+    "Actual packaged content code and real Chrome storage/messages, hosted on an extension page with synthetic links.",
+    "Not evidence of an ordinary webpage grant, native activation, or the main geometry suites."
+  ],
+  "result": "PASS",
+  "finished": "2026-09-25T21:16:43.294Z"
+}

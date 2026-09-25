@@ -1,5 +1,29 @@
 # Acceptance map
 
+## 0.2.1 resumed Astra audit — automated acceptance complete, September 25, 2026
+
+**Status: the previously blocked required automated checks now pass. No blocking defect was observed in the tested configuration.** This supersedes the pending status in the earlier audit section below. It is not a publication authorization, native-prompt/side-panel certification or universal compatibility claim. The human decision whether and when to merge and deploy remains outstanding. Full handback: [resume-01/REPORT.md](audit-0.2.0/resume-01/REPORT.md).
+
+**Unchanged build and source:** 193,346-byte `artifacts/link-meteor-0.2.1.zip`, SHA-256 `231f454f60a7aba45ad6834b559268e1ddaabc66304ce55be4a9e783a7d219e9`, packaged from `e8e69cf734ed750ee6b792cc3cae1f9bf898ce62`. All 13 ZIP members match the receipt, current src and extracted test copy. No product repair or repackaging was necessary during this resumed pass.
+
+**New timer:** 2026-09-25T21:37:50Z. **Fresh profile:** `.scratch/audit-021-resume-01`; exact same extracted build throughout. The real UI requests for tabs, the local `http://127.0.0.1:52478/*` origin and bookmarks each logged `activeGesture: true` and `granted: true`. The user was asked once for prompt assistance. At documentation preparation, no confirmation identifying who clicked had arrived; therefore grant establishment is recorded without claiming driver-observed native Allow/Deny. No API grants were forged and no permission database or security setting was edited.
+
+| Newly executed check | Result | Evidence and limits |
+| --- | --- | --- |
+| prepare-grants.mjs | Pass | Three actual optional grants recorded in `resume-01/grants.txt`. Native click mechanism remains unclassified absent user confirmation. |
+| browser.mjs | 27/27 pass | 37 initial faithful occurrences; exact regional selection, wrapped geometry, scrolling and frame capture; current/selected/window/all-window scopes; honest mixed failures; clipboard paste; collections, filters, Undo, exports and exact restart persistence. |
+| extended-browser.mjs | 8/8 pass | 5,037 real loaded-page occurrences; bounded rendering; complete export; actual bookmark folder/title/URL; inline confirmation and opening cap; grouping and draft preservation. Observed capture-to-render 700 ms is a single synthetic run, not a general performance guarantee. |
+| site-browser.mjs | Pass | All eight practice keys match: 7, 9, 10, 12, 7, 15, 3, 5; whole page 85. Empty anchors, accessible labels, formula/markup text, frame/shadow provenance and success/denied/unsupported report verified. |
+| audit-granted-regressions.mjs | 4/4 pass | Keyboard tab-checkbox focus; destination changes on an ordinary webpage; overlapping Add/Review commits five links once with actual destination/provenance; saved receipt remains stable. Concurrent clicks deliberately dispatched in one event-loop turn; no API stubs. |
+| verify-downloads.py | Pass | Seven newly downloaded formats independently read: 53 exact anchor/URL pairs in XLSX/CSV/TSV/HTML/JSON; expected Markdown normalization and exact URL list. Two empty anchors, one formula-like label. openpyxl 3.1.5, not Microsoft Excel. |
+| permission-browser.mjs — last extension suite | 3/3 pass | Actual fixture-origin revocation removes hold settings/registration, stops an already loaded gesture and returns denied on later capture. Native Deny button not tested. |
+
+Fresh evidence and implemented screenshots: `artifacts/audit-0.2.0/resume-01/`. Earlier 26 Node tests, 20 targeted checks, visual/site layout checks and readers remain applicable to byte-identical product source; they were not relabeled as reruns in this resumed pass. The only edits are test identification/evidence wording, a bounded regression test and documentation/site test-status text. Original Opus and first-audit evidence remain intact.
+
+Remaining human/platform checks include everyday Chrome 0.2.1, native Allow/Deny and side-panel interaction, Microsoft Excel, assistive technology, real research/admin sites, Windows/Linux, Chrome 116, real phones and deployed GitHub Pages. The user's unitemized everyday-Chrome 0.2.0 report remains separate. No merge, deployment, workflow dispatch, store submission or scheduled continuation occurred.
+
+---
+
 ## 0.2.1 Astra audit candidate, September 25, 2026
 
 **Status: repairs checked; final capture acceptance blocked. Do not treat this as approval to merge, deploy, or publish.** The original Opus section below remains historical evidence. The owner's unitemized everyday-Chrome report applies to 0.2.0, not this candidate. Full audit: [REPORT.md](audit-0.2.0/REPORT.md).

@@ -14,11 +14,13 @@ try{
   for(const old of context.pages())await old.close();
   const page=await context.newPage();await page.goto(fixture.base+'/index.html');
   ui=await context.newPage();await ui.goto(`chrome-extension://${id}/ui/workbench.html`);await ui.locator('#collection-heading').waitFor();
+  // Name only this test tab so a human can distinguish it from unrelated browser windows.
+  await ui.evaluate(()=>{document.title='Link Meteor audit — permission setup';});
   await ui.bringToFront();
   await ui.evaluate(async()=>{const window=await chrome.windows.getCurrent();await chrome.windows.update(window.id,{focused:true});});
   await ui.evaluate(()=>{globalThis.grantObservations=[];const original=chrome.permissions.request.bind(chrome.permissions);chrome.permissions.request=request=>{const entry={request,activeGesture:navigator.userActivation.isActive};grantObservations.push(entry);const promise=original(request);promise.then(value=>entry.granted=value,error=>entry.error=error.message);return promise;};});
   const has=request=>ui.evaluate(request=>chrome.permissions.contains(request),request);
-  log('ready',{extension:id,fixture:fixture.base});
+  log('ready',{extension:id,fixture:fixture.base,profile,title:'Link Meteor audit — permission setup'});
   if(!await has({permissions:['tabs']})){log('awaiting-native-allow',{permission:'tabs',via:'Pick tabs scope'});await ui.locator('input[name=scope][value=selected]').check();}
   await until(()=>has({permissions:['tabs']}),'tabs grant',grantTimeout);log('granted',{permission:'tabs'});
   await until(async()=>await ui.locator('#tab-options input').count()>0,'Tab inventory',10000);

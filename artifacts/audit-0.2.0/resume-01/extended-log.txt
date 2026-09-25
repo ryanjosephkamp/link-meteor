@@ -1,0 +1,8 @@
+PASS 5,037 real page occurrences captured; only 100 top-level rows and no closed details rendered {"elapsedMs":700}
+PASS Selection persists across pages and unselected export includes all 5,037 rows {}
+PASS Filtering resets page and finds final loaded source {}
+PASS Actual bookmark folder contains correct anchor title and URL {}
+PASS Bounded opener shows count and opens exact local destination {}
+PASS Large open action rejected before opening any tabs {}
+PASS Large duplicate group details load on demand in 100-occurrence increments {}
+PASS Per-link draft survives background update and saves separately from anchor text {}

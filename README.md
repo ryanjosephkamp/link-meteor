@@ -4,7 +4,7 @@ Capture the trail. Keep the source.
 
 Link Meteor is a free Chrome extension for collecting links with their **actual anchor text and URL in separate fields**, reviewing their sources, and exporting a useful research collection. It has no account, ads, telemetry, paid tier, or backend dependency.
 
-This repository contains the Chrome extension (development candidate 0.2.1) and its website in `site/`. The extension has not been published to the Chrome Web Store, and the website has not been deployed. Firefox, Safari and AI features are deferred. The audit repaired selection, keyboard focus and regional save behavior; its grant-dependent capture checks remain pending. See [the audit handback](docs/audit-0.2.0/REPORT.md) and [acceptance evidence](docs/ACCEPTANCE.md).
+This repository contains the Chrome extension (development build 0.2.1) and its website in `site/`. The extension has not been published to the Chrome Web Store, and the website has not been deployed. Firefox, Safari and AI features are deferred. The audit repaired selection, keyboard focus and regional save behavior; its required automated checks now pass on the exact packaged 0.2.1 build. Human/platform acceptance and publication decisions remain separate. See [the completed audit handback](docs/audit-0.2.0/resume-01/REPORT.md) and [acceptance evidence](docs/ACCEPTANCE.md).
 
 ## Try the development build
 

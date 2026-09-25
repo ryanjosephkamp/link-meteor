@@ -1,0 +1,4 @@
+PASS Tab checkbox retains focus after keyboard selection
+PASS Ordinary-page overlay updates its active collection destination
+PASS Concurrent ordinary-page Add and Review save once with the actual destination and provenance
+PASS Saved receipt stays attached to its destination after a later collection switch

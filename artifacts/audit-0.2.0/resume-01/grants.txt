@@ -1,0 +1,8 @@
+{"time":"2026-09-25T21:39:11.604Z","step":"ready","extension":"opobkdlbmmmobnkpogbcbopecjclljph","fixture":"http://127.0.0.1:52478","profile":"audit-021-resume-01","title":"Link Meteor audit — permission setup"}
+{"time":"2026-09-25T21:39:11.606Z","step":"awaiting-native-allow","permission":"tabs","via":"Pick tabs scope"}
+{"time":"2026-09-25T21:39:57.977Z","step":"granted","permission":"tabs"}
+{"time":"2026-09-25T21:39:58.026Z","step":"awaiting-native-allow","origin":"http://127.0.0.1:52478/*","via":"Capture selected tab"}
+{"time":"2026-09-25T21:39:59.342Z","step":"granted","origin":"http://127.0.0.1:52478/*"}
+{"time":"2026-09-25T21:39:59.449Z","step":"awaiting-native-allow","permission":"bookmarks","via":"Bookmark web links"}
+{"time":"2026-09-25T21:40:00.470Z","step":"granted","permission":"bookmarks"}
+{"time":"2026-09-25T21:40:00.528Z","step":"complete","observations":[{"request":{"permissions":["tabs"]},"activeGesture":true,"granted":true},{"request":{"origins":["http://127.0.0.1:52478/*"]},"activeGesture":true,"granted":true},{"request":{"permissions":["bookmarks"]},"activeGesture":true,"granted":true}],"grants":{"origins":["http://127.0.0.1:52478/*"],"permissions":["activeTab","bookmarks","clipboardWrite","contextMenus","storage","tabs","scripting","sidePanel"]}}

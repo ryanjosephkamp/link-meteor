@@ -1,0 +1,3 @@
+PASS Actual host permission revocation prunes saved hold origin and dynamic content registration
+PASS Already loaded page no longer starts the revoked hold-key gesture
+PASS Capture after grant revocation is a denied result, not successful zero

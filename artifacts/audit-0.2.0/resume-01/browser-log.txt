@@ -1,0 +1,27 @@
+PASS Loaded actual extension and initialized state
+PASS Collection created through UI
+PASS 37 faithful occurrences including duplicates, empty anchor, shadow root, frame provenance and explicit partial coverage
+PASS Current page resolves the invoking page from full workbench
+PASS Region Escape leaves collection unchanged
+PASS Regional quick-copy reports successful two-column clipboard write
+PASS Real rectangle pointer drag highlights and saves exactly 5 links without navigating
+PASS Add-another-region does not duplicate an already saved region
+PASS Positive-area 1px overlap of a wrapped line captures the actual anchor
+PASS Nested wheel scrolling extends the selection and retains earlier matches
+PASS Page scrolling during a drag retains selected links
+PASS Regional geometry includes an accessible same-origin frame
+PASS Loaded dynamic links captured on next scan
+PASS Recipientless mail links retained while malformed destinations are skipped with an explicit count
+PASS Collection notes and tags saved through UI
+PASS Search and reversible grouped view preserve occurrences
+PASS Removal and positional undo through UI
+PASS Domain, PDF filters and newest sort controls
+PASS Seven actual downloaded formats checked, with separate fields, safe labels and preserved JSON provenance
+PASS Export column order follows UI settings
+PASS Clipboard output verified by paste of task-generated text
+PASS Mixed batch preserves success and distinctly reports empty, denied, restricted and closed tabs
+PASS Current-window and all-ordinary-window capture through UI with two actual windows
+PASS Configured permitted hold-key gesture works and ignores editable-field typing
+PASS Exact collection state survives full test-browser and background-worker restart
+PASS 390px workbench has no document-wide horizontal overflow
+PASS No uncaught fixture or workbench errors

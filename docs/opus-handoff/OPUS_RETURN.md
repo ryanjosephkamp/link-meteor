@@ -63,8 +63,18 @@ Test edits changed interaction paths only (open the editor or View first, the in
 - Panel-width screenshots render the workbench in a tab, not inside Chrome's native side-panel frame.
 - Name/IP clearance remains unestablished. No Chrome Web Store listing exists, and the site says so.
 
-## Decisions for the user
+## Decisions for the user (answered September 25, 2026)
 
-1. **Dev ZIP on the site.** When deployed, `install.html` offers `downloads/link-meteor-0.2.0.zip` publicly. Keep it, or link only to the repository?
-2. **Merge and deploy.** Whether and when to merge `claude/design-v1`, enable Pages ("GitHub Actions" source) and run the manual workflow.
-3. **Native permission check.** Try the Allow and Deny sheets yourself in everyday Chrome, since automation doesn't establish them.
+The user tested the 0.2.0 build in their everyday Chrome and reported that it all works. Their answers:
+
+1. **Dev ZIP on the site:** keep offering it on the install page.
+2. **Merge and deploy:** wait for Astra's audit.
+3. **Native permission check:** covered by the user's own test pass. The steps covered were not itemized.
+4. **Optional design-skill update:** skipped.
+
+## Backup and protection
+
+- The branch `claude/design-v1` is pushed to GitHub, and the annotated tag `opus-handback-2026-09-25` marks the handback commit.
+- A **draft** pull request from `claude/design-v1` into `main` keeps the commits reachable on GitHub even if the branch were deleted. It is not to be merged until the audit passes and the user approves.
+- The Astra prompt forbids deleting, rewriting or force-pushing this branch, the tag or the PR, and asks Astra to commit its repairs on a new branch, `codex/audit-0.2.0`.
+- `artifacts/link-meteor-0.2.0/` is the user's unpacked copy loaded in Chrome. It is ignored by Git, and the prompt tells Astra not to touch it.

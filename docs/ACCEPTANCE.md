@@ -23,6 +23,8 @@ Status: redesigned extension and new website, functionally re-checked on the act
 
 Screenshots of real states are in `artifacts/evidence/`: `workbench-desktop.png`, `workbench-review.png` (grouped with details), `workbench-dark.png`, `workbench-narrow.png`, `panel-dark.png`, `panel-export.png`, `panel-collections.png`, `panel-empty.png`, `region-drag.png`, `permission-denied.png`, `site-overlay-drag.png`, `site-overlay-card.png`, `site-workbench.png`, `site-panel.png`, `site-panel-dark.png`, `site-report.png`, and the site's own `site-home*.png`, `site-install.png`, `site-practice-page.png`. Panel-width images render the workbench page in a tab at side-panel width; Chrome's native side-panel frame is not captured.
 
+**User report (September 25, 2026):** the user loaded the 0.2.0 build unpacked in their everyday Google Chrome, tried it, and reported that it all works. The specific steps covered were not itemized. After the automated runs above, two practice-page spellings were changed to American English: a ticket summary cell ("license") and one shadow-root link label ("Neighborhood heat map"). Link counts and URLs are unchanged, and `tests/site-check.mjs` and `sync-site.mjs --check` were re-run afterward.
+
 **Still unverified (human acceptance):** everyday Google Chrome; the native permission Allow/Deny sheets; the native side panel's real width and resizing; Windows/Linux shortcuts; Microsoft Excel itself; screen readers; real research and admin sites; Chrome 116; the deployed site on GitHub Pages; the site on real phones and non-Chromium browsers.
 
 ---

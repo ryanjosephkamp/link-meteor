@@ -49,7 +49,7 @@ function seed() {
   state = reduceState(state, { type: 'links.append', links: researchLinks() });
   state = reduceState(state, { type: 'collection.create', name: 'Research Ops tickets' });
   n = 100;
-  state = reduceState(state, { type: 'links.append', links: [link('OPS-1142 Renew dataset licence', 'https://desk.example.com/tickets/1142', tickets), link('OPS-1150 Archive 2019 survey', 'https://desk.example.com/tickets/1150', tickets)] });
+  state = reduceState(state, { type: 'links.append', links: [link('OPS-1142 Renew dataset license', 'https://desk.example.com/tickets/1142', tickets), link('OPS-1150 Archive 2019 survey', 'https://desk.example.com/tickets/1150', tickets)] });
   state = reduceState(state, { type: 'collection.create', name: 'Reading list, spring' });
   if (scenario === 'large') {
     n = 1000;

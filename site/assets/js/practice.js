@@ -18,7 +18,7 @@ class SourceCard extends HTMLElement {
       :host { display: block; padding: 14px 16px; border-radius: 12px; border: 1px dashed currentColor; }
       p { margin: 0 0 6px; font-weight: 700; }
       a { display: inline-block; margin-right: 14px; color: inherit; }
-    </style><p>Inside a shadow root</p><a href="https://components.example.net/sources/tree-survey">Street tree survey</a><a href="https://components.example.net/sources/heat-map">Neighbourhood heat map</a>`;
+    </style><p>Inside a shadow root</p><a href="https://components.example.net/sources/tree-survey">Street tree survey</a><a href="https://components.example.net/sources/heat-map">Neighborhood heat map</a>`;
   }
 }
 customElements.define('source-card', SourceCard);

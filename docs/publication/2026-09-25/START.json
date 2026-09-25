@@ -1,0 +1,22 @@
+{
+  "startedAt": "2026-09-25T22:20:18Z",
+  "softCloseout": "2026-09-26T04:20:18Z",
+  "entryBranch": "codex/audit-0.2.0",
+  "entryHead": "e60cc8ee36f8dd081d71b640c7a4a7ea9b4cb402",
+  "approvedHead": "696620091f7a92d3814e390582942c5f5db926b7",
+  "approvedMain": "9efb43350a0115c15b059b428f7cc8bffcbd59b1",
+  "sourceHead": "e8e69cf734ed750ee6b792cc3cae1f9bf898ce62",
+  "archive": {
+    "path": "artifacts/link-meteor-0.2.1.zip",
+    "bytes": 193346,
+    "sha256": "231f454f60a7aba45ad6834b559268e1ddaabc66304ce55be4a9e783a7d219e9"
+  },
+  "zipSourceReceiptAndSiteExact": true,
+  "protectedInstallation13FilesUnchanged": true,
+  "protectedOriginalZipUnchanged": true,
+  "initialWorkingTreeClean": true,
+  "distributionDecision": "ZIP extraction and Load unpacked is the primary route; all browser stores deferred; no payments, store account setup or uploads.",
+  "workers": 0,
+  "workflowDispatchAllowance": 1,
+  "dispatchesPerformed": 0
+}

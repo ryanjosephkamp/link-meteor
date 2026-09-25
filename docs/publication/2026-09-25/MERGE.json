@@ -1,0 +1,40 @@
+{
+  "checkedAt": "2026-09-25T22:23:22.170695+00:00",
+  "pr2": {
+    "baseRefName": "main",
+    "headRefOid": "696620091f7a92d3814e390582942c5f5db926b7",
+    "mergeCommit": {
+      "oid": "ee3148ec584c51e49438bed097ffb70c9d9a6603"
+    },
+    "mergedAt": "2026-09-25T22:23:19Z",
+    "state": "MERGED",
+    "url": "https://github.com/ryanjosephkamp/link-meteor/pull/2"
+  },
+  "merge": "ee3148ec584c51e49438bed097ffb70c9d9a6603",
+  "parents": [
+    "9efb43350a0115c15b059b428f7cc8bffcbd59b1",
+    "696620091f7a92d3814e390582942c5f5db926b7"
+  ],
+  "tree": "9b013c80026ab6b28ce2a70da33c49cb05fa1695",
+  "treeIdenticalToApprovedSnapshot": true,
+  "all13CommitsRetained": true,
+  "originalPr1": {
+    "baseRefName": "main",
+    "headRefName": "claude/design-v1",
+    "headRefOid": "41f82e58066d57aa19c44b00dc8bb07c8cf81407",
+    "isDraft": true,
+    "mergeCommit": {
+      "oid": "41f82e58066d57aa19c44b00dc8bb07c8cf81407"
+    },
+    "mergedAt": "2026-09-25T22:23:20Z",
+    "state": "MERGED",
+    "url": "https://github.com/ryanjosephkamp/link-meteor/pull/1"
+  },
+  "protectedRefs": {
+    "refs/heads/claude/design-v1": "41f82e58066d57aa19c44b00dc8bb07c8cf81407",
+    "refs/heads/codex/chrome-v1": "499c3ab1551a09338529f9f7ecabbf5c3048df38",
+    "refs/tags/opus-handback-2026-09-25": "91811fe331616b4aaaef502d4dcade5f24aca9a1",
+    "refs/tags/opus-handback-2026-09-25^{}": "41f82e58066d57aa19c44b00dc8bb07c8cf81407"
+  },
+  "directPr1Actions": []
+}

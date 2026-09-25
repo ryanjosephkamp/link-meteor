@@ -1,0 +1,74 @@
+{
+  "startedAt": "2026-09-25T22:13:16.716Z",
+  "result": "PASS",
+  "checks": [
+    {
+      "javaScriptEnabled": true,
+      "width": 320,
+      "overflow": false,
+      "promptExact": true,
+      "localLinksResolved": 6
+    },
+    {
+      "javaScriptEnabled": true,
+      "width": 390,
+      "overflow": false,
+      "promptExact": true,
+      "localLinksResolved": 6
+    },
+    {
+      "javaScriptEnabled": true,
+      "width": 412,
+      "overflow": false,
+      "promptExact": true,
+      "localLinksResolved": 6
+    },
+    {
+      "javaScriptEnabled": true,
+      "width": 1440,
+      "overflow": false,
+      "promptExact": true,
+      "localLinksResolved": 6
+    },
+    {
+      "javaScriptEnabled": false,
+      "width": 320,
+      "overflow": false,
+      "promptExact": true,
+      "localLinksResolved": 6
+    },
+    {
+      "javaScriptEnabled": false,
+      "width": 390,
+      "overflow": false,
+      "promptExact": true,
+      "localLinksResolved": 6
+    },
+    {
+      "javaScriptEnabled": false,
+      "width": 412,
+      "overflow": false,
+      "promptExact": true,
+      "localLinksResolved": 6
+    },
+    {
+      "javaScriptEnabled": false,
+      "width": 1440,
+      "overflow": false,
+      "promptExact": true,
+      "localLinksResolved": 6
+    }
+  ],
+  "limits": [
+    "Automated Chrome for Testing report layout only; no physical phone or in-app mobile preview acceptance.",
+    "Copy and clipboard intentionally not tested.",
+    "No extension or personal profile loaded. No new functional acceptance."
+  ],
+  "keyboardFocus": {
+    "tag": "A",
+    "visible": true
+  },
+  "exactCommitCount": 13,
+  "finishedAt": "2026-09-25T22:13:17.223Z",
+  "taskBrowserClosed": true
+}

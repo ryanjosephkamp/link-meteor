@@ -1,0 +1,112 @@
+{
+  "recordedAt": "2026-09-25T22:07:14.622053+00:00",
+  "startedAt": "2026-09-25T22:04:30Z",
+  "scope": "Preparation only; no publication or installation changes",
+  "entryHead": "696620091f7a92d3814e390582942c5f5db926b7",
+  "branch": "codex/audit-0.2.0",
+  "remote": "https://github.com/ryanjosephkamp/link-meteor.git",
+  "main": "9efb43350a0115c15b059b428f7cc8bffcbd59b1",
+  "proposedIntegrationHead": "696620091f7a92d3814e390582942c5f5db926b7",
+  "sourceHead": "e8e69cf734ed750ee6b792cc3cae1f9bf898ce62",
+  "archive": {
+    "path": "artifacts/link-meteor-0.2.1.zip",
+    "bytes": 193346,
+    "sha256": "231f454f60a7aba45ad6834b559268e1ddaabc66304ce55be4a9e783a7d219e9"
+  },
+  "membersVerified": 13,
+  "sourceUnchangedSincePackaging": true,
+  "siteDownloadExact": true,
+  "protectedUnpacked13FilesUnchanged": true,
+  "originalArchiveUnchanged": true,
+  "mainUniqueCommits": 0,
+  "integrationUniqueCommits": 13,
+  "commits": [
+    {
+      "sha": "123da8f7cd5155924a180c6ef4fafa16fdc16adc",
+      "subject": "docs: preserve approved scope and Chrome implementation plan"
+    },
+    {
+      "sha": "17b9186a93dc0d626f86069271cac1ada6724e2f",
+      "subject": "Build Chrome capture, collections and export baseline with test harness"
+    },
+    {
+      "sha": "a6dddac13b14307e6a343e78d540167c1232dc4b",
+      "subject": "Verify Chrome baseline and repair capture, permission and review edge cases"
+    },
+    {
+      "sha": "499c3ab1551a09338529f9f7ecabbf5c3048df38",
+      "subject": "Deliver tested Chrome build, mobile report and Opus design handoff"
+    },
+    {
+      "sha": "7a45e91d4801568e88be762625d93fcf2ffbd8c0",
+      "subject": "Redesign workbench, capture overlay and brand mark"
+    },
+    {
+      "sha": "7c9ca4aaab11eb405e9cdea4d6f786cd05114efb",
+      "subject": "Freeze 0.2.0 extension source; add select-all-in-view and site suites"
+    },
+    {
+      "sha": "3ec056cbf5aa19edec6979ca6a3547f2c1bd5567",
+      "subject": "Add GitHub Pages site, design docs and 0.2.0 acceptance evidence"
+    },
+    {
+      "sha": "41f82e58066d57aa19c44b00dc8bb07c8cf81407",
+      "subject": "Record user review, protect handback, use American spelling"
+    },
+    {
+      "sha": "e8e69cf734ed750ee6b792cc3cae1f9bf898ce62",
+      "subject": "Repair audited selection, capture labels and site package checks"
+    },
+    {
+      "sha": "2bac1d9c1d3501aa6b6de283ad8865398bc497c9",
+      "subject": "Record independent audit evidence and preserve the 0.2.1 candidate"
+    },
+    {
+      "sha": "7ce68674dcf04f714831948e49706fac909f43d6",
+      "subject": "Finalize blocked-audit closeout and verified backup receipt"
+    },
+    {
+      "sha": "20699de291d31554c0de2e55b8ab9e4609216fa8",
+      "subject": "Complete grant-dependent audit checks on the unchanged 0.2.1 build"
+    },
+    {
+      "sha": "696620091f7a92d3814e390582942c5f5db926b7",
+      "subject": "Deliver completed audit handback and preservation receipts"
+    }
+  ],
+  "remoteRefs": {
+    "main": "9efb43350a0115c15b059b428f7cc8bffcbd59b1",
+    "claude/design-v1": "41f82e58066d57aa19c44b00dc8bb07c8cf81407",
+    "codex/chrome-v1": "499c3ab1551a09338529f9f7ecabbf5c3048df38",
+    "codex/audit-0.2.0": "696620091f7a92d3814e390582942c5f5db926b7",
+    "opus-handback-2026-09-25": "91811fe331616b4aaaef502d4dcade5f24aca9a1",
+    "opus-handback-2026-09-25^{}": "41f82e58066d57aa19c44b00dc8bb07c8cf81407"
+  },
+  "pr1": {
+    "state": "OPEN",
+    "isDraft": true,
+    "head": "claude/design-v1",
+    "headSha": "41f82e58066d57aa19c44b00dc8bb07c8cf81407",
+    "base": "main",
+    "baseSha": "9efb43350a0115c15b059b428f7cc8bffcbd59b1",
+    "mergeable": "MERGEABLE",
+    "mergeStateStatus": "CLEAN",
+    "statusCheckRollup": []
+  },
+  "repository": {
+    "visibility": "public",
+    "defaultBranch": "main",
+    "hasPages": false,
+    "actionsEnabled": true,
+    "allowedActions": "all",
+    "shaPinningRequired": false,
+    "allowMergeCommit": true,
+    "deleteBranchOnMerge": false,
+    "mainProtected": false,
+    "mainRules": []
+  },
+  "instructions": "No AGENTS.md found in project or ancestor paths",
+  "newWorkers": 0,
+  "newProductTests": false,
+  "officialReferencesReadOn": "2026-09-25"
+}

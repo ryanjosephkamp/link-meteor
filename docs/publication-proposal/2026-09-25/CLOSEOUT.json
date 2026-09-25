@@ -1,0 +1,25 @@
+{
+  "recordedAt": "2026-09-25T22:13:18.606720+00:00",
+  "startedAt": "2026-09-25T22:04:30Z",
+  "elapsedSeconds": 528,
+  "scope": "preparation only",
+  "proposedIntegrationHead": "696620091f7a92d3814e390582942c5f5db926b7",
+  "protectedRefsRechecked": true,
+  "draftPr1Unchanged": {
+    "baseRefName": "main",
+    "baseRefOid": "9efb43350a0115c15b059b428f7cc8bffcbd59b1",
+    "headRefName": "claude/design-v1",
+    "headRefOid": "41f82e58066d57aa19c44b00dc8bb07c8cf81407",
+    "isDraft": true,
+    "state": "OPEN"
+  },
+  "pagesStillDisabled": true,
+  "protectedInstallationUnchanged": true,
+  "onlyNewProposalDirectoryChanged": "?? docs/publication-proposal/",
+  "productChanges": 0,
+  "packagesRebuilt": 0,
+  "workers": 0,
+  "taskBrowserClosed": true,
+  "newReportCheck": "PASS",
+  "backup": "Documentation commit and exact remote verification are reported in the accompanying final chat."
+}

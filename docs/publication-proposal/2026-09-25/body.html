@@ -1,0 +1,204 @@
+<p><strong>Recommendation: integrate the audited 0.2.1 snapshot through one new PR, then publish the development website with one manual Pages run. Keep Chrome Web Store submission and your everyday-installation update separate.</strong> This document is a proposal for your decision. No PR, protected branch, deployment setting or installed extension was changed to prepare it.</p>
+<p>The exact next prompt at the end authorizes that recommended integration and website publication if you choose to send it. It explicitly accepts the possible indirect merge status of the original PR. It does not authorize Store submission or access to your personal collection data.</p>
+<h2>What I reverified</h2>
+<p>The working directory is <code>/Users/noir/Documents/link-meteor</code>, the only remote is <code>https://github.com/ryanjosephkamp/link-meteor</code>, and the entry tree was clean on <code>codex/audit-0.2.0</code> at <strong>696620091f7a92d3814e390582942c5f5db926b7</strong>. Local and remote audit heads matched. No repository or ancestor <code>AGENTS.md</code> was found. I read the approved alignment, contracts, acceptance history, site instructions and resumed audit report/ledger/receipts.</p>
+<table>
+<thead>
+<tr>
+<th>Item</th>
+<th>Current verified state</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>main</code></td>
+<td><code>9efb43350a0115c15b059b428f7cc8bffcbd59b1</code></td>
+</tr>
+<tr>
+<td><code>codex/chrome-v1</code></td>
+<td><code>499c3ab1551a09338529f9f7ecabbf5c3048df38</code></td>
+</tr>
+<tr>
+<td><code>claude/design-v1</code></td>
+<td><code>41f82e58066d57aa19c44b00dc8bb07c8cf81407</code></td>
+</tr>
+<tr>
+<td><code>opus-handback-2026-09-25</code></td>
+<td>Annotated tag object <code>91811fe331616b4aaaef502d4dcade5f24aca9a1</code>, target <code>41f82e58066d57aa19c44b00dc8bb07c8cf81407</code></td>
+</tr>
+<tr>
+<td><a href="https://github.com/ryanjosephkamp/link-meteor/pull/1">Draft PR #1</a></td>
+<td>Open, draft; <code>claude/design-v1</code> → <code>main</code>; mergeable, no status checks reported. Its head does not include the audit repairs.</td>
+</tr>
+<tr>
+<td>Repository</td>
+<td>Public; default branch <code>main</code>; merge commits allowed; automatic branch deletion off.</td>
+</tr>
+<tr>
+<td>Pages and Actions</td>
+<td>Pages not enabled (<code>has_pages: false</code>). Actions enabled and all actions allowed. <code>main</code> reports no protection and no applicable rules. These observations are not instructions to alter protections.</td>
+</tr>
+</tbody></table>
+<p>The unchanged <a href="../../../artifacts/link-meteor-0.2.1.zip">0.2.1 ZIP</a> is <strong>193,346 bytes</strong>, SHA-256 <strong>231f454f60a7aba45ad6834b559268e1ddaabc66304ce55be4a9e783a7d219e9</strong>. All 13 members match both current <code>src/</code> and the per-file receipt; the site&#39;s downloadable copy matches too. Product source remains <strong>e8e69cf734ed750ee6b792cc3cae1f9bf898ce62</strong>. The original ZIP and all 13 fingerprints in your protected unpacked 0.2.0 folder are unchanged. Full facts: <a href="VERIFICATION.json">VERIFICATION.json</a>.</p>
+<h2>Integration: one PR containing the complete history</h2>
+<p>Create the proposed <strong><code>codex/release-0.2.1</code></strong> branch from exactly <strong>696620091f7a92d3814e390582942c5f5db926b7</strong> after authorization. Open a new PR into <code>main</code> titled <strong>Integrate audited Link Meteor 0.2.1 and development website</strong>. The <a href="PROPOSED_PR.md">prepared title and description</a> are local files only; no new PR exists yet.</p>
+<p>This freezes the tested implementation and its completed handback. Proposal-only commits added later on the audit branch are documentation backups and need not enter the first integration. The ancestry check found <strong>13 commits ahead of main, zero main-only commits</strong>. No cherry-pick, rewrite or intermediate 0.2.0 merge is needed.</p>
+<p>The complete proposed commit set, oldest first:</p>
+<table>
+<thead>
+<tr>
+<th>Commit</th>
+<th>Contribution</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>123da8f7cd5155924a180c6ef4fafa16fdc16adc</code></td>
+<td>Approved scope and implementation plan</td>
+</tr>
+<tr>
+<td><code>17b9186a93dc0d626f86069271cac1ada6724e2f</code></td>
+<td>Chrome capture, collections, exports and harness</td>
+</tr>
+<tr>
+<td><code>a6dddac13b14307e6a343e78d540167c1232dc4b</code></td>
+<td>Tested pre-design baseline and edge-case repairs</td>
+</tr>
+<tr>
+<td><code>499c3ab1551a09338529f9f7ecabbf5c3048df38</code></td>
+<td>Chrome baseline delivery and Opus handoff</td>
+</tr>
+<tr>
+<td><code>7a45e91d4801568e88be762625d93fcf2ffbd8c0</code></td>
+<td>Opus redesign of workbench, overlay and branding</td>
+</tr>
+<tr>
+<td><code>7c9ca4aaab11eb405e9cdea4d6f786cd05114efb</code></td>
+<td>Frozen 0.2.0 product source and selection/site tests</td>
+</tr>
+<tr>
+<td><code>3ec056cbf5aa19edec6979ca6a3547f2c1bd5567</code></td>
+<td>Website, design documentation and Opus evidence</td>
+</tr>
+<tr>
+<td><code>41f82e58066d57aa19c44b00dc8bb07c8cf81407</code></td>
+<td>Protected Opus handback and user-review record</td>
+</tr>
+<tr>
+<td><code>e8e69cf734ed750ee6b792cc3cae1f9bf898ce62</code></td>
+<td>Astra&#39;s 0.2.1 product and site-check repairs</td>
+</tr>
+<tr>
+<td><code>2bac1d9c1d3501aa6b6de283ad8865398bc497c9</code></td>
+<td>0.2.1 package and independent audit evidence</td>
+</tr>
+<tr>
+<td><code>7ce68674dcf04f714831948e49706fac909f43d6</code></td>
+<td>Preserved blocked-audit closeout</td>
+</tr>
+<tr>
+<td><code>20699de291d31554c0de2e55b8ab9e4609216fa8</code></td>
+<td>Completed grant-dependent checks and honest site status</td>
+</tr>
+<tr>
+<td><code>696620091f7a92d3814e390582942c5f5db926b7</code></td>
+<td>Final automated-audit handback and preservation receipts</td>
+</tr>
+</tbody></table>
+<p>After your authorization, reverify those refs, run <code>npm test</code> and <code>node scripts/sync-site.mjs --check</code> on the frozen snapshot, and inspect any newly required checks. Merge the new PR using <strong>Create a merge commit</strong>. Retain all branches and tags. A merge commit preserves the original source/evidence SHAs; its hash cannot be known before GitHub creates it. Verify its first parent is the approved main, its second parent is the approved integration head, all 13 commits remain ancestors, and its tree equals the approved snapshot. Any ref drift, unexpected tree change or failed check stops the publication step.</p>
+<p><strong>Original PR #1:</strong> leave its head, base, title and draft state alone before integration. Do not directly close, merge or retarget it. GitHub can mark a PR indirectly merged when its existing commits enter the base through another PR. This may happen to #1 through the proposed merge; if it stays open, leave it open and report that state. Approval of this route must include that possible automatic status change. <a href="https://docs.github.com/en/pull-requests/reference/pull-request-merges">GitHub&#39;s indirect-merge behavior</a>.</p>
+<p>The repair commit retains schema v1, original link fields, permissions and the export/model cores. It fixes hidden-selection removal, keyboard focus, stale batch/destination wording and overlapping regional saves; it also verifies package contents and constrains the site workflow to main. Integrating only PR #1 would omit these repairs.</p>
+<h2>Website: exact manual publication sequence</h2>
+<p>The proposed public URL is <strong><a href="https://ryanjosephkamp.github.io/link-meteor/">https://ryanjosephkamp.github.io/link-meteor/</a></strong>. The site continues to offer the development ZIP for free and clearly says the extension is not yet in the Chrome Web Store. Publishing this site does not install or update anybody&#39;s extension.</p>
+<p>The current workflow <code>.github/workflows/pages.yml</code> has only <code>workflow_dispatch</code>, a <code>main</code>-only job condition, <code>cancel-in-progress: false</code>, the <code>github-pages</code> environment, and permissions <code>contents: read</code>, <code>pages: write</code>, <code>id-token: write</code>. It uses checkout v4, setup-node v4 with Node 22, configure-pages v5, upload-pages-artifact v3 and deploy-pages v4. It verifies source/site/package consistency before uploading <strong>only <code>site/</code></strong>. There is no push, PR, schedule or Store publishing trigger. Its one job uploads before deploying, so it does not need an inter-job dependency. <a href="https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages">GitHub Pages workflow requirements</a>, <a href="https://github.com/actions/deploy-pages">deploy-pages action</a>.</p>
+<table>
+<thead>
+<tr>
+<th>Step</th>
+<th>Proposed action and completion evidence</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1. Integrate</td>
+<td>Complete the exact merge above and record its SHA. Do not run Pages from an audit or design branch.</td>
+</tr>
+<tr>
+<td>2. Check prerequisites</td>
+<td>Confirm Actions remains available, action versions are compatible at execution, and the <code>github-pages</code> environment permits main. Respect any owner approval requirement. No secrets or personal token are needed by this workflow; it uses GitHub&#39;s job token.</td>
+</tr>
+<tr>
+<td>3. Enable this site&#39;s source</td>
+<td>In this repository&#39;s <strong>Settings → Pages → Build and deployment</strong>, choose <strong>GitHub Actions</strong>. This is a future, explicitly authorized repository setting change. If owner access is required, the owner performs it. No custom domain or DNS change is proposed.</td>
+</tr>
+<tr>
+<td>4. Dispatch once</td>
+<td>In <strong>Actions → Deploy site to GitHub Pages (manual) → Run workflow</strong>, choose <strong>main</strong> and run once. Verify the run&#39;s <code>head_sha</code> is the just-approved merge. Record run ID, source SHA and deployment result.</td>
+</tr>
+<tr>
+<td>5. Verify the live result</td>
+<td>Confirm HTTPS home/install/guide/privacy/practice pages, fonts/images/modules, keyboard navigation and a nested missing path&#39;s 404 assets. Download the public 0.2.1 ZIP into task scratch and independently match its size/hash. Check the practice page and export preview in the deployed path.</td>
+</tr>
+<tr>
+<td>6. Hand back</td>
+<td>Report live URLs, workflow/run/merge identity, download hash, actual checks and any remaining human checks. No automatic rerun or next publication.</td>
+</tr>
+</tbody></table>
+<p>The workflow must be on the default branch before a manual dispatch is available. A merge alone does not start it. <a href="https://docs.github.com/en/actions/how-tos/manage-workflow-runs/manually-run-a-workflow">GitHub manual-workflow documentation</a>.</p>
+<p>Current repository settings satisfy the basic Actions prerequisites; Pages activation and the environment&#39;s eventual deployment approval have not been exercised. Official action documentation still shows the upload-v3/deploy-v4 combination, but this is not proof that a GitHub-hosted run succeeds. Recheck at execution; any necessary workflow repair should be reviewed before dispatch. <a href="https://github.com/actions/upload-pages-artifact">Upload action documentation</a>.</p>
+<p>If the first run fails, retain the run URL and logs and stop; do not retry indefinitely, change protections or claim a live site. There is no earlier Pages deployment to roll back to. If a live defect is found, preserve the evidence and request a bounded corrective action. History recovery uses new commits and an explicitly authorized redeployment, never reset/force-push.</p>
+<p>The Pages upload excludes repository docs, test profiles and local collection backups. This repository is already public, so committed files are nevertheless public through GitHub itself; personal exports must stay uncommitted. All features remain free, with no accounts, ads, telemetry, backend dependency or paid tier.</p>
+<h2>Your unpacked 0.2.0 installation: preserve path, ID and state</h2>
+<p><strong>User-controlled steps for later; none performed here or authorized by the embedded website-publication prompt.</strong> Keep the existing Chrome profile, extension entry and exact folder path:</p>
+<p><code>/Users/noir/Documents/link-meteor/artifacts/link-meteor-0.2.0/</code></p>
+<p>The folder&#39;s old version number can remain in its name. Both manifests lack a fixed <code>key</code>; don&#39;t rename/move the folder, uninstall the extension, clear extension data, add a key, or use <strong>Load unpacked</strong> on the separately extracted 0.2.1 directory as an update. Record the current extension ID shown at <code>chrome://extensions</code> before changing files; compare that same card and ID afterward. This same-path procedure is expected to retain the existing identity and storage, but your real-profile update has not been tested.</p>
+<ol>
+<li><strong>Save your work and make recovery copies.</strong> In each collection, clear filters and batch filtering, choose no grouping, and clear row selection so export covers the full collection. Export JSON and optionally XLSX; check the exported row count. Record collection names, notes/tags and counts. Link exports are useful records, <strong>not a complete app backup or an importable restore package</strong>.</li>
+<li><strong>Preserve full local state if the collections matter.</strong> Before disabling the extension, open Link Meteor&#39;s full workbench, use that extension page&#39;s DevTools Console, and read the code below before running it. It copies only this extension&#39;s local-storage snapshot to your clipboard; it does not write storage. Save the pasted JSON to a private local file, for example <code>.scratch/manual-update-backup/link-meteor-local-state.json</code>, never to tracked evidence or this chat. If you are not comfortable using DevTools, pause the update and request guided backup help. Do not disable any browser security restriction to run it.</li>
+</ol>
+<pre><code class="language-js">copy(JSON.stringify(await chrome.storage.local.get(null), null, 2))
+</code></pre>
+<p>That DevTools-only command uses the Console&#39;s <code>copy</code> helper. The snapshot should contain <code>linkMeteorState</code> with <code>schemaVersion: 1</code>, the full <code>collections</code>, notes/tags, settings and undo state. It does not contain Chrome&#39;s permission grants or a complete browser-profile backup. There is no built-in import/restore flow; raw JSON is recovery evidence, not a guarantee of one-click recovery.</p>
+<ol start="3">
+<li><strong>Stage outside the installed folder.</strong> Copy the existing 0.2.0 code to a distinct backup path under ignored <code>.scratch/</code>, keeping the live folder in place. Verify the candidate ZIP&#39;s exact hash above and unpack into a different staging directory. Confirm the staged root contains <code>manifest.json</code> version 0.2.1 and all 13 receipt-matching files. A code-folder backup alone does not back up collections.</li>
+<li><strong>Replace files in place, then reload.</strong> Save any collection edits, close Link Meteor views, and temporarily disable only Link Meteor using its existing extension card. Replace its code files with the verified staged contents inside the same original folder; avoid nesting another folder beneath it. Do not remove the Chrome extension entry or alter storage files. Re-enable and reload the same extension card. Reload the ordinary webpages you want to capture so they get fresh content scripts. <a href="https://developer.chrome.com/docs/extensions/get-started/tutorial/hello-world">Chrome reload guidance</a>.</li>
+<li><strong>Verify before new work.</strong> Confirm version 0.2.1 and the unchanged ID, then compare every collection&#39;s count, notes/tags and representative links/provenance. Check a region, an export and persistence after an ordinary restart when convenient. If the ID changes, a collection disappears or an error appears, stop using it and preserve the before/after data. Do not uninstall or create a replacement collection to work around it.</li>
+</ol>
+<p>For code rollback, keep the same path and original extension entry; the preserved 0.2.0 code can be restored there and reloaded. Schema v1 and the model/storage core are unchanged, but a rollback should still be verified and is not a substitute for the saved state. Restoring raw state needs a separately reviewed recovery operation.</p>
+<p><strong>Store installation is a different transition.</strong> Do not assume a later Store install shares this path-derived development ID or transfers collections. Chrome documents a manifest public key for consistent development/Store identity; adopting it now would change the tested manifest and may change the current installation&#39;s ID. We are not adding a key or designing migration in this proposal. Decide that transition before replacing an installation with valuable collections. <a href="https://developer.chrome.com/docs/extensions/reference/manifest/key">Chrome identity guidance</a>.</p>
+<h2>Before Chrome Web Store submission</h2>
+<p>The website can launch as an honestly labeled development site while these checks remain open. I recommend completing the following before a public Store release. These are remaining checks, not claims of failure or new feature requirements.</p>
+<table>
+<thead>
+<tr>
+<th>Area</th>
+<th>Concrete human acceptance</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Everyday Chrome 0.2.1</td>
+<td>After the user-controlled update, check 2–3 real research/admin pages; native shortcut, Escape, side-panel opening/resizing, regional capture and hold mode. Confirm collections survive reload/restart. The existing human report covers only 0.2.0.</td>
+</tr>
+<tr>
+<td>Actual permission UI</td>
+<td>On a disposable manual test profile, observe and record Allow and Deny for optional requests. Keep an allowed tab, denied tab and restricted page in one capture to check honest partial results. Do not revoke useful everyday-profile grants merely to generate evidence.</td>
+</tr>
+<tr>
+<td>Curation and actions</td>
+<td>Select all matches across pages, change filters/batches, remove/undo, group/ungroup, create bookmarks, and confirm opening count/cap. Keep this bounded to a few disposable links.</td>
+</tr>
+<tr>
+<td>Spreadsheet and accessibility</td>
+<td>Open a real exported workbook in Microsoft Excel; confirm separate fields, empty labels, Unicode and literal formula-like strings. Try keyboard-only and a screen reader in the actual panel/workbench.</td>
+</tr>
+<tr>
+<td>Supported environments</td>
+<td>Test Windows/Linux activation before asserting those behaviors are verified. Chrome 116 is declared, not tested. Limit claims to observed environments or test the claimed minimum. Real phones/non-Chromium site behavior remains separate.</td>
+</tr>
+</tbody></table>
+<p>For the later Store package: prepare an accurate single-purpose description, permission justifications, privacy declarations, contact/support details, suitable icons/screenshots and reviewer instructions using the public practice page. The existing ZIP is a candidate, not a Store-approved package. Owner registration, any one-time registration fee and two-step verification are owner actions; no credentials or settings changes are requested here. <a href="https://developer.chrome.com/docs/webstore/register">Registration</a>, <a href="https://developer.chrome.com/docs/webstore/using-api">account prerequisite</a>, <a href="https://developer.chrome.com/docs/webstore/cws-dashboard-listing">listing guidance</a>.</p>
+<p><strong>Local processing still needs truthful user-data disclosure.</strong> Links, source URLs, webpage labels and notes are handled even though they are not sent to a Link Meteor server. Use the eventual live privacy page, explain clipboard/downloads and browser bookmark sync, and do not simply select “no user data” because there is no telemetry. <a href="https://developer.chrome.com/docs/webstore/program-policies/user-data-faq">Chrome&#39;s local-data disclosure policy</a>.</p>
+<p>After those checks and a separate authorization, upload the verified package, complete listing/privacy/distribution details, and submit for review with <strong>deferred publication</strong> so passing review does not automatically publish. Actual public Store release remains an explicit owner decision. There is no Store submission or review result now. <a href="https://developer.chrome.com/docs/webstore/publish">Chrome submission and deferred publication</a>. Originality/name clearance remains unestablished as recorded in the approved alignment; this proposal does not supply legal clearance.</p>
+<h2>Evidence and preparation limits</h2>
+<p>This turn reran read-only package/source/site checks, protected-file fingerprints, ancestry and GitHub metadata checks. It also validates this report&#39;s exact prompt and responsive layout. It did not rerun the unchanged extension&#39;s full suites or establish new product/human acceptance. The actual prior results remain in <a href="../../audit-0.2.0/resume-01/REPORT.md">the completed audit</a> and <a href="../../ACCEPTANCE.md">ACCEPTANCE.md</a>: 27/27 browser checks, 8/8 extended checks, all eight practice keys, 4/4 regression checks, 3/3 revocation checks and independent seven-format reads. Optional grants succeeded under automation, but no driver-observed native Allow/Deny mechanism was established.</p>
+<p>No worker, product build, installer update, dependency installation or live publication was needed for this proposal. Only new proposal/evidence files are saved on the audit branch. No files outside this project were deleted. Disk remains about 97% full, with about 16 GiB available; only a small report-validation browser is used, without an extension or personal profile. Earlier screenshots are linked from the audit rather than duplicated. Current official references were checked on September 25, 2026; execution must recheck mutable settings and requirements.</p>
+<p>The accompanying handback states the final document commit and verified remote-backup status. <a href="VALIDATION.json">VALIDATION.json</a> records actual report checks and their limits. Copy/mobile-preview behavior is deliberately untested; the full next prompt remains readable without JavaScript.</p>
+<h2>Decision requested</h2>
+<p><strong>Approve the exact integration and manual development-site publication route above, while keeping Store submission and your installed-extension update deferred?</strong> This authorization is needed because your current instruction permits preparation only. If you approve, send the exact next prompt below; if you prefer integration only or want different timing, request that change instead. No action is taken merely because this report exists.</p>

@@ -1,0 +1,13 @@
+{
+  "startedAt": "2026-09-25T22:11:42.829Z",
+  "result": "FAIL",
+  "checks": [],
+  "limits": [
+    "Automated Chrome for Testing report layout only; no physical phone or in-app mobile preview acceptance.",
+    "Copy and clipboard intentionally not tested.",
+    "No extension or personal profile loaded. No new functional acceptance."
+  ],
+  "error": "AssertionError [ERR_ASSERTION]: Overflow 320\n\ntrue !== false\n\n    at file:///Users/noir/Documents/link-meteor/docs/publication-proposal/2026-09-25/validate.mjs:37:11",
+  "finishedAt": "2026-09-25T22:11:43.392Z",
+  "taskBrowserClosed": true
+}

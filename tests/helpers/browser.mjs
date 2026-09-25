@@ -24,7 +24,7 @@ export async function fixtureServer() {
   return {base,server,close:()=>new Promise(done=>server.close(done))};
 }
 
-export async function launch(profile='acceptance',{headless=true}={}) {
+export async function launch(profile='acceptance',{headless=true,scale=1}={}) {
   await mkdir(scratch,{recursive:true});await mkdir(evidence,{recursive:true});
   const extension=resolve(root,'dist');
   const hash=createHash('sha256');
@@ -35,7 +35,7 @@ export async function launch(profile='acceptance',{headless=true}={}) {
   await writeFile(fingerprint,buildHash+'\n');
   const context=await playwright.chromium.launchPersistentContext(resolve(scratch,profile),{
     executablePath:playwright.chromium.executablePath(),headless,
-    viewport:{width:1440,height:1000},acceptDownloads:true,
+    viewport:{width:1440,height:1000},deviceScaleFactor:scale,acceptDownloads:true,
     env:{...process.env,TMPDIR:scratch},
     args:[`--disable-extensions-except=${extension}`,`--load-extension=${extension}`,'--disable-background-networking','--disable-component-update',`--disk-cache-dir=${resolve(scratch,profile+'-cache')}`]
   });

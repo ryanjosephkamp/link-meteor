@@ -240,6 +240,10 @@ function renderLinks() {
   $('selection-count').textContent = ui.selectedIds.size ? `${count(ui.selectedIds.size)} selected · ${count(selectedOnPage)} on this page` : '';
   $('selection-count').classList.toggle('has-selection', !!ui.selectedIds.size);
   $('clear-selection').hidden = !ui.selectedIds.size;
+  const viewIds = result.rows.reduce((n, row) => n + row.occurrenceIds.length, 0);
+  const selectedInView = result.rows.reduce((n, row) => n + row.occurrenceIds.filter((id) => ui.selectedIds.has(id)).length, 0);
+  $('select-everything').hidden = !(pageCount > 1 && selectedOnPage === pageIds.length && pageIds.length && selectedInView < viewIds);
+  $('select-everything').textContent = `Select all ${count(viewIds)}`;
   $('remove').disabled = !ui.selectedIds.size;
   $('select-all').checked = !!pageIds.length && pageIds.every((id) => ui.selectedIds.has(id));
   $('select-all').indeterminate = pageIds.some((id) => ui.selectedIds.has(id)) && !$('select-all').checked;
@@ -933,6 +937,7 @@ function bindEvents() {
   });
   $('select-all').addEventListener('change', (event) => { for (const id of ui.rows.slice(ui.page * PAGE_SIZE, (ui.page + 1) * PAGE_SIZE).flatMap((row) => row.occurrenceIds)) event.target.checked ? ui.selectedIds.add(id) : ui.selectedIds.delete(id); renderLinks(); });
   $('clear-selection').addEventListener('click', () => { ui.selectedIds.clear(); renderLinks(); $('select-all').focus(); });
+  $('select-everything').addEventListener('click', () => { for (const row of ui.rows) for (const id of row.occurrenceIds) ui.selectedIds.add(id); renderLinks(); $('select-all').focus(); show(`Selected all ${plural(ui.selectedIds.size, 'link')} in this view.`); });
   $('page-prev').addEventListener('click', () => { if (ui.page > 0) { ui.page--; renderLinks(); $('review').scrollIntoView({ block: 'start' }); } });
   $('page-next').addEventListener('click', () => { if ((ui.page + 1) * PAGE_SIZE < ui.rows.length) { ui.page++; renderLinks(); $('review').scrollIntoView({ block: 'start' }); } });
   $('remove').addEventListener('click', () => action(async () => { const ids = [...ui.selectedIds]; if (!ids.length) return; await mutate({ type: 'links.remove', ids }); ui.selectedIds.clear(); renderLinks(); show(`Removed ${plural(ids.length, 'link')}.`, 'notice', { actionLabel: 'Undo', onAction: undo }); }));

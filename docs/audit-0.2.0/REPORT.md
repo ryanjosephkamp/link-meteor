@@ -54,7 +54,7 @@ The loaded-browser checks used the installed **Chrome for Testing 151.0.7922.34 
 | Site spreadsheet | **Pass, 6 rows** | Actual preview download independently matches the six source anchors/URLs, including the empty anchor. |
 | Site/source/package consistency | **Pass** | Actual ZIP contents match src; site ZIP, hash and copied export modules match the candidate. |
 
-Evidence lives in [artifacts/audit-0.2.0](../../artifacts/audit-0.2.0/). The [acceptance map](../ACCEPTANCE.md) identifies each suite and its qualifications. Tests/design-preview.mjs and overlay-preview.mjs simulations were not used as acceptance. Opus’s historical receipts remain intact and are not counted as Astra’s reruns.
+Evidence lives in [artifacts/audit-0.2.0](../../artifacts/audit-0.2.0/). The [acceptance map](../ACCEPTANCE.md) identifies each suite and its qualifications. Tests/design-preview.mjs and overlay-preview.mjs simulations were not used as acceptance. Opus’s historical receipts remain intact and are not counted as Astra’s reruns. The report itself passed 320/390/412/1440px checks with and without JavaScript, exact prompt parity and three decoded embedded images, with no remote requests. Updated install copy passed six additional width/theme checks. Mobile preview and Copy were not tested.
 
 A screenshot retry initially reused a profile whose synthetic occurrence IDs already existed; the reducer correctly prevented reinserting those IDs. The diagnostic is retained. A fresh profile passed, and screenshots now capture the completed UI animation. This was a test setup issue, not a product repair.
 
@@ -90,7 +90,7 @@ For a later update, export collections first and preserve the existing unpacked 
 
 ## Execution and backup receipt
 
-Report prepared **2026-09-25 21:28:06 UTC**, **25 minutes 9 seconds** after the recorded start. Source checkpoint `e8e69cf` was committed, pushed and independently matched to the remote audit branch. The complete artifact/evidence checkpoint and closeout will be committed and pushed on that same branch before handback; the final chat identifies the verified delivery tip. No protected branch or tag was moved. See [CLOSEOUT.json](CLOSEOUT.json), [LEDGER.md](LEDGER.md) and [resource checks](RESOURCES.json).
+Closeout recorded **2026-09-25 21:29:48 UTC**, **26 minutes 51 seconds** after the recorded start. Complete candidate/evidence/report checkpoint [`2bac1d9`](https://github.com/ryanjosephkamp/link-meteor/commit/2bac1d9c1d3501aa6b6de283ad8865398bc497c9) was committed, pushed and independently matched to the remote audit branch. Source checkpoint `e8e69cf` was backed up earlier. This closeout metadata is a subsequent documentation-only update on [codex/audit-0.2.0](https://github.com/ryanjosephkamp/link-meteor/tree/codex/audit-0.2.0); it does not change packaged source or test results. The final delivery tip is verified in the accompanying chat. No protected branch or tag was moved. See [CLOSEOUT.json](CLOSEOUT.json), [LEDGER.md](LEDGER.md) and [resource checks](RESOURCES.json).
 
 Workers: `/root/audit_workbench` requested and accepted **gpt-6-sol xhigh**; `/root/audit_site` requested and accepted **gpt-6-sol high**, both with no history fork or nested workers. They owned disjoint review/repair areas. Both completed; their writes were reconciled. Worker source claims, Astra’s actual checks and remaining human acceptance are separated above.
 

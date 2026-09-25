@@ -1,9 +1,9 @@
 {
-  "started": "2026-09-25T19:51:05.244Z",
+  "started": "2026-09-25T20:13:33.236Z",
   "checks": [
     {
       "name": "5,037 real page occurrences captured; only 100 top-level rows and no closed details rendered",
-      "elapsedMs": 592
+      "elapsedMs": 726
     },
     {
       "name": "Selection persists across pages and unselected export includes all 5,037 rows"
@@ -31,5 +31,5 @@
     "Single-machine synthetic measurement, not a cross-device performance guarantee."
   ],
   "result": "PASS",
-  "finished": "2026-09-25T19:51:12.459Z"
+  "finished": "2026-09-25T20:13:41.333Z"
 }

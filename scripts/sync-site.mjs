@@ -22,7 +22,9 @@ const sha = (bytes) => createHash('sha256').update(bytes).digest('hex');
 // Header and footer are authored once in site/index.html and copied into every other page.
 const master = await readFile(resolve(root, 'site/index.html'), 'utf8');
 const block = (html, name) => { const start = html.indexOf(`<!-- ${name} -->`), end = html.indexOf(`<!-- /${name} -->`); if (start < 0 || end < 0) throw new Error(`Missing ${name} markers`); return [start, end + `<!-- /${name} -->`.length]; };
-const pages = (await readdir(resolve(root, 'site'))).filter((name) => name.endsWith('.html') && name !== 'index.html');
+// 404.html and the embedded practice frame deliberately have no site chrome.
+const standalone = new Set(['index.html', '404.html', 'practice-frame.html']);
+const pages = (await readdir(resolve(root, 'site'))).filter((name) => name.endsWith('.html') && !standalone.has(name));
 const problems = [];
 for (const [from, to] of pairs) {
   const source = await readFile(resolve(root, from));

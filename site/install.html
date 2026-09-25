@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Install · Link Meteor</title>
+  <meta name="description" content="How to install the Link Meteor development build in desktop Chrome, update it, and remove it.">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#0e1526">
+  <link rel="icon" href="assets/img/icon.svg" type="image/svg+xml">
+  <link rel="icon" href="assets/img/icon-32.png" sizes="32x32" type="image/png">
+  <link rel="preload" href="assets/fonts/atkinson-hyperlegible-next.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="assets/css/site.css">
+  <script type="module" src="assets/js/site.js"></script>
+</head>
+<body>
+  <!-- site-header -->
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="site-header">
+    <div class="wrap">
+      <a class="logo" href="./" aria-label="Link Meteor home">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><defs><linearGradient id="logo-trail" x1="15.7" y1="8.3" x2="4" y2="20" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#c3f344"/><stop offset="1" stop-color="#c3f344" stop-opacity=".2"/></linearGradient></defs><rect width="24" height="24" rx="6.5" fill="#1b2336"/><g transform="translate(12 12) scale(.78) translate(-12 -12)"><path d="M13.2 4.6 19.4 10.8 4.6 20.4Q3.6 19.4 4.6 18.4Z" fill="url(#logo-trail)"/><circle cx="16.3" cy="7.7" r="4.4" fill="#c3f344"/></g></svg>
+        <span>Link Meteor</span>
+      </a>
+      <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-nav"><svg aria-hidden="true"><use href="assets/img/icons.svg#menu"/></svg>Menu</button>
+      <nav class="nav" id="site-nav" aria-label="Main">
+        <ul>
+          <li><a href="./#how">How it works</a></li>
+          <li><a href="install.html">Install</a></li>
+          <li><a href="guide.html">Guide</a></li>
+          <li><a href="practice.html">Practice page</a></li>
+          <li><a href="privacy.html">Privacy</a></li>
+          <li><a class="gh" href="https://github.com/ryanjosephkamp/link-meteor">Source<svg aria-hidden="true"><use href="assets/img/icons.svg#external"/></svg><span class="sr-only"> (GitHub)</span></a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+  <!-- /site-header -->
+
+  <main id="main">
+    <section class="page-hero night" aria-labelledby="page-title">
+      <div class="wrap">
+        <p class="status-chip">Development build · Not yet in the Chrome Web Store</p>
+        <h1 id="page-title">Install Link Meteor</h1>
+        <p>Until Link Meteor is published in the Chrome Web Store, you can load the development build into desktop Chrome yourself. It takes about two minutes and needs no account.</p>
+      </div>
+    </section>
+
+    <div class="wrap doc">
+      <nav class="toc" aria-labelledby="toc-title">
+        <h2 id="toc-title">On this page</h2>
+        <ol>
+          <li><a href="#before">Before you start</a></li>
+          <li><a href="#download">Download</a></li>
+          <li><a href="#load">Load it into Chrome</a></li>
+          <li><a href="#first">First capture</a></li>
+          <li><a href="#shortcut">Keyboard shortcut</a></li>
+          <li><a href="#update">Update or remove</a></li>
+          <li><a href="#trouble">Troubleshooting</a></li>
+        </ol>
+      </nav>
+      <div class="doc-body">
+        <section aria-labelledby="before">
+          <h2 id="before">Before you start</h2>
+          <p>Link Meteor is built for <strong>desktop Google Chrome</strong>. It doesn't run on phones or tablets, and there are no Firefox or Safari versions.</p>
+          <div class="note warn"><svg aria-hidden="true"><use href="assets/img/icons.svg#alert"/></svg><div><p><strong>What has been tested so far.</strong> This build has been exercised in automated Chrome for Testing on macOS, on synthetic test pages. It declares Chrome <span data-build="minimumChromeVersion">116</span> as its oldest supported version, but that version hasn't been tested, and neither have Windows, Linux or everyday Chrome installs. If something doesn't work for you, please <a href="https://github.com/ryanjosephkamp/link-meteor/issues">report it</a>.</p></div></div>
+          <p>A development build is installed with Chrome's <em>Developer mode</em>. That's a normal Chrome setting for loading extensions from a folder on your computer; it doesn't change anything else about your browser.</p>
+        </section>
+
+        <section aria-labelledby="download">
+          <h2 id="download">Download</h2>
+          <div class="download-card">
+            <p><strong>Link Meteor <span data-build="version">0.2.0</span></strong>, development build · <span data-build="size">187 KB ZIP</span></p>
+            <a class="btn btn-ink" href="downloads/link-meteor-0.2.0.zip" data-build-href="file" download><svg aria-hidden="true"><use href="assets/img/icons.svg#download"/></svg>Download <span data-build="filename">link-meteor-0.2.0.zip</span></a>
+            <p class="hash">SHA-256 <code data-build="sha256">1cb1b778a91180709455e273eb9b0f1cbefe758a6e43d01156729c14330fc197</code></p>
+          </div>
+          <p>To check the file, compare its SHA-256 with the value above. On a Mac, run <code>shasum -a 256</code> followed by the file's path in Terminal; on Windows, run <code>certutil -hashfile</code> with the path and <code>SHA256</code> in Command Prompt.</p>
+          <h3>Or build it from source</h3>
+          <p>The source is on <a href="https://github.com/ryanjosephkamp/link-meteor">GitHub</a>. With Node.js 22 or newer, run <code>npm run build</code> in the project folder; there are no packages to install. Then load the <code>dist</code> folder in the next step.</p>
+        </section>
+
+        <section aria-labelledby="load">
+          <h2 id="load">Load it into Chrome</h2>
+          <ol class="steps">
+            <li><div><strong>Unzip the download into a folder you'll keep.</strong> Chrome loads the extension from that folder every time it starts, so don't delete or move it afterward.</div></li>
+            <li><div><strong>Open <code>chrome://extensions</code>.</strong> Type it into the address bar and press Enter.</div></li>
+            <li><div><strong>Turn on Developer mode.</strong> The switch is at the top right of the Extensions page.</div></li>
+            <li><div><strong>Choose Load unpacked</strong> and select the unzipped folder, the one that contains <code>manifest.json</code>.</div></li>
+            <li><div><strong>Pin it.</strong> Open the puzzle-piece menu in Chrome's toolbar and pin Link Meteor so its icon stays visible.</div></li>
+          </ol>
+          <p>Chrome may occasionally remind you that developer-mode extensions are turned on. That reminder is expected for any extension loaded this way.</p>
+        </section>
+
+        <section aria-labelledby="first">
+          <h2 id="first">First capture</h2>
+          <ol class="steps">
+            <li><div><strong>Open the <a href="practice.html">practice page</a></strong>, a page of synthetic links made for trying Link Meteor.</div></li>
+            <li><div><strong>Click the Link Meteor icon</strong> to open its side panel beside the page.</div></li>
+            <li><div><strong>Press <kbd>⌥</kbd> <kbd>⇧</kbd> <kbd>L</kbd></strong> on a Mac, or <kbd>Alt</kbd> <kbd>Shift</kbd> <kbd>L</kbd> on Windows and Linux, then drag across the reading list. Choose <em>Add to collection</em> and watch the links arrive in the panel.</div></li>
+          </ol>
+          <figure class="shot">
+            <img src="assets/img/shot-sidepanel.webp" width="1600" height="999" loading="lazy" alt="The practice page on the left and Link Meteor's side panel on the right, showing the collection Urban heat islands: sources with 92 links, capture options, a search box and the first captured links with their URLs and source page.">
+            <figcaption>Two actual screenshots side by side: the practice page, and the workbench rendered at side-panel width. Chrome's own side-panel frame isn't shown.</figcaption>
+          </figure>
+          <p>Chrome will ask for extra permission only if you use a feature that needs it, such as capturing several tabs at once. The <a href="privacy.html#permissions">privacy page</a> lists every permission and why it's asked for.</p>
+        </section>
+
+        <section aria-labelledby="shortcut">
+          <h2 id="shortcut">Keyboard shortcut</h2>
+          <p>The default shortcut for selecting a region is <kbd>⌥</kbd> <kbd>⇧</kbd> <kbd>L</kbd> on a Mac and <kbd>Alt</kbd> <kbd>Shift</kbd> <kbd>L</kbd> elsewhere. If another extension already uses it, Chrome leaves Link Meteor's shortcut unassigned, and the side panel says <em>Not set</em>.</p>
+          <p>To change it, open <code>chrome://extensions/shortcuts</code>, or choose <em>Change</em> next to the shortcut in Link Meteor's side panel. You can always use the <em>Select a region</em> button or Chrome's right-click menu instead.</p>
+        </section>
+
+        <section aria-labelledby="update">
+          <h2 id="update">Update or remove</h2>
+          <h3>Update</h3>
+          <p>Download the new build and replace the contents of your Link Meteor folder with it. Then open <code>chrome://extensions</code>, press the reload button on Link Meteor's card, and reload any pages you had open. Your collections are kept.</p>
+          <h3>Remove</h3>
+          <p>Choose <em>Remove</em> on Link Meteor's card in <code>chrome://extensions</code>. <strong>This deletes your saved collections</strong>, because they are stored only in this browser. Export anything you want to keep first.</p>
+        </section>
+
+        <section aria-labelledby="trouble">
+          <h2 id="trouble">Troubleshooting</h2>
+          <dl class="defs">
+            <dt>Nothing happens on a page</dt><dd>Chrome doesn't let extensions run on its own pages (like <code>chrome://</code> addresses), the Chrome Web Store or incognito windows. On ordinary pages that were already open when you installed or updated, reload the page once.</dd>
+            <dt>The shortcut doesn't respond</dt><dd>Check <code>chrome://extensions/shortcuts</code>. Another extension or your operating system may be using the same keys.</dd>
+            <dt>Some links weren't captured</dt><dd>Links inside frames from other sites and closed shadow roots can't be read, and content that hasn't loaded yet isn't there. The capture report says when frames were skipped. See <a href="guide.html#limits">limits and coverage</a>.</dd>
+            <dt>A multi-tab capture says Access denied</dt><dd>Chrome asked whether Link Meteor could read those sites, and the request was declined or the permission was later removed. Capture again to be asked again.</dd>
+          </dl>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <!-- site-footer -->
+  <footer class="site-footer">
+    <div class="wrap">
+      <div>
+        <a class="logo" href="./" aria-label="Link Meteor home"><svg viewBox="0 0 24 24" aria-hidden="true"><defs><linearGradient id="foot-trail" x1="15.7" y1="8.3" x2="4" y2="20" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#c3f344"/><stop offset="1" stop-color="#c3f344" stop-opacity=".2"/></linearGradient></defs><rect width="24" height="24" rx="6.5" fill="#1b2336"/><g transform="translate(12 12) scale(.78) translate(-12 -12)"><path d="M13.2 4.6 19.4 10.8 4.6 20.4Q3.6 19.4 4.6 18.4Z" fill="url(#foot-trail)"/><circle cx="16.3" cy="7.7" r="4.4" fill="#c3f344"/></g></svg><span>Link Meteor</span></a>
+        <p>Capture the trail. Keep the source. A free Chrome extension with no account, no servers and no tracking.</p>
+      </div>
+      <div><h2>Use it</h2><ul><li><a href="install.html">Install</a></li><li><a href="guide.html">Guide</a></li><li><a href="practice.html">Practice page</a></li></ul></div>
+      <div><h2>About</h2><ul><li><a href="privacy.html">Privacy</a></li><li><a href="https://github.com/ryanjosephkamp/link-meteor">Source on GitHub</a></li><li><a href="https://github.com/ryanjosephkamp/link-meteor/issues">Report a problem</a></li></ul></div>
+      <p class="fine">Development build. Not yet published in the Chrome Web Store. This site uses no cookies, analytics or third-party requests; its fonts are Atkinson Hyperlegible Next and Mono, served from this site under the SIL Open Font License.</p>
+    </div>
+  </footer>
+  <!-- /site-footer -->
+</body>
+</html>

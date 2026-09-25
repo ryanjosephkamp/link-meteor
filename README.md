@@ -4,19 +4,19 @@ Capture the trail. Keep the source.
 
 Link Meteor is a free Chrome extension for collecting links with their **actual anchor text and URL in separate fields**, reviewing their sources, and exporting a useful research collection. It has no account, ads, telemetry, paid tier, or backend dependency.
 
-This repository contains the first working Chrome baseline. It has not been published to the Chrome Web Store. Firefox, Safari, AI features, and the GitHub Pages website are deferred.
+This repository contains the Chrome extension (development build 0.2.0) and its website in `site/`. The extension has not been published to the Chrome Web Store, and the website has not been deployed. Firefox, Safari and AI features are deferred.
 
 ## Try the development build
 
 1. Run `npm run build` with Node 22 or newer. There are no package dependencies to install.
 2. Open `chrome://extensions` in Chrome and enable Developer mode for local extension development.
 3. Choose **Load unpacked** and select this repository's `dist` directory.
-4. Open an ordinary webpage. Use the extension toolbar action for the side panel, or **Option+Shift+L** on Mac / **Alt+Shift+L** on Windows and Linux to select a region.
-5. Drag across links, then choose **Copy text + URL**, **Add to collection**, or **Review**. Escape cancels selection. You can scroll while dragging and append another region.
+4. Open an ordinary webpage (the site's `practice.html` is made for this). Use the extension toolbar action for the side panel, or **Option+Shift+L** on Mac / **Alt+Shift+L** on Windows and Linux to select a region.
+5. Drag across links, then choose **Copy text + URL**, **Add to collection**, **Review**, or **Add another region**. The card names the collection the links will go to. Escape cancels selection. You can scroll while dragging.
 
 Chrome manages shortcut assignments at `chrome://extensions/shortcuts`. A shortcut can conflict with another extension or system shortcut; use **Change shortcut** in Link Meteor to inspect it. Reload the extension at `chrome://extensions` after rebuilding, then reload test webpages so their injected script is current. If an automation profile caches an old worker, use a new task-owned test profile instead of treating that result as current-build evidence.
 
-The ZIP under `artifacts/` is an unpacked development package: extract it to a folder and select that folder with **Load unpacked**. It is not a store installer.
+The ZIPs under `artifacts/` are unpacked development packages (`link-meteor-0.2.0.zip` is current; `0.1.0` is the pre-design baseline): extract one to a folder and select that folder with **Load unpacked**. They are not store installers.
 
 ## What is included
 
@@ -27,7 +27,7 @@ The ZIP under `artifacts/` is an unpacked development package: extract it to a f
 - Reversible unique-URL and unique-URL-plus-anchor views. Originals and different labels/sources remain stored; expand a group to inspect them.
 - Real `.xlsx`, CSV, TSV, Markdown, HTML, JSON and URL-list downloads; clipboard columns/URLs/Markdown; bookmark folders; opening at most 20 HTTP(S) URLs per confirmed batch.
 - Ordered export columns. With no selection, exports include the entire filtered view across pages. When selection exists, exports use selected occurrences that still match the filters. JSON preserves every occurrence in each exported group. Other grouped exports use the displayed representative.
-- Side panel and full workbench, light/dark appearance, keyboard controls, visible focus and reduced-motion styling.
+- Side panel (compact views for links, collections and site settings, and export, with a bottom dock showing the exact export target) and full workbench (three columns, with anchor text, URL and source as separate columns), light/dark appearance, keyboard controls, visible focus and reduced-motion styling. The design system is documented in `docs/DESIGN.md`.
 
 ## Fidelity and coverage
 
@@ -61,14 +61,28 @@ node tests/interactive.mjs
 # Press Return in that terminal to close only the test browser/server.
 node tests/browser.mjs
 node tests/extended-browser.mjs
+node tests/site-browser.mjs        # practice-page answer keys and site screenshots
+node tests/permission-browser.mjs  # run last: revokes the synthetic grant
 ```
+
+For a changed build, create a new task-owned profile and prepare its grants through the product's own permission paths with `LINK_METEOR_TEST_PROFILE=<new-name> node tests/prepare-grants.mjs` (a visible test browser). `node tests/visual-browser.mjs` needs no grants (`LINK_METEOR_VISUAL_PROFILE` picks its profile). `tests/design-preview.mjs` and `tests/overlay-preview.mjs` render the UI with simulated extension APIs for design iteration only; they are not acceptance evidence.
 
 Tests store isolated profiles and cache under `.scratch/acceptance-final`, bind the local synthetic fixture server to `127.0.0.1:52478`, and fail if that port is occupied. `LINK_METEOR_TEST_PROFILE` and `LINK_METEOR_FIXTURE_PORT` can change these task-owned resources. The browser suite **resets collections in its selected test profile**, so never point it at a personal browser profile. Native permission grants are part of preparation, not silently forged by the tests. The harness records a build fingerprint and refuses reuse after packaged bytes change; prepare a fresh named test profile for a changed build. Headless optional-permission behavior was not accepted as native evidence.
 
 `tests/xlsx-fixture.mjs` and `tests/verify-workbook.py` independently check OOXML and, when available, openpyxl parsing. See `docs/ACCEPTANCE.md` for current executed results, commands, native checks and limits. A declared Chrome minimum is not proof of testing that historical version. Everyday Chrome, other operating systems, screen-reader use and Excel application behavior still need human review.
 
+## Website
+
+`site/` is a static GitHub Pages site (home with an interactive demo and a live export preview, install, guide, privacy, and a practice page with verified answer keys). It makes no third-party requests and self-hosts its fonts. See `site/README.md` for structure, checks and the manual deployment steps; `.github/workflows/pages.yml` runs only when triggered by hand. Nothing has been deployed.
+
+```sh
+node scripts/sync-site.mjs          # copy the packaged ZIP, export modules and icons into site/
+node scripts/sync-site.mjs --check  # verify the site matches the build
+node tests/site-check.mjs           # pages × widths × themes, links, structure, contrast, demo
+```
+
 ## Privacy and later design work
 
-Read [the privacy explanation](docs/PRIVACY.md) and [the accepted product scope](docs/alignment/2026-09-25/ALIGNMENT.md). The Opus package under `docs/opus-handoff/` separates extension refinement from the future GitHub Pages site. The user initiates that work; no website is implemented or deployed by this iteration.
+Read [the privacy explanation](docs/PRIVACY.md) and [the accepted product scope](docs/alignment/2026-09-25/ALIGNMENT.md). The design pass is summarized in `docs/opus-handoff/OPUS_RETURN.md`, with product intent in `docs/PRODUCT.md` and the visual system in `docs/DESIGN.md`.
 
-The implementation, icons and interface are original. The reference product informed functional requirements; no third-party code, branding or assets were copied. Trademark/name clearance has not been established.
+The implementation, icons, brand mark and interface are original; the site's fonts are Atkinson Hyperlegible Next and Mono under the SIL Open Font License (licenses in `site/assets/fonts/`). The reference product informed functional requirements; no third-party code, branding or assets were copied. Trademark/name clearance has not been established.

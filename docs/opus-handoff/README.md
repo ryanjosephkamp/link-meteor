@@ -1,5 +1,7 @@
 # Link Meteor — Opus 5.5 handoff
 
+> **Returned September 25, 2026.** The design pass is on branch `claude/design-v1`. Start with [OPUS_RETURN.md](OPUS_RETURN.md); the audit prompt is [RETURN_TO_ASTRA_FROM_OPUS.txt](RETURN_TO_ASTRA_FROM_OPUS.txt). The text below is the original handoff and describes the 0.1.0 baseline.
+
 Status: a functionally checked Chrome development baseline, ready for the user's review and your design work. This is not a Chrome Web Store release. The user will initiate Claude Code; no Claude session was launched by Codex.
 
 ## Identity and starting point

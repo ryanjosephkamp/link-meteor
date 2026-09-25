@@ -4,6 +4,12 @@ http://127.0.0.1:52478/papers/attention.pdf
 http://127.0.0.1:52478/appendix
 http://127.0.0.1:52478/visible
 http://127.0.0.1:52478/wrapped
+http://127.0.0.1:52478/wrapped
+http://127.0.0.1:52478/formula?value=(literal)
+http://127.0.0.1:52478/html
+mailto:research@example.org
+tel:+15550123
+http://127.0.0.1:52478/shadow
 http://127.0.0.1:52478/catalog/0
 http://127.0.0.1:52478/catalog/1
 http://127.0.0.1:52478/catalog/2

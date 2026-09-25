@@ -5,6 +5,12 @@ Download PDF,http://127.0.0.1:52478/papers/attention.pdf
 ,http://127.0.0.1:52478/appendix
 Visible label,http://127.0.0.1:52478/visible
 A long wrapped anchor with several lines of visible text,http://127.0.0.1:52478/wrapped
+A long wrapped anchor with several lines of visible text,http://127.0.0.1:52478/wrapped
+"'=SUM(1,2)",http://127.0.0.1:52478/formula?value=(literal)
+<img src=x onerror=alert(1)>,http://127.0.0.1:52478/html
+Email the research team,mailto:research@example.org
+Call the lab,tel:+15550123
+Open shadow source,http://127.0.0.1:52478/shadow
 Catalog source 0,http://127.0.0.1:52478/catalog/0
 Catalog source 1,http://127.0.0.1:52478/catalog/1
 Catalog source 2,http://127.0.0.1:52478/catalog/2

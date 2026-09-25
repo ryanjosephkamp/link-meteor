@@ -6,13 +6,13 @@
     "Anchor text",
     "URL"
   ],
-  "actual_download_rows": 53,
-  "csv_rows": 53,
-  "json_rows": 53,
+  "actual_download_rows": 59,
+  "csv_rows": 59,
+  "json_rows": 59,
   "exact_anchor_url_pairs": true,
   "csv_matches_json_after_formula_prefix": true,
   "empty_anchor_rows": 2,
-  "formula_like_rows": 3,
+  "formula_like_rows": 4,
   "xlsx_all_string_cells": true,
   "excel_application_tested": false
 }

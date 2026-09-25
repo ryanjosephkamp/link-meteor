@@ -34,4 +34,10 @@ Copying places the chosen content on the operating-system clipboard. Downloads w
 
 A private admin URL can contain sensitive information even without page content. Link Meteor preserves the original rather than silently modifying it, so review exports before sharing. Captured labels are treated as data, escaped in HTML/Markdown and protected against formula interpretation in spreadsheet exports.
 
+The region overlay asks the background for the active collection's name and link count (`collection.active`) so its card can say where links will be saved. This stays inside the extension.
+
+## The website
+
+The project site in `site/` (not yet deployed) has its own privacy page. It uses no cookies, analytics, advertising or third-party requests; fonts are self-hosted; its demo and export preview run entirely in the visitor's browser. If it is hosted on GitHub Pages, GitHub operates those servers under its own privacy statement.
+
 This document describes the current development build. Chrome Web Store disclosure forms and publication review are later steps; the extension has not been submitted or published.

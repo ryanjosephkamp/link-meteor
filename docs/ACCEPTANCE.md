@@ -1,4 +1,37 @@
-# Iteration 01 acceptance map
+# Acceptance map
+
+## 0.2.0 design pass (Claude Opus 5.5), September 25, 2026
+
+Status: redesigned extension and new website, functionally re-checked on the actual packaged build. Ready for the user's review and GPT-6 Astra's final functionality audit. Not a store release, not deployed, not human acceptance.
+
+**Build under test:** `artifacts/link-meteor-0.2.0.zip`, 191,513 bytes, SHA-256 `1cb1b778a91180709455e273eb9b0f1cbefe758a6e43d01156729c14330fc197`, 13 files, packaged from commit `7c9ca4a` with `sourceFilesGitDirty: false` (per-file hashes in `artifacts/link-meteor-0.2.0.sha256.json`). Compared with baseline `a6dddac`: `core/model.js`, `core/export.js` and `core/xlsx.js` are byte-identical; the manifest changed only its version, with identical permissions; `background.js` adds the read-only `collection.active` message; `content/capture.js` changes overlay markup/styles and adds the destination and preview lines; the workbench UI and icons are rebuilt.
+
+**Profiles:** fresh task-owned `.scratch/design-accept-2` (functional suites, same build fingerprint throughout) and `.scratch/design-visual-2` (visual suite). Optional grants (tabs, `http://127.0.0.1:52478/*`, bookmarks) were established by `tests/prepare-grants.mjs` through the product's own UI permission requests in headed, Playwright-launched Chrome for Testing. Each request resolved as granted within seconds without any click from the driver; whether Chrome auto-accepted under automation or a person clicked was not established. Treat these grants as automation-established, **not** native Allow/Deny acceptance. The permission-request code and its call order in click handlers are unchanged from the baseline.
+
+| Suite (actual 0.2.0 build) | Result | Notes |
+| --- | --- | --- |
+| `npm test` | 23/23 pass | The UI race harness now also supplies `renderCaptureButton`, `originAccess` and the real `count`/`plural` helpers extracted from the product file. |
+| `tests/browser.mjs`, headed | 27/27 pass | Same checks as the baseline. Path changes only: open the collection editor before notes, open View before grouping, and wait up to 2 s for the live badge to reach exactly 5 (pointer moves are frame-aligned; the count saved at release is asserted exactly as before). |
+| `tests/extended-browser.mjs`, headed | 8/8 pass | The opener is now an inline confirmation: asserts the exact count text and that no tab opens before confirming. Selection wording is `100 selected · 0 on this page`. |
+| `tests/site-browser.mjs`, headed | pass | New. Real overlay drags on the site's practice page match every published answer key: reading 7, results 9, tickets 10, products 12, tricky 7, scrolling archive 15, same-origin frame 3, shadow root + late-loaded 5. Field checks: formula/markup labels kept as text, icon-only link has empty anchor text and a separate ARIA label, hidden text and hidden/script links excluded, frame and shadow provenance present. Whole-page capture found 85 links. Mixed five-tab report: success ×3, denied, unsupported. |
+| `tests/permission-browser.mjs`, headed, run last | 3/3 pass | Real revocation prunes the hold origin and registration, stops the loaded gesture, and makes the next capture a denied result. |
+| `tests/visual-browser.mjs`, headless | pass | No horizontal overflow at 320/390/412/900/1440 and in compact collections/export views; zero unlabeled visible controls; focus ring on first Tab; 22 measured text pairs ≥ 4.5:1 in light and dark (lowest 5.1); a 120-character collection name fits at 320/390/1440. |
+| `python3 tests/verify-downloads.py` | pass | New reproducible reader: openpyxl reads the actual downloaded XLSX; all 59 anchor/URL pairs equal JSON and CSV (after the formula apostrophe); every cell is a string; 2 empty anchors, 3 formula-like labels. |
+| `tests/xlsx-fixture.mjs` + `verify-workbook.py` | pass | Unchanged export core. |
+| `tests/site-check.mjs` | pass | New. 5 pages × 5 widths × light/dark served under `/link-meteor/`: no overflow, console errors, failed or off-site requests; one h1, landmarks, skip link, alt text, named controls and no skipped heading levels; all internal links and anchors resolve; lowest measured text contrast 4.63:1; 404 page at a nested path; keyboard mobile menu; demo drag/select-all; export preview CSV/Markdown/XLSX from the real export module. |
+| `node scripts/sync-site.mjs --check` | pass | The site's ZIP, SHA-256, export modules, icons and shared header/footer match the build. |
+
+Screenshots of real states are in `artifacts/evidence/`: `workbench-desktop.png`, `workbench-review.png` (grouped with details), `workbench-dark.png`, `workbench-narrow.png`, `panel-dark.png`, `panel-export.png`, `panel-collections.png`, `panel-empty.png`, `region-drag.png`, `permission-denied.png`, `site-overlay-drag.png`, `site-overlay-card.png`, `site-workbench.png`, `site-panel.png`, `site-panel-dark.png`, `site-report.png`, and the site's own `site-home*.png`, `site-install.png`, `site-practice-page.png`. Panel-width images render the workbench page in a tab at side-panel width; Chrome's native side-panel frame is not captured.
+
+**Still unverified (human acceptance):** everyday Google Chrome; the native permission Allow/Deny sheets; the native side panel's real width and resizing; Windows/Linux shortcuts; Microsoft Excel itself; screen readers; real research and admin sites; Chrome 116; the deployed site on GitHub Pages; the site on real phones and non-Chromium browsers.
+
+---
+
+## Iteration 01 baseline (historical)
+
+The map below describes baseline `a6dddac` (0.1.0). It remains useful context; the 0.2.0 results above supersede it for the current build.
+
+### Iteration 01 acceptance map
 
 Status: functionally checked Chrome baseline for user review and the planned Opus design pass. Not a store release, not human acceptance, and not a claim of universal browser/site compatibility.
 

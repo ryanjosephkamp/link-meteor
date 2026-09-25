@@ -1,5 +1,5 @@
 {
-  "started": "2026-09-25T19:50:47.546Z",
+  "started": "2026-09-25T20:13:14.436Z",
   "browser": "Installed Chrome for Testing via Playwright; real unpacked extension",
   "checks": [
     {
@@ -41,7 +41,7 @@
     {
       "name": "Nested wheel scrolling extends the selection and retains earlier matches",
       "status": "pass",
-      "selectedCount": 6
+      "selectedCount": 12
     },
     {
       "name": "Page scrolling during a drag retains selected links",
@@ -78,7 +78,7 @@
     {
       "name": "Seven actual downloaded formats checked, with separate fields, safe labels and preserved JSON provenance",
       "status": "pass",
-      "rows": 53
+      "rows": 59
     },
     {
       "name": "Export column order follows UI settings",
@@ -133,5 +133,5 @@
     ]
   },
   "result": "PASS",
-  "finished": "2026-09-25T19:50:57.150Z"
+  "finished": "2026-09-25T20:13:23.787Z"
 }

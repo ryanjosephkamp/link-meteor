@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Privacy · Link Meteor</title>
+  <meta name="description" content="What Link Meteor stores, where, which permissions it asks for and why, and what this website does and does not collect.">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#0e1526">
+  <link rel="icon" href="assets/img/icon.svg" type="image/svg+xml">
+  <link rel="icon" href="assets/img/icon-32.png" sizes="32x32" type="image/png">
+  <link rel="preload" href="assets/fonts/atkinson-hyperlegible-next.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="assets/css/site.css">
+  <script type="module" src="assets/js/site.js"></script>
+</head>
+<body>
+  <!-- site-header -->
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="site-header">
+    <div class="wrap">
+      <a class="logo" href="./" aria-label="Link Meteor home">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><defs><linearGradient id="logo-trail" x1="15.7" y1="8.3" x2="4" y2="20" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#c3f344"/><stop offset="1" stop-color="#c3f344" stop-opacity=".2"/></linearGradient></defs><rect width="24" height="24" rx="6.5" fill="#1b2336"/><g transform="translate(12 12) scale(.78) translate(-12 -12)"><path d="M13.2 4.6 19.4 10.8 4.6 20.4Q3.6 19.4 4.6 18.4Z" fill="url(#logo-trail)"/><circle cx="16.3" cy="7.7" r="4.4" fill="#c3f344"/></g></svg>
+        <span>Link Meteor</span>
+      </a>
+      <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-nav"><svg aria-hidden="true"><use href="assets/img/icons.svg#menu"/></svg>Menu</button>
+      <nav class="nav" id="site-nav" aria-label="Main">
+        <ul>
+          <li><a href="./#how">How it works</a></li>
+          <li><a href="install.html">Install</a></li>
+          <li><a href="guide.html">Guide</a></li>
+          <li><a href="practice.html">Practice page</a></li>
+          <li><a href="privacy.html">Privacy</a></li>
+          <li><a class="gh" href="https://github.com/ryanjosephkamp/link-meteor">Source<svg aria-hidden="true"><use href="assets/img/icons.svg#external"/></svg><span class="sr-only"> (GitHub)</span></a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+  <!-- /site-header -->
+
+  <main id="main">
+    <section class="page-hero night" aria-labelledby="page-title">
+      <div class="wrap">
+        <h1 id="page-title">Privacy</h1>
+        <p>Link Meteor works entirely inside your browser. It has no account, no servers, no analytics and no advertising, and it never sends your links anywhere.</p>
+      </div>
+    </section>
+
+    <div class="wrap doc">
+      <nav class="toc" aria-labelledby="toc-title">
+        <h2 id="toc-title">On this page</h2>
+        <ol>
+          <li><a href="#summary">In short</a></li>
+          <li><a href="#stored">What's stored, and where</a></li>
+          <li><a href="#permissions">Permissions</a></li>
+          <li><a href="#moves">Actions that move data</a></li>
+          <li><a href="#delete">Deleting your data</a></li>
+          <li><a href="#site">This website</a></li>
+        </ol>
+      </nav>
+      <div class="doc-body">
+        <section aria-labelledby="summary">
+          <h2 id="summary">In short</h2>
+          <ul>
+            <li>Your collections are stored by Chrome on your computer, in storage that belongs to the extension. They are not uploaded, synced or shared by Link Meteor.</li>
+            <li>The extension contains no code that contacts a server, its pages' security policy forbids them from making network requests, and capturing a link never visits its destination.</li>
+            <li>There is no account, no telemetry, no analytics, no advertising and no paid tier.</li>
+            <li>Permissions beyond the basics are optional, requested only when you use the feature that needs them, and can be removed in Chrome at any time.</li>
+          </ul>
+        </section>
+
+        <section aria-labelledby="stored">
+          <h2 id="stored">What's stored, and where</h2>
+          <p>Each collection holds its name, notes and tags, and the links you captured. For every link: visible anchor text, accessible label, destination URL, the original href, the source page's address and title, the frame's address, the capture time and batch ID, and your notes and tags.</p>
+          <p>This is kept in <code>chrome.storage.local</code>, extension storage in your current Chrome profile. Link Meteor does not put it in Chrome Sync. Backups of your computer or Chrome profile are separate from Link Meteor and follow their own settings.</p>
+          <p>While Chrome is open, Link Meteor also keeps the tab you last opened it from and the latest capture report in session storage, so the side panel and full workbench agree. Session storage is cleared when Chrome closes, and you can dismiss the report at any time. Your hold-key letter and the sites where you turned hold-key drag on are saved with your collections.</p>
+        </section>
+
+        <section aria-labelledby="permissions">
+          <h2 id="permissions">Permissions</h2>
+          <p>Chrome shows you what an extension can do. Here is every permission Link Meteor uses, and why.</p>
+          <div class="table-scroll paper">
+            <table class="perm-table">
+              <thead><tr><th scope="col">Permission</th><th scope="col">When</th><th scope="col">Why</th></tr></thead>
+              <tbody>
+                <tr><td>activeTab</td><td>Always</td><td>Temporary access to a page only when you invoke Link Meteor on it with the toolbar, shortcut or right-click menu.</td></tr>
+                <tr><td>scripting</td><td>Always</td><td>Runs the local selection and capture code on a page you've given it access to.</td></tr>
+                <tr><td>storage</td><td>Always</td><td>Keeps your collections and settings in this browser.</td></tr>
+                <tr><td>sidePanel</td><td>Always</td><td>Shows Link Meteor beside the page you're reading.</td></tr>
+                <tr><td>contextMenus</td><td>Always</td><td>Adds the two Link Meteor items to the right-click menu.</td></tr>
+                <tr><td>clipboardWrite</td><td>Always</td><td>Copies what you choose to the clipboard. Link Meteor never reads your clipboard.</td></tr>
+                <tr><td>tabs</td><td>Optional, when asked</td><td>Lists your open tabs so you can choose which to capture.</td></tr>
+                <tr><td>Site access</td><td>Optional, per site</td><td>Needed to capture tabs other than the one you invoked it on, and for hold-key drag on the sites you choose.</td></tr>
+                <tr><td>bookmarks</td><td>Optional, when asked</td><td>Creates the bookmark folder you request.</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p>Link Meteor does not request access to your history, cookies, passwords, downloads list, network traffic or incognito windows. You can review and remove its optional access at any time from Link Meteor's card in <code>chrome://extensions</code>. Turning hold-key drag off for a site stops it there; removing the site's access in Chrome also turns it off.</p>
+        </section>
+
+        <section aria-labelledby="moves">
+          <h2 id="moves">Actions that move data</h2>
+          <p>A few actions deliberately take links out of Link Meteor, and only when you choose them:</p>
+          <dl class="defs">
+            <dt>Copy</dt><dd>Puts the text you chose on your computer's clipboard, where other apps can read it.</dd>
+            <dt>Download</dt><dd>Saves a file to your normal downloads folder.</dd>
+            <dt>Bookmarks</dt><dd>Creates bookmarks in Chrome. <strong>Chrome may sync bookmarks to your other devices</strong>, depending on your own Chrome sync settings.</dd>
+            <dt>Open in tabs</dt><dd>Visits those links, exactly as if you had clicked them, so those sites receive ordinary requests from your browser.</dd>
+          </dl>
+          <p>Link Meteor keeps links exactly as captured and never rewrites them. Addresses from private or admin pages can contain sensitive details, so check an export before you share it. Text taken from pages is treated as data: it is escaped in HTML and Markdown exports and protected from being run as formulas in spreadsheet exports.</p>
+        </section>
+
+        <section aria-labelledby="delete">
+          <h2 id="delete">Deleting your data</h2>
+          <p>Remove individual links (with undo), or delete a whole collection from its details. Deleting a collection can't be undone. Removing Link Meteor from Chrome normally deletes all of its stored data. There's no cloud copy to recover from, so export anything you want to keep first.</p>
+        </section>
+
+        <section aria-labelledby="site">
+          <h2 id="site">This website</h2>
+          <p>This site has no cookies, analytics, advertising, trackers or embedded third-party content. Its fonts, images and scripts are served from the site itself. The interactive demo and the export preview run entirely in your browser and send nothing anywhere.</p>
+          <p>The site is intended to be hosted on GitHub Pages. GitHub operates those servers and, like any web host, may process technical information such as IP addresses to deliver and secure the site. GitHub's own privacy statement covers that.</p>
+          <p>Questions or concerns can be raised on the project's <a href="https://github.com/ryanjosephkamp/link-meteor/issues">GitHub issues page</a>. This page describes the current development build; the extension hasn't yet been submitted to the Chrome Web Store.</p>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <!-- site-footer -->
+  <footer class="site-footer">
+    <div class="wrap">
+      <div>
+        <a class="logo" href="./" aria-label="Link Meteor home"><svg viewBox="0 0 24 24" aria-hidden="true"><defs><linearGradient id="foot-trail" x1="15.7" y1="8.3" x2="4" y2="20" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#c3f344"/><stop offset="1" stop-color="#c3f344" stop-opacity=".2"/></linearGradient></defs><rect width="24" height="24" rx="6.5" fill="#1b2336"/><g transform="translate(12 12) scale(.78) translate(-12 -12)"><path d="M13.2 4.6 19.4 10.8 4.6 20.4Q3.6 19.4 4.6 18.4Z" fill="url(#foot-trail)"/><circle cx="16.3" cy="7.7" r="4.4" fill="#c3f344"/></g></svg><span>Link Meteor</span></a>
+        <p>Capture the trail. Keep the source. A free Chrome extension with no account, no servers and no tracking.</p>
+      </div>
+      <div><h2>Use it</h2><ul><li><a href="install.html">Install</a></li><li><a href="guide.html">Guide</a></li><li><a href="practice.html">Practice page</a></li></ul></div>
+      <div><h2>About</h2><ul><li><a href="privacy.html">Privacy</a></li><li><a href="https://github.com/ryanjosephkamp/link-meteor">Source on GitHub</a></li><li><a href="https://github.com/ryanjosephkamp/link-meteor/issues">Report a problem</a></li></ul></div>
+      <p class="fine">Development build. Not yet published in the Chrome Web Store. This site uses no cookies, analytics or third-party requests; its fonts are Atkinson Hyperlegible Next and Mono, served from this site under the SIL Open Font License.</p>
+    </div>
+  </footer>
+  <!-- /site-footer -->
+</body>
+</html>

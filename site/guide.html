@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Guide · Link Meteor</title>
+  <meta name="description" content="How to capture, review, organize and export links with Link Meteor, and what its limits are.">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#0e1526">
+  <link rel="icon" href="assets/img/icon.svg" type="image/svg+xml">
+  <link rel="icon" href="assets/img/icon-32.png" sizes="32x32" type="image/png">
+  <link rel="preload" href="assets/fonts/atkinson-hyperlegible-next.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="assets/css/site.css">
+  <script type="module" src="assets/js/site.js"></script>
+</head>
+<body>
+  <!-- site-header -->
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="site-header">
+    <div class="wrap">
+      <a class="logo" href="./" aria-label="Link Meteor home">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><defs><linearGradient id="logo-trail" x1="15.7" y1="8.3" x2="4" y2="20" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#c3f344"/><stop offset="1" stop-color="#c3f344" stop-opacity=".2"/></linearGradient></defs><rect width="24" height="24" rx="6.5" fill="#1b2336"/><g transform="translate(12 12) scale(.78) translate(-12 -12)"><path d="M13.2 4.6 19.4 10.8 4.6 20.4Q3.6 19.4 4.6 18.4Z" fill="url(#logo-trail)"/><circle cx="16.3" cy="7.7" r="4.4" fill="#c3f344"/></g></svg>
+        <span>Link Meteor</span>
+      </a>
+      <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-nav"><svg aria-hidden="true"><use href="assets/img/icons.svg#menu"/></svg>Menu</button>
+      <nav class="nav" id="site-nav" aria-label="Main">
+        <ul>
+          <li><a href="./#how">How it works</a></li>
+          <li><a href="install.html">Install</a></li>
+          <li><a href="guide.html">Guide</a></li>
+          <li><a href="practice.html">Practice page</a></li>
+          <li><a href="privacy.html">Privacy</a></li>
+          <li><a class="gh" href="https://github.com/ryanjosephkamp/link-meteor">Source<svg aria-hidden="true"><use href="assets/img/icons.svg#external"/></svg><span class="sr-only"> (GitHub)</span></a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+  <!-- /site-header -->
+
+  <main id="main">
+    <section class="page-hero night" aria-labelledby="page-title">
+      <div class="wrap">
+        <h1 id="page-title">Guide</h1>
+        <p>Everything Link Meteor does, where to find it, and what to expect. New here? Start with <a href="install.html">installation</a>, then try the <a href="practice.html">practice page</a>.</p>
+      </div>
+    </section>
+
+    <div class="wrap doc">
+      <nav class="toc" aria-labelledby="toc-title">
+        <h2 id="toc-title">On this page</h2>
+        <ol>
+          <li><a href="#surfaces">Where things are</a></li>
+          <li><a href="#region">Select a region</a></li>
+          <li><a href="#hold">Hold-key drag</a></li>
+          <li><a href="#pages">Pages, tabs and windows</a></li>
+          <li><a href="#report">The capture report</a></li>
+          <li><a href="#fields">What gets saved</a></li>
+          <li><a href="#review">Review and curate</a></li>
+          <li><a href="#collections">Collections</a></li>
+          <li><a href="#export">Copy and export</a></li>
+          <li><a href="#limits">Limits and coverage</a></li>
+          <li><a href="#keys">Keyboard</a></li>
+        </ol>
+      </nav>
+      <div class="doc-body">
+        <section aria-labelledby="surfaces">
+          <h2 id="surfaces">Where things are</h2>
+          <dl class="defs">
+            <dt>On the page</dt><dd>While you select a region, a small bar at the top of the page explains the gesture, matching links light up, and a count follows your pointer. When you let go, a card lists what you selected and where it will be saved.</dd>
+            <dt>Side panel</dt><dd>Click the Link Meteor icon in Chrome's toolbar to open the side panel beside the page you're reading. It shows your active collection, capture options and your links. Use the folder button for collections and site settings, and <em>Export</em> at the bottom for copying and downloading.</dd>
+            <dt>Full workbench</dt><dd>The expand button in the side panel opens the same workbench in its own tab, with your collections, links and export options side by side, and links shown as anchor text, URL and source columns.</dd>
+          </dl>
+        </section>
+
+        <section aria-labelledby="region">
+          <h2 id="region">Select a region</h2>
+          <p>Press <kbd>⌥</kbd> <kbd>⇧</kbd> <kbd>L</kbd> on a Mac or <kbd>Alt</kbd> <kbd>Shift</kbd> <kbd>L</kbd> on Windows and Linux. You can also choose <em>Select a region</em> in the side panel, or right-click the page and choose <em>Link Meteor: select a region</em>. Then drag a rectangle across the links you want.</p>
+          <ul>
+            <li>A link is included when any visible part of it overlaps your rectangle, even by a pixel. Links that wrap across several lines count if any line overlaps.</li>
+            <li>Drag toward the edge of the window, or use your scroll wheel while dragging, to scroll the page or a scrolling box. Links you've already passed stay selected.</li>
+            <li>Press <kbd>Esc</kbd> at any time to cancel. Nothing is saved until you choose an action.</li>
+          </ul>
+          <p>When you let go, choose one of:</p>
+          <dl class="defs">
+            <dt>Copy text + URL</dt><dd>Copies two tab-separated columns, anchor text and URL, with a header row, ready to paste into a spreadsheet. Nothing is saved.</dd>
+            <dt>Add to collection</dt><dd>Saves the links to the collection named on the card.</dd>
+            <dt>Review</dt><dd>Saves them and opens the full workbench.</dd>
+            <dt>Add another region</dt><dd>Saves these links, then starts a new selection so you can keep going.</dd>
+          </dl>
+        </section>
+
+        <section aria-labelledby="hold">
+          <h2 id="hold">Hold-key drag</h2>
+          <p>On sites where you collect often, you can skip the shortcut. Open the side panel on that site, open collections and site settings, and turn on <em>Hold-key drag on this site</em>. Chrome asks whether Link Meteor may access that one site.</p>
+          <p>From then on, hold the letter key (Z unless you change it) and drag. Typing in a text box, search field or editor never starts a selection. Turning the setting off stops it on that site. If you remove the site's access in Chrome's settings, Link Meteor turns hold-key drag off there automatically.</p>
+        </section>
+
+        <section aria-labelledby="pages">
+          <h2 id="pages">Pages, tabs and windows</h2>
+          <p>In the side panel, choose how much to capture, then press the capture button. The button always says exactly what it will do, such as <em>Capture 3 tabs</em>.</p>
+          <dl class="defs">
+            <dt>This page</dt><dd>Every loaded link on the page you opened Link Meteor from, including links inside open shadow roots and frames from the same site.</dd>
+            <dt>Pick tabs</dt><dd>Choose exact tabs from a list of your open tabs, grouped by window.</dd>
+            <dt>This window</dt><dd>Every ordinary tab in the current window.</dd>
+            <dt>All windows</dt><dd>Every ordinary tab in every normal window of your current Chrome profile.</dd>
+          </dl>
+          <p>The first time you choose anything other than <em>This page</em>, Chrome asks whether Link Meteor may see your list of tabs. When you capture, Chrome also asks for access to the sites involved. If you decline, those pages are reported as denied; everything else is still captured. Tabs opened after you start a capture aren't added to it, and one capture can include up to 100 tabs.</p>
+        </section>
+
+        <section aria-labelledby="report">
+          <h2 id="report">The capture report</h2>
+          <p>After a page or tab capture, a report lists every page with its own result. Choose <em>Show only these links</em> to filter the list to that capture.</p>
+          <dl class="defs">
+            <dt>Captured</dt><dd>The number of links saved from that page, with notes about anything skipped, such as frames from other sites or malformed links.</dd>
+            <dt>No links</dt><dd>The page loaded and has no links Link Meteor can read. This is different from being denied access.</dd>
+            <dt>Access denied</dt><dd>Link Meteor doesn't have permission for that site. Capture again to be asked, or allow access in Chrome's extension settings.</dd>
+            <dt>Unsupported page</dt><dd>Chrome's own pages, the Chrome Web Store and incognito tabs can't be captured.</dd>
+            <dt>Capture failed</dt><dd>The tab closed, navigated to a new page mid-capture, or another error happened. The message says which.</dd>
+          </dl>
+        </section>
+
+        <section aria-labelledby="fields">
+          <h2 id="fields">What gets saved</h2>
+          <p>Each captured link is a separate <em>occurrence</em>, even when the same URL appears more than once. Every occurrence keeps these fields apart:</p>
+          <dl class="defs">
+            <dt>Anchor text</dt><dd>The link's visible text, with runs of spaces and line breaks collapsed to single spaces and the ends trimmed. Hidden text inside a link is left out. A link with no visible text has empty anchor text.</dd>
+            <dt>Accessible label</dt><dd>The link's ARIA label, or the alt text of images inside it. Kept separate from anchor text.</dd>
+            <dt>URL</dt><dd>The full destination the link points to. Web, email (<code>mailto:</code>) and phone (<code>tel:</code>) links are captured; script links such as <code>javascript:</code> are not.</dd>
+            <dt>Original href</dt><dd>The link's address exactly as written in the page, which may be relative.</dd>
+            <dt>Source page</dt><dd>The address and title of the page it was captured from, plus the frame's address if the link was inside a frame.</dd>
+            <dt>Capture time and batch</dt><dd>When it was captured, and an ID shared by everything captured in the same action.</dd>
+            <dt>Notes and tags</dt><dd>Yours to add. They are stored separately and never change what was captured.</dd>
+          </dl>
+          <p>Link Meteor never visits a link's destination, so it never replaces a label with a page title and never adds authors, dates or DOIs that weren't on the page.</p>
+        </section>
+
+        <section aria-labelledby="review">
+          <h2 id="review">Review and curate</h2>
+          <ul>
+            <li><strong>Search</strong> matches anchor text, URLs, source pages, notes and tags. Press <kbd>/</kbd> to jump to the search box.</li>
+            <li><strong>View</strong> opens filters for domain, file type (such as <code>pdf</code>) and whether links stay on the source site, plus sorting and grouping. Active options appear as chips you can remove one by one.</li>
+            <li><strong>Group</strong> shows one row per unique URL, or per unique URL and anchor text. Grouping is only a view: each group lists every occurrence, label and source page, and switching back shows them all again.</li>
+            <li><strong>Details</strong>: open any row to see every saved field and add notes and tags to that occurrence.</li>
+            <li><strong>Select and remove</strong>: tick rows, or tick <em>Select page</em>, then remove. <em>Undo</em> puts removed links back in their original positions.</li>
+          </ul>
+          <p>Long collections are shown 100 rows at a time. Selections carry across pages.</p>
+        </section>
+
+        <section aria-labelledby="collections">
+          <h2 id="collections">Collections</h2>
+          <p>Every capture goes into the active collection. Create collections for different projects, switch between them from the collections list, and use the pencil button to rename a collection or add notes and tags to it. Deleting a collection asks for confirmation and can't be undone.</p>
+          <p>Collections are saved on your computer by Chrome and survive restarts. They aren't synced to other computers, and there's no import or cloud backup, so export anything you want to keep elsewhere.</p>
+        </section>
+
+        <section aria-labelledby="export">
+          <h2 id="export">Copy and export</h2>
+          <p><strong>What gets exported:</strong> every link in the current view, across all pages, unless you've selected some, in which case only the selected links that still match your filters. The export panel always shows the exact count.</p>
+          <p><strong>Columns:</strong> anchor text and URL by default. Add any saved field and change the order; the table copy and the CSV, TSV, Excel and HTML files follow it.</p>
+          <dl class="defs">
+            <dt>Copy table, URLs or Markdown</dt><dd>Tab-separated columns, one URL per line, or one <code>[anchor text](URL)</code> per line.</dd>
+            <dt>Excel (.xlsx)</dt><dd>A real workbook in which every cell is text, so nothing is turned into a formula, number or date.</dd>
+            <dt>CSV and TSV</dt><dd>Properly quoted. Cells that look like formulas (starting with <code>=</code>, <code>+</code>, <code>-</code> or <code>@</code>) get a leading apostrophe so spreadsheets import them as text.</dd>
+            <dt>Markdown and HTML</dt><dd>Page text is escaped so it displays as text and can't act as markup.</dd>
+            <dt>JSON</dt><dd>Every field for every link. In grouped views, each row includes all of its occurrences.</dd>
+            <dt>URL list</dt><dd>One URL per line, exactly as captured.</dd>
+          </dl>
+          <p>In a grouped view, tables, text and Markdown use each group's first link; JSON keeps every occurrence and source.</p>
+          <h3>Bookmarks and opening links</h3>
+          <p><em>Save as bookmarks</em> creates a new folder in Chrome's bookmarks, using anchor text as each bookmark's name (or the URL if a link has no text). Chrome asks for bookmark access the first time. Only web links are bookmarked, and Chrome may sync bookmarks to your other devices according to your own browser settings.</p>
+          <p><em>Open in tabs</em> opens up to 20 web links at once as background tabs, after you confirm the number. Opening a link visits that site, like clicking it.</p>
+        </section>
+
+        <section aria-labelledby="limits">
+          <h2 id="limits">Limits and coverage</h2>
+          <ul>
+            <li>Only links that are loaded in the page can be captured. Link Meteor doesn't scroll infinite feeds, follow pagination, crawl sites or read PDF contents.</li>
+            <li>Frames from other sites and closed shadow roots can't be read; the report says when frames were skipped. Buttons that navigate with scripts but aren't real links aren't captured.</li>
+            <li>Chrome's own pages, the Chrome Web Store and incognito windows are off limits to extensions.</li>
+            <li>One capture can include up to 20,000 links from a page or region and up to 100 tabs. Larger captures are kept up to the limit and marked as partial.</li>
+            <li>Collections use Chrome's local storage for extensions. If a save ever fails because space runs out, your existing collections are left intact and Link Meteor says so.</li>
+          </ul>
+          <p>These are practical limits of the extension, not paid tiers. Every feature is free.</p>
+        </section>
+
+        <section aria-labelledby="keys">
+          <h2 id="keys">Keyboard</h2>
+          <dl class="defs">
+            <dt><kbd>⌥</kbd> <kbd>⇧</kbd> <kbd>L</kbd> / <kbd>Alt</kbd> <kbd>Shift</kbd> <kbd>L</kbd></dt><dd>Start selecting a region on the current page. Change it at <code>chrome://extensions/shortcuts</code>.</dd>
+            <dt><kbd>Esc</kbd></dt><dd>Cancel a selection, close a confirmation, or go back from a panel view.</dd>
+            <dt><kbd>/</kbd></dt><dd>Jump to the search box.</dd>
+            <dt><kbd>Tab</kbd></dt><dd>Every control can be reached and used with the keyboard, with a visible focus outline.</dd>
+          </dl>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <!-- site-footer -->
+  <footer class="site-footer">
+    <div class="wrap">
+      <div>
+        <a class="logo" href="./" aria-label="Link Meteor home"><svg viewBox="0 0 24 24" aria-hidden="true"><defs><linearGradient id="foot-trail" x1="15.7" y1="8.3" x2="4" y2="20" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#c3f344"/><stop offset="1" stop-color="#c3f344" stop-opacity=".2"/></linearGradient></defs><rect width="24" height="24" rx="6.5" fill="#1b2336"/><g transform="translate(12 12) scale(.78) translate(-12 -12)"><path d="M13.2 4.6 19.4 10.8 4.6 20.4Q3.6 19.4 4.6 18.4Z" fill="url(#foot-trail)"/><circle cx="16.3" cy="7.7" r="4.4" fill="#c3f344"/></g></svg><span>Link Meteor</span></a>
+        <p>Capture the trail. Keep the source. A free Chrome extension with no account, no servers and no tracking.</p>
+      </div>
+      <div><h2>Use it</h2><ul><li><a href="install.html">Install</a></li><li><a href="guide.html">Guide</a></li><li><a href="practice.html">Practice page</a></li></ul></div>
+      <div><h2>About</h2><ul><li><a href="privacy.html">Privacy</a></li><li><a href="https://github.com/ryanjosephkamp/link-meteor">Source on GitHub</a></li><li><a href="https://github.com/ryanjosephkamp/link-meteor/issues">Report a problem</a></li></ul></div>
+      <p class="fine">Development build. Not yet published in the Chrome Web Store. This site uses no cookies, analytics or third-party requests; its fonts are Atkinson Hyperlegible Next and Mono, served from this site under the SIL Open Font License.</p>
+    </div>
+  </footer>
+  <!-- /site-footer -->
+</body>
+</html>

@@ -29,7 +29,7 @@ try{
     const box=await frame(id);await arm();
     await page.mouse.move(box.x+3,box.y+3);await page.mouse.down();
     // For the scrolling box, end inside it so the wheel scrolls the box, as a person would.
-    const end=wheel?await page.locator('#archive-box').boundingBox().then(b=>({x:b.x+b.width-12,y:b.y+b.height-60})):{x:box.x+box.width-3,y:box.y+box.height-3};
+    const end=wheel?await page.locator('#archive-box').boundingBox().then(b=>({x:b.x+b.width-12,y:b.y+b.height-6})):{x:box.x+box.width-3,y:box.y+box.height-3};
     await page.mouse.move(end.x,end.y,{steps:10});
     for(let i=0;i<wheel;i++){await page.mouse.wheel(0,260);await settle();}
     await page.mouse.up();

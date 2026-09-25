@@ -1,0 +1,79 @@
+{
+  "formatVersion": 1,
+  "extensionVersion": "0.1.0",
+  "sourceGitHead": "a6dddac13b14307e6a343e78d540167c1232dc4b",
+  "sourceFilesGitDirty": false,
+  "gitWorkingTreeDirtyAtPackaging": true,
+  "archive": {
+    "path": "artifacts/link-meteor-0.1.0.zip",
+    "bytes": 116560,
+    "sha256": "60ffd66c561863172bb09e685ec698c1cf889abb62c3027eca13cf0bc3075f85"
+  },
+  "buildFiles": [
+    {
+      "path": "background.js",
+      "bytes": 14851,
+      "sha256": "c87f9c87fde5b5cec925ff887877917318b9813d0a594289cc7b3000d42b1101"
+    },
+    {
+      "path": "content/capture.js",
+      "bytes": 17516,
+      "sha256": "1b32ce80229048b04310dd3b3a94ba8bb0ee0733df8167e1131515195c2d4dd2"
+    },
+    {
+      "path": "core/export.js",
+      "bytes": 4587,
+      "sha256": "9822512212602a5bac64405d6a65d9694b722b7a5adc38a0485f19fe74ea0978"
+    },
+    {
+      "path": "core/model.js",
+      "bytes": 11641,
+      "sha256": "066ec58bf6c647d8b6abb5a48a26a1decd67c6df31cb2d27677996a2ce880edd"
+    },
+    {
+      "path": "core/xlsx.js",
+      "bytes": 5207,
+      "sha256": "32a8a9ba365b1866c7d957d6149e156eb50294bbf5365c60b17dd38f756da72b"
+    },
+    {
+      "path": "icons/128.png",
+      "bytes": 1998,
+      "sha256": "11b84513f7d603f2bf82c3190ee4969b19f8a07c760ec8dbf21fc506f01b2aa3"
+    },
+    {
+      "path": "icons/16.png",
+      "bytes": 311,
+      "sha256": "f0e534242b3c0a7bf0138ac553d7530f2ec78585fe2f7873e4017082c2c12745"
+    },
+    {
+      "path": "icons/32.png",
+      "bytes": 531,
+      "sha256": "9de35066962f0367e5254e668363cb0b2c0bbb0791f44f52c69a915db2c6818c"
+    },
+    {
+      "path": "icons/48.png",
+      "bytes": 753,
+      "sha256": "c91c7569ad815ffe4d888342cb07ec2c35ef1b7cdb1cf1ecaffd489a0aa9cc96"
+    },
+    {
+      "path": "manifest.json",
+      "bytes": 1133,
+      "sha256": "5d08b31d051272005d355395c3b89d14184fb25ff75bef7c1fb5d3ac105f3755"
+    },
+    {
+      "path": "ui/workbench.css",
+      "bytes": 12153,
+      "sha256": "a07cbae12c94e633e7aedc53c92b34e1e3ed0e59bc0d6bd50f9c7cd8a4171eff"
+    },
+    {
+      "path": "ui/workbench.html",
+      "bytes": 9419,
+      "sha256": "4e7a397929b1fa4e9219cbeced331f26a0e289409d06c18021e3b1e9bb130399"
+    },
+    {
+      "path": "ui/workbench.js",
+      "bytes": 35090,
+      "sha256": "1aecc7f4ebcfd509055141d165a83478f4d3dbccd096d4805043c4b0d994b728"
+    }
+  ]
+}

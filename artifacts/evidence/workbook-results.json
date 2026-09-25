@@ -1,0 +1,9 @@
+{
+  "result": "PASS",
+  "reader": "openpyxl",
+  "actual_download_rows": 53,
+  "csv_rows": 53,
+  "exact_anchor_url_pairs": true,
+  "xlsx_all_string_cells": true,
+  "excel_application_tested": false
+}

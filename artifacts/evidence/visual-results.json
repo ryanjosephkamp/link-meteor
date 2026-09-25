@@ -1,0 +1,36 @@
+{
+  "started": "2026-09-25T18:38:45.159Z",
+  "checks": [
+    {
+      "width": 320,
+      "horizontalOverflow": false
+    },
+    {
+      "width": 390,
+      "horizontalOverflow": false
+    },
+    {
+      "width": 412,
+      "horizontalOverflow": false
+    },
+    {
+      "width": 1440,
+      "horizontalOverflow": false
+    },
+    {
+      "darkDestructiveTextContrast": 8.986536471793174
+    },
+    {
+      "unlabeledFormControls": 0,
+      "keyboardFocusReachedControl": true
+    },
+    {
+      "longCollectionNameOverflow": false
+    }
+  ],
+  "limits": [
+    "Keyboard/label/contrast spot checks, not a complete screen-reader or WCAG audit."
+  ],
+  "result": "PASS",
+  "finished": "2026-09-25T18:38:46.712Z"
+}

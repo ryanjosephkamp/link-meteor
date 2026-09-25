@@ -1,0 +1,20 @@
+[
+  {
+    "id": "desktop",
+    "path": "../../../artifacts/publication/2026-09-25/site-home.png",
+    "alt": "Live Link Meteor desktop home page",
+    "caption": "Deployed website, automated desktop viewport. The illustrated selection is the website demo."
+  },
+  {
+    "id": "mobile",
+    "path": "../../../artifacts/publication/2026-09-25/site-home-mobile.png",
+    "alt": "Live home page at 390 pixels",
+    "caption": "Automated 390px viewport; not a physical phone check."
+  },
+  {
+    "id": "install",
+    "path": "../../../artifacts/publication/2026-09-25/site-install.png",
+    "alt": "Live 0.2.1 download and install instructions",
+    "caption": "The primary distribution route is the free ZIP and Load unpacked."
+  }
+]

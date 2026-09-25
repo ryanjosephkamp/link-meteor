@@ -1,0 +1,6 @@
+main { overflow-wrap: anywhere; }
+code, pre { overflow-wrap: anywhere; word-break: break-word; }
+pre { white-space: pre-wrap; }
+table { width: 100%; table-layout: fixed; }
+th, td { overflow-wrap: anywhere; vertical-align: top; }
+figure img { display: block; max-height: 750px; object-fit: contain; object-position: left top; }

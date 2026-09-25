@@ -1,0 +1,6 @@
+checked index.html
+checked install.html
+checked guide.html
+checked privacy.html
+checked practice.html
+{"result":"PASS","problems":[],"count":0,"checks":["404 page renders with its styles for a missing nested path","Mobile menu opens from the keyboard and closes with Escape","Demo drag selects exactly the swept links; Select all selects 6; export preview uses real CSV/Markdown/XLSX output; tabs work with arrow keys"]}

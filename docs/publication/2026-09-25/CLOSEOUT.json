@@ -1,0 +1,22 @@
+{
+  "startedAt": "2026-09-25T22:20:18Z",
+  "recordedAt": "2026-09-25T22:32:09.676984+00:00",
+  "elapsedSeconds": 711,
+  "status": "Completed: merged, deployed once, live checks and handback validation passed; stopping for user review",
+  "main": "ee3148ec584c51e49438bed097ffb70c9d9a6603",
+  "auditBranch": "codex/audit-0.2.0",
+  "verifiedCheckpoint": "0f4289ced367291e49a5ad6f7b0ba9a104cf3dcf",
+  "runId": 36196516959,
+  "dispatches": 1,
+  "retries": 0,
+  "storesDeferred": true,
+  "productChanges": 0,
+  "packagesRebuilt": 0,
+  "workers": 0,
+  "personalProfileUsed": false,
+  "unrelatedProcessesTerminated": 0,
+  "scheduledContinuation": false,
+  "protectedStateVerified": true,
+  "taskBrowsersClosed": true,
+  "reportBytes": 617887
+}

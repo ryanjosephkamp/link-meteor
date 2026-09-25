@@ -1,0 +1,24 @@
+{
+  "recordedAt": "2026-09-25T22:32:09.649185+00:00",
+  "remoteRefs": {
+    "refs/heads/claude/design-v1": "41f82e58066d57aa19c44b00dc8bb07c8cf81407",
+    "refs/heads/codex/chrome-v1": "499c3ab1551a09338529f9f7ecabbf5c3048df38",
+    "refs/heads/codex/release-0.2.1": "696620091f7a92d3814e390582942c5f5db926b7",
+    "refs/heads/main": "ee3148ec584c51e49438bed097ffb70c9d9a6603",
+    "refs/tags/opus-handback-2026-09-25": "91811fe331616b4aaaef502d4dcade5f24aca9a1",
+    "refs/tags/opus-handback-2026-09-25^{}": "41f82e58066d57aa19c44b00dc8bb07c8cf81407"
+  },
+  "protectedUnpackedFilesUnchanged": 13,
+  "originalZipUnchanged": true,
+  "sourceSiteWorkflowUnchanged": true,
+  "workflow": {
+    "conclusion": "success",
+    "head_sha": "ee3148ec584c51e49438bed097ffb70c9d9a6603",
+    "html_url": "https://github.com/ryanjosephkamp/link-meteor/actions/runs/36196516959",
+    "id": 36196516959,
+    "run_attempt": 1,
+    "status": "completed"
+  },
+  "taskBrowserProcesses": [],
+  "gitStatusBeforeDeliveryCommit": "M docs/publication/2026-09-25/LEDGER.md\n M docs/publication/2026-09-25/RUN.json\n?? artifacts/publication/\n?? docs/publication/2026-09-25/CLOSEOUT.json\n?? docs/publication/2026-09-25/NEXT_PROMPT.txt\n?? docs/publication/2026-09-25/REPORT.md\n?? docs/publication/2026-09-25/VALIDATION.json\n?? docs/publication/2026-09-25/artifact-verification.json\n?? docs/publication/2026-09-25/body.html\n?? docs/publication/2026-09-25/live-checks.txt\n?? docs/publication/2026-09-25/live-download-headers.txt\n?? docs/publication/2026-09-25/live-download.json\n?? docs/publication/2026-09-25/media.json\n?? docs/publication/2026-09-25/mobile-preview.png\n?? docs/publication/2026-09-25/pages-live.json\n?? docs/publication/2026-09-25/report.css\n?? docs/publication/2026-09-25/report.html\n?? docs/publication/2026-09-25/run-current.json\n?? docs/publication/2026-09-25/validate.mjs\n?? tests/publication-live.mjs"
+}

@@ -9,3 +9,11 @@
 - Existing official action definitions checked: checkout/setup-node/configure-pages/deploy-pages use Node20 action runtime; setup-node selects Node22 for the script; upload-pages-artifact v3 wraps upload-artifact v4; deploy-pages v4 consumes github-pages. Actual runner compatibility remains subject to run result. No workflow edits.
 - Dispatched pages.yml once on main; run 36196516959, head ee3148ec584c51e49438bed097ffb70c9d9a6603. First status queued. No retries authorized or attempted.
 - Returned local checkout to audit branch for evidence. Live test harness prepared from approved tests/site-check.mjs with only live origin/server/output/runtime-path adaptations. It will run only after successful deployment.
+
+- Run 36196516959 completed successfully on its first attempt at 22:25:04 UTC (run updated 22:25:05). Exact head was the approved integration merge. No environment approval or owner access blocker occurred.
+- Downloaded the deployment artifact: every one of 37 file members equals site/; no repository root, extension source tree, evidence or profiles included.
+- Public HTTPS 0.2.1 ZIP independently downloaded: 193346 bytes, exact approved SHA-256, all 13 members equal src/.
+- Live site QA passed all 50 page/width/theme cases, structure/link/anchor checks, sampled contrast, keyboard menu, nested 404 assets, demo regional selection and actual CSV/Markdown/XLSX preview. No failed/off-site page requests or console problems recorded. This is site automation, not a new loaded-extension or human-acceptance run.
+- Independent openpyxl read of live-demo XLSX matches all 6 anchor/URL pairs, with an empty anchor and string cells. No Excel application claim.
+- Test browser closed its own context; no unrelated process terminated. Store work remains deferred by owner choice.
+- Raw HTTP response headers retain their protocol CRLF bytes; Git whitespace checking excludes only that evidence file. All authored changes pass the whitespace check. No product or deployment check was waived.

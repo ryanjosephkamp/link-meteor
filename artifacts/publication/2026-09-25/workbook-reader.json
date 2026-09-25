@@ -1,0 +1,14 @@
+{
+  "checkedAt": "2026-09-25T22:27:51.521589+00:00",
+  "result": "PASS",
+  "source": "XLSX downloaded by real export preview on the deployed HTTPS home page",
+  "reader": "openpyxl 3.1.5",
+  "rows": 6,
+  "exactAnchorUrlPairs": true,
+  "stringCellsOnly": true,
+  "emptyAnchors": 1,
+  "limits": [
+    "Not Microsoft Excel application testing.",
+    "Synthetic website demo records, not loaded-extension capture."
+  ]
+}

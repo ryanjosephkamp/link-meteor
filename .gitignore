@@ -1,0 +1,8 @@
+node_modules/
+.scratch/
+.report-preview/
+dist/
+artifacts/runtime/
+artifacts/test-results/
+*.log
+.DS_Store

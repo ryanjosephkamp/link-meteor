@@ -1,0 +1,3 @@
+{"time":"2026-09-25T21:13:16.992Z","step":"ready","extension":"cjfigjmbedncennnjdajijfnakpaaddl","fixture":"http://127.0.0.1:52478"}
+{"time":"2026-09-25T21:13:16.993Z","step":"awaiting-native-allow","permission":"tabs","via":"Pick tabs scope"}
+{"time":"2026-09-25T21:13:27.406Z","step":"failed","error":"tabs grant (timed out)","uiError":"","uiNotice":"","observations":[{"request":{"permissions":["tabs"]},"activeGesture":true}],"grants":{"origins":[],"permissions":["activeTab","clipboardWrite","contextMenus","storage","scripting","sidePanel"]}}

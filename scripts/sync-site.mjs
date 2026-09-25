@@ -2,13 +2,16 @@
 // The site's export preview runs the extension's own export modules; the install page offers
 // the packaged development ZIP with its SHA-256. Nothing here deploys or publishes anything.
 import { createHash } from 'node:crypto';
-import { copyFile, mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
+import { copyFile, mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
+import { verifyPackagedSource } from './verify-package.mjs';
 
 const root = resolve(import.meta.dirname, '..');
 const check = process.argv.includes('--check');
 const manifest = JSON.parse(await readFile(resolve(root, 'src/manifest.json'), 'utf8'));
 const zipName = `link-meteor-${manifest.version}.zip`;
+const zip = await readFile(resolve(root, 'artifacts', zipName));
+await verifyPackagedSource(zip, resolve(root, 'src'));
 const pairs = [
   ['src/core/export.js', 'site/assets/js/core/export.js'],
   ['src/core/xlsx.js', 'site/assets/js/core/xlsx.js'],
@@ -44,7 +47,6 @@ for (const name of pages) {
   }
   if (!check) await writeFile(path, html);
 }
-const zip = await readFile(resolve(root, 'artifacts', zipName));
 const latest = { version: manifest.version, file: `downloads/${zipName}`, bytes: zip.length, sha256: sha(zip), minimumChromeVersion: manifest.minimum_chrome_version };
 const latestPath = resolve(root, 'site/downloads/latest.json');
 const buildText = { version: latest.version, filename: zipName, sha256: latest.sha256, size: `${Math.round(latest.bytes / 1024)} KB ZIP`, minimumChromeVersion: latest.minimumChromeVersion };
@@ -63,9 +65,6 @@ if (check) {
   if (problems.length) { console.error(problems.join('\n')); process.exit(1); }
   console.log(JSON.stringify({ check: 'pass', ...latest }));
 } else {
-  for (const entry of await readdir(resolve(root, 'site/downloads'))) {
-    if (entry.endsWith('.zip') && entry !== zipName) await rm(resolve(root, 'site/downloads', entry));
-  }
   await writeFile(latestPath, JSON.stringify(latest, null, 2) + '\n');
   const installPath = resolve(root, 'site/install.html');
   await writeFile(installPath, fillBuild(await readFile(installPath, 'utf8')));

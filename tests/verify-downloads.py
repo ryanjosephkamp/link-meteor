@@ -7,13 +7,15 @@ This is a library-level reader check, not Microsoft Excel application acceptance
 """
 import csv
 import json
+import os
 import sys
 import zipfile
 from pathlib import Path
 
 root = Path(__file__).resolve().parents[1]
-exports = root / "artifacts" / "evidence" / "exports"
-out = root / "artifacts" / "evidence" / "workbook-results.json"
+evidence = root / os.environ.get("LINK_METEOR_EVIDENCE_DIR", "artifacts/evidence")
+exports = evidence / "exports"
+out = evidence / "workbook-results.json"
 
 
 def unformula(value):

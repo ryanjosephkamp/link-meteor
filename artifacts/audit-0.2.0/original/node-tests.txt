@@ -1,0 +1,36 @@
+
+> link-meteor@0.2.0 test
+> node --test tests/*.test.mjs
+
+▶ background adverse paths using explicit Chrome-API simulation
+  ✔ failed persistent write preserves saved collection (1.410583ms)
+  ✔ session bookkeeping failure does not contradict successful capture (1.586625ms)
+  ✔ simultaneous hold settings serialize registration and retain last requested state (18.970959ms)
+  ✔ revoked permission prunes persisted hold origins and registered scripts (5.053125ms)
+  ✔ Review tab failure returns successful save and a separate warning (0.370792ms)
+  ✔ unreadable saved schema is preserved (0.08775ms)
+✔ background adverse paths using explicit Chrome-API simulation (28.287208ms)
+✔ fresh state and collection lifecycle (1.895958ms)
+✔ append preserves occurrences, removal has one positional undo, updates are immutable (0.354875ms)
+✔ filters and reversible dedup retain matched provenance (0.863417ms)
+✔ invalid actions and payloads fail descriptively (0.423625ms)
+✔ mixed web, email, and telephone destinations retain separate occurrences (0.303042ms)
+✔ ordered CSV/TSV protect formulas and preserve distinct fields (0.756292ms)
+✔ text, Markdown, HTML, and JSON use safe data and retain provenance (0.88ms)
+✔ XLSX is a ZIP with ordered inline string cells and no formulas (1.348042ms)
+✔ unsupported format or columns are rejected (0.258833ms)
+✔ text keeps valid destination strings exactly; Markdown encodes only its delimiters (0.281333ms)
+✔ XLSX escapes OOXML control tokens and supports columns past Z (0.961292ms)
+✔ Markdown preserves a genuinely empty anchor label (0.06175ms)
+✔ closed selected tab keeps its original ID for background error reporting (14.100375ms)
+✔ new tab in the current window is excluded from this capture (0.538875ms)
+✔ new tab in any window is excluded from all-windows capture (0.382083ms)
+✔ surviving tab that changes origin stops before capture.run (0.542375ms)
+ℹ tests 23
+ℹ suites 0
+ℹ pass 23
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 73.379209

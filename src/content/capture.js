@@ -161,9 +161,9 @@
     document.documentElement.append(host);
     const $=selector=>shadow.querySelector(selector);
     const shield=$('.shield'), box=$('.rect'), badge=$('.badge'), hits=$('.hits');
-    let dragging=false, start=null, pointer=null, frame=null, entries=[], selected=[], warnings=[],inaccessibleFrames=0,committed=false,destination='';
+    let dragging=false, start=null, pointer=null, frame=null, entries=[], selected=[], warnings=[],inaccessibleFrames=0,committed=false,destination='',destinationRequest=0,saveInFlight=null;
     const swept=new Map();
-    const state={close};active=state;
+    const state={close,refreshDestination};active=state;
 
     function close() {
       if(frame)cancelAnimationFrame(frame);document.removeEventListener('keydown',escape,true);host.remove();if(active===state)active=null;held=false;
@@ -215,7 +215,7 @@
       if(!dragging)return;event.preventDefault();event.stopImmediatePropagation();dragging=false;if(frame)cancelAnimationFrame(frame);refresh(true);shield.releasePointerCapture?.(event.pointerId);shield.style.pointerEvents='none';box.hidden=true;badge.hidden=true;$('.hint').hidden=true;$('.bar').style.display='block';
       $('.count').textContent=`${selected.length} link${selected.length===1?'':'s'} selected`;
       renderPreview();
-      $('.warning').textContent=warnings.join(' ');for(const cls of ['copy','add','review','more'])$('.'+cls).disabled=!selected.length;
+      $('.warning').textContent=warnings.join(' ');for(const cls of ['copy','add','review','more'])$('button.'+cls).disabled=!selected.length;
       if(!selected.length)$('.status').textContent='No links in this region. Close and select another area.';
       $('.copy').focus();
     });
@@ -235,13 +235,27 @@
       }
       if(selected.length>3){const more=document.createElement('li');more.className='more';more.textContent=`and ${selected.length-3} more`;list.append(more);}
     }
-    request({type:'collection.active'}).then(active=>{destination=active?.name || '';renderDest();}).catch(()=>{});
-    async function save(review=false){
-      if(committed){if(review)await request({type:'ui.open'});return;}
-      const result=await request({type:'capture.commit',links:selected.map(entry=>entry.link),inaccessibleFrames,review});committed=true;$('.add').disabled=true;$('.add').innerHTML=`${ICON_CHECK}Added`;renderDest();
-      $('.status').textContent=`Saved ${result.count} link${result.count===1?'':'s'} to ${destination?`“${destination}”`:'your active collection'}. ${result.warning || ''}`.trim();
+    async function refreshDestination() {
+      const sequence=++destinationRequest;
+      try {
+        const collection=await request({type:'collection.active'});
+        if(active!==state || committed || sequence!==destinationRequest)return;
+        destination=collection?.name || '';renderDest();
+      } catch { /* Saving still reports the actual destination from its receipt. */ }
     }
-    function action(cls,fn){$('.'+cls).onclick=async()=>{const button=$('.'+cls);button.disabled=true;try{await fn();}catch(error){$('.status').textContent=String(error.message || error);}finally{if(host.isConnected)button.disabled=cls==='add'&&committed;}};}
+    refreshDestination();
+    async function save(review=false){
+      if(saveInFlight){await saveInFlight;if(review)await request({type:'ui.open'});return;}
+      if(committed){if(review)await request({type:'ui.open'});return;}
+      saveInFlight=(async()=>{
+        const result=await request({type:'capture.commit',links:selected.map(entry=>entry.link),inaccessibleFrames,review});
+        committed=true;destination=result.state.collections.find(c=>c.id===result.state.activeCollectionId)?.name || '';
+        $('.add').disabled=true;$('.add').innerHTML=`${ICON_CHECK}Added`;renderDest();
+        $('.status').textContent=`Saved ${result.count} link${result.count===1?'':'s'} to ${destination?`“${destination}”`:'your active collection'}. ${result.warning || ''}`.trim();
+      })();
+      try {await saveInFlight;} finally {saveInFlight=null;}
+    }
+    function action(cls,fn){$('button.'+cls).onclick=async()=>{const button=$('button.'+cls);button.disabled=true;try{await fn();}catch(error){$('.status').textContent=String(error.message || error);}finally{if(host.isConnected)button.disabled=cls==='add'&&committed;}};}
     action('add',()=>save());action('review',()=>save(true));action('more',async()=>{await save();arm();});
     action('copy',async()=>{
       const {text}=await request({type:'capture.copy',links:selected.map(entry=>entry.link)});
@@ -263,6 +277,6 @@
   window.addEventListener('blur',()=>{held=false;});
   document.addEventListener('pointerdown',event=>{if(held&&holdEnabled&&!active&&event.button===0&&!editable(event)){event.preventDefault();event.stopImmediatePropagation();arm(event);}},true);
   chrome.runtime.onMessage.addListener(message=>{if(message.type==='content.configure'){holdEnabled=!!message.enabled;holdKey=message.holdKey;held=false;}});
-  chrome.storage.onChanged.addListener((changes,area)=>{if(area==='local'&&changes.linkMeteorState)configure();});
+  chrome.storage.onChanged.addListener((changes,area)=>{if(area==='local'&&changes.linkMeteorState){configure();active?.refreshDestination();}});
   globalThis.__linkMeteor={scan,arm};configure();
 })();

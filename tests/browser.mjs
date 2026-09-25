@@ -3,7 +3,7 @@ import {readFile,writeFile,mkdir} from 'node:fs/promises';
 import {resolve} from 'node:path';
 import {fixtureServer,launch,rpc,until,evidence} from './helpers/browser.mjs';
 
-const result={started:new Date().toISOString(),browser:'Installed Chrome for Testing via Playwright; real unpacked extension',checks:[],limitations:['Native optional site grant was established separately in the isolated interactive profile.','Not acceptance in the everyday Chrome profile or other operating systems.']};
+const result={started:new Date().toISOString(),browser:'Installed Chrome for Testing via Playwright; real unpacked extension',checks:[],limitations:['Optional grants established separately through product UI in an isolated automated profile; not native Allow/Deny evidence.','Not acceptance in the everyday Chrome profile or other operating systems.']};
 const check=(name,detail={})=>{result.checks.push({name,status:'pass',...detail});console.log('PASS',name);};
 const fixture=await fixtureServer();let context;
 const profile=process.env.LINK_METEOR_TEST_PROFILE || 'acceptance-final';

@@ -6,7 +6,7 @@ const PAGE_SIZE = 100;
 const DETAIL_PAGE_SIZE = 100;
 const DEFAULT_COLUMNS = ['anchorText', 'url'];
 const ARRIVAL_MS = 2600;
-const ui = { state: null, inventory: null, rows: [], page: 0, selectedIds: new Set(), selectedTabs: new Set(), columns: [...DEFAULT_COLUMNS], scope: 'current', busy: false, currentOrigin: '', collectionDrafts: new Map(), linkDrafts: new Map(), openDetails: new Set(), detailLimits: new Map(), holdKeyDraft: null, directionTouched: false, lastContextReportKey: '', dismissedContextReportKey: '', displayedReportKey: '', batchFilter: '', flashBatch: '', flashStart: 0, originAccess: new Map(), shortcut: null, pendingOpen: null, returnFocus: null };
+const ui = { state: null, inventory: null, rows: [], page: 0, selectedIds: new Set(), selectedTabs: new Set(), columns: [...DEFAULT_COLUMNS], scope: 'current', busy: false, currentOrigin: '', collectionDrafts: new Map(), linkDrafts: new Map(), openDetails: new Set(), detailLimits: new Map(), holdKeyDraft: null, directionTouched: false, lastContextReportKey: '', dismissedContextReportKey: '', displayedReportKey: '', displayedReport: null, batchFilter: '', flashBatch: '', flashStart: 0, originAccess: new Map(), shortcut: null, pendingOpen: null, returnFocus: null };
 const filters = ['search', 'domain', 'file-type', 'relation', 'sort', 'direction', 'dedupe'];
 const FORMAT_HELP = {
   xlsx: 'Every cell is stored as text, so nothing is reinterpreted as a formula, number or date.',
@@ -244,7 +244,7 @@ function renderLinks() {
   const selectedInView = result.rows.reduce((n, row) => n + row.occurrenceIds.filter((id) => ui.selectedIds.has(id)).length, 0);
   $('select-everything').hidden = !(pageCount > 1 && selectedOnPage === pageIds.length && pageIds.length && selectedInView < viewIds);
   $('select-everything').textContent = `Select all ${count(viewIds)}`;
-  $('remove').disabled = !ui.selectedIds.size;
+  $('remove').disabled = !selectedInView;
   $('select-all').checked = !!pageIds.length && pageIds.every((id) => ui.selectedIds.has(id));
   $('select-all').indeterminate = pageIds.some((id) => ui.selectedIds.has(id)) && !$('select-all').checked;
   $('select-all').disabled = !pageIds.length;
@@ -258,10 +258,13 @@ function renderLinks() {
   renderViewChips();
   renderSuggestions(collection);
   renderExportTarget();
+  syncReportAction();
   const list = $('link-list');
   const focused = document.activeElement;
   const focusId = focused?.dataset?.linkId;
   const focusField = focused?.dataset?.linkField;
+  const focusRowId = focused?.dataset?.rowId;
+  const focusRowControl = focused?.matches?.('.row-select') ? 'checkbox' : focused?.matches?.('.row-details summary') ? 'summary' : '';
   const selectionStart = focusId ? focused.selectionStart : null;
   const selectionEnd = focusId ? focused.selectionEnd : null;
   list.replaceChildren(...pageRows.map(renderRow));
@@ -271,6 +274,9 @@ function renderLinks() {
       replacement.focus({ preventScroll: true });
       if (selectionStart !== null && selectionEnd !== null) replacement.setSelectionRange(selectionStart, selectionEnd);
     }
+  } else if (focusRowId && focusRowControl) {
+    const selector = focusRowControl === 'checkbox' ? '.row-select' : '.row-details summary';
+    [...list.querySelectorAll(selector)].find((control) => control.dataset.rowId === focusRowId)?.focus({ preventScroll: true });
   }
 }
 
@@ -308,7 +314,7 @@ function resetView() {
 function renderViewChips() {
   const chips = [];
   const add = (label, clear) => chips.push([label, clear]);
-  if (ui.batchFilter) add('Only the latest capture', () => { ui.batchFilter = ''; });
+  if (ui.batchFilter) add('Selected capture', () => { ui.batchFilter = ''; });
   if ($('domain').value) add(`Domain contains “${$('domain').value}”`, () => { $('domain').value = ''; });
   if ($('file-type').value) add(`File type: ${$('file-type').value.replace(/^\./, '')}`, () => { $('file-type').value = ''; });
   if ($('relation').value !== 'all') add($('relation').value === 'internal' ? 'Internal links' : 'External links', () => { $('relation').value = 'all'; });
@@ -357,6 +363,7 @@ function renderRow(row) {
   }
   const checkbox = document.createElement('input');
   checkbox.type = 'checkbox'; checkbox.className = 'row-select';
+  checkbox.dataset.rowId = row.id;
   checkbox.setAttribute('aria-label', row.occurrenceIds.length === 1 ? `Select ${labelFor(row)}` : `Select ${plural(row.occurrenceIds.length, 'occurrence')} of ${labelFor(row)}`);
   checkbox.checked = row.occurrenceIds.every((id) => ui.selectedIds.has(id));
   checkbox.indeterminate = row.occurrenceIds.some((id) => ui.selectedIds.has(id)) && !checkbox.checked;
@@ -403,6 +410,7 @@ function renderRow(row) {
   const details = document.createElement('details'); details.className = 'row-details';
   details.open = ui.openDetails.has(detailKey);
   const summary = node('summary');
+  summary.dataset.rowId = row.id;
   summary.append(icon('i-chevron-right'), node('span', 'summary-text', row.occurrences.length === 1 ? `Source details and notes for ${labelFor(row)}` : `${plural(row.occurrences.length, 'source occurrence')} for ${labelFor(row)}`));
   summary.title = row.occurrences.length === 1 ? 'Source details and notes' : `${plural(row.occurrences.length, 'source occurrence')}`;
   details.append(summary);
@@ -654,13 +662,15 @@ function renderInventory() {
   }
   $('tab-picker').hidden = ui.scope !== 'selected';
   if (ui.scope === 'selected') {
-    const area = $('tab-options'); area.replaceChildren();
+    const area = $('tab-options');
+    const focusedTabId = area.contains(document.activeElement) ? document.activeElement.dataset.tabId : null;
+    area.replaceChildren();
     const windows = [...new Set(tabs.map((tab) => tab.windowId))];
     windows.sort((a, b) => (a === ui.inventory.currentWindowId ? -1 : b === ui.inventory.currentWindowId ? 1 : 0));
     windows.forEach((windowId, index) => {
       if (windows.length > 1) area.append(node('p', 'tab-window', windowId === ui.inventory.currentWindowId ? 'This window' : `Window ${index + 1}`));
       for (const tab of tabs.filter((item) => item.windowId === windowId)) {
-        const label = node('label', 'tab-option'); const box = document.createElement('input'); box.type = 'checkbox'; box.checked = ui.selectedTabs.has(tab.id);
+        const label = node('label', 'tab-option'); const box = document.createElement('input'); box.type = 'checkbox'; box.checked = ui.selectedTabs.has(tab.id); box.dataset.tabId = String(tab.id);
         box.setAttribute('aria-label', `Include ${tab.title || tab.url || `tab ${tab.id}`}`);
         box.addEventListener('change', () => { box.checked ? ui.selectedTabs.add(tab.id) : ui.selectedTabs.delete(tab.id); renderInventory(); });
         const text = node('span');
@@ -675,6 +685,7 @@ function renderInventory() {
     });
     if (!tabs.length) area.append(node('p', 'help', 'No tabs are available. Allow tab access to choose pages.'));
     $('tab-picked').textContent = `${count(ui.selectedTabs.size ? tabs.filter((tab) => ui.selectedTabs.has(tab.id)).length : 0)} of ${plural(tabs.length, 'tab')} selected`;
+    if (focusedTabId) [...area.querySelectorAll('input[data-tab-id]')].find((box) => box.dataset.tabId === focusedTabId)?.focus({ preventScroll: true });
   }
 }
 
@@ -713,9 +724,27 @@ const REPORT_STATUS = {
   error: { icon: 'i-alert', label: () => 'Capture failed' },
 };
 
+function syncReportAction() {
+  const box = $('capture-report');
+  const previous = box.querySelector('.report-actions');
+  const hadFocus = previous?.contains(document.activeElement);
+  previous?.remove();
+  const report = ui.displayedReport;
+  if (!report?.capturedCount || !currentCollection()?.links.some((link) => link.batchId === report.batchId)) return;
+  const actions = node('div', 'report-actions');
+  const only = node('button', 'link-btn', ui.batchFilter === report.batchId ? 'Show all links' : 'Show only these links'); only.type = 'button';
+  only.addEventListener('click', () => {
+    ui.batchFilter = ui.batchFilter === report.batchId ? '' : report.batchId;
+    ui.page = 0; renderLinks();
+  });
+  actions.append(only); box.append(actions);
+  if (hadFocus) only.focus({ preventScroll: true });
+}
+
 function captureReport(report, { source = 'workbench', key = '', createdAt = '' } = {}) {
   const box = $('capture-report'); box.replaceChildren(); box.hidden = false;
   ui.displayedReportKey = key;
+  ui.displayedReport = report;
   const results = report.results || [];
   const succeeded = results.filter((result) => result.status === 'success').length;
   const head = node('div', 'report-head');
@@ -747,17 +776,7 @@ function captureReport(report, { source = 'workbench', key = '', createdAt = '' 
   }
   if (!results.length) list.append(node('li', 'report-item error', 'No tab results were returned.'));
   if (list.childNodes.length) box.append(list);
-  const batchPresent = report.capturedCount > 0 && currentCollection()?.links.some((link) => link.batchId === report.batchId);
-  if (batchPresent) {
-    const actions = node('div', 'report-actions');
-    const only = node('button', 'link-btn', ui.batchFilter === report.batchId ? 'Show all links' : 'Show only these links'); only.type = 'button';
-    only.addEventListener('click', () => {
-      ui.batchFilter = ui.batchFilter === report.batchId ? '' : report.batchId;
-      only.textContent = ui.batchFilter ? 'Show all links' : 'Show only these links';
-      ui.page = 0; renderLinks();
-    });
-    actions.append(only); box.append(actions);
-  }
+  syncReportAction();
 }
 
 function showContextReport(value) {
@@ -937,10 +956,10 @@ function bindEvents() {
   });
   $('select-all').addEventListener('change', (event) => { for (const id of ui.rows.slice(ui.page * PAGE_SIZE, (ui.page + 1) * PAGE_SIZE).flatMap((row) => row.occurrenceIds)) event.target.checked ? ui.selectedIds.add(id) : ui.selectedIds.delete(id); renderLinks(); });
   $('clear-selection').addEventListener('click', () => { ui.selectedIds.clear(); renderLinks(); $('select-all').focus(); });
-  $('select-everything').addEventListener('click', () => { for (const row of ui.rows) for (const id of row.occurrenceIds) ui.selectedIds.add(id); renderLinks(); $('select-all').focus(); show(`Selected all ${plural(ui.selectedIds.size, 'link')} in this view.`); });
+  $('select-everything').addEventListener('click', () => { const ids = ui.rows.flatMap((row) => row.occurrenceIds); for (const id of ids) ui.selectedIds.add(id); renderLinks(); $('select-all').focus(); show(`Selected all ${plural(ids.length, 'link')} in this view.`); });
   $('page-prev').addEventListener('click', () => { if (ui.page > 0) { ui.page--; renderLinks(); $('review').scrollIntoView({ block: 'start' }); } });
   $('page-next').addEventListener('click', () => { if ((ui.page + 1) * PAGE_SIZE < ui.rows.length) { ui.page++; renderLinks(); $('review').scrollIntoView({ block: 'start' }); } });
-  $('remove').addEventListener('click', () => action(async () => { const ids = [...ui.selectedIds]; if (!ids.length) return; await mutate({ type: 'links.remove', ids }); ui.selectedIds.clear(); renderLinks(); show(`Removed ${plural(ids.length, 'link')}.`, 'notice', { actionLabel: 'Undo', onAction: undo }); }));
+  $('remove').addEventListener('click', () => action(async () => { const ids = ui.rows.flatMap((row) => row.occurrenceIds.filter((id) => ui.selectedIds.has(id))); if (!ids.length) return; await mutate({ type: 'links.remove', ids }); show(`Removed ${plural(ids.length, 'link')}.`, 'notice', { actionLabel: 'Undo', onAction: undo }); }));
   $('undo').addEventListener('click', () => action(undo));
   for (const radio of document.querySelectorAll('input[name="scope"]')) radio.addEventListener('change', () => action(() => chooseScope(radio.value)));
   $('tabs-all').addEventListener('click', () => { for (const tab of ui.inventory?.tabs || []) ui.selectedTabs.add(tab.id); renderInventory(); });

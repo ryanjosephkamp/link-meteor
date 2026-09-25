@@ -23,10 +23,11 @@ The home page's export preview imports `assets/js/core/export.js` and `xlsx.js`,
 ```sh
 npm run build && npm run package   # new extension ZIP in artifacts/
 node scripts/sync-site.mjs         # copy ZIP, export modules, icons; fill install page; sync header/footer
-node scripts/sync-site.mjs --check # verify; the deploy workflow runs this first
+node scripts/sync-site.mjs --check # verify ZIP members against current src/, site copies and metadata; deploy runs this first
 ```
 
 The header and footer are authored once in `index.html` (between `site-header` / `site-footer` markers) and copied into the other pages by the sync script.
+The sync script keeps older ZIP downloads intact; it updates the current version's download and metadata only. The check is read-only and fails if the packaged ZIP contains stale, missing or extra source files.
 
 ## Checks
 
@@ -41,6 +42,6 @@ node tests/site-preview.mjs    # ad-hoc screenshots into .scratch/site-preview
 
 1. Merge the branch into `main`.
 2. In the repository's Settings → Pages, set Source to **GitHub Actions**.
-3. In Actions, run **Deploy site to GitHub Pages (manual)**.
+3. In Actions, select `main` and run **Deploy site to GitHub Pages (manual)**. The deploy job runs only for `main`.
 
 The site will be at `https://ryanjosephkamp.github.io/link-meteor/`. If a custom domain is used instead, update the absolute paths in `404.html`, and consider making the `og:image` URL absolute in each page's head.

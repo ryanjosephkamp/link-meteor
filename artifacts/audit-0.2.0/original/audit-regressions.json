@@ -1,0 +1,41 @@
+{
+  "started": "2026-09-25T21:09:11.511Z",
+  "checks": [
+    {
+      "name": "Row checkbox retains keyboard focus",
+      "result": "FAIL",
+      "error": "Expected values to be strictly equal:\n\nfalse !== true\n"
+    },
+    {
+      "name": "Hidden selection cannot be removed through current view",
+      "result": "FAIL",
+      "error": "Expected values to be strictly equal:\n\nfalse !== true\n"
+    },
+    {
+      "name": "Select all N selects all205 and exports them",
+      "result": "PASS"
+    },
+    {
+      "name": "Batch filter shows exact matching count",
+      "result": "PASS"
+    },
+    {
+      "name": "Batch filter label does not misidentify older batch as latest",
+      "result": "FAIL",
+      "error": "The input was expected to not match the regular expression /latest capture/i. Input:\n\n'Only the latest capture'\n"
+    },
+    {
+      "name": "Old report action absent in another collection",
+      "result": "FAIL",
+      "error": "Expected values to be strictly equal:\n\n1 !== 0\n"
+    },
+    {
+      "name": "Schema1 occurrence identities and facts preserved",
+      "result": "PASS"
+    }
+  ],
+  "mode": "original-build observations",
+  "hiddenRemovalObserved": true,
+  "result": "DEFECTS OBSERVED",
+  "finished": "2026-09-25T21:09:14.432Z"
+}

@@ -221,12 +221,17 @@ if (exporter) {
       const cell = (tag, text, className = '') => { const item = document.createElement(tag); item.textContent = text; if (className) item.className = className; return item; };
       const letters = document.createElement('tr'); letters.className = 'colhead';
       letters.append(cell('th', '', 'rownum'), cell('th', 'A'), cell('th', 'B'));
+      for (const item of letters.children) item.setAttribute('aria-hidden', 'true');
       const header = document.createElement('tr'); header.className = 'header';
-      header.append(cell('td', '1', 'rownum'), cell('td', 'Anchor text'), cell('td', 'URL'));
+      const rowNumber = cell('td', '1', 'rownum'); rowNumber.setAttribute('aria-hidden', 'true');
+      const anchorHead = cell('th', 'Anchor text'); anchorHead.scope = 'col';
+      const urlHead = cell('th', 'URL'); urlHead.scope = 'col';
+      header.append(rowNumber, anchorHead, urlHead);
       table.append(letters, header);
       rows.forEach((row, index) => {
         const tr = document.createElement('tr');
-        tr.append(cell('td', String(index + 2), 'rownum'), cell('td', row.anchorText, row.anchorText ? '' : 'nil'), cell('td', row.url, 'url'));
+        const number = cell('td', String(index + 2), 'rownum'); number.setAttribute('aria-hidden', 'true');
+        tr.append(number, cell('td', row.anchorText, row.anchorText ? '' : 'nil'), cell('td', row.url, 'url'));
         table.append(tr);
       });
       output.replaceChildren(table);

@@ -10,7 +10,7 @@ try { playwright=require('playwright'); }
 catch { playwright=require(process.env.LINK_METEOR_PLAYWRIGHT || resolve(homedir(),'.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright')); }
 export const root=resolve(import.meta.dirname,'../..');
 export const scratch=resolve(root,'.scratch');
-export const evidence=resolve(root,'artifacts/evidence');
+export const evidence=resolve(root,process.env.LINK_METEOR_EVIDENCE_DIR || 'artifacts/evidence');
 
 export async function fixtureServer() {
   const server=createServer(async(req,res)=>{
@@ -26,7 +26,7 @@ export async function fixtureServer() {
 
 export async function launch(profile='acceptance',{headless=true,scale=1}={}) {
   await mkdir(scratch,{recursive:true});await mkdir(evidence,{recursive:true});
-  const extension=resolve(root,'dist');
+  const extension=resolve(root,process.env.LINK_METEOR_EXTENSION_PATH || 'dist');
   const hash=createHash('sha256');
   async function digest(dir){for(const entry of (await readdir(dir,{withFileTypes:true})).sort((a,b)=>a.name.localeCompare(b.name))){const path=resolve(dir,entry.name);if(entry.isDirectory())await digest(path);else{hash.update(path.slice(extension.length));hash.update(await readFile(path));}}}
   await digest(extension);const buildHash=hash.digest('hex');const fingerprint=resolve(scratch,profile+'-build.sha256');

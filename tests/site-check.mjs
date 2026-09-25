@@ -104,10 +104,16 @@ try {
     assert.equal(await page.locator('#demo-count').innerText(), '2 links selected');
     await page.locator('#demo-all').click(); assert.equal(await page.locator('#demo-count').innerText(), '6 links selected');
     assert.equal(await page.locator('#demo-table tbody tr').count(), 6);
+    // Read the six source anchors; the compact result table intentionally truncates after five.
+    const expectedPairs = await page.locator('#demo-list a').evaluateAll(anchors => anchors.map(anchor => [anchor.innerText.trim(), anchor.href]));
+    await writeFile(resolve(evidence, 'site-preview.expected.json'), JSON.stringify(expectedPairs, null, 2) + '\n');
     await page.locator('[role=tab][data-format=csv]').click(); const csv = await page.locator('#exporter-output pre').innerText();
     assert.ok(csv.startsWith('Anchor text,URL')); assert.ok(csv.includes(',https://journal.example.org/figures/canopy-map'), 'empty anchor stays empty in CSV');
     await page.locator('[role=tab][data-format=markdown]').click(); assert.ok((await page.locator('#exporter-output pre').innerText()).includes('[](https://journal.example.org/figures/canopy-map)'));
-    await page.locator('[role=tab][data-format=xlsx]').click(); const pending = page.waitForEvent('download'); await page.locator('#exporter-download').click(); const download = await pending;
+    await page.locator('[role=tab][data-format=xlsx]').click();
+    assert.deepEqual(await page.locator('#exporter-output th[scope=col]').allTextContents(), ['Anchor text', 'URL']);
+    const pending = page.waitForEvent('download'); await page.locator('#exporter-download').click(); const download = await pending;
+    await download.saveAs(resolve(evidence, 'site-preview.xlsx'));
     const bytes = await (await import('node:fs/promises')).readFile(await download.path()); assert.equal(bytes.subarray(0, 2).toString(), 'PK');
     await page.locator('[role=tab][data-format=csv]').focus(); await page.keyboard.press('ArrowRight'); assert.equal(await page.evaluate(() => document.activeElement.dataset.format), 'markdown');
     result.checks.push('Demo drag selects exactly the swept links; Select all selects 6; export preview uses real CSV/Markdown/XLSX output; tabs work with arrow keys');

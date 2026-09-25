@@ -23,7 +23,7 @@ try {
   const active=async()=>{const s=await rpc(ui,{type:'state.get'});return s.collections.find(c=>c.id===s.activeCollectionId);};
   const initial=await rpc(ui,{type:'state.get'});assert.equal(initial.schemaVersion,1);check('Loaded actual extension and initialized state');
   const grants=await ui.evaluate(()=>chrome.permissions.getAll());result.initialGrants=grants;
-  assert.ok(grants.origins?.some(o=>o.includes('127.0.0.1')),'Run native site grant preparation first');
+  assert.ok(grants.origins?.some(o=>o.includes('127.0.0.1')),'Run optional site grant preparation first');
   await ui.locator('#new-collection').fill('Browser acceptance');await ui.locator('#create-collection button').click();
   await until(async()=>(await active()).name==='Browser acceptance','Collection creation');check('Collection created through UI');
   await ui.locator('input[name=scope][value=selected]').check();

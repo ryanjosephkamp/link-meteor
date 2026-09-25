@@ -1,0 +1,12 @@
+{
+  "started": "2026-09-25T21:22:19.287Z",
+  "checks": [],
+  "screenshots": [],
+  "limits": [
+    "Keyboard/label/contrast spot checks in automated Chrome for Testing, not a complete screen-reader or WCAG audit.",
+    "Compact widths render the workbench page at side-panel widths in a tab; the native side-panel frame itself is not captured."
+  ],
+  "result": "FAIL",
+  "error": "Error: Rows (timed out)\n    at until (file:///Users/noir/Documents/link-meteor/tests/helpers/browser.mjs:52:9)\n    at async file:///Users/noir/Documents/link-meteor/tests/visual-browser.mjs:24:103",
+  "finished": "2026-09-25T21:22:25.303Z"
+}

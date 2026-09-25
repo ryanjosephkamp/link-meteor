@@ -1,5 +1,33 @@
 # Acceptance map
 
+## 0.2.1 Astra audit candidate, September 25, 2026
+
+**Status: repairs checked; final capture acceptance blocked. Do not treat this as approval to merge, deploy, or publish.** The original Opus section below remains historical evidence. The owner's unitemized everyday-Chrome report applies to 0.2.0, not this candidate. Full audit: [REPORT.md](audit-0.2.0/REPORT.md).
+
+**Tested source:** `e8e69cf734ed750ee6b792cc3cae1f9bf898ce62` on `codex/audit-0.2.0`. Product files clean at packaging; later audit commits add artifacts, tests, site metadata and documentation. **Build:** `artifacts/link-meteor-0.2.1.zip`, 193,346 bytes, SHA-256 `231f454f60a7aba45ad6834b559268e1ddaabc66304ce55be4a9e783a7d219e9`. Actual ZIP members match current `src/`. Original ZIP, all 13 files in the owner's unpacked 0.2.0 folder, protected remote branches, annotated tag and draft PR #1 were independently rechecked unchanged.
+
+Astra verified the original handback's model/export/XLSX identity, manifest-only version difference, read-only background addition and unchanged capture geometry/scanning against `a6dddac`. Repairs address removal of hidden selections, keyboard focus, stale batch controls, stale regional destination wording and overlapping regional saves. Schema v1, original link fields, export cores and permissions are unchanged. Site repairs enforce a main-only manual deployment job, compare actual packaged members with every source file, improve semantic export-preview headers and qualify test claims. No deployment or workflow dispatch occurred.
+
+| Check executed by Astra | Result and limit |
+| --- | --- |
+| `npm test` | 26/26 pass, including 3 actual/stale/corrupt package checks. Simulated storage and permission races remain simulations. |
+| `tests/audit-regressions.mjs` | 7/7 pass on loaded 0.2.1: focus, hidden selection, Select all 205, batch counts/labels/action, unchanged occurrence facts. Real extension, synthetic stored records. Original 0.2.0 defects reproduced separately. |
+| `tests/audit-actions.mjs` | 9/9 pass: collections/notes/tags, UI and background cap, confirmation invalidation, exact opened local URL, Undo, grouping, note draft, denied/closed-tab failures, exact browser-restart persistence. No capture/bookmark grant assumed. |
+| `tests/audit-overlay.mjs` | 4/4 pass: destination refresh, accurate save receipt, stable saved destination, one save for concurrent Add/Review. Actual packaged content code on an extension page with real messaging/storage; **not ordinary-page injection or native activation evidence**. Original 0.2.0 defects reproduced. |
+| `tests/visual-browser.mjs` | 10 check groups pass, widths 320/390/412/900/1440; 22 sampled contrast pairs ≥5.1; zero unlabeled visible form controls, first focus ring and long-name checks. Steady-state screenshots; tab rendered at panel width, not native side-panel acceptance. |
+| `python3 tests/verify-downloads.py` | Seven actual downloaded formats independently read; 205 exact XLSX/CSV/TSV/HTML/JSON pairs, Markdown single-line labels and exact URL list. One empty anchor and one formula-like label; XLSX cells are strings. openpyxl 3.1.5, not Microsoft Excel. |
+| XLSX fixture + `verify-workbook.py` | ZIP/OOXML and openpyxl exact values pass for the existing edge-case workbook. |
+| `tests/site-check.mjs` | 50 page/width/theme cases pass; internal links, anchors, names, contrast, 404, keyboard menu, demo and export checks. Site workbook independently matches all 6 source anchors/URLs, including the empty anchor. No external page requests observed. |
+| `node scripts/sync-site.mjs --check` | Pass; exact source/member check and site ZIP/hash/module checks. |
+| `tests/prepare-grants.mjs` | **Blocked**: optional tabs request remains pending with active user gesture, no API error and no optional grants. Confirmed in fresh 0.2.0 and 0.2.1 task profiles. Native automation bound another test-browser window; no native Allow/Deny click was made. |
+| `tests/browser.mjs`, `extended-browser.mjs`, `site-browser.mjs`, `permission-browser.mjs` | **Not run in this audit: grant preparation precondition unmet.** Opus's historical successes below are not substituted for Astra acceptance. Permission suite must remain last when resumed. |
+
+Evidence is under `artifacts/audit-0.2.0/` (the audit is named for the reviewed handback). The latest successful visual receipt uses a fresh profile; `visual-reused-profile-diagnostic.json` preserves a failed screenshot retry whose reused fixture profile already contained the same globally unique occurrence IDs. No product repair was needed for that harness setup error. Design/overlay preview mocks were not used for acceptance.
+
+Remaining: ordinary-page regional geometry and scopes, practice-page answer keys, large capture, actual bookmarks, hold/revocation and clipboard reruns after grants; native Allow/Deny and side-panel interaction; everyday Chrome 0.2.1, Microsoft Excel, screen readers, real sites, Windows/Linux, Chrome 116, real phones and deployed Pages. No compatibility or performance claim beyond the recorded checks.
+
+---
+
 ## 0.2.0 design pass (Claude Opus 5.5), September 25, 2026
 
 Status: redesigned extension and new website, functionally re-checked on the actual packaged build. Ready for the user's review and GPT-6 Astra's final functionality audit. Not a store release, not deployed, not human acceptance.

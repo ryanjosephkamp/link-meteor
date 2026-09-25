@@ -1,0 +1,9 @@
+{
+  "result": "PASS",
+  "reader": "openpyxl 3.1.5",
+  "source": "actual local site preview XLSX downloaded by tests/site-check.mjs",
+  "rows": 6,
+  "exact_source_anchor_url_pairs": true,
+  "empty_anchor_preserved": true,
+  "microsoft_excel_tested": false
+}

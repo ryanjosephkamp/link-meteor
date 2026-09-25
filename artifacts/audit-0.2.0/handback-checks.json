@@ -1,0 +1,73 @@
+{
+  "started": "2026-09-25T21:28:49.013Z",
+  "checks": [
+    {
+      "surface": "report",
+      "javaScriptEnabled": true,
+      "widths": [
+        320,
+        390,
+        412,
+        1440
+      ],
+      "promptExact": true,
+      "embeddedImages": 3,
+      "noRemoteRequests": true
+    },
+    {
+      "surface": "report",
+      "javaScriptEnabled": false,
+      "widths": [
+        320,
+        390,
+        412,
+        1440
+      ],
+      "promptExact": true,
+      "embeddedImages": 3,
+      "noRemoteRequests": true
+    },
+    {
+      "surface": "updated install copy",
+      "width": 320,
+      "scheme": "light",
+      "overflow": false
+    },
+    {
+      "surface": "updated install copy",
+      "width": 390,
+      "scheme": "light",
+      "overflow": false
+    },
+    {
+      "surface": "updated install copy",
+      "width": 1440,
+      "scheme": "light",
+      "overflow": false
+    },
+    {
+      "surface": "updated install copy",
+      "width": 320,
+      "scheme": "dark",
+      "overflow": false
+    },
+    {
+      "surface": "updated install copy",
+      "width": 390,
+      "scheme": "dark",
+      "overflow": false
+    },
+    {
+      "surface": "updated install copy",
+      "width": 1440,
+      "scheme": "dark",
+      "overflow": false
+    }
+  ],
+  "limits": [
+    "Full automated browser checks only; no mobile preview/device acceptance.",
+    "Copy and clipboard behavior deliberately not investigated."
+  ],
+  "result": "PASS",
+  "finished": "2026-09-25T21:28:53.183Z"
+}

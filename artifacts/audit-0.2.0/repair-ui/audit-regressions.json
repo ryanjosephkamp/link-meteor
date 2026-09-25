@@ -1,0 +1,45 @@
+{
+  "started": "2026-09-25T21:14:26.587Z",
+  "checks": [
+    {
+      "name": "Row checkbox retains keyboard focus",
+      "result": "PASS"
+    },
+    {
+      "name": "Hidden selection cannot be removed through current view",
+      "result": "PASS"
+    },
+    {
+      "name": "Select all N selects all205 and exports them",
+      "result": "PASS"
+    },
+    {
+      "name": "Batch filter shows exact matching count",
+      "result": "PASS"
+    },
+    {
+      "name": "Batch filter label does not misidentify older batch as latest",
+      "result": "PASS"
+    },
+    {
+      "name": "Old report action absent in another collection",
+      "result": "PASS"
+    },
+    {
+      "name": "Schema1 occurrence identities and facts preserved",
+      "result": "PASS"
+    }
+  ],
+  "mode": "repair acceptance",
+  "actualExportFormats": [
+    "csv",
+    "tsv",
+    "xlsx",
+    "markdown",
+    "html",
+    "json",
+    "text"
+  ],
+  "result": "PASS",
+  "finished": "2026-09-25T21:14:28.875Z"
+}

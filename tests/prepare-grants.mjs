@@ -1,5 +1,5 @@
 // Prepares optional-permission grants in a NEW task-owned test profile by
-// driving the product's own permission paths in a visible Chrome for Testing window.
+// driving the product's own permission paths in Chrome for Testing (headed by default).
 // Under automation requests may resolve without an observed click. Successful
 // grants are not evidence that native Allow/Deny sheets were exercised.
 import {fixtureServer,launch,rpc,until} from './helpers/browser.mjs';

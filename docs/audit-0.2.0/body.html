@@ -1,0 +1,174 @@
+<p><strong>Repairs are ready for review; final functional acceptance is blocked by the isolated browser’s permission prompts. I recommend waiting to merge or deploy.</strong> No publication, PR merge, Pages setting change or workflow dispatch occurred.</p>
+<p>The audit began at <strong>2026-09-25 21:02:57 UTC</strong> with a new six-hour clock. It is stopping early at a concrete testing blocker, not at the time limit. Closeout time and remote backup receipt appear below. The user-selected driver was Astra Xhigh; two bounded Sol workers assisted with source review and narrow repairs. Astra reviewed their changes and ran the acceptance checks.</p>
+<h2>What was found and repaired</h2>
+<table>
+<thead>
+<tr>
+<th>Area</th>
+<th>Observed problem</th>
+<th>Repair and evidence</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Selection</td>
+<td>Remove could delete a selected occurrence hidden by the current filter.</td>
+<td>Remove now targets selected occurrences in the current view; hidden selection remains intact. Original defect reproduced, repaired packaged UI passes.</td>
+</tr>
+<tr>
+<td>Keyboard</td>
+<td>Checking an individual link or tab replaced its focused control.</td>
+<td>Stable control identity restores focus. Link checkbox tested with Space; tab-checkbox repair reviewed statically, awaiting the tab-grant suite.</td>
+</tr>
+<tr>
+<td>Capture batches</td>
+<td>A report action survived switching collections, and an older batch could be called “latest.”</td>
+<td>Report actions track the active collection; the filter reads “Selected capture.” Exact 105/205 filtering and later-batch/collection changes tested.</td>
+</tr>
+<tr>
+<td>Regional saves</td>
+<td>The overlay retained an old destination name, and overlapping Add/Review could save five links twice.</td>
+<td>Destination refresh and the actual save receipt determine wording; concurrent saves share one request. Four targeted checks pass.</td>
+</tr>
+<tr>
+<td>Site package</td>
+<td>The old sync check could pass even when the downloadable ZIP was stale relative to capture/workbench source.</td>
+<td>Verify all actual ZIP members, CRCs and bytes against every source file. Stale-source and corrupt-ZIP regressions pass. Old packages are retained.</td>
+</tr>
+<tr>
+<td>Site semantics and claims</td>
+<td>Excel preview exposed A/B as column headings; install text understated the owner’s report.</td>
+<td>Anchor text/URL are semantic headers; the site distinguishes 0.2.0 human use from 0.2.1 automated checks and pending capture acceptance.</td>
+</tr>
+<tr>
+<td>Deployment</td>
+<td>A manual run could select a non-main branch.</td>
+<td>Workflow remains manual only and now permits its deployment job only on main. Static review only; nothing was dispatched.</td>
+</tr>
+</tbody></table>
+<p>The core data model and exporters, storage schema v1, permission set, capture geometry, and original link fields are unchanged by these repairs. No additional product feature was started. Existing collection data was checked through synthetic schema-v1 records and exact restart persistence; your everyday Chrome data was not accessed or changed.</p>
+<h2>Identity and preservation</h2>
+<table>
+<thead>
+<tr>
+<th>Item</th>
+<th>Verified identity</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Original Opus handback head</td>
+<td><code>41f82e58066d57aa19c44b00dc8bb07c8cf81407</code></td>
+</tr>
+<tr>
+<td>Original tested product source</td>
+<td><code>7c9ca4a</code>; head source matched the original package</td>
+</tr>
+<tr>
+<td>Comparison baseline</td>
+<td><code>a6dddac13b14307e6a343e78d540167c1232dc4b</code></td>
+</tr>
+<tr>
+<td>Audit branch</td>
+<td><code>codex/audit-0.2.0</code></td>
+</tr>
+<tr>
+<td>Repaired packaged product source</td>
+<td><code>e8e69cf734ed750ee6b792cc3cae1f9bf898ce62</code> — clean product files at packaging</td>
+</tr>
+<tr>
+<td>New candidate</td>
+<td><code>artifacts/link-meteor-0.2.1.zip</code> — <strong>193,346 bytes</strong>, 13 files</td>
+</tr>
+<tr>
+<td>New candidate SHA-256</td>
+<td><code>231f454f60a7aba45ad6834b559268e1ddaabc66304ce55be4a9e783a7d219e9</code></td>
+</tr>
+<tr>
+<td>Original ZIP</td>
+<td>191,513 bytes; SHA-256 <code>1cb1b778a91180709455e273eb9b0f1cbefe758a6e43d01156729c14330fc197</code>, unchanged</td>
+</tr>
+</tbody></table>
+<p>The <a href="../../artifacts/link-meteor-0.2.1.zip">new ZIP</a> and its <a href="../../artifacts/link-meteor-0.2.1.sha256.json">per-file receipt</a> are separate files. The site’s local development download points to that candidate; neither the site nor ZIP was published. Later audit commits contain tests, evidence, site metadata and this report; their product source remains identical to the packaged source above.</p>
+<p>I verified Opus’s comparison claims directly: model.js, export.js and xlsx.js were byte-identical to the baseline; the manifest differed only by version; background.js added only the read-only collection.active handler. Capture scanning/geometry function regions were identical, and the full diff was reviewed as overlay presentation/destination/preview work. This is source review and byte comparison, not a formal semantic proof. See <a href="SOURCE-COMPARISON.json">SOURCE-COMPARISON.json</a>.</p>
+<p>The protected <code>claude/design-v1</code> and <code>codex/chrome-v1</code> branches, main, annotated tag object and target, and <a href="https://github.com/ryanjosephkamp/link-meteor/pull/1">open draft PR #1</a> remain unchanged. All 13 files in <strong>artifacts/link-meteor-0.2.0/</strong> still match the entry fingerprints. That folder was never used as the automation build and was never overwritten. See <a href="PRESERVATION.json">PRESERVATION.json</a>.</p>
+<h2>What Astra actually checked</h2>
+<p>The loaded-browser checks used the installed <strong>Chrome for Testing 151.0.7922.34 on macOS</strong>, driven by Playwright, with task-owned profiles and extracted packaged bytes. They are automated Chromium evidence, not everyday-Chrome or native-prompt acceptance.</p>
+<table>
+<thead>
+<tr>
+<th>Check</th>
+<th>Result</th>
+<th>Scope and limit</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>npm test</td>
+<td><strong>26/26 pass</strong></td>
+<td>Pure model/export tests, simulated adverse API paths, UI permission-race simulations, and actual/stale/corrupt package checks.</td>
+</tr>
+<tr>
+<td>Loaded workbench regressions</td>
+<td><strong>7/7 pass</strong></td>
+<td>Select all exports 205 rows; focus, hidden selection, batch behavior and original occurrence facts. Synthetic stored records, not captured webpage data.</td>
+</tr>
+<tr>
+<td>Loaded action/persistence checks</td>
+<td><strong>9/9 pass</strong></td>
+<td>Collections, notes/tags, reversible grouping, Undo, preserved drafts, confirmed local opening, UI/background rejection of 21 links, missing-grant/closed-tab failures, exact restart persistence.</td>
+</tr>
+<tr>
+<td>Packaged overlay component</td>
+<td><strong>4/4 pass</strong></td>
+<td>Real content code and messages/storage on an extension page. Destination/save/concurrency checks; does not establish ordinary-page injection or region geometry acceptance.</td>
+</tr>
+<tr>
+<td>Seven exported formats</td>
+<td><strong>Pass, 205 rows</strong></td>
+<td>Independent Python reads: exact XLSX/CSV/TSV/HTML/JSON anchor/URL pairs, Markdown label normalization and URL-list fidelity. Formula-like label, literal markup, Unicode/newline and empty anchor preserved appropriately.</td>
+</tr>
+<tr>
+<td>Workbook readers</td>
+<td><strong>Pass</strong></td>
+<td>openpyxl 3.1.5 and ZIP/OOXML; existing workbook edge-case fixture also passes. Microsoft Excel itself was not opened.</td>
+</tr>
+<tr>
+<td>Extension presentation</td>
+<td><strong>Pass</strong></td>
+<td>320/390/412/900/1440px bounds, compact views and long name; 22 sampled contrast pairs ≥5.1:1; named controls and focus ring. Not a screen-reader/WCAG certification or native side-panel test.</td>
+</tr>
+<tr>
+<td>Local site</td>
+<td><strong>Pass</strong></td>
+<td>50 page/width/theme cases; links, anchors, labels, contrast, keyboard menu, nested 404, demo drag/select-all and preview. No off-site requests observed.</td>
+</tr>
+<tr>
+<td>Site spreadsheet</td>
+<td><strong>Pass, 6 rows</strong></td>
+<td>Actual preview download independently matches the six source anchors/URLs, including the empty anchor.</td>
+</tr>
+<tr>
+<td>Site/source/package consistency</td>
+<td><strong>Pass</strong></td>
+<td>Actual ZIP contents match src; site ZIP, hash and copied export modules match the candidate.</td>
+</tr>
+</tbody></table>
+<p>Evidence lives in <a href="../../artifacts/audit-0.2.0/">artifacts/audit-0.2.0</a>. The <a href="../ACCEPTANCE.md">acceptance map</a> identifies each suite and its qualifications. Tests/design-preview.mjs and overlay-preview.mjs simulations were not used as acceptance. Opus’s historical receipts remain intact and are not counted as Astra’s reruns.</p>
+<p>A screenshot retry initially reused a profile whose synthetic occurrence IDs already existed; the reducer correctly prevented reinserting those IDs. The diagnostic is retained. A fresh profile passed, and screenshots now capture the completed UI animation. This was a test setup issue, not a product repair.</p>
+<h2>What remains blocked</h2>
+<p><strong>prepare-grants.mjs cannot finish the first optional tabs request.</strong> The real API request starts inside an active user gesture, but remains pending; it returns neither a grant nor an error. The profile still has only required permissions. Headed attempts on the original package and a fresh repaired-package profile reproduced this; short headless diagnostics did not establish grants either. The final repaired-package attempt was bounded at 30 seconds and closed its own browser/server.</p>
+<p>Native automation selected a different Chrome for Testing window, so I did not click a prompt in an unidentified window. No permission database, browser security setting, personal profile or credentials were changed. The reason for the unresolved request is <strong>not established</strong>; it is not being labeled an extension defect or a confirmed denial.</p>
+<p>The requested <strong>browser.mjs, extended-browser.mjs, site-browser.mjs and permission-browser.mjs were not run in this audit</strong>, because their grant-preparation precondition was unmet. Therefore these remain outstanding on 0.2.1: ordinary-page regional geometry and capture scopes, practice-page answer keys, large capture, actual bookmarks, hold-key/revocation and clipboard reruns. Run permission-browser.mjs last after the other functional suites when grants are available.</p>
+<p>The site worker reviewed the eight practice answer keys against the markup and scripts; Astra did not independently execute their captures. Opus’s successful 0.2.0 practice run is historical evidence only. Likewise, your report that 0.2.0 worked in everyday Chrome remains valuable human-use testimony with unitemized coverage, not proof for particular flows or for 0.2.1.</p>
+<p>Still manual or unverified: native Allow/Deny, native side-panel sizing, everyday Chrome 0.2.1, real research/admin sites, Microsoft Excel, screen readers, Windows/Linux shortcuts, Chrome 116, real phones and deployed GitHub Pages. No unmeasured performance or broader compatibility claim is made.</p>
+<h2>Implemented screenshots</h2>
+<p>These show the actual repaired workbench and local site, not design-preview mocks. Workbench records are synthetic fixture data. The narrow export view is a tab at panel width; it does not show Chrome’s native side-panel frame.</p>
+{{MEDIA:desktop}}
+{{MEDIA:export}}
+{{MEDIA:site}}
+<h2>Your installed build and next decision</h2>
+<p>Your loaded <strong>0.2.0 installation is unchanged</strong>. The 0.2.1 ZIP contains fixes, but reloading the unchanged 0.2.0 folder will not apply them. I recommend completing the blocked audit before replacing your everyday build.</p>
+<p>For a later update, export collections first and preserve the existing unpacked path/extension identity. Without a fixed manifest key, an unpacked extension’s ID can derive from its path; a different folder can create a separate installation and separate storage. See <a href="https://chromium.googlesource.com/chromium/src/+/lkgr/components/crx_file/id_util.h">Chromium’s path-derived ID implementation</a> and <a href="https://developer.chrome.com/docs/extensions/reference/manifest/key">Chrome’s consistent-ID documentation</a>. The agent has not altered your protected folder; any update there needs your explicit instruction or your own action. After its files are deliberately updated, Reload the extension and refresh source pages. Do not uninstall to update; version one has no import/restore flow.</p>
+<p><strong>Whether and when to merge and deploy remains your decision.</strong> My recommendation is to resume the outstanding checks first. The original draft PR does not contain these audit-branch repairs; a later integration decision must include them. I did not merge, retarget or modify that PR. No Pages workflow was run and no future run was scheduled.</p>
+<h2>Execution and backup receipt</h2>
+<p>Report prepared <strong>2026-09-25 21:28:06 UTC</strong>, <strong>25 minutes 9 seconds</strong> after the recorded start. Source checkpoint <code>e8e69cf</code> was committed, pushed and independently matched to the remote audit branch. The complete artifact/evidence checkpoint and closeout will be committed and pushed on that same branch before handback; the final chat identifies the verified delivery tip. No protected branch or tag was moved. See <a href="CLOSEOUT.json">CLOSEOUT.json</a>, <a href="LEDGER.md">LEDGER.md</a> and <a href="RESOURCES.json">resource checks</a>.</p>
+<p>Workers: <code>/root/audit_workbench</code> requested and accepted <strong>gpt-6-sol xhigh</strong>; <code>/root/audit_site</code> requested and accepted <strong>gpt-6-sol high</strong>, both with no history fork or nested workers. They owned disjoint review/repair areas. Both completed; their writes were reconciled. Worker source claims, Astra’s actual checks and remaining human acceptance are separated above.</p>
+<p>No new dependencies or browser downloads; project-local profiles/caches only. Project footprint measured about 182 MiB, including retained profiles and prior work (about 160 MiB in .scratch). The disk reached 97% capacity with about 16.2 GiB free; the much larger system-wide change is not attributed to this task. No peak-RAM measurement is claimed. All task browser/server contexts were closed; unrelated apps and sessions were not terminated.</p>

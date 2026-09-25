@@ -31,7 +31,7 @@ export async function launch(profile='acceptance',{headless=true,scale=1}={}) {
   async function digest(dir){for(const entry of (await readdir(dir,{withFileTypes:true})).sort((a,b)=>a.name.localeCompare(b.name))){const path=resolve(dir,entry.name);if(entry.isDirectory())await digest(path);else{hash.update(path.slice(extension.length));hash.update(await readFile(path));}}}
   await digest(extension);const buildHash=hash.digest('hex');const fingerprint=resolve(scratch,profile+'-build.sha256');
   let previous;try{previous=(await readFile(fingerprint,'utf8')).trim();}catch(error){if(error.code!=='ENOENT')throw error;}
-  if(previous&&previous!==buildHash)throw new Error('Build changed since this profile was initialized. Use LINK_METEOR_TEST_PROFILE with a fresh task-owned profile, prepare native grants, and repeat checks.');
+  if(previous&&previous!==buildHash)throw new Error('Build changed since this profile was initialized. Use LINK_METEOR_TEST_PROFILE with a fresh task-owned profile, prepare optional grants, and repeat checks.');
   await writeFile(fingerprint,buildHash+'\n');
   const context=await playwright.chromium.launchPersistentContext(resolve(scratch,profile),{
     executablePath:playwright.chromium.executablePath(),headless,

@@ -7,7 +7,7 @@ import {resolve} from 'node:path';
 import {launch,rpc,until,evidence} from './helpers/browser.mjs';
 const result={started:new Date().toISOString(),checks:[],screenshots:[],limits:['Keyboard/label/contrast spot checks in automated Chrome for Testing, not a complete screen-reader or WCAG audit.','Compact widths render the workbench page at side-panel widths in a tab; the native side-panel frame itself is not captured.']};
 const {context,id}=await launch(process.env.LINK_METEOR_VISUAL_PROFILE || 'visual-final',{headless:true});
-const shot=async(page,name,options={})=>{await page.screenshot({path:resolve(evidence,name),...options});result.screenshots.push(name);};
+const shot=async(page,name,options={})=>{await page.screenshot({path:resolve(evidence,name),animations:'disabled',...options});result.screenshots.push(name);};
 const overflow=page=>page.evaluate(()=>document.documentElement.scrollWidth>innerWidth);
 // Rasterizes any CSS color (including oklch) to sRGB, then computes WCAG contrast.
 const contrast=(page,pairs)=>page.evaluate(pairs=>{const canvas=document.createElement('canvas');canvas.width=canvas.height=1;const ctx=canvas.getContext('2d',{willReadFrequently:true});

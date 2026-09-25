@@ -4,7 +4,7 @@ Capture the trail. Keep the source.
 
 Link Meteor is a free Chrome extension for collecting links with their **actual anchor text and URL in separate fields**, reviewing their sources, and exporting a useful research collection. It has no account, ads, telemetry, paid tier, or backend dependency.
 
-This repository contains the Chrome extension (development build 0.2.0) and its website in `site/`. The extension has not been published to the Chrome Web Store, and the website has not been deployed. Firefox, Safari and AI features are deferred.
+This repository contains the Chrome extension (development candidate 0.2.1) and its website in `site/`. The extension has not been published to the Chrome Web Store, and the website has not been deployed. Firefox, Safari and AI features are deferred. The audit repaired selection, keyboard focus and regional save behavior; its grant-dependent capture checks remain pending. See [the audit handback](docs/audit-0.2.0/REPORT.md) and [acceptance evidence](docs/ACCEPTANCE.md).
 
 ## Try the development build
 
@@ -16,7 +16,7 @@ This repository contains the Chrome extension (development build 0.2.0) and its 
 
 Chrome manages shortcut assignments at `chrome://extensions/shortcuts`. A shortcut can conflict with another extension or system shortcut; use **Change shortcut** in Link Meteor to inspect it. Reload the extension at `chrome://extensions` after rebuilding, then reload test webpages so their injected script is current. If an automation profile caches an old worker, use a new task-owned test profile instead of treating that result as current-build evidence.
 
-The ZIPs under `artifacts/` are unpacked development packages (`link-meteor-0.2.0.zip` is current; `0.1.0` is the pre-design baseline): extract one to a folder and select that folder with **Load unpacked**. They are not store installers.
+The ZIPs under `artifacts/` are unpacked development packages (`link-meteor-0.2.1.zip` is the audit candidate; `0.2.0` is the preserved Opus handback; `0.1.0` is the pre-design baseline). For a new installation, extract one to a folder and select that folder with **Load unpacked**. For an existing installation, preserve its folder path and extension identity and export your collections before updating; loading a different unpacked path can create a separate extension and separate storage. They are not store installers.
 
 ## What is included
 

@@ -150,8 +150,12 @@ async function commitCapture(message, sender) {
   const links = occurrences(message.links, sender.tab, crypto.randomUUID());
   const state = links.length ? await mutate({type:'links.append',links}) : await serial(readState);
   await rememberTarget(sender.tab).catch(() => {});
-  if (message.review) await chrome.tabs.create({url:WORKBENCH});
-  return {state,count:links.length};
+  let warning='';
+  if (message.review) {
+    try { await chrome.tabs.create({url:WORKBENCH}); }
+    catch { warning='Your links were saved, but the review tab could not open. Open Link Meteor from the toolbar to review them.'; }
+  }
+  return {state,count:links.length,warning};
 }
 
 function validWebUrls(urls) {

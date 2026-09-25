@@ -1,0 +1,17 @@
+import assert from 'node:assert/strict';
+import {readFile,writeFile} from 'node:fs/promises';
+import {resolve} from 'node:path';
+import {launch,rpc,until,evidence} from './helpers/browser.mjs';
+const result={started:new Date().toISOString(),checks:[],limits:['Keyboard/label/contrast spot checks, not a complete screen-reader or WCAG audit.']};
+const {context,id}=await launch('visual-final',{headless:true});
+try{
+ const ui=await context.newPage();await ui.goto(`chrome-extension://${id}/ui/workbench.html`);
+ await ui.locator('#collection-heading').waitFor();const rows=JSON.parse(await readFile(resolve(evidence,'exports/browser.json'),'utf8'));await rpc(ui,{type:'state.mutate',action:{type:'collection.create',name:'Research sources'}});await rpc(ui,{type:'state.mutate',action:{type:'links.append',links:rows.map(r=>r.occurrences[0])}});await until(async()=>await ui.locator('.link-row').count()>0,'Rows');
+ for(const width of [320,390,412,1440]){await ui.setViewportSize({width,height:1000});assert.equal(await ui.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);result.checks.push({width,horizontalOverflow:false});}
+ await ui.setViewportSize({width:1440,height:1000});await ui.screenshot({path:resolve(evidence,'workbench-desktop.png')});await ui.locator('#review-title').scrollIntoViewIfNeeded();await ui.screenshot({path:resolve(evidence,'workbench-review.png')});
+ await ui.emulateMedia({colorScheme:'dark',reducedMotion:'reduce'});await ui.evaluate(()=>scrollTo(0,0));await ui.screenshot({path:resolve(evidence,'workbench-dark.png')});
+ const contrast=await ui.evaluate(()=>{const parse=s=>s.match(/[\d.]+/g).slice(0,3).map(Number);const luminance=a=>a.map(n=>{n/=255;return n<=.04045?n/12.92:((n+.055)/1.055)**2.4;}).reduce((s,n,i)=>s+n*[.2126,.7152,.0722][i],0);const el=document.querySelector('#delete-collection'),card=el.closest('.card');const a=luminance(parse(getComputedStyle(el).color)),b=luminance(parse(getComputedStyle(card).backgroundColor));return(Math.max(a,b)+.05)/(Math.min(a,b)+.05);});assert.ok(contrast>=4.5);result.checks.push({darkDestructiveTextContrast:contrast});
+ await ui.emulateMedia({colorScheme:'light'});await ui.setViewportSize({width:390,height:844});await ui.screenshot({path:resolve(evidence,'workbench-narrow.png')});await ui.keyboard.press('Tab');assert.ok(await ui.evaluate(()=>document.activeElement!==document.body));
+ const labels=await ui.evaluate(()=>[...document.querySelectorAll('input,select,textarea,button')].filter(e=>e.getClientRects().length&&!e.getAttribute('aria-label')&&!e.getAttribute('aria-labelledby')&&!e.labels?.length&&!(e.tagName==='BUTTON'&&e.textContent.trim())).map(e=>e.id||e.outerHTML.slice(0,80)));assert.deepEqual(labels,[]);result.checks.push({unlabeledFormControls:0,keyboardFocusReachedControl:true});
+ const collection=(await rpc(ui,{type:'state.get'})).activeCollectionId;await rpc(ui,{type:'state.mutate',action:{type:'collection.update',id:collection,patch:{name:'L'.repeat(120)}}});await until(async()=>(await ui.locator('#collection-heading').innerText()).length===120,'Long name');assert.equal(await ui.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);result.checks.push({longCollectionNameOverflow:false});result.result='PASS';
+}catch(e){result.result='FAIL';result.error=e.stack;console.error(e);process.exitCode=1;}finally{await context.close();result.finished=new Date().toISOString();await writeFile(resolve(evidence,'visual-results.json'),JSON.stringify(result,null,2)+'\n');console.log(result);}

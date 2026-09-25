@@ -45,7 +45,7 @@ function safeLinkUrl(value) {
   let url;
   try { url = new URL(value); } catch { throw new Error(`Unsupported link URL: ${value}`); }
   if (!['http:', 'https:', 'mailto:', 'tel:'].includes(url.protocol) ||
-      (['mailto:', 'tel:'].includes(url.protocol) && !url.pathname)) throw new Error(`Unsupported link URL: ${value}`);
+      (url.protocol === 'tel:' && !url.pathname)) throw new Error(`Unsupported link URL: ${value}`);
   return value;
 }
 

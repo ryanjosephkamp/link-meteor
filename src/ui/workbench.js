@@ -329,7 +329,7 @@ function captureReport(report, { source = 'workbench', key = '', createdAt = '' 
   const box = $('capture-report'); box.replaceChildren(); box.hidden = false;
   ui.displayedReportKey = key;
   const heading = node('div', 'report-heading');
-  heading.append(node('h3', '', `${source === 'context' ? 'Context-menu capture · ' : ''}${report.capturedCount} link occurrence${report.capturedCount === 1 ? '' : 's'} captured`));
+  heading.append(node('h3', '', `${source === 'context' ? 'Previous capture · ' : ''}${report.capturedCount} link occurrence${report.capturedCount === 1 ? '' : 's'} captured`));
   const dismiss = node('button', 'quiet', 'Dismiss'); dismiss.type = 'button'; dismiss.setAttribute('aria-label', 'Dismiss capture report');
   dismiss.addEventListener('click', () => action(async () => {
     box.hidden = true;
@@ -367,9 +367,13 @@ async function runCapture() {
     let tabIds = [];
     if (ui.scope !== 'current') {
       if (!ui.inventory) throw new Error('Tab preview is unavailable. Choose the scope again to refresh it.');
+      const scope = ui.scope;
       const tabs = ui.inventory.tabs;
-      const picked = ui.scope === 'selected' ? tabs.filter((tab) => ui.selectedTabs.has(tab.id)) : ui.scope === 'window' ? tabs.filter((tab) => tab.windowId === ui.inventory.currentWindowId) : tabs;
+      const picked = scope === 'selected' ? tabs.filter((tab) => ui.selectedTabs.has(tab.id)) : scope === 'window' ? tabs.filter((tab) => tab.windowId === ui.inventory.currentWindowId) : tabs;
       if (!picked.length) throw new Error('Select at least one tab before capturing.');
+      if (picked.length > 100) throw new Error(`${picked.length} tabs are in scope. Select at most 100 tabs for each capture.`);
+      tabIds = picked.map((tab) => tab.id);
+      const originalOrigins = new Map(picked.map((tab) => [tab.id, originOf(tab.url)]));
       const origins = [...new Set(picked.map((tab) => originOf(tab.url)).filter(Boolean))];
       if (origins.length) {
         try {
@@ -378,11 +382,10 @@ async function runCapture() {
         } catch (error) { show(`Site access request failed: ${error.message}. The capture report will identify denied pages.`, 'notice'); }
       }
       const freshInventory = await loadInventory();
-      const freshTabs = freshInventory.tabs;
-      const fresh = ui.scope === 'selected' ? freshTabs.filter((tab) => ui.selectedTabs.has(tab.id)) : ui.scope === 'window' ? freshTabs.filter((tab) => tab.windowId === freshInventory.currentWindowId) : freshTabs;
-      if (fresh.some((tab) => originOf(tab.url) && !origins.includes(originOf(tab.url)))) throw new Error('Tab origins changed after the permission request. Review the scope and capture again.');
-      if (fresh.length > 100) throw new Error(`${fresh.length} tabs are in scope. Select at most 100 tabs for each capture.`);
-      tabIds = fresh.map((tab) => tab.id);
+      const survivors = new Map(freshInventory.tabs.map((tab) => [tab.id, tab]));
+      if (tabIds.some((id) => survivors.has(id) && originOf(survivors.get(id).url) !== originalOrigins.get(id))) {
+        throw new Error('A selected tab changed origin during the permission request. Review the scope and capture again.');
+      }
     }
     const { state, report } = await request({ type: 'capture.run', tabIds });
     ui.state = state; render(); captureReport(report);

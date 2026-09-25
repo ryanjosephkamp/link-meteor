@@ -9,5 +9,5 @@
     "test:browser": "node tests/browser.mjs",
     "package": "node scripts/package.mjs"
   },
-  "engines": { "node": ">=20" }
+  "engines": { "node": ">=22" }
 }

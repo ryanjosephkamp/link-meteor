@@ -87,16 +87,20 @@ test('unsupported format or columns are rejected', () => {
 test('text keeps valid destination strings exactly; Markdown encodes only its delimiters', () => {
   const links = [
     { anchorText: 'Email', url: 'mailto:team@example.org?subject=Plan(2026)' },
+    { anchorText: 'Compose subject', url: 'mailto:?subject=Hello' },
+    { anchorText: 'Compose', url: 'mailto:' },
     { anchorText: 'Call', url: 'tel:+12125550123' },
     { anchorText: 'Web', url: 'https://example.org/report(1)' },
   ];
   assert.equal(makeExport(links, { format: 'text' }).data, links.map(x => x.url).join('\n'));
   const markdown = makeExport(links, { format: 'markdown' }).data;
   assert.match(markdown, /mailto:team@example\.org\?subject=Plan%282026%29/);
+  assert.match(markdown, /\[Compose subject\]\(mailto:\?subject=Hello\)/);
+  assert.match(markdown, /\[Compose\]\(mailto:\)/);
   assert.match(markdown, /tel:\+12125550123/);
   assert.match(markdown, /https:\/\/example\.org\/report%281%29/);
   assert.equal(links[0].url, 'mailto:team@example.org?subject=Plan(2026)');
-  for (const bad of ['javascript:alert(1)', 'data:text/html,hi']) {
+  for (const bad of ['javascript:alert(1)', 'data:text/html,hi', 'tel:', 'mailto:team@example.org\n']) {
     assert.throws(() => makeExport([{ url: bad }], { format: 'text' }), /URL/i);
     assert.throws(() => makeExport([{ anchorText: 'bad', url: bad }], { format: 'markdown' }), /URL/i);
   }

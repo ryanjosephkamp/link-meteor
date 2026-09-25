@@ -15,12 +15,15 @@
     return true;
   }
 
-  function candidate(anchor) {
+  function candidate(anchor, invalid) {
     const href = anchor.getAttribute('href') ?? anchor.getAttribute('xlink:href');
     if (href === null || !visible(anchor)) return null;
     let url;
     try { url = new URL(href,anchor.baseURI); } catch { return null; }
     if (!['http:','https:','mailto:','tel:'].includes(url.protocol)) return null;
+    if (/\s|[\u0000-\u001f\u007f]/u.test(url.href) || (url.protocol==='tel:'&&!url.pathname)) {
+      invalid();return null;
+    }
     const rects = [...anchor.getClientRects()].filter(positive);
     if (!rects.length) return null;
     const anchorText = normalize(typeof anchor.innerText === 'string' ? anchor.innerText : anchor.textContent);
@@ -44,7 +47,7 @@
 
   function collect(regional=false) {
     const records = [], warnings = [];
-    let inaccessibleFrames=0, capped=false;
+    let inaccessibleFrames=0, malformedLinks=0, capped=false;
     const seenDocuments = new Set();
     const viewport = {left:0,top:0,right:innerWidth,bottom:innerHeight};
     function walk(root, transform={x:0,y:0,sx:1,sy:1}, clip=viewport) {
@@ -52,7 +55,7 @@
       for (const element of root.querySelectorAll('*')) {
         if (element.closest(`[${marker}]`)) continue;
         if (element.matches('a[href],a[xlink\\:href]')) {
-          const link = candidate(element);
+          const link = candidate(element,()=>malformedLinks++);
           if (link) {
             const rects = regional ? geometry(element,transform,clip) : [];
             if (!regional || rects.length) {
@@ -79,6 +82,7 @@
     }
     walk(document);
     if (inaccessibleFrames) warnings.push(`${inaccessibleFrames} inaccessible frame${inaccessibleFrames===1?' was':'s were'} excluded. Same-origin frames and open shadow roots are supported.`);
+    if (malformedLinks) warnings.push(`${malformedLinks} malformed link destination${malformedLinks===1?' was':'s were'} excluded.`);
     if (capped) warnings.push('Capture reached 20,000 loaded links. Results are partial; select smaller regions for the remainder.');
     return {records,inaccessibleFrames,warnings};
   }
@@ -170,7 +174,7 @@
     });
     async function save(review=false){
       if(committed){if(review)await request({type:'ui.open'});return;}
-      const result=await request({type:'capture.commit',links:selected.map(entry=>entry.link),inaccessibleFrames,review});committed=true;$('.add').disabled=true;$('.status').textContent=`Saved ${result.count} links to your active collection.`;
+      const result=await request({type:'capture.commit',links:selected.map(entry=>entry.link),inaccessibleFrames,review});committed=true;$('.add').disabled=true;$('.status').textContent=`Saved ${result.count} links to your active collection. ${result.warning || ''}`.trim();
     }
     function action(cls,fn){$('.'+cls).onclick=async()=>{const button=$('.'+cls);button.disabled=true;try{await fn();}catch(error){$('.status').textContent=String(error.message || error);}finally{if(host.isConnected)button.disabled=cls==='add'&&committed;}};}
     action('add',()=>save());action('review',()=>save(true));action('more',async()=>{await save();arm();});

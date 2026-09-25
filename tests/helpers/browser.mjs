@@ -1,5 +1,6 @@
+import {createHash} from 'node:crypto';
 import {createServer} from 'node:http';
-import {readFile,mkdir,writeFile} from 'node:fs/promises';
+import {readFile,mkdir,writeFile,readdir} from 'node:fs/promises';
 import {resolve,extname} from 'node:path';
 import {createRequire} from 'node:module';
 import {homedir} from 'node:os';
@@ -18,7 +19,7 @@ export async function fixtureServer() {
     try {const body=await readFile(resolve(root,'tests/fixtures'+name));res.writeHead(200,{'Content-Type':'text/html;charset=utf-8','Cache-Control':'no-store'});res.end(body);}
     catch {res.writeHead(500);res.end('Fixture unavailable');}
   });
-  await new Promise((done,fail)=>{server.once('error',fail);server.listen(0,'127.0.0.1',done);});
+  await new Promise((done,fail)=>{server.once('error',fail);server.listen(Number(process.env.LINK_METEOR_FIXTURE_PORT || 52478),'127.0.0.1',done);});
   const base=`http://127.0.0.1:${server.address().port}`;
   return {base,server,close:()=>new Promise(done=>server.close(done))};
 }
@@ -26,26 +27,21 @@ export async function fixtureServer() {
 export async function launch(profile='acceptance',{headless=true}={}) {
   await mkdir(scratch,{recursive:true});await mkdir(evidence,{recursive:true});
   const extension=resolve(root,'dist');
+  const hash=createHash('sha256');
+  async function digest(dir){for(const entry of (await readdir(dir,{withFileTypes:true})).sort((a,b)=>a.name.localeCompare(b.name))){const path=resolve(dir,entry.name);if(entry.isDirectory())await digest(path);else{hash.update(path.slice(extension.length));hash.update(await readFile(path));}}}
+  await digest(extension);const buildHash=hash.digest('hex');const fingerprint=resolve(scratch,profile+'-build.sha256');
+  let previous;try{previous=(await readFile(fingerprint,'utf8')).trim();}catch(error){if(error.code!=='ENOENT')throw error;}
+  if(previous&&previous!==buildHash)throw new Error('Build changed since this profile was initialized. Use LINK_METEOR_TEST_PROFILE with a fresh task-owned profile, prepare native grants, and repeat checks.');
+  await writeFile(fingerprint,buildHash+'\n');
   const context=await playwright.chromium.launchPersistentContext(resolve(scratch,profile),{
     executablePath:playwright.chromium.executablePath(),headless,
     viewport:{width:1440,height:1000},acceptDownloads:true,
     env:{...process.env,TMPDIR:scratch},
     args:[`--disable-extensions-except=${extension}`,`--load-extension=${extension}`,'--disable-background-networking','--disable-component-update',`--disk-cache-dir=${resolve(scratch,profile+'-cache')}`]
   });
-  let worker=context.serviceWorkers()[0] || await context.waitForEvent('serviceworker',{timeout:15000});
-  const initialId=new URL(worker.url()).host;
-  // Reload then open an extension page to wake the freshly loaded background worker.
-  await worker.evaluate(()=>chrome.runtime.reload()).catch(()=>{});
-  const bootstrap=await context.newPage();
-  try {
-    await bootstrap.goto(`chrome-extension://${initialId}/ui/workbench.html`);
-    await bootstrap.waitForFunction(()=>typeof chrome?.runtime?.sendMessage==='function');
-    await bootstrap.evaluate(()=>chrome.runtime.sendMessage({type:'state.get'}));
-    worker=context.serviceWorkers().find(next=>new URL(next.url()).host===initialId) || await context.waitForEvent('serviceworker',{timeout:15000});
-  } catch(error) { await context.close(); throw error; }
-  await bootstrap.close();
+  const worker=context.serviceWorkers()[0] || await context.waitForEvent('serviceworker',{timeout:15000});
   const id=new URL(worker.url()).host;
-  await writeFile(resolve(scratch,'runtime.json'),JSON.stringify({owner:'Link Meteor acceptance',nodePid:process.pid,profile:resolve(scratch,profile),extension,id,headless,started:new Date().toISOString()},null,2));
+  await writeFile(resolve(scratch,'runtime.json'),JSON.stringify({owner:'Link Meteor acceptance',nodePid:process.pid,profile:resolve(scratch,profile),extension,id,buildHash,headless,started:new Date().toISOString()},null,2));
   return {context,worker,id};
 }
 

@@ -36,64 +36,64 @@ See `docs/CONTRACTS.md` for the exact shapes and APIs. All workers read it befor
 
 Files: `src/core/model.js`, `src/core/export.js`, `src/core/xlsx.js`, `tests/core.test.mjs`, `tests/export.test.mjs`.
 
-- [ ] Write tests for empty state/collection operations, immutable append/remove/undo, faithful labels and occurrences, filter/dedup behavior, and independent source preservation.
-- [ ] Run `node --test tests/core.test.mjs` and establish an initial failing result before implementation.
-- [ ] Implement the pure APIs in CONTRACTS.md with validation and non-destructive views.
-- [ ] Write export tests using strings such as `=1+1`, `a,"b"\n雪`, `<img onerror=alert(1)>`, an empty label, and duplicate URLs from different sources; assert safe output and original data immutability.
-- [ ] Implement CSV/TSV/text/Markdown/HTML/JSON/XLSX with configurable column order. Example acceptance: `makeExport([row], {format:'csv',columns:['anchorText','url']}).data` must contain both headers in that order and quoted distinct cells.
-- [ ] Run `node --test tests/core.test.mjs tests/export.test.mjs`; hand back files, output, and limits. Astra reviews and commits this milestone.
+- [x] Write tests for empty state/collection operations, immutable append/remove/undo, faithful labels and occurrences, filter/dedup behavior, and independent source preservation.
+- [x] Run `node --test tests/core.test.mjs` and establish an initial failing result before implementation.
+- [x] Implement the pure APIs in CONTRACTS.md with validation and non-destructive views.
+- [x] Write export tests using strings such as `=1+1`, `a,"b"\n雪`, `<img onerror=alert(1)>`, an empty label, and duplicate URLs from different sources; assert safe output and original data immutability.
+- [x] Implement CSV/TSV/text/Markdown/HTML/JSON/XLSX with configurable column order. Example acceptance: `makeExport([row], {format:'csv',columns:['anchorText','url']}).data` must contain both headers in that order and quoted distinct cells.
+- [x] Run `node --test tests/core.test.mjs tests/export.test.mjs`; hand back files, output, and limits. Astra reviews and commits this milestone.
 
 ## Task 2 — Capture engine and selection overlay (Astra)
 
 Files: `src/content/capture.js`, `tests/fixtures/index.html`, `tests/fixtures/frame.html`, capture cases in `tests/browser.mjs`.
 
-- [ ] Create deterministic fixtures with expected text/URL pairs, image links, hidden text, repeated targets, open shadow roots, same-origin frames, external frames, dynamic anchors, nested scroll, wrapped text, and a large generated list.
-- [ ] Implement loaded-page extraction and a geometry-driven overlay. A link counts when any visible clipped client rectangle has positive-area intersection with the selection. Ignore hidden content, unsupported schemes, and extension-owned UI. Traverse open shadow roots and accessible same-origin frames; report inaccessible frames.
-- [ ] Implement shortcut arming, Escape cleanup, live highlights/count, page and nested-container scrolling, additional capture batches, a compact action strip, and explicit success/failure feedback.
-- [ ] Test by real pointer drags in the loaded extension; assert exact fixture IDs/labels and no accidental navigation after cancellation/selection. Add scroll and partial-intersection cases.
-- [ ] Implement optional hold-key mode with editable key, editable-field exclusion, per-origin permission, and graceful disabling. Astra reviews and checkpoints the slice.
+- [x] Create deterministic fixtures with expected text/URL pairs, image links, hidden text, repeated targets, open shadow roots, same-origin frames, external frames, dynamic anchors, nested scroll, wrapped text, and a large generated list.
+- [x] Implement loaded-page extraction and a geometry-driven overlay. A link counts when any visible clipped client rectangle has positive-area intersection with the selection. Ignore hidden content, unsupported schemes, and extension-owned UI. Traverse open shadow roots and accessible same-origin frames; report inaccessible frames.
+- [x] Implement shortcut arming, Escape cleanup, live highlights/count, page and nested-container scrolling, additional capture batches, a compact action strip, and explicit success/failure feedback.
+- [x] Test by real pointer drags in the loaded extension; assert exact fixture IDs/labels and no accidental navigation after cancellation/selection. Add scroll and partial-intersection cases.
+- [x] Implement optional hold-key mode with editable key, editable-field exclusion, per-origin permission, and graceful disabling. Astra reviews and checkpoints the slice.
 
 ## Task 3 — Manifest, background coordination, persistence and browser actions (Astra)
 
 Files: `src/manifest.json`, `src/background.js`, `src/icons/*`, `scripts/build.mjs`, `package.json`.
 
-- [ ] Build a loadable MV3 package with action/side panel, configurable command, context menu, required current-page/scripting/storage/clipboard APIs, optional tabs/bookmarks and HTTP(S) hosts. Bundle only product files.
-- [ ] Implement the background message API, serial state mutation, current-target selection, and safe capture orchestration. Preserve state on storage failure and return actionable errors.
-- [ ] Capture each selected tab independently and return a report: success, denied, unsupported, closed/navigation error, plus covered/omitted frames and counts.
-- [ ] Implement optional hold-mode dynamic content registration for approved origins, removal on disable/revocation, and restart reconciliation.
-- [ ] Implement explicit bookmark-folder creation and sequential, bounded opening of HTTP(S) links (at most 20 per confirmed action); report failures without pretending atomicity.
-- [ ] Test the complete current-page path and state persistence across background/browser restart; test multi-tab/window scope, denied hosts, and restricted pages before milestone commit/push.
+- [x] Build a loadable MV3 package with action/side panel, configurable command, context menu, required current-page/scripting/storage/clipboard APIs, optional tabs/bookmarks and HTTP(S) hosts. Bundle only product files.
+- [x] Implement the background message API, serial state mutation, current-target selection, and safe capture orchestration. Preserve state on storage failure and return actionable errors.
+- [x] Capture each selected tab independently and return a report: success, denied, unsupported, closed/navigation error, plus covered/omitted frames and counts.
+- [x] Implement optional hold-mode dynamic content registration for approved origins, removal on disable/revocation, and restart reconciliation.
+- [x] Implement explicit bookmark-folder creation and sequential, bounded opening of HTTP(S) links (at most 20 per confirmed action); report failures without pretending atomicity.
+- [x] Test the complete current-page path and state persistence across background/browser restart; test multi-tab/window scope, denied hosts, and restricted pages before milestone commit/push.
 
 ## Task 4 — Workbench UI (second independent Sol worker after contracts settle)
 
 Files: `src/ui/*`, UI cases in a worker-owned `tests/ui.test.mjs` if useful. Do not edit core/background/capture files.
 
-- [ ] Implement semantic side-panel and full-tab UI using the same page, original meteor styling, system fonts, accessible focus, light/dark theme, and reduced motion.
-- [ ] Connect the exact background APIs; display collections, rename/notes/tags, source provenance, all occurrences and dedup counts, filters, sorting, selection, remove/undo, and empty/loading/error feedback.
-- [ ] Add source-scope preview, selected-tab picker and runtime permissions from explicit gestures; selection activation and settings; open full view.
-- [ ] Add ordered export-column controls; download each supported format; clipboard choices; explicit bookmark permission; bounded open confirmation. Derive export targets consistently: selected groups if selection exists, otherwise the visible filtered view; disclose representative/dedup mode.
-- [ ] Test UI interactions in the real loaded extension and inspect narrow side-panel and desktop states. Astra audits escaping and failure feedback, then commits/pushes integrated work.
+- [x] Implement semantic side-panel and full-tab UI using the same page, original meteor styling, system fonts, accessible focus, light/dark theme, and reduced motion.
+- [x] Connect the exact background APIs; display collections, rename/notes/tags, source provenance, all occurrences and dedup counts, filters, sorting, selection, remove/undo, and empty/loading/error feedback.
+- [x] Add source-scope preview, selected-tab picker and runtime permissions from explicit gestures; selection activation and settings; open full view.
+- [x] Add ordered export-column controls; download each supported format; clipboard choices; explicit bookmark permission; bounded open confirmation. Derive export targets consistently: selected groups if selection exists, otherwise the visible filtered view; disclose representative/dedup mode.
+- [x] Test UI interactions in the real loaded extension and inspect narrow side-panel and desktop states. Astra audits escaping and failure feedback, then commits/pushes integrated work.
 
 ## Task 5 — Independent integration acceptance and repair (Astra, with bounded worker fixes)
 
 Files: `tests/browser.mjs`, `tests/verify-xlsx.py`, `docs/ACCEPTANCE.md`, concise `artifacts/evidence/*`.
 
-- [ ] Run all Node tests and package validation. Inspect generated XLSX with an independent Python reader available on the host (no download solely for this check).
-- [ ] Run the extension in a dedicated persistent Chromium profile served by a task-owned local HTTP fixture server. Record only task-owned server/browser identities and close them explicitly.
-- [ ] Exercise capture, append/review/export, filters/selection/dedup, persistence, scopes/permissions, and export injection cases. Read the actual downloaded outputs.
-- [ ] Inspect screenshots of the full workbench, narrow side panel, selection, and meaningful errors. Check keyboard paths, responsive overflow, and semantic control labels.
-- [ ] Perform visible installed-Chrome/native shortcut checks where the supported tools allow; distinguish these from injected-message or Chromium automation evidence. Report any untested native behavior.
-- [ ] Fix material findings or assign one bounded repair at a time; rerun covering checks and the integrated suite when changes cross boundaries. Review final diff against the acceptance map.
+- [x] Run all Node tests and package validation. Inspect generated XLSX with an independent Python reader available on the host (no download solely for this check).
+- [x] Run the extension in a dedicated persistent Chromium profile served by a task-owned local HTTP fixture server. Record only task-owned server/browser identities and close them explicitly.
+- [x] Exercise capture, append/review/export, filters/selection/dedup, persistence, scopes/permissions, and export injection cases. Read the actual downloaded outputs.
+- [x] Inspect screenshots of the full workbench, narrow side panel, selection, and meaningful errors. Check keyboard paths, responsive overflow, and semantic control labels.
+- [x] Perform visible native shortcut checks in installed Chrome for Testing where the supported tools allow; distinguish these from injected-message or Chromium automation evidence. Report any untested native behavior.
+- [x] Fix material findings or assign one bounded repair at a time; rerun covering checks and the integrated suite when changes cross boundaries. Review final diff against the acceptance map.
 
 ## Task 6 — Review build and Opus handoff (Astra)
 
 Files: `README.md`, `docs/PRIVACY.md`, `docs/handbacks/iteration-01/*`, `docs/opus-handoff/*`, `artifacts/releases/*`.
 
-- [ ] Create a development ZIP and verify its file manifest and hash. Record exact source/build identity and installation instructions.
-- [ ] Produce the accepted feature/check/limitation map, resource/time notes, outstanding human acceptance, worker reconciliation, and verified GitHub checkpoint status.
-- [ ] Prepare separate Opus extension-refinement and website briefs with code context, screenshots, test evidence, known limitations, and a return-to-Astra prompt. Ask Opus to create its own scaffolding and choose its own approach without prescribing stack or governance.
-- [ ] Render the mobile HTML handback with the report skill, canonical Markdown, exact next prompt, embedded relevant screenshots, and no clipboard troubleshooting. Validate source parity and narrow layout.
-- [ ] Reconcile all worker writes, stop task-owned background processes, checkpoint/push, verify remote head, and stop for the user's review. No publication or Opus execution.
+- [x] Create a development ZIP and verify its file manifest and hash. Record exact source/build identity and installation instructions.
+- [x] Produce the accepted feature/check/limitation map, resource/time notes, outstanding human acceptance, worker reconciliation, and verified GitHub checkpoint status.
+- [x] Prepare separate Opus extension-refinement and website briefs with code context, screenshots, test evidence, known limitations, and a return-to-Astra prompt. Ask Opus to create its own scaffolding and choose its own approach without prescribing stack or governance.
+- [x] Render the mobile HTML handback with the report skill, canonical Markdown, exact next prompt, embedded relevant screenshots, and no clipboard troubleshooting. Validate source parity and narrow layout.
+- [x] Reconcile all worker writes, stop task-owned background processes, checkpoint/push, verify remote head, and stop for the user's review. No publication or Opus execution.
 
 ## Preflight consistency review
 
@@ -112,3 +112,7 @@ Files: `README.md`, `docs/PRIVACY.md`, `docs/handbacks/iteration-01/*`, `docs/op
 | 4 | UI scope | Disjoint ownership; no hidden storage writes or remote assets. |
 | 5 | Test scope | Real browser claims separated from mock/unit evidence. |
 | 6 | Handoff scope | No site implementation, deployment, store submission, or Claude launch. |
+
+## Closeout acceptance qualification
+
+Implementation tasks are complete for the development baseline. The acceptance map in docs/ACCEPTANCE.md is authoritative for executed versus simulated versus remaining human checks. Native checks used Chrome for Testing; ordinary installed Google Chrome remains unverified. Store publication, site implementation, Firefox/Safari, Opus execution and human approval have not occurred. Delivery artifacts and final remote verification are recorded in the iteration handback.

@@ -39,7 +39,7 @@ function destinationUrl(value) {
   let parsed;
   try { parsed = new URL(value); } catch { throw new Error('link.url must be an HTTP(S), mailto, or tel URL'); }
   if (!['http:', 'https:', 'mailto:', 'tel:'].includes(parsed.protocol) ||
-      (['mailto:', 'tel:'].includes(parsed.protocol) && !parsed.pathname)) {
+      (parsed.protocol === 'tel:' && !parsed.pathname)) {
     throw new Error('link.url must be an HTTP(S), mailto, or tel URL');
   }
 }

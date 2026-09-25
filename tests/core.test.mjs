@@ -89,12 +89,16 @@ test('mixed web, email, and telephone destinations retain separate occurrences',
   const mixed = [
     link('web'),
     link('email', { anchorText: 'Write us', url: 'mailto:team@example.org?subject=Plan(2026)' }),
+    link('recipientless', { anchorText: 'Compose subject', url: 'mailto:?subject=Hello' }),
+    link('empty-mailto', { anchorText: 'Compose', url: 'mailto:' }),
     link('phone', { anchorText: 'Call us', url: 'tel:+12125550123' }),
   ];
   const captured = reduceState(state, { type: 'links.append', links: mixed });
   assert.deepEqual(captured.collections[0].links.map(item => item.url), mixed.map(item => item.url));
-  assert.deepEqual(queryLinks(captured.collections[0].links).rows.map(row => row.id), ['web', 'email', 'phone']);
+  assert.deepEqual(queryLinks(captured.collections[0].links).rows.map(row => row.id), ['web', 'email', 'recipientless', 'empty-mailto', 'phone']);
   assert.equal(queryLinks(captured.collections[0].links, { relation: 'external' }).matchedCount, 0);
   assert.throws(() => reduceState(state, { type: 'links.append', links: [link('script', { url: 'javascript:alert(1)' })] }), /url/i);
   assert.throws(() => reduceState(state, { type: 'links.append', links: [link('data', { url: 'data:text/html,hi' })] }), /url/i);
+  assert.throws(() => reduceState(state, { type: 'links.append', links: [link('empty-phone', { url: 'tel:' })] }), /url/i);
+  assert.throws(() => reduceState(state, { type: 'links.append', links: [link('whitespace', { url: 'mailto:team@example.org\n' })] }), /url/i);
 });

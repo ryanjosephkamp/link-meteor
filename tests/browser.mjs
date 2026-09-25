@@ -6,7 +6,7 @@ import {fixtureServer,launch,rpc,until,evidence} from './helpers/browser.mjs';
 const result={started:new Date().toISOString(),browser:'Installed Chrome for Testing via Playwright; real unpacked extension',checks:[],limitations:['Native optional site grant was established separately in the isolated interactive profile.','Not acceptance in the everyday Chrome profile or other operating systems.']};
 const check=(name,detail={})=>{result.checks.push({name,status:'pass',...detail});console.log('PASS',name);};
 const fixture=await fixtureServer();let context;
-const profile=process.env.LINK_METEOR_TEST_PROFILE || 'interactive';
+const profile=process.env.LINK_METEOR_TEST_PROFILE || 'acceptance-final';
 const headed=process.env.LINK_METEOR_HEADED!=='0';
 await mkdir(resolve(evidence,'exports'),{recursive:true});
 try {
@@ -58,6 +58,7 @@ try {
   await page.mouse.move(rect.x+4,rect.y+4);await page.mouse.down();await page.mouse.move(rect.x+rect.width-4,rect.y+rect.height-4,{steps:12});
   assert.match(await overlay.locator('.badge').innerText(),/^5 links$/);await page.screenshot({path:resolve(evidence,'region-drag.png')});await page.mouse.up();
   assert.equal(await overlay.locator('.count').innerText(),'5 links selected');
+  await overlay.getByRole('button',{name:'Copy text + URL',exact:true}).click();await until(async()=>(await overlay.locator('.status').innerText()).startsWith('Copied'),'Regional clipboard');check('Regional quick-copy reports successful two-column clipboard write');
   await overlay.getByRole('button',{name:'Add to collection',exact:true}).click();await until(async()=>(await active()).links.length===5,'Regional save');
   assert.equal(page.url(),fixture.base+'/index.html');check('Real rectangle pointer drag highlights and saves exactly 5 links without navigating');
   await overlay.getByRole('button',{name:'Add another region',exact:true}).click();await page.keyboard.press('Escape');assert.equal((await active()).links.length,5);check('Add-another-region does not duplicate an already saved region');
@@ -73,7 +74,11 @@ try {
   assert.ok(await page.locator('#nested').evaluate(e=>e.scrollTop)>0);
   const selectedCount=parseInt(await overlay.locator('.count').innerText());assert.ok(selectedCount>=4);
   await overlay.getByRole('button',{name:'Add to collection',exact:true}).click();await until(async()=>(await active()).links.length===6+selectedCount,'Scrolled save');await page.keyboard.press('Escape');check('Nested wheel scrolling extends the selection and retains earlier matches',{selectedCount});
+  await page.evaluate(()=>scrollTo(0,0));await arm();await page.mouse.move(250,340);await page.mouse.down();await page.mouse.move(950,800,{steps:4});await page.mouse.wheel(0,420);await new Promise(r=>setTimeout(r,120));assert.ok(await page.evaluate(()=>scrollY)>0);await page.mouse.up();assert.ok(parseInt(await overlay.locator('.count').innerText())>0);await page.keyboard.press('Escape');check('Page scrolling during a drag retains selected links');
+  await page.locator('#same-frame').scrollIntoViewIfNeeded();const f=await page.frameLocator('#same-frame').locator('a').boundingBox();await arm();await page.mouse.move(f.x+2,f.y+2);await page.mouse.down();await page.mouse.move(f.x+10,f.y+10);await page.mouse.up();assert.equal(await overlay.locator('.count').innerText(),'1 link selected');await page.keyboard.press('Escape');check('Regional geometry includes an accessible same-origin frame');
   await page.locator('#load-dynamic').click();const dyn=await rpc(ui,{type:'capture.run',tabIds:[tab.id]});assert.equal(dyn.report.capturedCount,38);check('Loaded dynamic links captured on next scan');
+  const edge=await context.newPage();await edge.goto(fixture.base+'/empty.html');await edge.evaluate(()=>{for(const [text,href] of [['Normal','/normal'],['Email subject','mailto:?subject=Hello'],['Compose email','mailto:'],['Malformed phone','tel:'],['Malformed email','mailto:a b@example.org']]){const a=document.createElement('a');a.textContent=text;a.href=href;document.body.append(a);}});
+  const edgeTab=(await rpc(ui,{type:'tabs.list'})).tabs.find(t=>t.url===edge.url());const edgeReport=(await rpc(ui,{type:'capture.run',tabIds:[edgeTab.id]})).report;assert.equal(edgeReport.capturedCount,3);assert.match(edgeReport.results[0].warning,/2 malformed link destinations/);await edge.close();check('Recipientless mail links retained while malformed destinations are skipped with an explicit count');
   await ui.bringToFront();await ui.locator('#collection-notes').fill('Synthetic research notes');await ui.locator('#collection-tags').fill('research, fixture');await ui.locator('#collection-details button[type=submit]').click();
   await until(async()=>(await active()).notes==='Synthetic research notes','Collection notes save');assert.deepEqual((await active()).tags,['research','fixture']);check('Collection notes and tags saved through UI');
   await ui.locator('#search').fill('Attention in small systems');await until(async()=>await ui.locator('.link-row').count()===2,'Search occurrences');
@@ -124,5 +129,5 @@ try {
   await ui.emulateMedia({colorScheme:'dark',reducedMotion:'reduce'});await ui.screenshot({path:resolve(evidence,'workbench-dark.png')});
   assert.deepEqual(errors,[]);check('No uncaught fixture or workbench errors');
   result.result='PASS';
-} catch(error) {result.result='FAIL';result.error=error.stack;console.error(error);process.exitCode=1;}
+} catch(error) {if(context){const failureUI=context.pages().find(p=>p.url().includes('/ui/workbench.html'));if(failureUI){result.failureUI=await failureUI.locator('body').innerText().catch(()=>'(unavailable)');result.failureSession=await failureUI.evaluate(()=>chrome.storage.session.get(null)).catch(()=>null);await failureUI.screenshot({path:resolve(evidence,'browser-failure.png')}).catch(()=>{});}}result.result='FAIL';result.error=error.stack;console.error(error);process.exitCode=1;}
 finally{if(context)await context.close();await fixture.close();result.finished=new Date().toISOString();await writeFile(resolve(evidence,'browser-results.json'),JSON.stringify(result,null,2)+'\n');}

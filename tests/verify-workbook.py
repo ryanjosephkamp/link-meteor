@@ -162,7 +162,17 @@ def check_formatted(xlsx_path, expected_rows, url_columns, about=None):
              and labels[-2:] == ["Columns", "Link Meteor version"]
              and (labels[5:-2] == ["Filters"] and core[5][1] == "None" or set(labels[5:-2]) == {"Filter"}))
     if about is not None:
-        local, utc = local_and_utc(about["exportedAtUtcSeconds"])
+        seconds = about.get("exportedAtUtcSeconds")
+        if seconds is None:
+            # A downloaded workbook: its time is only known from the sheet, so check that the local
+            # and UTC rows name the same instant.
+            utc_row = next((row[1] for row in core if row[0] == "Exported (UTC)"), "")
+            try:
+                seconds = datetime.strptime(utc_row, "%Y-%m-%d %H:%M:%S UTC").replace(tzinfo=timezone.utc).timestamp()
+            except ValueError:
+                fail(f"Unreadable UTC export time: {utc_row!r}")
+            checks["exported_at_utc"] = utc_row
+        local, utc = local_and_utc(seconds)
         filters = [["Filter", item] for item in about["filters"]] or [["Filters", "None"]]
         wanted = [["Exported (local time)", local], ["Exported (UTC)", utc], ["Collection", about["collection"]],
                   ["Links", str(about["count"])], ["View", about["view"]], *filters,

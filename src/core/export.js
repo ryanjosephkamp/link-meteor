@@ -120,7 +120,7 @@ function aboutBlock(about, rows, columns) {
 function aboutJson(about) {
   return {
     exportedAt: about.exportedAt.toISOString(),
-    exportedAtLocal: `${localDateTime(about.exportedAt)}${offset(about.exportedAt)}`,
+    exportedAtLocal: `${localDateTime(about.exportedAt)}.${String(about.exportedAt.getMilliseconds()).padStart(3, '0')}${offset(about.exportedAt)}`,
     collection: about.collection, count: about.count, view: about.view, filters: about.filters, version: about.version,
   };
 }

@@ -226,7 +226,7 @@ test('JSON without about is the row array; with about it is {about, rows}', () =
   assert.deepEqual(Object.keys(parsed), ['about', 'rows']);
   assert.deepEqual(parsed.rows, JSON.parse(plain.data), 'rows is exactly the 0.2.2 array');
   assert.equal(parsed.about.exportedAt, '2026-09-26T21:32:59.000Z');
-  assert.match(parsed.about.exportedAtLocal, /^2026-09-2[67]T\d\d:\d\d:59[+-]\d\d:\d\d$/);
+  assert.match(parsed.about.exportedAtLocal, /^2026-09-2[67]T\d\d:\d\d:59\.000[+-]\d\d:\d\d$/);
   const local = new Date(parsed.about.exportedAtLocal);
   assert.equal(local.valueOf(), about.exportedAt.valueOf(), 'the local time and its offset name the same instant');
   assert.deepEqual({ ...parsed.about, exportedAt: undefined, exportedAtLocal: undefined }, { exportedAt: undefined, exportedAtLocal: undefined, collection: 'Urban heat', count: fixtureRows.length, view: about.view, filters: about.filters, version: '0.3.0' });

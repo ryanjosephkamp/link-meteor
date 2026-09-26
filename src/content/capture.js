@@ -174,7 +174,8 @@
       .pick label{display:flex;align-items:center;gap:8px;font-size:12px;color:#a2a8b5}
       select{flex:1;min-width:0;min-height:30px;font:500 12.5px/1.2 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:#0f1422;color:#fff;border:1px solid rgba(255,255,255,.22);border-radius:7px;padding:4px 6px}
       select:focus-visible{outline:2px solid #c3f344;outline-offset:2px}
-      .preview{list-style:none;margin:12px 0 0;padding:6px 8px;border-radius:9px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.07);display:grid;gap:1px;max-height:10.5em;overflow:auto;overscroll-behavior:contain}
+      .preview{list-style:none;margin:12px 0 0;padding:6px 8px;border-radius:9px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.07);display:grid;grid-template-columns:minmax(0,1fr);gap:1px;max-height:10.5em;overflow:auto;overscroll-behavior:contain}
+      .preview li{min-width:0}
       .preview label{display:flex;align-items:center;gap:8px;min-width:0;padding:2px 0;cursor:pointer;font-size:12.5px}
       .preview input{flex:none;margin:0;width:14px;height:14px;accent-color:#c3f344}
       .preview input:focus-visible{outline:2px solid #c3f344;outline-offset:2px}

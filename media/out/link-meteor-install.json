@@ -1,0 +1,108 @@
+{
+  "id": "link-meteor-install",
+  "title": "Install Link Meteor and make your first capture",
+  "file": "site/assets/video/link-meteor-install.mp4",
+  "bytes": 7125702,
+  "sha256": "8c90669c8009ff22ed2385eba3b69eeb765dde03ce67e599944e4d3851cc070f",
+  "seconds": 74.62,
+  "fps": 30,
+  "frames": 2238,
+  "size": "1920x1080",
+  "codec": "H.264 High, yuv420p, no audio track",
+  "crf": 24,
+  "renderedAt": "2026-09-26T04:14:51.244Z",
+  "renderSeconds": 57,
+  "captions": 18,
+  "sources": [
+    {
+      "scene": 0,
+      "method": "artwork",
+      "note": "Approved README artwork with the README animation’s flowing light, rendered at full resolution"
+    },
+    {
+      "scene": 1,
+      "clip": "tut-install",
+      "method": "recording",
+      "page": "Install · Link Meteor",
+      "version": "0.2.2",
+      "recordedAt": "2026-09-26T03:53:32.091Z",
+      "profile": "task-owned test profile"
+    },
+    {
+      "scene": 2,
+      "method": "illustration",
+      "note": "Schematic of Your downloads folder"
+    },
+    {
+      "scene": 3,
+      "clip": "tut-ext-before",
+      "method": "recording",
+      "page": "chrome://extensions",
+      "version": "0.2.2",
+      "recordedAt": "2026-09-26T03:54:33.345Z",
+      "profile": "separate task-owned profile without Link Meteor"
+    },
+    {
+      "scene": 4,
+      "method": "illustration",
+      "note": "Schematic of Chrome’s file picker"
+    },
+    {
+      "scene": 5,
+      "clip": "tut-ext-after",
+      "method": "recording",
+      "page": "chrome://extensions",
+      "version": "0.2.2",
+      "recordedAt": "2026-09-26T03:54:16.694Z",
+      "profile": "task-owned test profile"
+    },
+    {
+      "scene": 6,
+      "method": "illustration",
+      "note": "Schematic of Chrome’s toolbar"
+    },
+    {
+      "scene": 7,
+      "clip": "tut-capture",
+      "method": "reconstruction",
+      "page": "Practice page",
+      "version": "0.2.2",
+      "recordedAt": "2026-09-26T04:05:37.585Z",
+      "profile": "task-owned test profile"
+    },
+    {
+      "scene": 8,
+      "clip": "tut-panel",
+      "method": "recording",
+      "page": "Link Meteor side panel (panel width)",
+      "version": "0.2.2",
+      "recordedAt": "2026-09-26T04:05:52.208Z",
+      "profile": "task-owned test profile",
+      "still": "tut-capture-still.jpg"
+    },
+    {
+      "scene": 9,
+      "clip": "tut-shortcuts",
+      "method": "recording",
+      "page": "chrome://extensions/shortcuts",
+      "version": "0.2.2",
+      "recordedAt": "2026-09-26T03:54:23.276Z",
+      "profile": "task-owned test profile"
+    },
+    {
+      "scene": 10,
+      "clip": "tut-about",
+      "method": "recording",
+      "page": "Link Meteor side panel (panel width)",
+      "version": "0.2.2",
+      "recordedAt": "2026-09-26T04:06:01.648Z",
+      "profile": "task-owned test profile",
+      "still": "tut-capture-still.jpg"
+    },
+    {
+      "scene": 11,
+      "method": "artwork",
+      "note": "Approved README artwork with the README animation’s flowing light, rendered at full resolution"
+    }
+  ]
+}

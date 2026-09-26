@@ -24,7 +24,7 @@ export async function fixtureServer() {
   return {base,server,close:()=>new Promise(done=>server.close(done))};
 }
 
-export async function launch(profile='acceptance',{headless=true,scale=1}={}) {
+export async function launch(profile='acceptance',{headless=true,scale=1,args=[]}={}) {
   await mkdir(scratch,{recursive:true});await mkdir(evidence,{recursive:true});
   const extension=resolve(root,process.env.LINK_METEOR_EXTENSION_PATH || 'dist');
   const hash=createHash('sha256');
@@ -37,7 +37,7 @@ export async function launch(profile='acceptance',{headless=true,scale=1}={}) {
     executablePath:playwright.chromium.executablePath(),headless,
     viewport:{width:1440,height:1000},deviceScaleFactor:scale,acceptDownloads:true,
     env:{...process.env,TMPDIR:scratch},
-    args:[`--disable-extensions-except=${extension}`,`--load-extension=${extension}`,'--disable-background-networking','--disable-component-update',`--disk-cache-dir=${resolve(scratch,profile+'-cache')}`]
+    args:[`--disable-extensions-except=${extension}`,`--load-extension=${extension}`,'--disable-background-networking','--disable-component-update',`--disk-cache-dir=${resolve(scratch,profile+'-cache')}`,...args]
   });
   const worker=context.serviceWorkers()[0] || await context.waitForEvent('serviceworker',{timeout:15000});
   const id=new URL(worker.url()).host;

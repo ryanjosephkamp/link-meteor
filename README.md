@@ -13,7 +13,7 @@ Capture the trail. Keep the source.
 
 Link Meteor is a free Chrome extension for collecting links with their **actual anchor text and URL in separate fields**, reviewing their sources, and exporting a useful research collection. It has no account, ads, telemetry, paid tier, or backend dependency.
 
-This repository contains the Chrome extension (development build 0.2.2) and its [live website](https://ryanjosephkamp.github.io/link-meteor/). Install the extension from the downloadable ZIP using Chrome's **Load unpacked** option. Browser-store distribution is deferred. See [testing and compatibility](docs/ACCEPTANCE.md) for the environments and workflows checked so far.
+This repository contains the Chrome extension (development build 0.2.2) and its [live website](https://ryanjosephkamp.github.io/link-meteor/). Install the extension from the downloadable ZIP using Chrome's **Load unpacked** option. Chrome Web Store distribution is planned after the next feature release. See [testing and compatibility](docs/ACCEPTANCE.md) for the environments and workflows checked so far.
 
 ## Try the development build
 
@@ -75,6 +75,7 @@ node tests/browser.mjs
 node tests/extended-browser.mjs
 node tests/site-browser.mjs        # practice-page answer keys and site screenshots
 node tests/permission-browser.mjs  # run last: revokes the synthetic grant
+node tests/capture-page-access.mjs # Capture this page after the tab moves to a new site (fresh temporary profile)
 ```
 
 For a changed build, create a new isolated profile and prepare its grants through the product's own permission paths with `LINK_METEOR_TEST_PROFILE=<new-name> node tests/prepare-grants.mjs` (a visible test browser). `node tests/visual-browser.mjs` needs no grants (`LINK_METEOR_VISUAL_PROFILE` picks its profile). `tests/design-preview.mjs` and `tests/overlay-preview.mjs` render the UI with simulated extension APIs for design iteration only; they are not acceptance evidence.

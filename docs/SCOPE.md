@@ -42,7 +42,9 @@ Current-page activation uses user-triggered access. Multi-tab capture and persis
 
 The website explains installation, features, privacy, limitations and usage, offers a synthetic practice page and a development ZIP, and remains useful and accessible without tracking or external media services. Branding, code, copy and assets are independently created; similar functionality does not establish name or trademark clearance.
 
-Firefox/Safari ports, destination metadata enrichment, continuous capture and AI integrations are outside this release. Future capabilities must preserve originals and require explicit user choices about any new data destinations or costs. Existing structured exports do not imply a remote AI service. Browser-store distribution is deferred; ZIP plus Load unpacked is the supported installation route.
+The next feature release is planned to add a one-time choice to allow Link Meteor on all sites, so hold-key drag and page capture work everywhere, with per-site exceptions; more actions on the capture card; opening larger batches of links after a confirmation; export file names and workbook formatting; saving bookmarks into existing folders; and backup and restore. After that release, Link Meteor is intended for the Chrome Web Store. Later releases may add color themes, imports and local research aids, such as context snippets and citation exports.
+
+Anything that contacts other sites, such as looking up a destination's details, would only ever be opt-in, per request. Firefox, Safari and mobile versions and AI integrations are not planned for now. Future capabilities must preserve originals and require explicit user choices about any new data destinations or costs. Existing structured exports do not imply a remote AI service. Until Store publication, ZIP plus Load unpacked is the supported installation route.
 
 ## Evidence standard
 

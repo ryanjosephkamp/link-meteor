@@ -21,10 +21,23 @@ The current development build is **0.2.2**. It adds an About and help area to 0.
 | `tests/audit-granted-regressions.mjs` | 4/4 | Keyboard focus on tab checkboxes, a changed collection destination, overlapping Add/Review saving once, and a saved receipt staying with its destination. [Results](../artifacts/evidence-0.2.2/granted-regressions.json). |
 | `tests/verify-downloads.py` | Pass | The seven formats downloaded by `tests/browser.mjs`, read independently: 53 exact anchor/URL pairs, including two empty anchors and one formula-like label, with every XLSX cell a string. openpyxl 3.0.10 read the XLSX, not Microsoft Excel. [Results](../artifacts/evidence-0.2.2/workbook-results.json). |
 | `tests/permission-browser.mjs` | 3/3, run last | Revoking the fixture-origin grant prunes the saved hold origin and its content registration, stops the loaded gesture, and makes capture report denied. [Results](../artifacts/evidence-0.2.2/permission-browser-results.json). The native Deny button was not tested. |
+| `tests/capture-page-access.mjs` | Pass | Reproduces *Capture this page* after the tab moves to a new site: a toolbar click on the first site allows capture (37 links); after the tab moves, capture is denied; a toolbar click on the new page allows it again (38 links) without adding lasting site access. Toolbar clicks are Chrome's own action, driven through the DevTools protocol in a fresh temporary profile; the full view in its own window stands in for the open side panel. [Results](../artifacts/evidence-0.2.2/capture-page-access.json). |
 
-The functional suites used a new profile whose optional grants (tabs, the local fixture origin and bookmarks) were requested by the product itself, each with an active user gesture, in a visible Chrome for Testing window, with the project owner present to click Allow. Each request resolved within about three seconds. The harness can't observe the native click, so this is not an itemized native Allow/Deny test.
+The functional suites used a new profile whose optional grants (tabs, the local fixture origin and bookmarks) were requested by the product itself, each with an active user gesture, in a visible Chrome for Testing window. The project owner confirmed clicking Allow on each native prompt: six clicks in all, three for this profile and three for the video-recording profile. Each request resolved within about three seconds.
 
-**Diagnostic runs.** The first visible run of `tests/browser.mjs` failed its sixth check. The live badge had reached 5 links, but after release the card read `3 links selected` (`AssertionError: '3 links selected' !== '5 links selected'`, line 61). A screenshot taken just before release shows the selection's corner displaced to a point unrelated to the drag. That is consistent with the Mac's real pointer resting over the visible test window. A second run without a visible window passed that check, but it can't complete the later wheel-scroll check, which needs a rendered window. After the project owner was asked to move the pointer off the test window, a third, visible run passed 27/27. The download verifier's first attempt failed only because the first browser run stopped before writing its exports. The first two runs are kept in [`artifacts/evidence-0.2.2/diagnostics/`](../artifacts/evidence-0.2.2/diagnostics/).
+**Diagnostic runs.** The first visible run of `tests/browser.mjs` failed its sixth check. The live badge had reached 5 links, but after release the card read `3 links selected` (`AssertionError: '3 links selected' !== '5 links selected'`, line 61). A screenshot taken just before release shows the selection's corner displaced to a point unrelated to the drag. That is consistent with the Mac's real pointer resting over the visible test window, and the project owner confirmed it was. A second run without a visible window passed that check, but it can't complete the later wheel-scroll check, which needs a rendered window. After the project owner was asked to move the pointer off the test window, a third, visible run passed 27/27. The download verifier's first attempt failed only because the first browser run stopped before writing its exports. The first two runs are kept in [`artifacts/evidence-0.2.2/diagnostics/`](../artifacts/evidence-0.2.2/diagnostics/).
+
+## Hands-on use (0.2.2)
+
+These results come from the project owner using 0.2.2 by hand in everyday Google Chrome on macOS, on September 26, 2026. They are human observations, reported without itemized steps, and are kept separate from the automated results above.
+
+| Area | Result |
+| --- | --- |
+| Everyday Chrome on real sites | Works. One friction: *Capture this page* on a newly visited site (Wikipedia) reported missing site access until hold-key drag was turned on for that site, which grants lasting access. The cause and a tested workaround are above (`tests/capture-page-access.mjs`) and in the install page's troubleshooting. |
+| Native permission prompts | The owner clicked Allow on all six native prompts during test preparation, and checked that the native Deny button works as intended. |
+| Native side-panel frame | Looks and behaves as expected. |
+| Microsoft Excel | Downloaded XLSX files open correctly in Excel. |
+| Windows and Linux | Not tested; a known gap for now. |
 
 ## Earlier build (0.2.1)
 
@@ -51,7 +64,7 @@ Optional tabs, local-origin and bookmark permissions were established through ac
 
 ## Presentation and website checks
 
-The 0.2.2 visual and site results are listed above. The 0.2.1 [visual results](../artifacts/audit-0.2.0/repair-ui/visual-results.json) cover responsive widths, long names, labeled controls, keyboard focus and sampled contrast. They are not a complete screen-reader or WCAG audit. Panel-width screenshots render the workbench at a compact width; they do not prove native side-panel framing or resizing.
+The 0.2.2 visual and site results are listed above. The site's four product screenshots were regenerated from the 0.2.2 `tests/site-browser.mjs` run, and their alt text describes what each one shows. The 0.2.1 [visual results](../artifacts/audit-0.2.0/repair-ui/visual-results.json) cover responsive widths, long names, labeled controls, keyboard focus and sampled contrast. They are not a complete screen-reader or WCAG audit. Panel-width screenshots render the workbench at a compact width; they do not prove native side-panel framing or resizing.
 
 The 0.2.1-era [site results](../artifacts/audit-0.2.0/repair-ui/site-results.json) checked five pages across five widths and light/dark themes, internal links, semantic structure, sampled contrast, keyboard menu use, interactive demo, nested 404 handling and export preview contents. These are automated Chromium checks.
 
@@ -69,11 +82,12 @@ See the [README](../README.md#develop-and-verify) for Node, installed Playwright
 
 ## Remaining compatibility and human checks
 
-- Everyday Google Chrome 0.2.2 and real research/admin sites.
-- Native Allow/Deny interactions and native side-panel width/resizing.
-- Microsoft Excel and other spreadsheet applications, beyond file-reader checks.
+- A wider range of real research and admin sites, beyond the owner's hands-on use.
+- Native side-panel resizing, beyond the owner's check of its frame.
+- Spreadsheet applications other than Microsoft Excel.
 - Screen readers and other assistive technologies.
-- Windows/Linux, native shortcuts on those systems and Chrome 116. The manifest's minimum version is a declaration, not proof of testing that release.
+- Windows and Linux, native shortcuts on those systems, and Chrome 116. The manifest's minimum version is a declaration, not proof of testing that release.
+- Other Chromium-based browsers, such as Brave and Edge.
 - The website on physical phones and non-Chromium browsers.
 
-Version 0.2.0 received an informal report of successful everyday Chrome use without itemized steps. It does not establish manual acceptance of 0.2.1 or 0.2.2. Firefox and Safari are not supported ports, and browser-store distribution is deferred.
+Version 0.2.0 received an informal report of successful everyday Chrome use without itemized steps. The 0.2.2 hands-on results above are the first owner report for the current build. Firefox and Safari are not supported ports. Chrome Web Store distribution is planned after the next feature release.

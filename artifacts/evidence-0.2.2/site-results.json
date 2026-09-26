@@ -1,5 +1,5 @@
 {
-  "started": "2026-09-26T15:12:11.916Z",
+  "started": "2026-09-26T18:48:06.882Z",
   "base": "/link-meteor/",
   "pages": {
     "index.html": {
@@ -137,8 +137,8 @@
           "minContrast": 7.63
         }
       ],
-      "links": 22,
-      "anchors": 14,
+      "links": 23,
+      "anchors": 15,
       "structure": {
         "h1": 1,
         "headingLevelsSkip": false,
@@ -209,8 +209,8 @@
           "minContrast": 8.49
         }
       ],
-      "links": 20,
-      "anchors": 14,
+      "links": 21,
+      "anchors": 15,
       "structure": {
         "h1": 1,
         "headingLevelsSkip": false,
@@ -463,5 +463,5 @@
   ],
   "problems": [],
   "result": "PASS",
-  "finished": "2026-09-26T15:13:12.641Z"
+  "finished": "2026-09-26T18:49:07.893Z"
 }

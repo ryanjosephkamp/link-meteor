@@ -2,6 +2,7 @@
 import { queryLinks } from '../../core/model.js';
 import { $, node, icon, button, count, plural, quoted, labelFor, tags, DOCUMENT_TYPES, fileType, appendTextLink, renderUrl, hostOf, formatTime, shortcutKeys, kbdGroup } from './helpers.js';
 import { ui, action, mutate, show, currentCollection } from './state.js';
+import { onEscape } from './rendering.js';
 import { renderExportTarget } from './export.js';
 import { syncReportAction } from './capture.js';
 
@@ -9,6 +10,8 @@ const PAGE_SIZE = 100;
 const DETAIL_PAGE_SIZE = 100;
 const ARRIVAL_MS = 2600;
 const filters = ['search', 'domain', 'file-type', 'relation', 'sort', 'direction', 'dedupe'];
+// "Remove all in this view" awaiting confirmation: the collection and the exact occurrences shown.
+let pendingViewRemoval = null;
 
 export function queryOptions() {
   return { search: $('search').value, domain: $('domain').value, fileType: $('file-type').value,
@@ -42,9 +45,15 @@ export function renderLinks() {
   $('clear-selection').hidden = !ui.selectedIds.size;
   const viewIds = result.rows.reduce((n, row) => n + row.occurrenceIds.length, 0);
   const selectedInView = result.rows.reduce((n, row) => n + row.occurrenceIds.filter((id) => ui.selectedIds.has(id)).length, 0);
-  $('select-everything').hidden = !(pageCount > 1 && selectedOnPage === pageIds.length && pageIds.length && selectedInView < viewIds);
+  // One page: the page checkbox selects everything, so it says so. More pages: "Select all N"
+  // is always offered, and the checkbox covers only the page.
+  $('select-all-label').textContent = pageCount > 1 ? 'Select page' : 'Select all';
+  $('select-everything').hidden = pageCount <= 1;
   $('select-everything').textContent = `Select all ${count(viewIds)}`;
+  $('select-everything').disabled = !viewIds || selectedInView === viewIds;
   $('remove').disabled = !selectedInView;
+  $('remove-view').disabled = !viewIds;
+  syncViewRemoval(collection);
   $('select-all').checked = !!pageIds.length && pageIds.every((id) => ui.selectedIds.has(id));
   $('select-all').indeterminate = pageIds.some((id) => ui.selectedIds.has(id)) && !$('select-all').checked;
   $('select-all').disabled = !pageIds.length;
@@ -85,7 +94,16 @@ export function renderEmpty(collection, result) {
   empty.hidden = !!result.rows.length;
   if (result.rows.length) return;
   const heading = node('h3');
-  if (!collection.links.length) {
+  if (!collection.links.length && ui.state.undo?.collectionId === collection.id) {
+    // Emptied by a removal: offer its Undo here, since the list toolbar hides with no links.
+    heading.textContent = 'This collection is empty';
+    const focused = document.activeElement?.id === 'empty-undo';
+    const back = button('Undo removal', 'btn small', 'i-undo');
+    back.id = 'empty-undo';
+    back.addEventListener('click', () => action(undo));
+    empty.replaceChildren(heading, node('p', '', `You removed ${plural(ui.state.undo.links.length, 'link')}. Undo puts them back in their original order.`), back);
+    if (focused) back.focus();
+  } else if (!collection.links.length) {
     heading.textContent = 'Start this collection';
     const intro = node('p', '', 'Links you capture are saved here, in this browser only. Each keeps its visible anchor text, its exact URL and the page it came from.');
     const steps = node('ol', 'empty-steps');
@@ -321,6 +339,50 @@ export async function undo() { await mutate({ type: 'links.undo' }); show('Remov
 
 export function renderUndo() { $('undo').disabled = !ui.state.undo; }
 
+// Every occurrence in the filtered view, across pages and inside grouped rows.
+function viewOccurrenceIds() { return ui.rows.flatMap((row) => row.occurrenceIds); }
+
+function openViewRemoval() {
+  const collection = currentCollection();
+  const ids = viewOccurrenceIds();
+  if (!collection || !ids.length) return;
+  pendingViewRemoval = { collectionId: collection.id, ids, key: ids.join('\n') };
+  const others = collection.links.length - ids.length;
+  const grouped = $('dedupe').value !== 'none' && ids.length > ui.rows.length;
+  $('remove-view-confirm-text').textContent = `Remove all ${plural(ids.length, 'link')} in this view${grouped ? ', including every grouped occurrence' : ''}? `
+    + (others ? `The other ${plural(others, 'link')} in “${collection.name}” stay. ` : `That is every link in “${collection.name}”. `)
+    + 'You can undo this.';
+  $('remove-view-confirm-yes').textContent = `Remove ${plural(ids.length, 'link')}`;
+  $('remove-view-confirm').hidden = false;
+  $('remove-view-confirm-no').focus();
+}
+
+export function closeViewRemoval() {
+  pendingViewRemoval = null;
+  $('remove-view-confirm').hidden = true;
+}
+
+// A confirmation names an exact set of links: if the view changes under it, it closes.
+function syncViewRemoval(collection) {
+  if (!pendingViewRemoval) return;
+  if (pendingViewRemoval.collectionId !== collection.id || pendingViewRemoval.key !== viewOccurrenceIds().join('\n')) closeViewRemoval();
+}
+
+// After a removal, keyboard focus goes to the Undo that is still on screen.
+export function focusUndo() {
+  const target = $('review').classList.contains('is-blank') ? $('empty-undo') : $('undo');
+  target?.focus();
+}
+
+async function confirmViewRemoval() {
+  const pending = pendingViewRemoval;
+  if (!pending) return;
+  closeViewRemoval();
+  await mutate({ type: 'links.remove', collectionId: pending.collectionId, ids: pending.ids });
+  show(`Removed ${plural(pending.ids.length, 'link')} from this view.`, 'notice', { actionLabel: 'Undo', onAction: undo });
+  focusUndo();
+}
+
 export function bindReview() {
   for (const id of filters) $(id).addEventListener(['search', 'domain', 'file-type'].includes(id) ? 'input' : 'change', () => action(async () => {
     if (id === 'direction') ui.directionTouched = true;
@@ -341,4 +403,12 @@ export function bindReview() {
   $('page-next').addEventListener('click', () => { if ((ui.page + 1) * PAGE_SIZE < ui.rows.length) { ui.page++; renderLinks(); $('review').scrollIntoView({ block: 'start' }); } });
   $('remove').addEventListener('click', () => action(async () => { const ids = ui.rows.flatMap((row) => row.occurrenceIds.filter((id) => ui.selectedIds.has(id))); if (!ids.length) return; await mutate({ type: 'links.remove', ids }); show(`Removed ${plural(ids.length, 'link')}.`, 'notice', { actionLabel: 'Undo', onAction: undo }); }));
   $('undo').addEventListener('click', () => action(undo));
+  $('remove-view').addEventListener('click', openViewRemoval);
+  $('remove-view-confirm-yes').addEventListener('click', () => action(confirmViewRemoval));
+  $('remove-view-confirm-no').addEventListener('click', () => { closeViewRemoval(); $('remove-view').focus(); });
+  onEscape(() => {
+    if ($('remove-view-confirm').hidden) return false;
+    closeViewRemoval(); $('remove-view').focus();
+    return true;
+  });
 }

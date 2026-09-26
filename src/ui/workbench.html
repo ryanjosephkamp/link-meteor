@@ -90,7 +90,34 @@
         </div>
       </section>
 
-      <section id="backup-panel" class="rail-section" hidden></section>
+      <section id="backup-panel" class="rail-section backup" aria-labelledby="backup-title">
+        <h2 id="backup-title" class="rail-title">Backup and restore</h2>
+        <p id="backup-help" class="help">One file with every collection, link, note, tag and setting. It is saved to your downloads and goes nowhere else.</p>
+        <div class="backup-actions">
+          <button id="backup-download" class="btn" type="button"><svg class="icon" aria-hidden="true"><use href="#i-download"/></svg><span>Download a backup</span></button>
+          <input id="backup-file" class="backup-file sr-only" type="file" accept=".json,application/json">
+          <label for="backup-file" class="btn backup-choose"><svg class="icon" aria-hidden="true"><use href="#i-folders"/></svg><span>Restore from a backup…</span></label>
+        </div>
+        <section id="restore-preview" class="restore-preview" aria-labelledby="restore-title" hidden>
+          <h3 id="restore-title" tabindex="-1">Restore this backup?</h3>
+          <p id="restore-source" class="restore-source"></p>
+          <div id="restore-modes" class="restore-modes"></div>
+          <p class="help">Choosing a file changes nothing. Merge or Replace can be undone here afterwards.</p>
+          <div class="restore-actions">
+            <button id="restore-merge" class="btn primary" type="button">Merge</button>
+            <button id="restore-replace" class="btn danger-solid" type="button">Replace</button>
+            <button id="restore-cancel" class="btn quiet" type="button">Cancel</button>
+          </div>
+        </section>
+        <div id="restore-status" class="restore-status" role="group" aria-labelledby="restore-status-text" hidden>
+          <p id="restore-status-text" class="restore-status-text"></p>
+          <p id="restore-status-help" class="help">Undo puts back what was here before, as long as nothing has changed since.</p>
+          <div class="restore-actions">
+            <button id="restore-undo" class="btn" type="button"><svg class="icon" aria-hidden="true"><use href="#i-undo"/></svg>Undo restore</button>
+            <button id="restore-discard" class="btn quiet" type="button">Discard Undo</button>
+          </div>
+        </div>
+      </section>
 
       <section class="rail-section about" aria-label="About and help">
         <details id="about-panel" class="about-panel">
@@ -141,11 +168,18 @@
           <div class="editor-actions">
             <button class="btn primary" type="submit">Save details</button>
             <button id="cancel-edit" class="btn quiet" type="button">Close</button>
-            <button id="delete-collection" class="btn quiet danger" type="button"><svg class="icon" aria-hidden="true"><use href="#i-trash"/></svg>Delete collection</button>
+            <span class="editor-danger">
+              <button id="empty-collection" class="btn quiet danger" type="button">Empty this collection</button>
+              <button id="delete-collection" class="btn quiet danger" type="button"><svg class="icon" aria-hidden="true"><use href="#i-trash"/></svg>Delete collection</button>
+            </span>
           </div>
           <div id="delete-confirm" class="confirm danger-confirm" role="group" aria-labelledby="delete-confirm-text" hidden>
             <p id="delete-confirm-text"></p>
             <div class="confirm-actions"><button id="delete-confirm-yes" class="btn danger-solid" type="button">Delete permanently</button><button id="delete-confirm-no" class="btn quiet" type="button">Keep collection</button></div>
+          </div>
+          <div id="empty-confirm" class="confirm danger-confirm" role="group" aria-labelledby="empty-confirm-text" hidden>
+            <p id="empty-confirm-text"></p>
+            <div class="confirm-actions"><button id="empty-confirm-yes" class="btn danger-solid" type="button">Remove all links</button><button id="empty-confirm-no" class="btn quiet" type="button">Keep links</button></div>
           </div>
         </form>
       </section>
@@ -194,13 +228,18 @@
         <ul id="active-filters" class="chips" aria-label="Active view options" hidden></ul>
 
         <div class="list-toolbar">
-          <label class="select-all"><input id="select-all" type="checkbox"><span>Select page</span></label>
+          <label class="select-all"><input id="select-all" type="checkbox"><span id="select-all-label">Select all</span></label>
           <span id="selection-count" class="selection-count">0 selected</span>
           <div class="toolbar-actions">
             <button id="select-everything" class="btn quiet small" type="button" hidden>Select all</button>
             <button id="clear-selection" class="btn quiet small" type="button" hidden>Clear</button>
             <button id="remove" class="btn quiet small danger" type="button" disabled><svg class="icon" aria-hidden="true"><use href="#i-trash"/></svg>Remove</button>
+            <button id="remove-view" class="btn quiet small danger" type="button" disabled>Remove all in this view</button>
             <button id="undo" class="btn quiet small" type="button" disabled><svg class="icon" aria-hidden="true"><use href="#i-undo"/></svg>Undo</button>
+          </div>
+          <div id="remove-view-confirm" class="confirm danger-confirm toolbar-confirm" role="group" aria-labelledby="remove-view-confirm-text" hidden>
+            <p id="remove-view-confirm-text"></p>
+            <div class="confirm-actions"><button id="remove-view-confirm-yes" class="btn danger-solid small" type="button">Remove all</button><button id="remove-view-confirm-no" class="btn quiet small" type="button">Keep them</button></div>
           </div>
         </div>
 

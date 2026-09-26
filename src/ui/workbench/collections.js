@@ -1,8 +1,12 @@
-// Collections: the header, the rail list, create, switch, edit and delete.
+// Collections: the header, the rail list, create, switch, edit, empty and delete.
 import { $, node, count, plural, tags } from './helpers.js';
 import { ui, action, mutate, show, currentCollection } from './state.js';
 import { render, setView, onEscape } from './rendering.js';
-import { renderLinks } from './review.js';
+import { renderLinks, undo, focusUndo } from './review.js';
+import { bindBackup } from './backup.js';
+
+// "Empty this collection" awaiting confirmation: the collection and the links it will remove.
+let pendingEmpty = null;
 
 export function renderCollectionHeader(collection) {
   $('collection-heading').textContent = collection.name;
@@ -21,6 +25,8 @@ export function renderCollectionHeader(collection) {
   $('collection-name').value = draft?.name ?? collection.name;
   $('collection-notes').value = draft?.notes ?? collection.notes;
   $('collection-tags').value = draft?.tags ?? collection.tags.join(', ');
+  $('empty-collection').disabled = !collection.links.length;
+  if (pendingEmpty && (pendingEmpty.collectionId !== collection.id || pendingEmpty.key !== collection.links.map((link) => link.id).join('\n'))) closeEmpty();
 }
 
 export function renderCollections() {
@@ -58,8 +64,37 @@ export function openEditor() {
 export function closeEditor() {
   $('collection-editor').hidden = true;
   $('delete-confirm').hidden = true;
+  closeEmpty();
   $('edit-collection').setAttribute('aria-expanded', 'false');
   if (ui.state) render();
+}
+
+/* Empty this collection ---------------------------------------------------------- */
+function openEmpty() {
+  const collection = currentCollection();
+  if (!collection?.links.length) return;
+  const ids = collection.links.map((link) => link.id);
+  pendingEmpty = { collectionId: collection.id, ids, key: ids.join('\n') };
+  $('delete-confirm').hidden = true;
+  $('empty-confirm-text').textContent = `Remove all ${plural(ids.length, 'link')} from “${collection.name}”? The collection keeps its name, notes and tags. You can undo this.`;
+  $('empty-confirm-yes').textContent = `Remove ${plural(ids.length, 'link')}`;
+  $('empty-confirm').hidden = false;
+  $('empty-confirm-no').focus();
+}
+
+export function closeEmpty() {
+  pendingEmpty = null;
+  $('empty-confirm').hidden = true;
+}
+
+async function confirmEmpty() {
+  const pending = pendingEmpty;
+  if (!pending) return;
+  const name = currentCollection()?.name || '';
+  closeEmpty();
+  await mutate({ type: 'links.remove', collectionId: pending.collectionId, ids: pending.ids });
+  show(`Emptied “${name}”: removed ${plural(pending.ids.length, 'link')}.`, 'notice', { actionLabel: 'Undo', onAction: undo });
+  focusUndo();
 }
 
 export function bindCollections() {
@@ -77,6 +112,7 @@ export function bindCollections() {
   }); });
   $('delete-collection').addEventListener('click', () => {
     const collection = currentCollection();
+    closeEmpty();
     $('delete-confirm-text').textContent = `Delete “${collection.name}” and its ${plural(collection.links.length, 'saved link')}? This cannot be undone. Export first if you want a copy.`;
     $('delete-confirm').hidden = false; $('delete-confirm-no').focus();
   });
@@ -87,4 +123,13 @@ export function bindCollections() {
     $('delete-confirm').hidden = true; $('delete-collection').focus();
     return true;
   });
+  $('empty-collection').addEventListener('click', openEmpty);
+  $('empty-confirm-yes').addEventListener('click', () => action(confirmEmpty));
+  $('empty-confirm-no').addEventListener('click', () => { closeEmpty(); $('empty-collection').focus(); });
+  onEscape(() => {
+    if ($('empty-confirm').hidden) return false;
+    closeEmpty(); $('empty-collection').focus();
+    return true;
+  });
+  bindBackup();
 }

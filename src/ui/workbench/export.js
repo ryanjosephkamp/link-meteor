@@ -1,18 +1,19 @@
 // Export: format, columns, what an export covers, downloads and clipboard copies.
 import { COLUMNS, makeExport } from '../../core/export.js';
-import { $, node, icon, count, plural, filename } from './helpers.js';
+import { $, node, icon, count, plural } from './helpers.js';
 import { ui, action, show, currentCollection, DEFAULT_COLUMNS } from './state.js';
 import { targetRows, requiredRows } from './review.js';
 import { renderBookmarkTarget } from './bookmarks.js';
 import { renderOpenTarget } from './open.js';
+import { bindNames, renderNames, renderSavesAs, exportName, followFormatChange } from './names.js';
 
 const FORMAT_HELP = {
-  xlsx: 'Every cell is stored as text, so nothing is reinterpreted as a formula, number or date.',
+  xlsx: 'Every cell is stored as text, so nothing is reinterpreted as a formula, number or date. Web and email addresses are clickable, and a second sheet, About, records when and how the file was exported.',
   csv: 'Cells that look like formulas start with an apostrophe so spreadsheets import them as text.',
   tsv: 'Tab-separated. Cells that look like formulas start with an apostrophe.',
   markdown: 'One [anchor text](URL) per line. Columns do not apply; empty anchor text stays empty.',
   html: 'A plain HTML table using your columns. Page text is escaped.',
-  json: 'Every field for every link, including all grouped occurrences. Columns do not apply.',
+  json: 'Every field for every link, including all grouped occurrences, after an about block that records when and how the file was exported. Columns do not apply.',
   text: 'One URL per line, exactly as captured. Columns do not apply.',
 };
 
@@ -79,9 +80,8 @@ export function renderExportTarget() {
   if (grouped && rows.length) notes.push('Grouped rows use their first link for tables, text and Markdown. JSON keeps every occurrence and source.');
   $('export-scope').textContent = notes.join(' ');
   const format = $('format').value;
-  const extension = { xlsx: 'xlsx', csv: 'csv', tsv: 'tsv', markdown: 'md', html: 'html', json: 'json', text: 'txt' }[format];
   $('download-label').textContent = `Download ${{ xlsx: 'Excel file', csv: 'CSV file', tsv: 'TSV file', markdown: 'Markdown file', html: 'HTML file', json: 'JSON file', text: 'URL list' }[format]}`;
-  $('download-name').textContent = `Saves as ${filename(collection.name)}.${extension}`;
+  renderNames();
   $('format-help').textContent = FORMAT_HELP[format] || '';
   $('columns-help').textContent = ['markdown', 'json', 'text'].includes(format)
     ? 'Columns apply to the Table copy and to CSV, TSV, Excel and HTML files. This format ignores them.'
@@ -91,14 +91,43 @@ export function renderExportTarget() {
   renderOpenTarget(rows);
 }
 
+// How the rows were chosen, for the About sheet and JSON about block. Read from the review
+// controls, whose IDs are stable.
+function viewDescription() {
+  const group = $('dedupe').selectedOptions[0]?.textContent || 'Every occurrence';
+  const sort = ($('sort').selectedOptions[0]?.textContent || 'Capture order').toLowerCase();
+  return `${group}; sorted by ${sort}, ${$('direction').value === 'desc' ? 'descending' : 'ascending'}`;
+}
+
+function filterDescriptions() {
+  const filters = [];
+  if (ui.batchFilter) filters.push(`One capture only (batch ${ui.batchFilter})`);
+  if ($('search').value.trim()) filters.push(`Search: “${$('search').value}”`);
+  if ($('domain').value.trim()) filters.push(`Domain contains “${$('domain').value}”`);
+  if ($('file-type').value.trim()) filters.push(`File type: ${$('file-type').value.replace(/^\./, '')}`);
+  if ($('relation').value === 'internal') filters.push('Internal links only (same site as the source page)');
+  if ($('relation').value === 'external') filters.push('External links only (other sites)');
+  if (ui.selectedIds.size) filters.push('Selected links only');
+  return filters;
+}
+
+export function exportAbout(rows, date) {
+  return { exportedAt: date, collection: currentCollection().name, count: rows.length, view: viewDescription(),
+    filters: filterDescriptions(), columns: [...ui.columns], version: chrome.runtime.getManifest().version };
+}
+
 export async function download() {
-  const result = makeExport(requiredRows(), { format: $('format').value, columns: ui.columns });
+  const rows = requiredRows();
+  const date = new Date();
+  const name = exportName(date);
+  const result = makeExport(rows, { format: $('format').value, columns: ui.columns, about: exportAbout(rows, date) });
   const blob = new Blob([result.data], { type: result.mime });
   const href = URL.createObjectURL(blob);
-  const link = document.createElement('a'); link.href = href; link.download = `${filename(currentCollection().name)}.${result.extension}`;
+  const link = document.createElement('a'); link.href = href; link.download = name;
+  renderSavesAs(date);
   document.body.append(link); link.click(); link.remove();
   setTimeout(() => URL.revokeObjectURL(href), 30000);
-  show(`Downloaded ${link.download}.`);
+  show(`Downloaded ${name}.`);
 }
 
 export async function copy(format, columns) {
@@ -113,7 +142,8 @@ export async function copy(format, columns) {
 
 export function bindExport() {
   $('dock-copy').addEventListener('click', () => action(() => copy('tsv', ui.columns)));
-  $('format').addEventListener('change', renderExportTarget);
+  $('format').addEventListener('change', () => { followFormatChange(); renderExportTarget(); });
+  bindNames();
   $('add-column').addEventListener('change', (event) => { if (event.target.value) { ui.columns.push(event.target.value); renderColumns(); $('add-column').focus(); } });
   $('reset-columns').addEventListener('click', () => { ui.columns = [...DEFAULT_COLUMNS]; renderColumns(); $('add-column').focus(); });
   $('download').addEventListener('click', () => action(download));

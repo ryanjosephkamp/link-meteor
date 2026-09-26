@@ -259,15 +259,40 @@
           </div>
           <p id="columns-help" class="help">Used by the Table copy and by CSV, TSV, Excel and HTML files.</p>
         </fieldset>
+        <label class="file-name">File name <input id="export-name" type="text" autocomplete="off" spellcheck="false" aria-describedby="export-name-help"></label>
+        <p id="export-name-help" class="help">Type a name for this download, or leave it empty to use the pattern.</p>
+        <details id="name-settings" class="name-settings">
+          <summary>File name pattern</summary>
+          <div class="name-settings-body">
+            <label>Prefix <input id="name-prefix" type="text" maxlength="80" placeholder="Optional, for example lab-notes" autocomplete="off" spellcheck="false" aria-describedby="name-prefix-help"></label>
+            <p id="name-prefix-help" class="help">Letters, digits, dots, underscores and hyphens, up to 40. Other characters become hyphens.</p>
+            <label class="name-check"><input id="name-timestamp" type="checkbox" checked><span>Add the date to file names</span></label>
+            <label>Date format <select id="name-timestamp-format"><option value="datetime">Date and time</option><option value="date">Date only</option></select></label>
+            <p id="name-pattern" class="help name-pattern"></p>
+          </div>
+        </details>
         <button id="download" class="btn primary wide" type="button"><svg class="icon" aria-hidden="true"><use href="#i-download"/></svg><span id="download-label">Download</span></button>
-        <p id="download-name" class="help download-name"></p>
+        <p id="download-name" class="help download-name" aria-live="polite"></p>
       </section>
 
       <section class="export-group" aria-labelledby="bookmark-title">
         <h3 id="bookmark-title">Save as bookmarks</h3>
-        <label>Folder name <input id="bookmark-name" placeholder="Collection name" autocomplete="off"></label>
+        <div id="bookmark-mode" class="bookmark-mode" role="radiogroup" aria-label="Bookmark folder">
+          <label class="bookmark-choice"><input type="radio" name="bookmark-mode" value="new" checked><span>New folder</span></label>
+          <label class="bookmark-choice"><input type="radio" name="bookmark-mode" value="existing"><span>Existing folder</span></label>
+        </div>
+        <div id="bookmark-new" class="bookmark-pane">
+          <label>Folder name <input id="bookmark-name" placeholder="Collection name" autocomplete="off"></label>
+        </div>
+        <div id="bookmark-existing" class="bookmark-pane" hidden>
+          <label>Find a folder <input id="bookmark-folder-search" type="search" placeholder="Search folder names" autocomplete="off" spellcheck="false" aria-controls="bookmark-folder" aria-describedby="bookmark-folder-status"></label>
+          <label class="sr-only" for="bookmark-folder">Bookmark folders</label>
+          <select id="bookmark-folder" class="bookmark-folders" size="6" aria-describedby="bookmark-folder-status"></select>
+          <p id="bookmark-folder-status" class="help" aria-live="polite"></p>
+        </div>
+        <label class="name-check"><input id="bookmark-skip-existing" type="checkbox" checked><span>Skip links already in that folder</span></label>
         <button id="bookmark" class="btn wide" type="button"><svg class="icon" aria-hidden="true"><use href="#i-bookmark"/></svg><span id="bookmark-label">Create bookmark folder</span></button>
-        <p class="help">Creates a new folder in Chrome's bookmarks. Web links only. Chrome may sync bookmarks according to your browser settings.</p>
+        <p id="bookmark-help" class="help">Creates a new folder in Other bookmarks. Web links only. Chrome may sync bookmarks according to your browser settings.</p>
       </section>
 
       <section class="export-group" aria-labelledby="open-title">

@@ -1,0 +1,15 @@
+{
+  "started": "2026-09-26T14:56:01.170Z",
+  "checks": [
+    "Tab checkbox retains focus after keyboard selection",
+    "Ordinary-page overlay updates its active collection destination",
+    "Concurrent ordinary-page Add and Review save once with the actual destination and provenance",
+    "Saved receipt stays attached to its destination after a later collection switch"
+  ],
+  "limits": [
+    "Automated Chrome for Testing; no claim of native prompt or everyday Chrome acceptance.",
+    "Concurrent Add/Review uses two deliberate DOM clicks in the same event-loop turn."
+  ],
+  "result": "PASS",
+  "finished": "2026-09-26T14:56:02.647Z"
+}

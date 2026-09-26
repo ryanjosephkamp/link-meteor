@@ -1,0 +1,21 @@
+PASS Loaded actual extension and initialized state
+PASS Collection created through UI
+PASS 37 faithful occurrences including duplicates, empty anchor, shadow root, frame provenance and explicit partial coverage
+PASS Current page resolves the invoking page from full workbench
+PASS Region Escape leaves collection unchanged
+PASS Regional quick-copy reports successful two-column clipboard write
+PASS Real rectangle pointer drag highlights and saves exactly 5 links without navigating
+PASS Add-another-region does not duplicate an already saved region
+PASS Positive-area 1px overlap of a wrapped line captures the actual anchor
+AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:
+
+  assert.ok(await page.locator('#nested').evaluate(e=>e.scrollTop)>0)
+
+    at tests/browser.mjs:75:10 {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: false,
+  expected: true,
+  operator: '==',
+  diff: 'simple'
+}

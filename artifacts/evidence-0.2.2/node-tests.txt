@@ -3,32 +3,32 @@
 > node --test tests/*.test.mjs
 
 ▶ background adverse paths using explicit Chrome-API simulation
-  ✔ failed persistent write preserves saved collection (1.455458ms)
-  ✔ session bookkeeping failure does not contradict successful capture (1.917833ms)
-  ✔ simultaneous hold settings serialize registration and retain last requested state (20.398416ms)
-  ✔ revoked permission prunes persisted hold origins and registered scripts (4.525125ms)
-  ✔ Review tab failure returns successful save and a separate warning (0.312416ms)
-  ✔ unreadable saved schema is preserved (0.083ms)
-✔ background adverse paths using explicit Chrome-API simulation (29.404833ms)
-✔ fresh state and collection lifecycle (1.596334ms)
-✔ append preserves occurrences, removal has one positional undo, updates are immutable (0.503333ms)
-✔ filters and reversible dedup retain matched provenance (0.816208ms)
-✔ invalid actions and payloads fail descriptively (0.346584ms)
-✔ mixed web, email, and telephone destinations retain separate occurrences (0.252792ms)
-✔ ordered CSV/TSV protect formulas and preserve distinct fields (0.699292ms)
-✔ text, Markdown, HTML, and JSON use safe data and retain provenance (0.962959ms)
-✔ XLSX is a ZIP with ordered inline string cells and no formulas (1.0995ms)
-✔ unsupported format or columns are rejected (0.221875ms)
-✔ text keeps valid destination strings exactly; Markdown encodes only its delimiters (0.429292ms)
-✔ XLSX escapes OOXML control tokens and supports columns past Z (1.173542ms)
-✔ Markdown preserves a genuinely empty anchor label (0.095625ms)
-✔ release ZIP members are the current extension source (13.855417ms)
-✔ a source change outside the site copy pairs invalidates the ZIP (25.4845ms)
-✔ a corrupted ZIP member is rejected before comparing source (0.917ms)
-✔ closed selected tab keeps its original ID for background error reporting (29.048167ms)
-✔ new tab in the current window is excluded from this capture (0.889333ms)
-✔ new tab in any window is excluded from all-windows capture (0.4055ms)
-✔ surviving tab that changes origin stops before capture.run (0.493125ms)
+  ✔ failed persistent write preserves saved collection (2.065917ms)
+  ✔ session bookkeeping failure does not contradict successful capture (3.761416ms)
+  ✔ simultaneous hold settings serialize registration and retain last requested state (18.141833ms)
+  ✔ revoked permission prunes persisted hold origins and registered scripts (6.30425ms)
+  ✔ Review tab failure returns successful save and a separate warning (0.388708ms)
+  ✔ unreadable saved schema is preserved (0.1085ms)
+✔ background adverse paths using explicit Chrome-API simulation (32.160208ms)
+✔ fresh state and collection lifecycle (2.690125ms)
+✔ append preserves occurrences, removal has one positional undo, updates are immutable (0.510833ms)
+✔ filters and reversible dedup retain matched provenance (1.810375ms)
+✔ invalid actions and payloads fail descriptively (0.452208ms)
+✔ mixed web, email, and telephone destinations retain separate occurrences (0.2845ms)
+✔ ordered CSV/TSV protect formulas and preserve distinct fields (0.848458ms)
+✔ text, Markdown, HTML, and JSON use safe data and retain provenance (1.572959ms)
+✔ XLSX is a ZIP with ordered inline string cells and no formulas (1.57025ms)
+✔ unsupported format or columns are rejected (0.273667ms)
+✔ text keeps valid destination strings exactly; Markdown encodes only its delimiters (0.374041ms)
+✔ XLSX escapes OOXML control tokens and supports columns past Z (1.43275ms)
+✔ Markdown preserves a genuinely empty anchor label (0.079709ms)
+✔ release ZIP members are the current extension source (17.416792ms)
+✔ a source change outside the site copy pairs invalidates the ZIP (28.4335ms)
+✔ a corrupted ZIP member is rejected before comparing source (1.062625ms)
+✔ closed selected tab keeps its original ID for background error reporting (28.832667ms)
+✔ new tab in the current window is excluded from this capture (1.097125ms)
+✔ new tab in any window is excluded from all-windows capture (0.588583ms)
+✔ surviving tab that changes origin stops before capture.run (0.677583ms)
 ℹ tests 26
 ℹ suites 0
 ℹ pass 26
@@ -36,4 +36,4 @@
 ℹ cancelled 0
 ℹ skipped 0
 ℹ todo 0
-ℹ duration_ms 83.225667
+ℹ duration_ms 100.750166

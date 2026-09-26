@@ -17,7 +17,9 @@ const contrast=(page,pairs)=>page.evaluate(pairs=>{const canvas=document.createE
   return pairs.map(([name,selector])=>{const el=document.querySelector(selector);if(!el)return {name,missing:true};const a=lum(rgb(getComputedStyle(el).color)),b=lum(rgb(bg(el)));return {name,ratio:Math.round(((Math.max(a,b)+.05)/(Math.min(a,b)+.05))*100)/100};});},pairs);
 try{
  const ui=await context.newPage();await ui.goto(`chrome-extension://${id}/ui/workbench.html`);
- await ui.locator('#collection-heading').waitFor();const rows=JSON.parse(await readFile(resolve(evidence,'exports/browser.json'),'utf8'));
+ await ui.locator('#collection-heading').waitFor();// Seed with real captured occurrences: this run's browser-suite export, or an explicit earlier export (LINK_METEOR_SEED_JSON).
+ const seed=process.env.LINK_METEOR_SEED_JSON?resolve(import.meta.dirname,'..',process.env.LINK_METEOR_SEED_JSON):resolve(evidence,'exports/browser.json');result.seed=seed.slice(resolve(import.meta.dirname,'..').length+1);
+ const rows=JSON.parse(await readFile(seed,'utf8'));
  await rpc(ui,{type:'state.mutate',action:{type:'collection.create',name:'Research sources'}});
  const active=(await rpc(ui,{type:'state.get'})).activeCollectionId;
  await rpc(ui,{type:'state.mutate',action:{type:'collection.update',id:active,patch:{notes:'Synthetic fixture captures for checking labels, provenance and exports.',tags:['fixture','research']}}});

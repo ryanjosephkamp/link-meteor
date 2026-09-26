@@ -1,0 +1,24 @@
+{
+  "startedAt": "2026-09-25T23:57:52+00:00",
+  "recordedAt": "2026-09-26T00:06:43.311467+00:00",
+  "elapsedSeconds": 531,
+  "status": "Handoff prepared; documentation backup and final remote verification follow",
+  "branch": "codex/audit-0.2.0",
+  "entryCommit": "3311a0ee580e59108fced995836d7381279a830c",
+  "scope": "Documentation only; no media or product changes",
+  "reportValidation": "PASS: 8 viewport/script combinations; exact prompt; 26 local links; keyboard focus; no remote requests",
+  "limits": [
+    "No real phone or embedded mobile preview acceptance",
+    "Copy intentionally not tested",
+    "No new extension or media acceptance"
+  ],
+  "protectedRemoteRefsUnchanged": true,
+  "productSiteWorkflowUnchanged": true,
+  "claudeLaunched": false,
+  "workersDispatched": 0,
+  "videosCreated": 0,
+  "deployments": 0,
+  "personalProfileUsed": false,
+  "taskBrowserClosed": true,
+  "unrelatedProcessesTerminated": 0
+}

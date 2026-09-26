@@ -84,6 +84,7 @@ function chooseMode(event) {
   action(async () => {
     let allowed = false;
     try { allowed = await pending; } catch { allowed = false; }
+    if (mode() !== 'existing') { picker.loading = false; renderFolders(); return; } // the person chose New folder meanwhile
     if (!allowed) {
       picker.loading = false; renderFolders();
       setMode('new');

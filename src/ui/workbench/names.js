@@ -20,8 +20,10 @@ export function exportName(date = new Date(), override = $('export-name').value)
 export function renderSavesAs(date = new Date()) {
   if (!currentCollection()) return;
   const field = $('export-name');
-  field.placeholder = exportName(date, '');
-  $('download-name').textContent = `Saves as ${exportName(date)}`;
+  const placeholder = exportName(date, '');
+  const line = `Saves as ${exportName(date)}`;
+  if (field.placeholder !== placeholder) field.placeholder = placeholder;
+  if ($('download-name').textContent !== line) $('download-name').textContent = line;
 }
 
 function renderPattern() {

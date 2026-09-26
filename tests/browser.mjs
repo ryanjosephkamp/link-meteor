@@ -91,7 +91,7 @@ try {
   for(const format of ['csv','tsv','xlsx','markdown','html','json','text']){
     await ui.locator('#format').selectOption(format);const pending=ui.waitForEvent('download');await ui.locator('#download').click();const download=await pending;
     const path=resolve(evidence,'exports',`browser.${format==='markdown'?'md':format==='text'?'txt':format}`);await download.saveAs(path);const bytes=await readFile(path);assert.ok(bytes.length>0);
-    if(format==='json'){const rows=JSON.parse(bytes);assert.equal(rows.length,exportExpected);assert.ok(rows.every(r=>r.occurrences.length===1));assert.equal(rows.find(r=>r.originalHref==='/appendix').anchorText,'');}
+    if(format==='json'){const parsed=JSON.parse(bytes);assert.deepEqual(Object.keys(parsed),['about','rows']);assert.equal(parsed.about.count,exportExpected);const rows=parsed.rows;assert.equal(rows.length,exportExpected);assert.ok(rows.every(r=>r.occurrences.length===1));assert.equal(rows.find(r=>r.originalHref==='/appendix').anchorText,'');}
     if(format==='csv'){assert.ok(bytes.toString().startsWith('Anchor text,URL\r\n'));assert.ok(bytes.toString().includes("'=SUM(1,2)"));}
     if(format==='html'){assert.ok(bytes.toString().includes('&lt;img'));assert.ok(!bytes.toString().includes('<img'));}
     if(format==='markdown')assert.ok(bytes.toString().includes(`[](${fixture.base}/appendix)`));

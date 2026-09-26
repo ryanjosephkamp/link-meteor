@@ -3,6 +3,7 @@ import { execFileSync } from 'node:child_process';
 import { mkdtemp, mkdir, readFile, readdir, rename, rm, writeFile } from 'node:fs/promises';
 import { dirname, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { releaseFiles } from './release-files.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const source = join(root, 'src');
@@ -19,13 +20,6 @@ if (extensionManifest.manifest_version !== 3 || extensionManifest.version !== pa
   throw new Error('dist/manifest.json must be a version-matched Manifest V3 build');
 }
 
-const expected = [...new Set([
-  'manifest.json', 'background.js', 'content/capture.js',
-  'core/model.js', 'core/export.js', 'core/xlsx.js',
-  'ui/workbench.html', 'ui/workbench.js', 'ui/workbench.css',
-  ...Object.values(extensionManifest.icons),
-])].sort();
-
 async function filesBelow(directory) {
   const files = [];
   async function walk(current) {
@@ -39,6 +33,8 @@ async function filesBelow(directory) {
   await walk(directory);
   return files.sort();
 }
+
+const expected = releaseFiles(await filesBelow(source), extensionManifest);
 
 for (const [label, directory] of [['source', source], ['dist', dist]]) {
   const actual = await filesBelow(directory);

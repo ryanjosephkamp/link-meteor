@@ -485,3 +485,14 @@ kbd, .shortcut-keys kbd, .btn-keys kbd { display: inline-grid; place-items: cent
   .seg:has(input:checked) { outline: 2px solid Highlight; }
   .switch { border: 1px solid CanvasText; }
 }
+
+/* 0.3.0 areas. Add each area's rules between its own two markers, so parallel work merges cleanly. */
+
+/* Area: all-sites access, hold key, welcome card, opening many links */
+/* End of area: all-sites access, hold key, welcome card, opening many links */
+
+/* Area: export file names, workbook formatting, bookmark folders */
+/* End of area: export file names, workbook formatting, bookmark folders */
+
+/* Area: backup and restore, selecting and removing all */
+/* End of area: backup and restore, selecting and removing all */

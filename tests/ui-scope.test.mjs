@@ -6,16 +6,17 @@ import { readFileSync } from 'node:fs';
 import { runInNewContext } from 'node:vm';
 import test from 'node:test';
 
-const source = readFileSync(new URL('../src/ui/workbench.js', import.meta.url), 'utf8');
+const source = readFileSync(new URL('../src/ui/workbench/capture.js', import.meta.url), 'utf8');
 const start = source.indexOf('async function runCapture() {');
-const end = source.indexOf('\nasync function download()', start);
+const end = source.indexOf('\n}\n', start) + 2;
 assert.ok(start >= 0 && end > start, 'The product runCapture function must be available to this harness');
 const runCaptureSource = source.slice(start, end);
-// Formatting helpers used by runCapture's status messages, taken from the same product file.
+// Formatting helpers used by runCapture's status messages, taken from the product's helpers module.
+const helpers = readFileSync(new URL('../src/ui/workbench/helpers.js', import.meta.url), 'utf8');
 const helperSource = ['function count(', 'function plural('].map((signature) => {
-  const at = source.indexOf(signature);
+  const at = helpers.indexOf(signature);
   assert.ok(at >= 0, `${signature} must be available to this harness`);
-  return source.slice(at, source.indexOf('\n', at));
+  return helpers.slice(at, helpers.indexOf('\n', at));
 }).join('\n');
 
 const tab = (id, windowId, url) => ({ id, windowId, url });

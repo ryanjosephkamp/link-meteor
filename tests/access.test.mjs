@@ -253,7 +253,7 @@ test('capture card: collections.list, commit to a chosen collection, copy format
   const before = JSON.stringify(local.linkMeteorState.collections);
   await refused({type: 'capture.commit', links: [candidate(3)], collectionId: 'gone'}, /no longer exists, so nothing was saved/, PAGE);
   assert.equal(JSON.stringify(local.linkMeteorState.collections), before);
-  await refused({type: 'capture.commit', links: [candidate(3)]}, /capture card on a webpage/);
+  await refused({type: 'capture.commit', links: [candidate(3)]}, /capture card on a webpage/, {url: 'chrome-extension://meteor/ui/workbench.html'});
 
   const tsv = await ok({type: 'capture.copy', links: [candidate(1, {anchorText: '=SUM(1)'})]}, PAGE);
   assert.equal(tsv.text, "Anchor text\tURL\r\n'=SUM(1)\thttps://a.test/1\r\n");

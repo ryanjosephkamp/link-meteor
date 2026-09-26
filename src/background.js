@@ -108,12 +108,9 @@ async function handle(message, sender) {
     const active = state.collections.find(c => c.id === state.activeCollectionId);
     return {name:active?.name || '',count:active?.links.length || 0};
   }
-  if (message.type === 'collections.list') return pageMessages['collections.list'](message,sender);
-  // Capture-card messages come from the page script, never from Link Meteor's own pages.
-  if (message.type === 'capture.commit' || Object.hasOwn(pageMessages,message.type)) {
-    if (ui) throw new Error('This action belongs to the capture card on a webpage.');
-    return message.type === 'capture.commit' ? commitCapture(message,sender,{remember:rememberTarget}) : pageMessages[message.type](message,sender);
-  }
+  // Capture-card messages need a sender tab (the page script's); collections.list takes any sender.
+  if (message.type === 'capture.commit') return commitCapture(message,sender,{remember:rememberTarget});
+  if (Object.hasOwn(pageMessages,message.type)) return pageMessages[message.type](message,sender);
   if (message.type === 'ui.open' && (ui || sender.tab?.id)) return openWorkbench(message);
   // A page may cancel only the opening it started from its own capture card.
   if (message.type === 'links.cancel' && !ui && sender.tab?.id) return cancelOpen(message,{senderTabId:sender.tab.id});

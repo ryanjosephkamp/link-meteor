@@ -271,7 +271,7 @@ try {
   const fileFocus = await B.ui.evaluate(() => ({id: document.activeElement?.id, outline: getComputedStyle(document.querySelector('label[for=backup-file]')).outlineStyle}));
   assert.deepEqual(fileFocus, {id: 'backup-file', outline: 'solid'}, 'the file control is reachable by keyboard with a visible focus ring');
   assert.deepEqual(await unlabeled(B.ui), []);
-  const pairs = [['backup help', '#backup-help'], ['preview source', '.restore-source span:nth-child(2)'], ['mode note', '.restore-mode-note'], ['mode line', '.restore-mode li'],
+  const pairs = [['backup help', '#backup-help'], ['storage help', '#storage-help'], ['preview source', '.restore-source span:nth-child(2)'], ['mode note', '.restore-mode-note'], ['mode line', '.restore-mode li'],
     ['access warning', '.restore-access'], ['restore choose', 'label[for=backup-file]'], ['replace button', '#restore-replace'], ['select all label', '#select-all-label']];
   const light = await contrast(B.ui, pairs);
   await resize(B.ui, 320, 900);

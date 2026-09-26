@@ -151,9 +151,9 @@ export function loadShortcut() {
   chrome.commands?.getAll?.().then((commands) => { ui.shortcut = commands.find((command) => command.name === 'select-region')?.shortcut || ''; renderShortcut(); if (ui.state) renderLinks(); }).catch(() => {});
 }
 
-// Reverts a switch the person just changed when the change did not happen.
+// When a change did not happen, the switches show the saved state and Chrome's grant again.
 function revertOnError(event, fn) {
-  return action(async () => { try { await fn(event.target.checked); } catch (error) { event.target.checked = !event.target.checked; throw error; } });
+  return action(async () => { try { await fn(event.target.checked); } catch (error) { renderSite(); throw error; } });
 }
 
 export function bindSettings() {

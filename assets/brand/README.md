@@ -15,7 +15,7 @@ Regenerate the packaged PNGs with `node scripts/make-icons.mjs` (uses the locall
 
 ## README masthead
 
-`readme-meteor.png` is the full-resolution still artwork (1536 × 1024). `readme-meteor.gif` is a 3-second, 768 × 512 loop with restrained refraction and light movement in the meteor; the wordmark stays fixed. The README selects the still for reduced-motion preferences and also links it directly.
+`readme-meteor.png` is the full-resolution still artwork (1536 × 1024). `readme-meteor.gif` is a 3-second, 768 × 512 loop with visible flowing refraction and light movement in the meteor; the wordmark stays fixed. The README selects the still for reduced-motion preferences and also links both the animation and still directly. The README uses a versioned image URL so updated artwork does not reuse an older cached preview.
 
 Regenerate the animation with `node scripts/make-readme-animation.mjs` using an installed `ffmpeg`. The script processes the existing still locally and does not download tools or assets. It does not change the toolbar icons or site mark.
 

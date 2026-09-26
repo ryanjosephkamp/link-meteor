@@ -1,11 +1,17 @@
 // Capture: scope and tab inventory, running a capture, and the capture report.
 import { $, node, icon, count, plural, capturableUrl, originOf, hostOf } from './helpers.js';
-import { ui, request, action, show, fail, currentCollection } from './state.js';
-import { render } from './rendering.js';
+import { ui, request, action, mutate, show, fail, currentCollection } from './state.js';
+import { render, setView } from './rendering.js';
 import { renderLinks } from './review.js';
 import { renderSite } from './settings.js';
+import { grants, pageAccessPlan } from './access.js';
 
 let inventoryTimer, inventoryRequestSequence = 0;
+// Whether the current page's tab can be read right now (a toolbar click, a site grant or all-sites
+// access): {tabId, url, ok}. Checked when the tab preview refreshes, so a click can decide at once
+// whether Chrome must be asked for the site.
+let pageAccess = null;
+const OPEN_INTENT_KEY = 'linkMeteorOpenIntent';
 
 /* Capture scope ---------------------------------------------------------------- */
 export function scopeTabs() {
@@ -55,9 +61,12 @@ export function renderInventory() {
   const target = tabs.find((tab) => tab.id === ui.inventory.targetTabId);
   if (ui.scope === 'current') {
     if (!target) preview(['Open a webpage, then open Link Meteor from it to capture that page.'], true, 'i-alert');
-    else if (!target.url) preview(['The current tab was found, but its address is not visible to Link Meteor. The capture result will say whether it can be read.']);
+    else if (!target.url) preview(['The current tab was found, but Chrome hides its address and contents from Link Meteor. Click the Link Meteor toolbar icon while on that page, or allow all sites under Site access.']);
     else if (!capturableUrl(target.url)) preview([`This is a browser page (${target.url}). Chrome does not allow capturing it; choose an ordinary webpage.`], true, 'i-ban');
-    else preview([node('strong', '', target.title || target.url), ` · ${hostOf(target.url)}`], false, 'i-page');
+    else {
+      const plan = currentPagePlan();
+      preview([node('strong', '', target.title || target.url), ` · ${hostOf(target.url)}`, plan.ask ? '. Chrome will ask to allow Link Meteor on this site when you capture.' : ''], false, 'i-page');
+    }
   } else if (!chosen.length) {
     preview([ui.scope === 'selected' ? 'Choose the tabs to capture below.' : 'No ordinary tabs are open in this scope.'], ui.scope !== 'selected');
   } else {
@@ -113,7 +122,26 @@ export async function loadInventory() {
   ui.currentOrigin = originOf(target?.url || '');
   renderInventory();
   renderSite();
+  probePageAccess(target);
   return inventory;
+}
+
+// Checks whether the current page can be read now, without reading anything from it.
+async function probePageAccess(target) {
+  if (!target?.url || !capturableUrl(target.url) || !chrome.scripting?.executeScript) return;
+  const check = { tabId: target.id, url: target.url };
+  let ok = false;
+  try { await chrome.scripting.executeScript({ target: { tabId: target.id }, func: () => true }); ok = true; } catch { /* not readable */ }
+  pageAccess = { ...check, ok };
+  const current = ui.inventory?.tabs.find((tab) => tab.id === ui.inventory.targetTabId);
+  if (ui.scope === 'current' && current?.id === check.tabId) renderInventory();
+}
+
+// Capture this page: whether the click must first ask Chrome for the tab's site.
+export function currentPagePlan() {
+  const target = ui.inventory?.tabs.find((tab) => tab.id === ui.inventory.targetTabId);
+  const origin = originOf(target?.url || '');
+  return { ...pageAccessPlan({ target, origin, probe: pageAccess, allSites: grants.allSites, originGranted: ui.originAccess.get(origin) === true }), origin, tabId: target?.id };
 }
 
 export function scheduleInventoryRefresh() {
@@ -155,7 +183,7 @@ export function syncReportAction() {
   if (hadFocus) only.focus({ preventScroll: true });
 }
 
-export function captureReport(report, { source = 'workbench', key = '', createdAt = '' } = {}) {
+export function captureReport(report, { source = 'workbench', key = '', createdAt = '', reasons = new Map() } = {}) {
   const box = $('capture-report'); box.replaceChildren(); box.hidden = false;
   ui.displayedReportKey = key;
   ui.displayedReport = report;
@@ -183,7 +211,7 @@ export function captureReport(report, { source = 'workbench', key = '', createdA
     const item = node('li', `report-item ${empty ? 'empty' : result.status}`);
     item.append(icon(empty ? 'i-minus' : kind.icon), node('span', 'page', result.title || result.url || `Tab ${result.tabId}`), node('span', 'status', kind.label(result)));
     if (empty && !result.warning) item.append(node('span', 'detail', 'The page loaded, but it has no links Link Meteor can read.'));
-    if (result.status === 'denied') item.append(node('span', 'detail', 'Link Meteor does not have access to this site. Capture it again to be asked, or allow site access in Chrome’s extension settings.'));
+    if (result.status === 'denied') item.append(node('span', 'detail', reasons.get(result.tabId) || 'Link Meteor does not have access to this site. Capture it again to be asked, or click the Link Meteor toolbar icon while on the page. If Chrome’s site access for Link Meteor (in the Extensions menu, the puzzle-piece icon) is set to “On click” or blocks this site, change it there.'));
     if (result.warning) item.append(node('span', `detail${result.status === 'success' ? ' warn' : ''}`, result.warning));
     if (result.error) item.append(node('span', 'detail', result.status === 'denied' ? `Chrome: ${result.error}` : result.error));
     list.append(item);
@@ -203,9 +231,21 @@ export function showContextReport(value) {
 
 export async function runCapture() {
   if (ui.busy) return;
+  // This page on a site Link Meteor cannot read yet: ask Chrome for that site in this same click,
+  // before anything is awaited, then capture either way so a decline is reported as denied.
+  const plan = ui.scope === 'current' ? currentPagePlan() : { ask: false };
+  const asking = plan.ask ? chrome.permissions.request({ origins: [`${plan.origin}/*`] }).then((granted) => ({ granted }), (error) => ({ granted: false, error })) : null;
   ui.busy = true; $('capture').disabled = true; renderCaptureButton();
   try {
     let tabIds = [];
+    const reasons = new Map();
+    if (asking) {
+      const answer = await asking;
+      ui.originAccess.set(plan.origin, answer.granted);
+      if (!answer.granted) reasons.set(plan.tabId, answer.error ? `Chrome could not ask for access to ${plan.origin}: ${answer.error.message}` : `You declined Chrome’s request for access to ${plan.origin}, so Link Meteor could not read this page. Capture it again to be asked again.`);
+    } else if (ui.scope === 'current' && plan.reason === 'hidden') {
+      reasons.set(ui.inventory?.targetTabId, 'Chrome hides this tab’s address and contents from Link Meteor, so it cannot ask for this site here. Click the Link Meteor toolbar icon while on the page, or allow all sites under Site access, then capture again.');
+    }
     if (ui.scope !== 'current') {
       if (!ui.inventory) throw new Error('Tab preview is unavailable. Choose the scope again to refresh it.');
       const scope = ui.scope;
@@ -231,7 +271,7 @@ export async function runCapture() {
     }
     const { state, report } = await request({ type: 'capture.run', tabIds });
     ui.flashBatch = report.batchId; ui.flashStart = Date.now();
-    ui.state = state; render(); captureReport(report);
+    ui.state = state; render(); captureReport(report, { reasons });
     clearTimeout(inventoryTimer);
     let previewError;
     try { await loadInventory(); } catch (error) { previewError = error; }
@@ -264,6 +304,7 @@ export function onCaptureStorageChange(changes, area) {
 // A capture started from the context menu or shortcut, or an activation error, is kept in
 // session storage until a view shows it.
 export async function restoreSessionReport() {
+  await applyOpenIntent();
   try {
     const stored = await chrome.storage.session.get(['linkMeteorActivationError', 'linkMeteorCaptureReport', 'linkMeteorCaptureReportDismissed']);
     ui.dismissedContextReportKey = stored.linkMeteorCaptureReportDismissed || '';
@@ -273,6 +314,26 @@ export async function restoreSessionReport() {
       show(`Link Meteor could not start the shortcut or context-menu action: ${stored.linkMeteorActivationError}`, 'error');
       try { await chrome.storage.session.remove('linkMeteorActivationError'); } catch { /* display remains actionable */ }
     }
+  } catch (error) { fail(error); }
+}
+
+// ui.open with a view or batch (from the capture card): applied once by the view that opens, then
+// removed. It shows only that capture, in its collection, and the export view at compact widths.
+async function applyOpenIntent() {
+  let intent;
+  try {
+    intent = (await chrome.storage.session.get(OPEN_INTENT_KEY))[OPEN_INTENT_KEY];
+    if (!intent) return;
+    await chrome.storage.session.remove(OPEN_INTENT_KEY);
+  } catch { return; }
+  if (Date.now() - Date.parse(intent.createdAt) > 120000) return;
+  try {
+    if (intent.batchId) {
+      const home = ui.state?.collections.find((collection) => collection.links.some((link) => link.batchId === intent.batchId));
+      if (home && home.id !== ui.state.activeCollectionId) await mutate({ type: 'collection.activate', id: home.id });
+      if (home) { ui.batchFilter = intent.batchId; ui.page = 0; renderLinks(); }
+    }
+    if (intent.view === 'export' && !matchMedia('(min-width: 900px)').matches) setView('export');
   } catch (error) { fail(error); }
 }
 

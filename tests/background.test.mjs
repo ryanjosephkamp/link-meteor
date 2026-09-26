@@ -8,11 +8,11 @@ let failLocal=false,failSession=false,failTabCreate=false,permitted=true;
 let scripts=[],activeRegistrations=0,maxActiveRegistrations=0;
 const tabs=[{id:1,windowId:1,url:'https://fixture.test/',title:'Fixture'},{id:2,windowId:1,url:'chrome-extension://meteor/ui/workbench.html',active:true}];
 globalThis.chrome={
- storage:{local:{async get(key){return {[key]:structuredClone(local[key])};},async set(value){if(failLocal)throw Error('quota');Object.assign(local,structuredClone(value));}},session:{async get(key){return {[key]:structuredClone(session[key])};},async set(value){if(failSession)throw Error('session unavailable');Object.assign(session,structuredClone(value));}}},
+ storage:{onChanged:event(),local:{async get(key){return {[key]:structuredClone(local[key])};},async set(value){if(failLocal)throw Error('quota');Object.assign(local,structuredClone(value));}},session:{async get(key){return {[key]:structuredClone(session[key])};},async set(value){if(failSession)throw Error('session unavailable');Object.assign(session,structuredClone(value));}}},
  runtime:{getURL:path=>'chrome-extension://meteor/'+path,sendMessage:async()=>{},onMessage:event(),onInstalled:event(),onStartup:event()},
  tabs:{async query(query){return query?.active?[tabs[1]]:tabs;},async get(id){const tab=tabs.find(t=>t.id===id);if(!tab)throw Error('No tab');return tab;},sendMessage:async()=>{},create:async()=>{if(failTabCreate)throw Error('tab creation failed');},update:async()=>{}},
  windows:{getAll:async()=>[{id:1,focused:true,tabs}],update:async()=>{}},
- permissions:{contains:async()=>permitted,onRemoved:event()},
+ permissions:{contains:async()=>permitted,onAdded:event(),onRemoved:event()},
  scripting:{async executeScript(spec){return spec.files?[]:[{result:{links:[{anchorText:'A',url:'https://fixture.test/destination',originalHref:'/destination',frameUrl:'https://fixture.test/'}],warnings:[]}}];},async getRegisteredContentScripts(){return scripts;},async unregisterContentScripts(){scripts=[];},async registerContentScripts(next){activeRegistrations++;maxActiveRegistrations=Math.max(maxActiveRegistrations,activeRegistrations);await new Promise(done=>setTimeout(done,8));scripts=next;activeRegistrations--;}},
  bookmarks:{},action:{onClicked:event()},sidePanel:{open:async()=>{}},commands:{onCommand:event()},contextMenus:{onClicked:event(),removeAll:async()=>{},create:()=>{}}
 };

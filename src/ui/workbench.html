@@ -71,18 +71,47 @@
       </section>
 
       <section class="rail-section site-settings" aria-labelledby="site-title">
-        <h2 id="site-title" class="rail-title">This site</h2>
-        <p id="site-origin" class="site-origin">Current site unavailable</p>
+        <h2 id="site-title" class="rail-title">Site access</h2>
         <div class="hold-row">
+          <input id="all-sites" type="checkbox" role="switch" class="switch" aria-describedby="all-sites-help">
+          <label for="all-sites">Allow on all sites</label>
+        </div>
+        <p id="all-sites-help" class="help">Hold-key drag and Capture this page then work on every website without asking site by site. Link Meteor reads a page’s links only when you capture or drag, and keeps them in this browser.</p>
+        <p id="all-sites-note" class="access-note" role="status" hidden></p>
+        <div id="all-sites-remove" class="confirm" role="group" aria-labelledby="all-sites-remove-text" hidden>
+          <p id="all-sites-remove-text">Chrome still lets Link Meteor read every site. Remove that access too? Sites you allowed one by one keep their access.</p>
+          <div class="confirm-actions"><button id="all-sites-remove-yes" class="btn" type="button">Remove Chrome’s access</button><button id="all-sites-remove-no" class="btn quiet" type="button">Keep it</button></div>
+        </div>
+
+        <h3 class="rail-subtitle">This site</h3>
+        <p id="site-origin" class="site-origin">Current site unavailable</p>
+        <div id="site-hold-row" class="hold-row">
           <input id="hold-enabled" type="checkbox" role="switch" class="switch" aria-describedby="hold-help">
           <label for="hold-enabled">Hold-key drag on this site</label>
         </div>
         <p id="hold-help" class="help">Hold the key below and drag to select links, without opening Link Meteor first. Chrome asks for access to this site only.</p>
-        <div class="hold-key-row">
+        <div id="site-exception-row" class="hold-row" hidden>
+          <input id="site-exception" type="checkbox" role="switch" class="switch" aria-describedby="site-exception-help">
+          <label for="site-exception">Never on this site</label>
+        </div>
+        <p id="site-exception-help" class="help" hidden>Hold-key drag stays off here even though Link Meteor may run on all sites. Capture this page still works.</p>
+
+        <h3 class="rail-subtitle">Hold to drag</h3>
+        <div class="hold-trigger-row">
+          <label for="hold-trigger">Hold</label>
+          <select id="hold-trigger" aria-describedby="hold-trigger-help"><option value="letter">A letter key</option><option value="modifier">Command</option></select>
+        </div>
+        <div id="hold-letter-row" class="hold-key-row">
           <label for="hold-key">Hold key</label>
           <input id="hold-key" class="key-input" maxlength="1" pattern="[A-Za-z]" autocomplete="off" spellcheck="false">
           <button id="save-hold-key" class="btn small" type="button">Save key</button>
         </div>
+        <p id="hold-trigger-help" class="help"></p>
+
+        <h3 class="rail-subtitle" id="exceptions-title">Never on these sites <span id="exception-count" class="count-pill">0</span></h3>
+        <ul id="hold-exceptions" class="exception-list" aria-labelledby="exceptions-title"></ul>
+        <p id="hold-exceptions-empty" class="help">No sites yet. Turn on Never on this site while you are on one.</p>
+
         <div class="shortcut-row">
           <span class="shortcut-label">Region shortcut</span>
           <span id="shortcut-keys" class="shortcut-keys"><kbd>Alt</kbd><kbd>Shift</kbd><kbd>L</kbd></span>
@@ -114,7 +143,22 @@
     </aside>
 
     <main class="main" id="main">
-      <section id="welcome" class="welcome" hidden></section>
+      <section id="welcome" class="welcome" aria-labelledby="welcome-title" hidden>
+        <div id="welcome-ask" class="welcome-ask">
+          <h2 id="welcome-title" class="welcome-title">Use Link Meteor on every site?</h2>
+          <p>With access to all sites, you can hold <kbd id="welcome-key">Z</kbd> and drag across links on any webpage, and Capture this page works without asking site by site. Chrome asks you once.</p>
+          <p class="help">Link Meteor reads a page’s links only when you capture or drag, and keeps what you save in this browser. You can list sites where it never runs, or turn this off, under Site access.</p>
+          <div class="welcome-actions">
+            <button id="welcome-allow" class="btn primary" type="button">Allow on all sites (recommended)</button>
+            <button id="welcome-later" class="btn" type="button">Choose sites later</button>
+          </div>
+        </div>
+        <div id="welcome-outcome" class="welcome-outcome" hidden>
+          <p id="welcome-outcome-text" role="status"></p>
+          <button id="welcome-done" class="btn small" type="button">Done</button>
+        </div>
+        <button id="welcome-close" class="btn quiet icon-btn welcome-close" type="button" aria-label="Close the welcome card" title="Close"><svg class="icon" aria-hidden="true"><use href="#i-x"/></svg></button>
+      </section>
 
       <header class="collection-head">
         <svg class="brand-mark compact-only" aria-hidden="true"><use href="#i-mark"/></svg>
@@ -273,11 +317,18 @@
       <section class="export-group" aria-labelledby="open-title">
         <h3 id="open-title">Open in tabs</h3>
         <button id="open-links" class="btn wide" type="button"><svg class="icon" aria-hidden="true"><use href="#i-external"/></svg><span id="open-label">Open links…</span></button>
+        <div class="open-modes"><span class="open-modes-label">Or open in</span><button id="open-window" class="link-btn" type="button">a new window</button><button id="open-group" class="link-btn" type="button" aria-describedby="open-group-help">a tab group</button></div>
         <div id="open-confirm" class="confirm" role="group" aria-labelledby="open-confirm-text" hidden>
           <p id="open-confirm-text"></p>
-          <div class="confirm-actions"><button id="open-confirm-yes" class="btn primary" type="button">Open tabs</button><button id="open-confirm-no" class="btn quiet" type="button">Cancel</button></div>
+          <div class="confirm-actions"><button id="open-confirm-yes" class="btn primary" type="button">Open tabs</button><button id="open-confirm-window" class="btn" type="button">Open in a new window</button><button id="open-confirm-group" class="btn" type="button">Open as a tab group</button><button id="open-confirm-no" class="btn quiet" type="button">Cancel</button></div>
         </div>
-        <p class="help">Opens up to 20 web links at a time as background tabs.</p>
+        <div id="open-progress" class="open-progress" hidden>
+          <p id="open-progress-text" role="status"></p>
+          <progress id="open-progress-bar" max="1" value="0" aria-labelledby="open-progress-text"></progress>
+          <button id="open-cancel-progress" class="btn small" type="button">Cancel</button>
+        </div>
+        <p class="help">Opens up to 500 web links in background tabs, a few at a time. Link Meteor asks first above 20.</p>
+        <p id="open-group-help" class="help">A tab group is named after the collection when Chrome lets Link Meteor manage tab groups. Chrome asks the first time you choose one.</p>
       </section>
     </aside>
 

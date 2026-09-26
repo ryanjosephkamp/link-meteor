@@ -14,7 +14,9 @@ let offerRemoval = false;
 // Reads Chrome's all-sites grant; the switch and welcome card show it together with the saved scope.
 export async function refreshGrants() {
   try { grants.allSites = !!(await chrome.permissions?.contains?.({ origins: ALL_SITES })); } catch { grants.allSites = false; }
+  try { grants.tabs = !!(await chrome.permissions?.contains?.({ permissions: ['tabs'] })); } catch { grants.tabs = false; }
   grants.known = true;
+  $('scope-access-help').hidden = grants.tabs;
   if (!grants.allSites) offerRemoval = false;
   renderSite();
 }

@@ -7,7 +7,7 @@ export const CONFIRM_ABOVE = 20;
 export const STRONG_ABOVE = 100;
 
 // What Chrome currently grants, kept current by settings.js from chrome.permissions.
-export const grants = { allSites: false, known: false };
+export const grants = { allSites: false, tabs: false, known: false };
 
 export function isMac(platform = globalThis.navigator?.userAgentData?.platform || globalThis.navigator?.platform || '') {
   return /mac/i.test(platform);

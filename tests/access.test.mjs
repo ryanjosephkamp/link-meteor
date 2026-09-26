@@ -15,6 +15,7 @@ const tabs = [
   {id: 1, windowId: 1, url: 'https://a.test/page', title: 'A'},
   {id: 2, windowId: 1, url: 'https://b.test/page', title: 'B'},
   {id: 3, windowId: 1, url: 'chrome-extension://meteor/ui/workbench.html', title: 'Link Meteor', active: true},
+  {id: 4, windowId: 1, url: 'https://c.test/page', title: 'C, never granted on its own'},
 ];
 const covered = (pattern) => granted.origins.has(pattern) || (/^https?:\/\//.test(pattern) && granted.origins.has(pattern.slice(0, pattern.indexOf(':')) + '://*/*'));
 const onAdded = event(), onRemoved = event(), storageChanged = event();
@@ -85,7 +86,8 @@ test("'all' needs Chrome's all-sites grant, then covers every site with one scri
   assert.equal(state.settings.holdScope, 'all');
   assert.deepEqual(state.settings.holdOrigins, ['https://a.test'], 'chosen sites are kept for switching back');
   assert.deepEqual(registered.map(({id, matches, excludeMatches}) => ({id, matches, excludeMatches})), [{id: 'meteor-hold-all', matches: ALL, excludeMatches: undefined}]);
-  assert.deepEqual(calls.inject.sort(), [1, 2], 'open web tabs get the script at once');
+  assert.deepEqual(calls.inject.sort(), [1, 2, 4], 'open web tabs get the script at once');
+  assert.equal(lastConfigure(4).enabled, true);
   assert.equal(lastConfigure(2).enabled, true);
 });
 
@@ -151,6 +153,7 @@ test("removing all-sites access returns the scope to 'sites' and keeps per-site 
   await chrome.permissions.remove({origins: ALL});
   await until(() => settings().holdScope === 'sites', 'scope returns to sites');
   await until(() => registered[0]?.id === 'meteor-hold-sites', 'the per-site script replaces the all-sites one');
+  assert.equal(lastConfigure(4).enabled, false, 'a tab Chrome no longer lets Link Meteor read stops at once');
   assert.deepEqual(settings().holdOrigins, ['https://a.test'], 'the per-site grant for a.test is kept');
   assert.deepEqual(registered[0].matches, ['https://a.test/*']);
   // Removing that site's grant too prunes it.

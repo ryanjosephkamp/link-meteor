@@ -78,8 +78,10 @@ async function configureTabs(settings, allSites, inject) {
   let tabs = [];
   try { tabs = await chrome.tabs.query({}); } catch { return; }
   await Promise.all(tabs.map(async tab => {
-    if (!tab.url || !ordinaryUrl(tab.url)) return;
-    const origin = new URL(tab.url).origin;
+    // Chrome hides the address of a tab Link Meteor may no longer read (for example just after
+    // all-sites access was removed): a page script still loaded there must stop.
+    if (tab.url && !ordinaryUrl(tab.url)) return;
+    const origin = tab.url ? new URL(tab.url).origin : '';
     const enabled = holdRuns(origin, settings, allSites);
     if (enabled && !tab.incognito && !tab.discarded && (inject === 'all' || inject.includes(origin))) {
       try { await chrome.scripting.executeScript({target: {tabId: tab.id}, files: ['content/capture.js']}); } catch { /* the page loads it on its next visit */ }

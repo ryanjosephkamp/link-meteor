@@ -1,5 +1,5 @@
 {
-  "started": "2026-09-26T04:22:55.717Z",
+  "started": "2026-09-26T04:27:01.994Z",
   "base": "/link-meteor/",
   "pages": {
     "index.html": {
@@ -439,7 +439,7 @@
     "404 page renders with its styles for a missing nested path",
     "Mobile menu opens from the keyboard and closes with Escape",
     "Demo drag selects exactly the swept links; Select all selects 6; export preview uses real CSV/Markdown/XLSX output; tabs work with arrow keys",
-    "Videos: controls, no autoplay or loop, preload none with nothing loaded before play, local MP4/poster/WebVTT captions, transcripts, phone gutters, and both files play"
+    "Videos: controls, no autoplay or loop, preload none with nothing loaded before play, local MP4/poster, WebVTT caption cues load, transcripts, phone gutters, and both files play and seek"
   ],
   "limits": [
     "Automated Chromium checks; not a screen-reader, real-device or cross-browser audit.",
@@ -449,15 +449,19 @@
     {
       "id": "link-meteor-demo",
       "h264": "probably",
-      "playedSeconds": 1.2
+      "captionCues": 12,
+      "playedSeconds": 1.2,
+      "seekedTo": 30
     },
     {
       "id": "link-meteor-install",
       "h264": "probably",
-      "playedSeconds": 1.2
+      "captionCues": 18,
+      "playedSeconds": 1.2,
+      "seekedTo": 30
     }
   ],
   "problems": [],
   "result": "PASS",
-  "finished": "2026-09-26T04:23:56.644Z"
+  "finished": "2026-09-26T04:28:03.069Z"
 }

@@ -23,7 +23,8 @@ const problems = [];
 function watch(page, label) {
   page.on('console', (m) => { if (m.type() === 'error' && !/status of 404/.test(m.text())) problems.push(`${label}: console ${m.text()}`); });
   page.on('pageerror', (e) => problems.push(`${label}: ${e.message}`));
-  page.on('requestfailed', (r) => { if (!r.url().startsWith('blob:')) problems.push(`${label}: failed ${r.url()}`); });
+  // A video player cancels its in-flight media request when it seeks or pauses; that is not a failure.
+  page.on('requestfailed', (r) => { if (r.url().startsWith('blob:') || (r.resourceType() === 'media' && r.failure()?.errorText === 'net::ERR_ABORTED')) return; problems.push(`${label}: failed ${r.url()} ${r.failure()?.errorText || ''}`); });
   page.on('request', (r) => { const u = r.url(); if (!u.startsWith(origin) && !u.startsWith('data:') && !u.startsWith('blob:')) problems.push(`${label}: off-site request ${u}`); });
   page.on('response', (r) => { if (r.status() >= 400 && !r.url().includes('/definitely-missing')) problems.push(`${label}: HTTP ${r.status()} ${r.url()}`); });
 }
@@ -128,14 +129,18 @@ try {
       assert.deepEqual([v.src, v.poster, v.track, v.trackKind], [`assets/video/${id}.mp4`, `assets/video/${id}-poster.jpg`, `assets/video/${id}.vtt`, 'captions']);
       for (const file of [v.src, v.poster, v.track]) assert.equal((await page.request.get(base + file)).status(), 200, file);
       assert.ok((await (await page.request.get(base + v.track)).text()).startsWith('WEBVTT'));
+      const media = await page.request.get(base + v.src, { headers: { Range: 'bytes=0-1023' } }); assert.equal(media.headers()['content-type'], 'video/mp4');
+      const cues = await video.evaluate(el => new Promise(done => { const track = el.textTracks[0]; track.mode = 'hidden'; const read = () => track.cues?.length ? done(track.cues.length) : setTimeout(read, 100); read(); setTimeout(() => done(0), 4000); }));
+      assert.ok(cues >= 5, `${id}: caption cues load (${cues})`); await video.evaluate(el => { el.textTracks[0].mode = 'disabled'; });
       assert.ok(await page.locator('.transcript-box .transcript li').count() >= 4, `${id}: transcript`);
       const box = await video.boundingBox(); assert.ok(box.x >= 15 && box.x + box.width <= 390 - 15, `${id}: phone gutters`);
-      let played = null;
-      if (v.h264) { played = await video.evaluate(async el => { el.muted = true; await el.play(); await new Promise(done => setTimeout(done, 1200)); el.pause(); return +el.currentTime.toFixed(2); }); assert.ok(played > 0.5, `${id}: plays`); }
-      videos.push({ id, h264: v.h264 || 'not supported by this test browser', playedSeconds: played });
+      let played = null, seeked = null;
+      if (v.h264) { [played, seeked] = await video.evaluate(async el => { el.muted = true; await el.play(); await new Promise(done => setTimeout(done, 1200)); el.pause(); const at = +el.currentTime.toFixed(2); el.currentTime = 30; await new Promise(done => { el.addEventListener('seeked', done, { once: true }); setTimeout(done, 5000); }); return [at, +el.currentTime.toFixed(2)]; });
+        assert.ok(played > 0.5, `${id}: plays`); assert.equal(seeked, 30, `${id}: seeks`); }
+      videos.push({ id, h264: v.h264 || 'not supported by this test browser', captionCues: cues, playedSeconds: played, seekedTo: seeked });
     }
     result.videos = videos;
-    result.checks.push('Videos: controls, no autoplay or loop, preload none with nothing loaded before play, local MP4/poster/WebVTT captions, transcripts, phone gutters' + (videos.every(x => x.playedSeconds) ? ', and both files play' : ''));
+    result.checks.push('Videos: controls, no autoplay or loop, preload none with nothing loaded before play, local MP4/poster, WebVTT caption cues load, transcripts, phone gutters' + (videos.every(x => x.playedSeconds && x.seekedTo) ? ', and both files play and seek' : ''));
     await page.close(); }
   for (const [name, width, scheme, path] of [['site-home-mobile.png', 390, 'light', ''], ['site-home-dark.png', 1440, 'dark', ''], ['site-install.png', 1440, 'light', 'install.html'], ['site-practice-page.png', 1440, 'light', 'practice.html']]) {
     const page = await browser.newPage({ viewport: { width, height: width < 500 ? 844 : 1000 }, colorScheme: scheme, reducedMotion: 'reduce' }); await page.goto(base + path, { waitUntil: 'networkidle' }); await page.evaluate(() => document.fonts.ready); await page.waitForTimeout(1200); await page.screenshot({ path: resolve(evidence, name) }); await page.close();

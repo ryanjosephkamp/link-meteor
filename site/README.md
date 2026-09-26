@@ -37,6 +37,7 @@ The sync script keeps older ZIP downloads intact; it updates the current version
 ```sh
 node tests/site-check.mjs      # all pages × 5 widths × light/dark, links, anchors, structure, contrast, demo, videos
 node tests/site-preview.mjs    # ad-hoc screenshots into .scratch/site-preview
+node tests/site-preview.mjs --serve   # browse locally at http://127.0.0.1:8123/ (byte ranges, so videos seek)
 ```
 
 `tests/site-browser.mjs` (loaded extension, prepared test profile) verifies the practice page's answer keys and renders the real screenshots in `assets/img/shot-*.webp`.

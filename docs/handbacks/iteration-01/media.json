@@ -1,6 +1,0 @@
-[
-  {"id":"region","path":"../../../artifacts/evidence/region-drag.png","alt":"A rectangular selection highlights five bibliography links with a live count of five.","caption":"Actual loaded extension: regional drag capture on the deterministic research fixture."},
-  {"id":"review","path":"../../../artifacts/evidence/workbench-review.png","alt":"Link Meteor review rows show anchor text and destination URLs with filtering and export controls.","caption":"Implemented workbench with synthetic captured source records."},
-  {"id":"narrow","path":"../../../artifacts/evidence/workbench-narrow.png","alt":"The Link Meteor workbench in a narrow 390 CSS pixel viewport.","caption":"Responsive presentation check; not an Android extension test."},
-  {"id":"dark","path":"../../../artifacts/evidence/workbench-dark.png","alt":"Link Meteor's dark presentation for a research collection.","caption":"Final dark presentation, with the destructive-text contrast repair included."}
-]

@@ -1,6 +1,6 @@
 # Shared implementation contracts — v1
 
-JavaScript modules use the following exact field names and exports. Pure model/export modules do not reference Chrome, DOM, or Node-only APIs. Changes require notifying the driver before breaking a consumer.
+JavaScript modules use the following exact field names and exports. Pure model/export modules do not reference Chrome, DOM, or Node-only APIs. Changes must preserve compatibility across module consumers and stored schema-v1 collections.
 
 ## Data
 

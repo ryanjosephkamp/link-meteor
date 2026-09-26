@@ -38,6 +38,6 @@ The region overlay asks the background for the active collection's name and link
 
 ## The website
 
-The project site in `site/` (not yet deployed) has its own privacy page. It uses no cookies, analytics, advertising or third-party requests; fonts are self-hosted; its demo and export preview run entirely in the visitor's browser. If it is hosted on GitHub Pages, GitHub operates those servers under its own privacy statement.
+The [project website](https://ryanjosephkamp.github.io/link-meteor/) has its own privacy page. It uses no cookies, analytics, advertising or third-party requests; fonts are self-hosted; its demo and export preview run entirely in the visitor's browser. GitHub Pages hosts the site; GitHub operates those servers under its own privacy statement.
 
-This document describes the current development build. Chrome Web Store disclosure forms and publication review are later steps; the extension has not been submitted or published.
+This document describes the current development build. Installation uses the downloadable ZIP and Chrome's Load unpacked option. Browser-store distribution is deferred.

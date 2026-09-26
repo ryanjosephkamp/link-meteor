@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Link Meteor",
-  "version": "0.2.2",
+  "version": "0.3.0",
   "description": "Capture links with their anchor text, organize local research collections, and export them your way. Free, private, and local.",
   "minimum_chrome_version": "116",
   "permissions": ["activeTab", "scripting", "storage", "sidePanel", "contextMenus", "clipboardWrite"],

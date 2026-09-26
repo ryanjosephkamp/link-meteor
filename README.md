@@ -2,10 +2,10 @@
 
 <picture>
   <source media="(prefers-reduced-motion: reduce)" srcset="assets/brand/readme-meteor.png">
-  <img src="assets/brand/readme-meteor.gif" alt="Link Meteor — a luminous lime meteor on a dark background">
+  <img src="assets/brand/readme-meteor.gif?motion=2" alt="Link Meteor — a luminous lime meteor on a dark background">
 </picture>
 
-[View the still artwork](assets/brand/readme-meteor.png)
+[View the animation](https://raw.githubusercontent.com/ryanjosephkamp/link-meteor/main/assets/brand/readme-meteor.gif?motion=2) · [View the still artwork](assets/brand/readme-meteor.png)
 
 [Website](https://ryanjosephkamp.github.io/link-meteor/) · [Installation guide](https://ryanjosephkamp.github.io/link-meteor/install.html) · [Report a bug or suggest a feature](https://github.com/ryanjosephkamp/link-meteor/issues)
 

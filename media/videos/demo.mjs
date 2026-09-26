@@ -6,7 +6,7 @@ export default {
   title: 'Link Meteor in under a minute',
   fps: 30,
   fade: 0.4,
-  poster: 10.6,
+  poster: 11.3,
   scenes: [
     {kind: 'card', variant: 'intro', duration: 3.6, kicker: 'A free Chrome extension', tagline: 'Capture the trail. <span>Keep the source.</span>',
       describe: 'The Link Meteor artwork: a glowing lime meteor beside the name.'},

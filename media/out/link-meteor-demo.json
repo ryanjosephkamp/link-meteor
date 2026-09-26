@@ -2,16 +2,16 @@
   "id": "link-meteor-demo",
   "title": "Link Meteor in under a minute",
   "file": "site/assets/video/link-meteor-demo.mp4",
-  "bytes": 7672971,
-  "sha256": "cd32130327090dfb8f96355ae654d55c2e09271ae1abbe8a52b61878685ee8bf",
-  "seconds": 53.73,
+  "bytes": 7834862,
+  "sha256": "264885efbbe06f7b20e638747139e2cd77e840955fb2949b80fa5c82b6c63622",
+  "seconds": 55.68,
   "fps": 30,
-  "frames": 1612,
+  "frames": 1670,
   "size": "1920x1080",
   "codec": "H.264 High, yuv420p, no audio track",
   "crf": 24,
-  "renderedAt": "2026-09-26T04:13:54.078Z",
-  "renderSeconds": 46,
+  "renderedAt": "2026-09-26T15:08:48.870Z",
+  "renderSeconds": 55,
   "captions": 12,
   "sources": [
     {
@@ -22,10 +22,12 @@
     {
       "scene": 1,
       "clip": "demo-select",
-      "method": "reconstruction",
+      "method": "recording",
+      "capture": "the extension’s own injected script",
       "page": "Practice page",
       "version": "0.2.2",
-      "recordedAt": "2026-09-26T04:06:40.856Z",
+      "build": "41f6195f64d662843e2d2bfa60e5afb06dd5ed334abae21cc3dd4272a56caeae",
+      "recordedAt": "2026-09-26T15:00:57.273Z",
       "profile": "task-owned test profile"
     },
     {
@@ -34,7 +36,8 @@
       "method": "recording",
       "page": "Link Meteor full view",
       "version": "0.2.2",
-      "recordedAt": "2026-09-26T04:07:08.567Z",
+      "build": "41f6195f64d662843e2d2bfa60e5afb06dd5ed334abae21cc3dd4272a56caeae",
+      "recordedAt": "2026-09-26T15:01:25.908Z",
       "profile": "task-owned test profile"
     },
     {

@@ -74,7 +74,7 @@ async function resolveTimeline(tl) {
       s.captions = (spec.captions || []).map((x) => ({...x, t0: T(x.t0), t1: T(x.t1)}));
       if (spec.still) s.still = {src: `/.scratch/media/rec/${spec.still}`, width: 2560, height: 1440};
       s.duration = s.to - s.from;
-      sources.push({scene: i, clip: spec.clip, method: c.clip.mode === 'reconstruction' ? 'reconstruction' : 'recording', page: c.clip.page, version: c.clip.version, recordedAt: c.clip.recordedAt, profile: c.clip.profile || 'task-owned test profile', ...(spec.still ? {still: spec.still} : {})});
+      sources.push({scene: i, clip: spec.clip, method: c.clip.mode === 'reconstruction' ? 'reconstruction' : 'recording', ...(c.clip.mode ? {capture: c.clip.mode === 'extension' ? 'the extension’s own injected script' : 'extension script bridged to the loaded extension'} : {}), page: c.clip.page, version: c.clip.version, ...(c.clip.build ? {build: c.clip.build} : {}), recordedAt: c.clip.recordedAt, profile: c.clip.profile || 'task-owned test profile', ...(spec.still ? {still: spec.still} : {})});
     } else {
       s.captions = (spec.captions || []).map((x) => ({...x}));
       if (spec.kind === 'card') { s.art = art; sources.push({scene: i, method: 'artwork', note: 'Approved README artwork with the README animation’s flowing light, rendered at full resolution'}); }

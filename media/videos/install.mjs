@@ -5,7 +5,7 @@ export default {
   title: 'Install Link Meteor and make your first capture',
   fps: 30,
   fade: 0.4,
-  poster: 44.5,
+  poster: 45,
   scenes: [
     {kind: 'card', variant: 'intro', duration: 3.4, kicker: 'Install and first capture', tagline: 'Set up Link Meteor in <span>desktop Chrome</span>',
       describe: 'The Link Meteor artwork with the title “Set up Link Meteor in desktop Chrome.”'},

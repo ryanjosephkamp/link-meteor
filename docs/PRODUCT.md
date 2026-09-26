@@ -1,5 +1,7 @@
 # Product
 
+See [product scope and guarantees](SCOPE.md), [data contracts](CONTRACTS.md) and [testing/compatibility](ACCEPTANCE.md) for implementation requirements and verified limits.
+
 ## Register
 
 product

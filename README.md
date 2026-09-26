@@ -1,22 +1,31 @@
 # Link Meteor
 
+<picture>
+  <source media="(prefers-reduced-motion: reduce)" srcset="assets/brand/readme-meteor.png">
+  <img src="assets/brand/readme-meteor.gif" alt="Link Meteor — a luminous lime meteor on a dark background">
+</picture>
+
+[View the still artwork](assets/brand/readme-meteor.png)
+
+[Website](https://ryanjosephkamp.github.io/link-meteor/) · [Installation guide](https://ryanjosephkamp.github.io/link-meteor/install.html) · [Report a bug or suggest a feature](https://github.com/ryanjosephkamp/link-meteor/issues)
+
 Capture the trail. Keep the source.
 
 Link Meteor is a free Chrome extension for collecting links with their **actual anchor text and URL in separate fields**, reviewing their sources, and exporting a useful research collection. It has no account, ads, telemetry, paid tier, or backend dependency.
 
-This repository contains the Chrome extension (development build 0.2.1) and its website in `site/`. The extension has not been published to the Chrome Web Store, and the website has not been deployed. Firefox, Safari and AI features are deferred. The audit repaired selection, keyboard focus and regional save behavior; its required automated checks now pass on the exact packaged 0.2.1 build. Human/platform acceptance and publication decisions remain separate. See [the completed audit handback](docs/audit-0.2.0/resume-01/REPORT.md) and [acceptance evidence](docs/ACCEPTANCE.md).
+This repository contains the Chrome extension (development build 0.2.1) and its [live website](https://ryanjosephkamp.github.io/link-meteor/). Install the extension from the downloadable ZIP using Chrome's **Load unpacked** option. Browser-store distribution is deferred. See [testing and compatibility](docs/ACCEPTANCE.md) for the environments and workflows checked so far.
 
 ## Try the development build
 
-1. Run `npm run build` with Node 22 or newer. There are no package dependencies to install.
-2. Open `chrome://extensions` in Chrome and enable Developer mode for local extension development.
-3. Choose **Load unpacked** and select this repository's `dist` directory.
-4. Open an ordinary webpage (the site's `practice.html` is made for this). Use the extension toolbar action for the side panel, or **Option+Shift+L** on Mac / **Alt+Shift+L** on Windows and Linux to select a region.
+1. [Download version 0.2.1](https://ryanjosephkamp.github.io/link-meteor/downloads/link-meteor-0.2.1.zip) and extract it to a folder you will keep. The ZIP is a development package, not a store installer.
+2. Open `chrome://extensions` in Chrome and enable **Developer mode**.
+3. Choose **Load unpacked** and select the extracted folder containing `manifest.json`.
+4. Open an ordinary webpage (try the [practice page](https://ryanjosephkamp.github.io/link-meteor/practice.html)). Use the extension toolbar action for the side panel, or **Option+Shift+L** on Mac / **Alt+Shift+L** on Windows and Linux to select a region.
 5. Drag across links, then choose **Copy text + URL**, **Add to collection**, **Review**, or **Add another region**. The card names the collection the links will go to. Escape cancels selection. You can scroll while dragging.
 
-Chrome manages shortcut assignments at `chrome://extensions/shortcuts`. A shortcut can conflict with another extension or system shortcut; use **Change shortcut** in Link Meteor to inspect it. Reload the extension at `chrome://extensions` after rebuilding, then reload test webpages so their injected script is current. If an automation profile caches an old worker, use a new task-owned test profile instead of treating that result as current-build evidence.
+Chrome manages shortcut assignments at `chrome://extensions/shortcuts`. A shortcut can conflict with another extension or system shortcut; use **Change shortcut** in Link Meteor to inspect it. Reload the extension at `chrome://extensions` after rebuilding, then reload test webpages so their injected script is current.
 
-The ZIPs under `artifacts/` are unpacked development packages (`link-meteor-0.2.1.zip` is the audit candidate; `0.2.0` is the preserved Opus handback; `0.1.0` is the pre-design baseline). For a new installation, extract one to a folder and select that folder with **Load unpacked**. For an existing installation, preserve its folder path and extension identity and export your collections before updating; loading a different unpacked path can create a separate extension and separate storage. They are not store installers.
+For an existing installation, export any collections you want to retain, keep the same installation folder path, and follow the [update instructions](https://ryanjosephkamp.github.io/link-meteor/install.html). Loading a different unpacked path can create a separate extension with separate storage. JSON exports preserve captured link fields for reference, but are not a full backup of collection settings. Version 0.2.1 does not provide an import/restore flow.
 
 ## What is included
 
@@ -45,6 +54,8 @@ CSV/TSV prefix formula-like strings with an apostrophe for safer spreadsheet imp
 
 ## Develop and verify
 
+Building from source requires Node.js 22 or newer. There are no package dependencies to install. Load the resulting `dist` folder with Chrome's **Load unpacked** option.
+
 ```sh
 npm run build
 npm test
@@ -53,10 +64,10 @@ npm run package
 
 The build copies only packaged extension files. Packaging refuses stale source/build differences and emits a deterministic ZIP plus file hashes and truthful Git identity/dirty flags.
 
-Browser tests reuse an installed Playwright library and Chromium/Chrome for Testing. No browser or library is downloaded by these scripts. Set `LINK_METEOR_PLAYWRIGHT` to an installed Playwright module if it is not on the normal Node resolution path. The Codex runtime path is also detected on the development machine.
+Browser tests reuse an installed Playwright library and Chromium/Chrome for Testing. No browser or library is downloaded by these scripts. Set `LINK_METEOR_PLAYWRIGHT` to an installed Playwright module if it is not on the normal Node resolution path.
 
 ```sh
-# One task-owned test browser; allow synthetic 127.0.0.1 access and bookmarks when requested.
+# One isolated test browser; allow synthetic 127.0.0.1 access and bookmarks when requested.
 node tests/interactive.mjs
 # Press Return in that terminal to close only the test browser/server.
 node tests/browser.mjs
@@ -65,15 +76,15 @@ node tests/site-browser.mjs        # practice-page answer keys and site screensh
 node tests/permission-browser.mjs  # run last: revokes the synthetic grant
 ```
 
-For a changed build, create a new task-owned profile and prepare its grants through the product's own permission paths with `LINK_METEOR_TEST_PROFILE=<new-name> node tests/prepare-grants.mjs` (a visible test browser). `node tests/visual-browser.mjs` needs no grants (`LINK_METEOR_VISUAL_PROFILE` picks its profile). `tests/design-preview.mjs` and `tests/overlay-preview.mjs` render the UI with simulated extension APIs for design iteration only; they are not acceptance evidence.
+For a changed build, create a new isolated profile and prepare its grants through the product's own permission paths with `LINK_METEOR_TEST_PROFILE=<new-name> node tests/prepare-grants.mjs` (a visible test browser). `node tests/visual-browser.mjs` needs no grants (`LINK_METEOR_VISUAL_PROFILE` picks its profile). `tests/design-preview.mjs` and `tests/overlay-preview.mjs` render the UI with simulated extension APIs for design iteration only; they are not acceptance evidence.
 
-Tests store isolated profiles and cache under `.scratch/acceptance-final`, bind the local synthetic fixture server to `127.0.0.1:52478`, and fail if that port is occupied. `LINK_METEOR_TEST_PROFILE` and `LINK_METEOR_FIXTURE_PORT` can change these task-owned resources. The browser suite **resets collections in its selected test profile**, so never point it at a personal browser profile. Native permission grants are part of preparation, not silently forged by the tests. The harness records a build fingerprint and refuses reuse after packaged bytes change; prepare a fresh named test profile for a changed build. Headless optional-permission behavior was not accepted as native evidence.
+Tests store isolated profiles and cache under `.scratch/acceptance-final`, bind the local synthetic fixture server to `127.0.0.1:52478`, and fail if that port is occupied. `LINK_METEOR_TEST_PROFILE` and `LINK_METEOR_FIXTURE_PORT` can change these isolated resources. The browser suite **resets collections in its selected test profile**, so never point it at a personal browser profile. Prepare permission grants through the extension in the isolated browser. The harness records a build fingerprint and refuses reuse after packaged bytes change; prepare a fresh named test profile for a changed build. Headless optional-permission behavior was not accepted as native evidence.
 
 `tests/xlsx-fixture.mjs` and `tests/verify-workbook.py` independently check OOXML and, when available, openpyxl parsing. See `docs/ACCEPTANCE.md` for current executed results, commands, native checks and limits. A declared Chrome minimum is not proof of testing that historical version. Everyday Chrome, other operating systems, screen-reader use and Excel application behavior still need human review.
 
 ## Website
 
-`site/` is a static GitHub Pages site (home with an interactive demo and a live export preview, install, guide, privacy, and a practice page with verified answer keys). It makes no third-party requests and self-hosts its fonts. See `site/README.md` for structure, checks and the manual deployment steps; `.github/workflows/pages.yml` runs only when triggered by hand. Nothing has been deployed.
+`site/` is a static GitHub Pages site (home with an interactive demo and a live export preview, install, guide, privacy, and a practice page with verified answer keys). It makes no third-party requests and self-hosts its fonts. Visit [Link Meteor](https://ryanjosephkamp.github.io/link-meteor/). See `site/README.md` for structure, checks and the manual deployment steps; `.github/workflows/pages.yml` runs only when triggered by hand.
 
 ```sh
 node scripts/sync-site.mjs          # copy the packaged ZIP, export modules and icons into site/
@@ -81,8 +92,16 @@ node scripts/sync-site.mjs --check  # verify the site matches the build
 node tests/site-check.mjs           # pages × widths × themes, links, structure, contrast, demo
 ```
 
-## Privacy and later design work
+## Privacy
 
-Read [the privacy explanation](docs/PRIVACY.md) and [the accepted product scope](docs/alignment/2026-09-25/ALIGNMENT.md). The design pass is summarized in `docs/opus-handoff/OPUS_RETURN.md`, with product intent in `docs/PRODUCT.md` and the visual system in `docs/DESIGN.md`.
+Read [the privacy explanation](docs/PRIVACY.md), [product overview](docs/PRODUCT.md), [scope and guarantees](docs/SCOPE.md) and [data contracts](docs/CONTRACTS.md). Link collection and export processing happen locally in your browser.
 
-The implementation, icons, brand mark and interface are original; the site's fonts are Atkinson Hyperlegible Next and Mono under the SIL Open Font License (licenses in `site/assets/fonts/`). The reference product informed functional requirements; no third-party code, branding or assets were copied. Trademark/name clearance has not been established.
+## Support and suggestions
+
+[Open a GitHub issue](https://github.com/ryanjosephkamp/link-meteor/issues) to report a bug or suggest an improvement. For a bug, include your extension version, Chrome version, operating system and steps to reproduce. Use a synthetic example where possible and leave private URLs, personal collection data and credentials out of public reports.
+
+## License and author
+
+MIT licensed; see [LICENSE](LICENSE). The site's Atkinson Hyperlegible Next and Mono fonts retain their SIL Open Font License notices in `site/assets/fonts/`.
+
+Created by **[Ryan Kamp](https://github.com/ryanjosephkamp/)**. Link Meteor and all its features are free. Optional support never unlocks features or changes functionality.

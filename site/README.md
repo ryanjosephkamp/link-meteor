@@ -2,7 +2,7 @@
 
 Static site for GitHub Pages. Plain HTML, CSS and JavaScript with no build step, no dependencies, no cookies, no analytics and no third-party requests. Fonts (Atkinson Hyperlegible Next and Mono, SIL Open Font License) are self-hosted under `assets/fonts/` with their licenses.
 
-This folder is published as-is. It is **not deployed** yet.
+This folder is published as-is at [Link Meteor](https://ryanjosephkamp.github.io/link-meteor/).
 
 ## Pages
 
@@ -38,10 +38,10 @@ node tests/site-preview.mjs    # ad-hoc screenshots into .scratch/site-preview
 
 `tests/site-browser.mjs` (loaded extension, prepared test profile) verifies the practice page's answer keys and renders the real screenshots in `assets/img/shot-*.webp`.
 
-## Deploying later
+## Manual deployment
 
-1. Merge the branch into `main`.
-2. In the repository's Settings → Pages, set Source to **GitHub Actions**.
+1. Review and merge the intended site changes into `main`.
+2. The repository's Pages Source is **GitHub Actions**.
 3. In Actions, select `main` and run **Deploy site to GitHub Pages (manual)**. The deploy job runs only for `main`.
 
-The site will be at `https://ryanjosephkamp.github.io/link-meteor/`. If a custom domain is used instead, update the absolute paths in `404.html`, and consider making the `og:image` URL absolute in each page's head.
+The site is at `https://ryanjosephkamp.github.io/link-meteor/`. If a custom domain is used instead, update the absolute paths in `404.html`, and consider making the `og:image` URL absolute in each page's head.

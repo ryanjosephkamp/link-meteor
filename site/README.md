@@ -12,6 +12,7 @@ This folder is published as-is at [Link Meteor](https://ryanjosephkamp.github.io
 | `install.html` | Development-build installation, update, removal and troubleshooting. Build details are filled from the packaged ZIP. |
 | `guide.html` | Full help reference. |
 | `privacy.html` | Extension and website privacy, with every permission explained. |
+| `about.html` | Creator credit, contact and social links, bug reports and suggestions through GitHub Issues, optional support, license and credits. |
 | `practice.html` | Sandbox of synthetic links. Each section's `data-expect` is its answer key, verified with the real extension by `tests/site-browser.mjs`. |
 | `practice-frame.html` | Same-origin frame used by the practice page. |
 | `404.html` | Not-found page. Uses absolute `/link-meteor/` paths because GitHub Pages serves it at any depth. |

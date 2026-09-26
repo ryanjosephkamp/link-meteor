@@ -13,7 +13,7 @@ let playwright;
 try { playwright = require('playwright'); }
 catch { playwright = require(process.env.LINK_METEOR_PLAYWRIGHT || resolve(homedir(), '.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright')); }
 const evidence = resolve(import.meta.dirname, '..', process.env.LINK_METEOR_EVIDENCE_DIR || 'artifacts/evidence');
-const pages = ['index.html', 'install.html', 'guide.html', 'privacy.html', 'practice.html'];
+const pages = ['index.html', 'install.html', 'guide.html', 'privacy.html', 'practice.html', 'about.html'];
 const widths = [320, 390, 768, 1024, 1440];
 const result = { started: new Date().toISOString(), base: '/link-meteor/', pages: {}, checks: [], limits: ['Automated Chromium checks; not a screen-reader, real-device or cross-browser audit.', 'Contrast is measured against the nearest solid background and skips text over images.'] };
 const { server, base: origin } = await serve();

@@ -54,6 +54,38 @@ function markdownUrl(value) {
   return safeLinkUrl(value).replace(/[<>()[\]\\]/g, char => `%${char.codePointAt(0).toString(16).toUpperCase()}`);
 }
 
+const WINDOWS_RESERVED = /^(con|prn|aux|nul|com[1-9]|lpt[1-9])$/i;
+
+// One file-name part: accents folded to plain letters, any other run of characters outside
+// letters, digits, dot, underscore and hyphen becomes one hyphen, with no leading or trailing
+// dot or hyphen (hidden files and Windows trailing dots).
+export function fileNamePart(value, max = 80) {
+  return String(value ?? '').normalize('NFKD').replace(/\p{M}+/gu, '')
+    .replace(/[^\p{L}\p{N}._-]+/gu, '-').replace(/^[.-]+/, '').slice(0, max).replace(/[.-]+$/, '');
+}
+
+function pad(n) { return String(n).padStart(2, '0'); }
+
+// Default export name: <prefix_><collection>_<YYYY-MM-DD>_<HHmm>.<extension>, in local time and
+// without colons. A nonempty override (the Export panel's File name field) replaces the pattern.
+export function exportFileName({ collection = '', extension, settings = {}, date = new Date(), override = '' } = {}) {
+  if (typeof extension !== 'string' || !/^[a-z0-9]{1,5}$/.test(extension)) throw new Error(`Unsupported file extension: ${extension}`);
+  if (!(date instanceof Date) || Number.isNaN(date.valueOf())) throw new Error('Export time must be a valid date');
+  const { exportPrefix = '', exportTimestamp = true, exportTimestampFormat = 'datetime' } = settings;
+  const typed = String(override ?? '').trim().replace(new RegExp(`\\.${extension}$`, 'i'), '');
+  let stem = fileNamePart(typed, 150);
+  if (!stem) {
+    const parts = [fileNamePart(exportPrefix, 40), fileNamePart(collection) || 'links'];
+    if (exportTimestamp) {
+      parts.push(`${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`);
+      if (exportTimestampFormat !== 'date') parts.push(`${pad(date.getHours())}${pad(date.getMinutes())}`);
+    }
+    stem = parts.filter(Boolean).join('_');
+  }
+  if (WINDOWS_RESERVED.test(stem)) stem += '_';
+  return `${stem}.${extension}`;
+}
+
 export function makeExport(rows, { format, columns = ['anchorText', 'url'] } = {}) {
   if (!Array.isArray(rows)) throw new Error('rows must be an array');
   if (!FORMATS.has(format)) throw new Error(`Unsupported export format: ${format}`);

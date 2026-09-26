@@ -1,4 +1,4 @@
-import {createState, reduceState} from './core/model.js';
+import {createState, migrateState, reduceState} from './core/model.js';
 import {makeExport} from './core/export.js';
 
 const STATE_KEY = 'linkMeteorState';
@@ -29,7 +29,8 @@ async function readState() {
   if (stored.schemaVersion !== 1 || !Array.isArray(stored.collections)) {
     throw new Error('Saved collection data could not be read. It has been preserved; do not reset the extension.');
   }
-  return stored;
+  // Settings added after 0.2.2 read as their defaults; the next write stores them.
+  return migrateState(stored);
 }
 
 async function mutate(action) {

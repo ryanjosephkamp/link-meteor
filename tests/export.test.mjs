@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { makeExport, COLUMNS } from '../src/core/export.js';
+import { makeExport, COLUMNS, exportFileName, fileNamePart } from '../src/core/export.js';
 import { writeXlsx } from '../src/core/xlsx.js';
 import { queryLinks } from '../src/core/model.js';
 
@@ -121,4 +121,29 @@ test('XLSX escapes OOXML control tokens and supports columns past Z', () => {
 
 test('Markdown preserves a genuinely empty anchor label', () => {
   assert.equal(makeExport([{anchorText:'',url:'https://example.org/image'}],{format:'markdown'}).data,'[](https://example.org/image)');
+});
+
+test('export file names follow the pattern settings, in local time and without colons', () => {
+  const date = new Date(2026, 8, 26, 14, 32, 59);
+  const name = (options) => exportFileName({ collection: 'Urban heat islands sources', extension: 'xlsx', date, ...options });
+  assert.equal(name(), 'Urban-heat-islands-sources_2026-09-26_1432.xlsx');
+  assert.equal(name({ settings: { exportPrefix: 'link-meteor-research' } }), 'link-meteor-research_Urban-heat-islands-sources_2026-09-26_1432.xlsx');
+  assert.equal(name({ settings: { exportTimestampFormat: 'date' } }), 'Urban-heat-islands-sources_2026-09-26.xlsx');
+  assert.equal(name({ settings: { exportTimestamp: false, exportTimestampFormat: 'date' } }), 'Urban-heat-islands-sources.xlsx');
+  assert.equal(exportFileName({ collection: 'Late', extension: 'csv', date: new Date(2026, 0, 2, 3, 4) }), 'Late_2026-01-02_0304.csv');
+  assert.doesNotMatch(name(), /:/);
+});
+
+test('typed file names and collection names become safe file names', () => {
+  const date = new Date(2026, 8, 26, 9, 5);
+  assert.equal(exportFileName({ collection: 'x', extension: 'md', date, override: '  My notes.MD ' }), 'My-notes.md', 'the typed name replaces the pattern and a typed extension is not doubled');
+  assert.equal(exportFileName({ collection: 'x', extension: 'md', date, override: '???' }), 'x_2026-09-26_0905.md', 'a name with nothing usable falls back to the pattern');
+  assert.equal(exportFileName({ collection: 'Résumé: “Draft” / v2', extension: 'csv', date, settings: { exportTimestamp: false } }), 'Resume-Draft-v2.csv');
+  assert.equal(exportFileName({ collection: '', extension: 'txt', date }), 'links_2026-09-26_0905.txt');
+  assert.equal(exportFileName({ collection: 'CON', extension: 'txt', date, settings: { exportTimestamp: false } }), 'CON_.txt');
+  assert.equal(exportFileName({ collection: '..\\..\\secret', extension: 'json', date, settings: { exportTimestamp: false } }), 'secret.json');
+  assert.equal(fileNamePart('雪 研究'), '雪-研究');
+  assert.equal(fileNamePart('x'.repeat(200)).length, 80);
+  assert.throws(() => exportFileName({ collection: 'x', extension: '.xlsx', date }), /extension/);
+  assert.throws(() => exportFileName({ collection: 'x', extension: 'xlsx', date: new Date('nope') }), /valid date/);
 });

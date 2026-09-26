@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Guide and limits
+    url: https://ryanjosephkamp.github.io/link-meteor/guide.html
+    about: How capture, review and export work, and what Link Meteor can't read.
+  - name: Privacy
+    url: https://ryanjosephkamp.github.io/link-meteor/privacy.html
+    about: What Link Meteor stores, where, and every permission it asks for.

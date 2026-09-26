@@ -1,0 +1,39 @@
+
+> link-meteor@0.2.2 test
+> node --test tests/*.test.mjs
+
+▶ background adverse paths using explicit Chrome-API simulation
+  ✔ failed persistent write preserves saved collection (1.539708ms)
+  ✔ session bookkeeping failure does not contradict successful capture (2.180417ms)
+  ✔ simultaneous hold settings serialize registration and retain last requested state (18.550584ms)
+  ✔ revoked permission prunes persisted hold origins and registered scripts (6.285375ms)
+  ✔ Review tab failure returns successful save and a separate warning (0.451916ms)
+  ✔ unreadable saved schema is preserved (0.135875ms)
+✔ background adverse paths using explicit Chrome-API simulation (30.007625ms)
+✔ fresh state and collection lifecycle (2.217ms)
+✔ append preserves occurrences, removal has one positional undo, updates are immutable (0.363041ms)
+✔ filters and reversible dedup retain matched provenance (0.962625ms)
+✔ invalid actions and payloads fail descriptively (0.377583ms)
+✔ mixed web, email, and telephone destinations retain separate occurrences (0.265583ms)
+✔ ordered CSV/TSV protect formulas and preserve distinct fields (0.703458ms)
+✔ text, Markdown, HTML, and JSON use safe data and retain provenance (1.248833ms)
+✔ XLSX is a ZIP with ordered inline string cells and no formulas (1.98525ms)
+✔ unsupported format or columns are rejected (0.330042ms)
+✔ text keeps valid destination strings exactly; Markdown encodes only its delimiters (0.455417ms)
+✔ XLSX escapes OOXML control tokens and supports columns past Z (0.986416ms)
+✔ Markdown preserves a genuinely empty anchor label (0.058375ms)
+✔ release ZIP members are the current extension source (15.719375ms)
+✔ a source change outside the site copy pairs invalidates the ZIP (26.342167ms)
+✔ a corrupted ZIP member is rejected before comparing source (1.015584ms)
+✔ closed selected tab keeps its original ID for background error reporting (27.760084ms)
+✔ new tab in the current window is excluded from this capture (1.079542ms)
+✔ new tab in any window is excluded from all-windows capture (0.457084ms)
+✔ surviving tab that changes origin stops before capture.run (0.759ms)
+ℹ tests 26
+ℹ suites 0
+ℹ pass 26
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 95.573917

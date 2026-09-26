@@ -1,0 +1,116 @@
+{
+  "id": "link-meteor-install",
+  "title": "Install Link Meteor and make your first capture",
+  "file": "site/assets/video/link-meteor-install.mp4",
+  "bytes": 7349304,
+  "sha256": "8896b6a98fa03b7d3427d62c08395f2b53b72a22e44903b7e630febc7710b865",
+  "seconds": 74.46,
+  "fps": 30,
+  "frames": 2234,
+  "size": "1920x1080",
+  "codec": "H.264 High, yuv420p, no audio track",
+  "crf": 24,
+  "renderedAt": "2026-09-26T15:09:54.431Z",
+  "renderSeconds": 65,
+  "captions": 18,
+  "sources": [
+    {
+      "scene": 0,
+      "method": "artwork",
+      "note": "Approved README artwork with the README animation’s flowing light, rendered at full resolution"
+    },
+    {
+      "scene": 1,
+      "clip": "tut-install",
+      "method": "recording",
+      "page": "Install · Link Meteor",
+      "version": "0.2.2",
+      "build": "41f6195f64d662843e2d2bfa60e5afb06dd5ed334abae21cc3dd4272a56caeae",
+      "recordedAt": "2026-09-26T15:03:54.203Z",
+      "profile": "task-owned test profile"
+    },
+    {
+      "scene": 2,
+      "method": "illustration",
+      "note": "Schematic of Your downloads folder"
+    },
+    {
+      "scene": 3,
+      "clip": "tut-ext-before",
+      "method": "recording",
+      "page": "chrome://extensions",
+      "version": "0.2.2",
+      "build": "41f6195f64d662843e2d2bfa60e5afb06dd5ed334abae21cc3dd4272a56caeae",
+      "recordedAt": "2026-09-26T15:04:59.302Z",
+      "profile": "separate task-owned profile without Link Meteor"
+    },
+    {
+      "scene": 4,
+      "method": "illustration",
+      "note": "Schematic of Chrome’s file picker"
+    },
+    {
+      "scene": 5,
+      "clip": "tut-ext-after",
+      "method": "recording",
+      "page": "chrome://extensions",
+      "version": "0.2.2",
+      "build": "41f6195f64d662843e2d2bfa60e5afb06dd5ed334abae21cc3dd4272a56caeae",
+      "recordedAt": "2026-09-26T15:04:43.118Z",
+      "profile": "task-owned test profile"
+    },
+    {
+      "scene": 6,
+      "method": "illustration",
+      "note": "Schematic of Chrome’s toolbar"
+    },
+    {
+      "scene": 7,
+      "clip": "tut-capture",
+      "method": "recording",
+      "capture": "the extension’s own injected script",
+      "page": "Practice page",
+      "version": "0.2.2",
+      "build": "41f6195f64d662843e2d2bfa60e5afb06dd5ed334abae21cc3dd4272a56caeae",
+      "recordedAt": "2026-09-26T15:04:12.189Z",
+      "profile": "task-owned test profile"
+    },
+    {
+      "scene": 8,
+      "clip": "tut-panel",
+      "method": "recording",
+      "page": "Link Meteor side panel (panel width)",
+      "version": "0.2.2",
+      "build": "41f6195f64d662843e2d2bfa60e5afb06dd5ed334abae21cc3dd4272a56caeae",
+      "recordedAt": "2026-09-26T15:04:26.674Z",
+      "profile": "task-owned test profile",
+      "still": "tut-capture-still.jpg"
+    },
+    {
+      "scene": 9,
+      "clip": "tut-shortcuts",
+      "method": "recording",
+      "page": "chrome://extensions/shortcuts",
+      "version": "0.2.2",
+      "build": "41f6195f64d662843e2d2bfa60e5afb06dd5ed334abae21cc3dd4272a56caeae",
+      "recordedAt": "2026-09-26T15:04:49.669Z",
+      "profile": "task-owned test profile"
+    },
+    {
+      "scene": 10,
+      "clip": "tut-about",
+      "method": "recording",
+      "page": "Link Meteor side panel (panel width)",
+      "version": "0.2.2",
+      "build": "41f6195f64d662843e2d2bfa60e5afb06dd5ed334abae21cc3dd4272a56caeae",
+      "recordedAt": "2026-09-26T15:04:36.020Z",
+      "profile": "task-owned test profile",
+      "still": "tut-capture-still.jpg"
+    },
+    {
+      "scene": 11,
+      "method": "artwork",
+      "note": "Approved README artwork with the README animation’s flowing light, rendered at full resolution"
+    }
+  ]
+}

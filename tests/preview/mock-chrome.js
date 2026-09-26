@@ -105,7 +105,7 @@ async function handle(message) {
 }
 
 globalThis.chrome = {
-  runtime: { sendMessage: handle, onMessage: { addListener: (fn) => listeners.add(fn) }, getURL: (path) => `/${path}` },
+  runtime: { getManifest: () => ({ version: '0.2.2' }), sendMessage: handle, onMessage: { addListener: (fn) => listeners.add(fn) }, getURL: (path) => `/${path}` },
   storage: { onChanged: noop, session: { get: async () => structuredClone(session), set: async (value) => Object.assign(session, value), remove: async () => {} } },
   permissions: { request: async () => true, contains: async ({ origins }) => !origins?.some((origin) => origin.includes('desk.example.com')), onAdded: noop, onRemoved: noop },
   tabs: { create: async () => ({}), getCurrent: async () => (params.has('tab') ? { id: 99 } : undefined), onActivated: noop, onUpdated: noop, onRemoved: noop },

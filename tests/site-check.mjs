@@ -13,7 +13,7 @@ let playwright;
 try { playwright = require('playwright'); }
 catch { playwright = require(process.env.LINK_METEOR_PLAYWRIGHT || resolve(homedir(), '.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright')); }
 const evidence = resolve(import.meta.dirname, '..', process.env.LINK_METEOR_EVIDENCE_DIR || 'artifacts/evidence');
-const pages = ['index.html', 'install.html', 'guide.html', 'privacy.html', 'practice.html'];
+const pages = ['index.html', 'install.html', 'guide.html', 'privacy.html', 'practice.html', 'about.html'];
 const widths = [320, 390, 768, 1024, 1440];
 const result = { started: new Date().toISOString(), base: '/link-meteor/', pages: {}, checks: [], limits: ['Automated Chromium checks; not a screen-reader, real-device or cross-browser audit.', 'Contrast is measured against the nearest solid background and skips text over images.'] };
 const { server, base: origin } = await serve();
@@ -23,7 +23,8 @@ const problems = [];
 function watch(page, label) {
   page.on('console', (m) => { if (m.type() === 'error' && !/status of 404/.test(m.text())) problems.push(`${label}: console ${m.text()}`); });
   page.on('pageerror', (e) => problems.push(`${label}: ${e.message}`));
-  page.on('requestfailed', (r) => { if (!r.url().startsWith('blob:')) problems.push(`${label}: failed ${r.url()}`); });
+  // A video player cancels its in-flight media request when it seeks or pauses; that is not a failure.
+  page.on('requestfailed', (r) => { if (r.url().startsWith('blob:') || (r.resourceType() === 'media' && r.failure()?.errorText === 'net::ERR_ABORTED')) return; problems.push(`${label}: failed ${r.url()} ${r.failure()?.errorText || ''}`); });
   page.on('request', (r) => { const u = r.url(); if (!u.startsWith(origin) && !u.startsWith('data:') && !u.startsWith('blob:')) problems.push(`${label}: off-site request ${u}`); });
   page.on('response', (r) => { if (r.status() >= 400 && !r.url().includes('/definitely-missing')) problems.push(`${label}: HTTP ${r.status()} ${r.url()}`); });
 }
@@ -118,6 +119,29 @@ try {
     await page.locator('[role=tab][data-format=csv]').focus(); await page.keyboard.press('ArrowRight'); assert.equal(await page.evaluate(() => document.activeElement.dataset.format), 'markdown');
     result.checks.push('Demo drag selects exactly the swept links; Select all selects 6; export preview uses real CSV/Markdown/XLSX output; tabs work with arrow keys');
     await page.evaluate(() => scrollTo(0, 0)); await page.screenshot({ path: resolve(evidence, 'site-home.png') }); await page.close(); }
+  // Videos: click to play only, local poster/MP4/WebVTT, a transcript, phone gutters and a playable file.
+  { const page = await browser.newPage({ viewport: { width: 390, height: 844 } }); watch(page, 'videos'); const videos = [];
+    for (const [path, id] of [['', 'link-meteor-demo'], ['install.html', 'link-meteor-install']]) {
+      await page.goto(base + path, { waitUntil: 'networkidle' });
+      const video = page.locator('figure.video video');
+      const v = await video.evaluate(el => ({ autoplay: el.autoplay, loop: el.loop, controls: el.controls, preload: el.preload, readyState: el.readyState, poster: el.getAttribute('poster'), src: el.querySelector('source').getAttribute('src'), track: el.querySelector('track').getAttribute('src'), trackKind: el.querySelector('track').kind, h264: el.canPlayType('video/mp4; codecs="avc1.640028"') }));
+      assert.deepEqual([v.autoplay, v.loop, v.controls, v.preload, v.readyState], [false, false, true, 'none', 0], `${id}: no autoplay, and nothing loads before play`);
+      assert.deepEqual([v.src, v.poster, v.track, v.trackKind], [`assets/video/${id}.mp4`, `assets/video/${id}-poster.jpg`, `assets/video/${id}.vtt`, 'captions']);
+      for (const file of [v.src, v.poster, v.track]) assert.equal((await page.request.get(base + file)).status(), 200, file);
+      assert.ok((await (await page.request.get(base + v.track)).text()).startsWith('WEBVTT'));
+      const media = await page.request.get(base + v.src, { headers: { Range: 'bytes=0-1023' } }); assert.equal(media.headers()['content-type'], 'video/mp4');
+      const cues = await video.evaluate(el => new Promise(done => { const track = el.textTracks[0]; track.mode = 'hidden'; const read = () => track.cues?.length ? done(track.cues.length) : setTimeout(read, 100); read(); setTimeout(() => done(0), 4000); }));
+      assert.ok(cues >= 5, `${id}: caption cues load (${cues})`); await video.evaluate(el => { el.textTracks[0].mode = 'disabled'; });
+      assert.ok(await page.locator('.transcript-box .transcript li').count() >= 4, `${id}: transcript`);
+      const box = await video.boundingBox(); assert.ok(box.x >= 15 && box.x + box.width <= 390 - 15, `${id}: phone gutters`);
+      let played = null, seeked = null;
+      if (v.h264) { [played, seeked] = await video.evaluate(async el => { el.muted = true; await el.play(); await new Promise(done => setTimeout(done, 1200)); el.pause(); const at = +el.currentTime.toFixed(2); el.currentTime = 30; await new Promise(done => { el.addEventListener('seeked', done, { once: true }); setTimeout(done, 5000); }); return [at, +el.currentTime.toFixed(2)]; });
+        assert.ok(played > 0.5, `${id}: plays`); assert.equal(seeked, 30, `${id}: seeks`); }
+      videos.push({ id, h264: v.h264 || 'not supported by this test browser', captionCues: cues, playedSeconds: played, seekedTo: seeked });
+    }
+    result.videos = videos;
+    result.checks.push('Videos: controls, no autoplay or loop, preload none with nothing loaded before play, local MP4/poster, WebVTT caption cues load, transcripts, phone gutters' + (videos.every(x => x.playedSeconds && x.seekedTo) ? ', and both files play and seek' : ''));
+    await page.close(); }
   for (const [name, width, scheme, path] of [['site-home-mobile.png', 390, 'light', ''], ['site-home-dark.png', 1440, 'dark', ''], ['site-install.png', 1440, 'light', 'install.html'], ['site-practice-page.png', 1440, 'light', 'practice.html']]) {
     const page = await browser.newPage({ viewport: { width, height: width < 500 ? 844 : 1000 }, colorScheme: scheme, reducedMotion: 'reduce' }); await page.goto(base + path, { waitUntil: 'networkidle' }); await page.evaluate(() => document.fonts.ready); await page.waitForTimeout(1200); await page.screenshot({ path: resolve(evidence, name) }); await page.close();
   }

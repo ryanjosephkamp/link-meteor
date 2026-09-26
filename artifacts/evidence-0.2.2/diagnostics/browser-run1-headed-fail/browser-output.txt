@@ -1,0 +1,19 @@
+PASS Loaded actual extension and initialized state
+PASS Collection created through UI
+PASS 37 faithful occurrences including duplicates, empty anchor, shadow root, frame provenance and explicit partial coverage
+PASS Current page resolves the invoking page from full workbench
+PASS Region Escape leaves collection unchanged
+AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
++ actual - expected
+
++ '3 links selected'
+- '5 links selected'
+
+    at tests/browser.mjs:61:10 {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: '3 links selected',
+  expected: '5 links selected',
+  operator: 'strictEqual',
+  diff: 'simple'
+}

@@ -1,0 +1,467 @@
+{
+  "started": "2026-09-26T18:48:06.882Z",
+  "base": "/link-meteor/",
+  "pages": {
+    "index.html": {
+      "layouts": [
+        {
+          "width": 320,
+          "scheme": "light",
+          "overflow": false,
+          "minContrast": 4.63
+        },
+        {
+          "width": 390,
+          "scheme": "light",
+          "overflow": false,
+          "minContrast": 4.63
+        },
+        {
+          "width": 768,
+          "scheme": "light",
+          "overflow": false,
+          "minContrast": 4.63
+        },
+        {
+          "width": 1024,
+          "scheme": "light",
+          "overflow": false,
+          "minContrast": 4.63
+        },
+        {
+          "width": 1440,
+          "scheme": "light",
+          "overflow": false,
+          "minContrast": 4.63
+        },
+        {
+          "width": 320,
+          "scheme": "dark",
+          "overflow": false,
+          "minContrast": 4.63
+        },
+        {
+          "width": 390,
+          "scheme": "dark",
+          "overflow": false,
+          "minContrast": 4.63
+        },
+        {
+          "width": 768,
+          "scheme": "dark",
+          "overflow": false,
+          "minContrast": 4.63
+        },
+        {
+          "width": 1024,
+          "scheme": "dark",
+          "overflow": false,
+          "minContrast": 4.63
+        },
+        {
+          "width": 1440,
+          "scheme": "dark",
+          "overflow": false,
+          "minContrast": 4.63
+        }
+      ],
+      "links": 12,
+      "anchors": 5,
+      "structure": {
+        "h1": 1,
+        "headingLevelsSkip": false,
+        "imagesWithoutAlt": 0,
+        "unnamedControls": 0
+      }
+    },
+    "install.html": {
+      "layouts": [
+        {
+          "width": 320,
+          "scheme": "light",
+          "overflow": false,
+          "minContrast": 5.82
+        },
+        {
+          "width": 390,
+          "scheme": "light",
+          "overflow": false,
+          "minContrast": 5.82
+        },
+        {
+          "width": 768,
+          "scheme": "light",
+          "overflow": false,
+          "minContrast": 5.82
+        },
+        {
+          "width": 1024,
+          "scheme": "light",
+          "overflow": false,
+          "minContrast": 5.82
+        },
+        {
+          "width": 1440,
+          "scheme": "light",
+          "overflow": false,
+          "minContrast": 5.82
+        },
+        {
+          "width": 320,
+          "scheme": "dark",
+          "overflow": false,
+          "minContrast": 7.63
+        },
+        {
+          "width": 390,
+          "scheme": "dark",
+          "overflow": false,
+          "minContrast": 7.63
+        },
+        {
+          "width": 768,
+          "scheme": "dark",
+          "overflow": false,
+          "minContrast": 7.63
+        },
+        {
+          "width": 1024,
+          "scheme": "dark",
+          "overflow": false,
+          "minContrast": 7.63
+        },
+        {
+          "width": 1440,
+          "scheme": "dark",
+          "overflow": false,
+          "minContrast": 7.63
+        }
+      ],
+      "links": 23,
+      "anchors": 15,
+      "structure": {
+        "h1": 1,
+        "headingLevelsSkip": false,
+        "imagesWithoutAlt": 0,
+        "unnamedControls": 0
+      }
+    },
+    "guide.html": {
+      "layouts": [
+        {
+          "width": 320,
+          "scheme": "light",
+          "overflow": false,
+          "minContrast": 6.24
+        },
+        {
+          "width": 390,
+          "scheme": "light",
+          "overflow": false,
+          "minContrast": 6.24
+        },
+        {
+          "width": 768,
+          "scheme": "light",
+          "overflow": false,
+          "minContrast": 6.24
+        },
+        {
+          "width": 1024,
+          "scheme": "light",
+          "overflow": false,
+          "minContrast": 6.24
+        },
+        {
+          "width": 1440,
+          "scheme": "light",
+          "overflow": false,
+          "minContrast": 6.24
+        },
+        {
+          "width": 320,
+          "scheme": "dark",
+          "overflow": false,
+          "minContrast": 8.49
+        },
+        {
+          "width": 390,
+          "scheme": "dark",
+          "overflow": false,
+          "minContrast": 8.49
+        },
+        {
+          "width": 768,
+          "scheme": "dark",
+          "overflow": false,
+          "minContrast": 8.49
+        },
+        {
+          "width": 1024,
+          "scheme": "dark",
+          "overflow": false,
+          "minContrast": 8.49
+        },
+        {
+          "width": 1440,
+          "scheme": "dark",
+          "overflow": false,
+          "minContrast": 8.49
+        }
+      ],
+      "links": 21,
+      "anchors": 15,
+      "structure": {
+        "h1": 1,
+        "headingLevelsSkip": false,
+        "imagesWithoutAlt": 0,
+        "unnamedControls": 0
+      }
+    },
+    "privacy.html": {
+      "layouts": [
+        {
+          "width": 320,
+          "scheme": "light",
+          "overflow": false,
+          "minContrast": 5.42
+        },
+        {
+          "width": 390,
+          "scheme": "light",
+          "overflow": false,
+          "minContrast": 5.42
+        },
+        {
+          "width": 768,
+          "scheme": "light",
+          "overflow": false,
+          "minContrast": 5.42
+        },
+        {
+          "width": 1024,
+          "scheme": "light",
+          "overflow": false,
+          "minContrast": 5.42
+        },
+        {
+          "width": 1440,
+          "scheme": "light",
+          "overflow": false,
+          "minContrast": 5.42
+        },
+        {
+          "width": 320,
+          "scheme": "dark",
+          "overflow": false,
+          "minContrast": 8.49
+        },
+        {
+          "width": 390,
+          "scheme": "dark",
+          "overflow": false,
+          "minContrast": 8.49
+        },
+        {
+          "width": 768,
+          "scheme": "dark",
+          "overflow": false,
+          "minContrast": 8.49
+        },
+        {
+          "width": 1024,
+          "scheme": "dark",
+          "overflow": false,
+          "minContrast": 8.49
+        },
+        {
+          "width": 1440,
+          "scheme": "dark",
+          "overflow": false,
+          "minContrast": 8.49
+        }
+      ],
+      "links": 15,
+      "anchors": 9,
+      "structure": {
+        "h1": 1,
+        "headingLevelsSkip": false,
+        "imagesWithoutAlt": 0,
+        "unnamedControls": 0
+      }
+    },
+    "practice.html": {
+      "layouts": [
+        {
+          "width": 320,
+          "scheme": "light",
+          "overflow": false,
+          "minContrast": 5.82
+        },
+        {
+          "width": 390,
+          "scheme": "light",
+          "overflow": false,
+          "minContrast": 5.82
+        },
+        {
+          "width": 768,
+          "scheme": "light",
+          "overflow": false,
+          "minContrast": 5.82
+        },
+        {
+          "width": 1024,
+          "scheme": "light",
+          "overflow": false,
+          "minContrast": 5.82
+        },
+        {
+          "width": 1440,
+          "scheme": "light",
+          "overflow": false,
+          "minContrast": 5.82
+        },
+        {
+          "width": 320,
+          "scheme": "dark",
+          "overflow": false,
+          "minContrast": 7.63
+        },
+        {
+          "width": 390,
+          "scheme": "dark",
+          "overflow": false,
+          "minContrast": 7.63
+        },
+        {
+          "width": 768,
+          "scheme": "dark",
+          "overflow": false,
+          "minContrast": 7.63
+        },
+        {
+          "width": 1024,
+          "scheme": "dark",
+          "overflow": false,
+          "minContrast": 7.63
+        },
+        {
+          "width": 1440,
+          "scheme": "dark",
+          "overflow": false,
+          "minContrast": 7.63
+        }
+      ],
+      "links": 12,
+      "anchors": 6,
+      "structure": {
+        "h1": 1,
+        "headingLevelsSkip": false,
+        "imagesWithoutAlt": 0,
+        "unnamedControls": 0
+      }
+    },
+    "about.html": {
+      "layouts": [
+        {
+          "width": 320,
+          "scheme": "light",
+          "overflow": false,
+          "minContrast": 6.24
+        },
+        {
+          "width": 390,
+          "scheme": "light",
+          "overflow": false,
+          "minContrast": 6.24
+        },
+        {
+          "width": 768,
+          "scheme": "light",
+          "overflow": false,
+          "minContrast": 6.24
+        },
+        {
+          "width": 1024,
+          "scheme": "light",
+          "overflow": false,
+          "minContrast": 6.24
+        },
+        {
+          "width": 1440,
+          "scheme": "light",
+          "overflow": false,
+          "minContrast": 6.24
+        },
+        {
+          "width": 320,
+          "scheme": "dark",
+          "overflow": false,
+          "minContrast": 7.63
+        },
+        {
+          "width": 390,
+          "scheme": "dark",
+          "overflow": false,
+          "minContrast": 7.63
+        },
+        {
+          "width": 768,
+          "scheme": "dark",
+          "overflow": false,
+          "minContrast": 7.63
+        },
+        {
+          "width": 1024,
+          "scheme": "dark",
+          "overflow": false,
+          "minContrast": 7.63
+        },
+        {
+          "width": 1440,
+          "scheme": "dark",
+          "overflow": false,
+          "minContrast": 7.63
+        }
+      ],
+      "links": 17,
+      "anchors": 11,
+      "structure": {
+        "h1": 1,
+        "headingLevelsSkip": false,
+        "imagesWithoutAlt": 0,
+        "unnamedControls": 0
+      }
+    }
+  },
+  "checks": [
+    "404 page renders with its styles for a missing nested path",
+    "Mobile menu opens from the keyboard and closes with Escape",
+    "Demo drag selects exactly the swept links; Select all selects 6; export preview uses real CSV/Markdown/XLSX output; tabs work with arrow keys",
+    "Videos: controls, no autoplay or loop, preload none with nothing loaded before play, local MP4/poster, WebVTT caption cues load, transcripts, phone gutters, and both files play and seek"
+  ],
+  "limits": [
+    "Automated Chromium checks; not a screen-reader, real-device or cross-browser audit.",
+    "Contrast is measured against the nearest solid background and skips text over images."
+  ],
+  "videos": [
+    {
+      "id": "link-meteor-demo",
+      "h264": "probably",
+      "captionCues": 12,
+      "playedSeconds": 1.2,
+      "seekedTo": 30
+    },
+    {
+      "id": "link-meteor-install",
+      "h264": "probably",
+      "captionCues": 18,
+      "playedSeconds": 1.2,
+      "seekedTo": 30
+    }
+  ],
+  "problems": [],
+  "result": "PASS",
+  "finished": "2026-09-26T18:49:07.893Z"
+}

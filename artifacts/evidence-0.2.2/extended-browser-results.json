@@ -1,0 +1,35 @@
+{
+  "started": "2026-09-26T14:55:46.547Z",
+  "checks": [
+    {
+      "name": "5,037 real page occurrences captured; only 100 top-level rows and no closed details rendered",
+      "elapsedMs": 583
+    },
+    {
+      "name": "Selection persists across pages and unselected export includes all 5,037 rows"
+    },
+    {
+      "name": "Filtering resets page and finds final loaded source"
+    },
+    {
+      "name": "Actual bookmark folder contains correct anchor title and URL"
+    },
+    {
+      "name": "Bounded opener shows count and opens exact local destination"
+    },
+    {
+      "name": "Large open action rejected before opening any tabs"
+    },
+    {
+      "name": "Large duplicate group details load on demand in 100-occurrence increments"
+    },
+    {
+      "name": "Per-link draft survives background update and saves separately from anchor text"
+    }
+  ],
+  "limits": [
+    "Single-machine synthetic measurement, not a cross-device performance guarantee."
+  ],
+  "result": "PASS",
+  "finished": "2026-09-26T14:55:52.902Z"
+}

@@ -1,0 +1,89 @@
+{
+  "started": "2026-09-26T14:57:43.768Z",
+  "browser": "Installed Chrome for Testing via Playwright; real unpacked extension",
+  "checks": [
+    {
+      "name": "Loaded actual extension and initialized state",
+      "status": "pass"
+    },
+    {
+      "name": "Collection created through UI",
+      "status": "pass"
+    },
+    {
+      "name": "37 faithful occurrences including duplicates, empty anchor, shadow root, frame provenance and explicit partial coverage",
+      "status": "pass"
+    },
+    {
+      "name": "Current page resolves the invoking page from full workbench",
+      "status": "pass"
+    },
+    {
+      "name": "Region Escape leaves collection unchanged",
+      "status": "pass"
+    },
+    {
+      "name": "Regional quick-copy reports successful two-column clipboard write",
+      "status": "pass"
+    },
+    {
+      "name": "Real rectangle pointer drag highlights and saves exactly 5 links without navigating",
+      "status": "pass"
+    },
+    {
+      "name": "Add-another-region does not duplicate an already saved region",
+      "status": "pass"
+    },
+    {
+      "name": "Positive-area 1px overlap of a wrapped line captures the actual anchor",
+      "status": "pass"
+    }
+  ],
+  "limitations": [
+    "Optional grants established separately through product UI in an isolated automated profile; not native Allow/Deny evidence.",
+    "Not acceptance in the everyday Chrome profile or other operating systems."
+  ],
+  "initialGrants": {
+    "origins": [
+      "http://127.0.0.1:52478/*"
+    ],
+    "permissions": [
+      "activeTab",
+      "bookmarks",
+      "clipboardWrite",
+      "contextMenus",
+      "storage",
+      "tabs",
+      "scripting",
+      "sidePanel"
+    ]
+  },
+  "failureUI": "Link Meteor\nCollections\n2\nMy research\n0\nBrowser acceptance\n6\nNew collection name\nThis site\n\nhttp://127.0.0.1:52478\n\nHold-key drag on this site\n\nHold the key below and drag to select links, without opening Link Meteor first. Chrome asks for access to this site only.\n\nHold key\nSave key\nRegion shortcut\n⌥\n⇧\nL\nChange\nregion shortcut in Chrome settings\nAbout and help\nv0.2.2\n\nSaved only in this browser. No account, servers or tracking.\n\nBrowser acceptance\n\n6 links from 1 page\n\nCapture\nThis page\nPick tabs\nThis window\nAll windows\n\nMeteor Research Lab — deterministic fixture · 127.0.0.1:52478\n\nCapture this page\nSelect a region\n⌥\n⇧\nL\n37 links captured\nfrom Meteor Research Lab — deterministic fixture\nMeteor Research Lab — deterministic fixture\n37 links\n1 inaccessible frame was excluded. Same-origin frames and open shadow roots are supported.\nLinks\n\n6 links\n\nSearch links\n/\nView\nSelect page\nRemove\nUndo\nAnchor text\nURL\nSource page\nAttention in small systems\nPDF\nhttp://127.0.0.1:52478/papers/attention.pdf\nMeteor Research Lab — deterministic fixture\n127.0.0.1:52478\nSource details and notes for Attention in small systems\nGeometry, “frames” & 雪\nPDF\nhttp://127.0.0.1:52478/papers/geometry.pdf?edition=2\nMeteor Research Lab — deterministic fixture\n127.0.0.1:52478\nSource details and notes for Geometry, “frames” & 雪\nDownload PDF\nPDF\nhttp://127.0.0.1:52478/papers/attention.pdf\nMeteor Research Lab — deterministic fixture\n127.0.0.1:52478\nSource details and notes for Download PDF\nNo anchor text\nAccessible label: Open illustrated appendix\nhttp://127.0.0.1:52478/appendix\nMeteor Research Lab — deterministic fixture\n127.0.0.1:52478\nSource details and notes for Open illustrated appendix\nVisible label\nhttp://127.0.0.1:52478/visible\nMeteor Research Lab — deterministic fixture\n127.0.0.1:52478\nSource details and notes for Visible label\nA long wrapped anchor with several lines of visible text\nhttp://127.0.0.1:52478/wrapped\nMeteor Research Lab — deterministic fixture\n127.0.0.1:52478\nSource details and notes for A long wrapped anchor with several lines of visible text\nExport\n\nAll 6 links in this view\n\nEvery link in the collection, across all pages.\n\nCopy to clipboard\nTable\nAnchor text · URL\nURLs\nOne per line\nMarkdown\n[text](URL)\nDownload a file\nFormat\nExcel workbook (.xlsx)\nCSV (.csv)\nTSV (.tsv)\nMarkdown links (.md)\nHTML table (.html)\nJSON with full provenance (.json)\nURL list (.txt)\n\nEvery cell is stored as text, so nothing is reinterpreted as a formula, number or date.\n\nColumns, in order\nAnchor text\nURL\nAdd export column\nAdd a column…\nAccessible label\nOriginal href\nSource page URL\nSource page title\nFrame URL\nCaptured at\nCapture batch ID\nOccurrence ID\nNotes\nTags\n\nColumns apply to the Table copy and to CSV, TSV, Excel and HTML files.\n\nDownload Excel file\n\nSaves as Browser-acceptance.xlsx\n\nSave as bookmarks\nFolder name\nBookmark 6 web links\n\nCreates a new folder in Chrome's bookmarks. Web links only. Chrome may sync bookmarks according to your browser settings.\n\nOpen in tabs\nOpen 5 web links…\n\nOpens up to 20 web links at a time as background tabs.\n\nCapture finished: 37 links from 1 page. Details are in the capture report.",
+  "failureSession": {
+    "linkMeteorCaptureReport": {
+      "createdAt": "2026-09-26T14:57:45.204Z",
+      "report": {
+        "batchId": "07aaf992-682e-4a7a-b5ca-8e88eddbae48",
+        "capturedCount": 37,
+        "results": [
+          {
+            "count": 37,
+            "error": "",
+            "status": "success",
+            "tabId": 730802676,
+            "title": "Meteor Research Lab — deterministic fixture",
+            "url": "http://127.0.0.1:52478/index.html",
+            "warning": "1 inaccessible frame was excluded. Same-origin frames and open shadow roots are supported."
+          }
+        ]
+      }
+    },
+    "linkMeteorTarget": {
+      "tabId": 730802676,
+      "windowId": 730802675
+    }
+  },
+  "result": "FAIL",
+  "error": "AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:\n\n  assert.ok(await page.locator('#nested').evaluate(e=>e.scrollTop)>0)\n\n    at tests/browser.mjs:75:10",
+  "finished": "2026-09-26T14:57:46.343Z"
+}

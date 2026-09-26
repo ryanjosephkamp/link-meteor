@@ -17,7 +17,9 @@ const contrast=(page,pairs)=>page.evaluate(pairs=>{const canvas=document.createE
   return pairs.map(([name,selector])=>{const el=document.querySelector(selector);if(!el)return {name,missing:true};const a=lum(rgb(getComputedStyle(el).color)),b=lum(rgb(bg(el)));return {name,ratio:Math.round(((Math.max(a,b)+.05)/(Math.min(a,b)+.05))*100)/100};});},pairs);
 try{
  const ui=await context.newPage();await ui.goto(`chrome-extension://${id}/ui/workbench.html`);
- await ui.locator('#collection-heading').waitFor();const rows=JSON.parse(await readFile(resolve(evidence,'exports/browser.json'),'utf8'));
+ await ui.locator('#collection-heading').waitFor();// Seed with real captured occurrences: this run's browser-suite export, or an explicit earlier export (LINK_METEOR_SEED_JSON).
+ const seed=process.env.LINK_METEOR_SEED_JSON?resolve(import.meta.dirname,'..',process.env.LINK_METEOR_SEED_JSON):resolve(evidence,'exports/browser.json');result.seed=seed.slice(resolve(import.meta.dirname,'..').length+1);
+ const rows=JSON.parse(await readFile(seed,'utf8'));
  await rpc(ui,{type:'state.mutate',action:{type:'collection.create',name:'Research sources'}});
  const active=(await rpc(ui,{type:'state.get'})).activeCollectionId;
  await rpc(ui,{type:'state.mutate',action:{type:'collection.update',id:active,patch:{notes:'Synthetic fixture captures for checking labels, provenance and exports.',tags:['fixture','research']}}});
@@ -42,6 +44,23 @@ try{
  const focusRing=await ui.evaluate(()=>{const el=document.activeElement;const s=getComputedStyle(el);return {tag:el.tagName,outline:s.outlineStyle,width:s.outlineWidth};});assert.notEqual(focusRing.outline,'none');
  const labels=await ui.evaluate(()=>[...document.querySelectorAll('input,select,textarea,button')].filter(e=>e.getClientRects().length&&!e.getAttribute('aria-label')&&!e.getAttribute('aria-labelledby')&&!e.labels?.length&&!(e.tagName==='BUTTON'&&e.textContent.trim())).map(e=>e.id||e.outerHTML.slice(0,80)));assert.deepEqual(labels,[]);
  result.checks.push({unlabeledFormControls:0,keyboardFocusReachedControl:true,firstFocusRing:focusRing});
+ // About and help: exact outbound links, version from the manifest, and nothing opens on its own.
+ const aboutLinks=['https://ryanjosephkamp.github.io/','https://ryanjosephkamp.github.io/link-meteor/guide.html','https://github.com/ryanjosephkamp/link-meteor/issues','https://ryanjosephkamp.github.io/link-meteor/','https://github.com/ryanjosephkamp/link-meteor','https://github.com/sponsors/ryanjosephkamp'];
+ const pagesBefore=context.pages().length;
+ await ui.setViewportSize({width:1440,height:1000});assert.equal(await ui.locator('#about-panel').evaluate(d=>d.open),false,'About starts collapsed');
+ await ui.locator('#help-toggle').click();await ui.waitForTimeout(150);
+ const about=await ui.evaluate(()=>({open:document.getElementById('about-panel').open,focused:document.activeElement?.id,version:document.getElementById('about-version').textContent,manifest:chrome.runtime.getManifest().version,links:[...document.querySelectorAll('#about-panel a')].map(a=>({href:a.href,target:a.target,rel:a.rel,text:a.textContent.trim()}))}));
+ assert.equal(about.open,true);assert.equal(about.focused,'about-summary');assert.equal(about.version,'v'+about.manifest);
+ assert.deepEqual(about.links.map(l=>l.href),aboutLinks);assert.ok(about.links.every(l=>l.target==='_blank'&&/noopener/.test(l.rel)&&l.text));
+ await shot(ui,'workbench-about.png');
+ await ui.setViewportSize({width:390,height:844});await ui.locator('#about-panel').evaluate(d=>{d.open=false;});
+ await ui.locator('#help-toggle').focus();await ui.keyboard.press('Enter');await ui.waitForTimeout(250);
+ const compact=await ui.evaluate(()=>({view:document.getElementById('app').dataset.view,open:document.getElementById('about-panel').open,focused:document.activeElement?.id}));
+ assert.deepEqual(compact,{view:'collections',open:true,focused:'about-summary'});
+ await shot(ui,'panel-about.png');
+ await ui.keyboard.press('Escape');await ui.waitForTimeout(150);assert.equal(await ui.evaluate(()=>document.getElementById('app').dataset.view),'links');
+ assert.equal(context.pages().length,pagesBefore,'No tab opened without a click');
+ result.checks.push({aboutAndHelp:{links:about.links.length,version:about.version,startsCollapsed:true,keyboardCompact:true,noAutomaticNavigation:true}});
  const collection=(await rpc(ui,{type:'state.get'})).activeCollectionId;await rpc(ui,{type:'state.mutate',action:{type:'collection.update',id:collection,patch:{name:'L'.repeat(120)}}});await until(async()=>(await ui.locator('#collection-heading').innerText()).length===120,'Long name');
  for(const width of [320,390,1440]){await ui.setViewportSize({width,height:900});assert.equal(await overflow(ui),false);}result.checks.push({longCollectionNameOverflow:false,widths:[320,390,1440]});
  await rpc(ui,{type:'state.mutate',action:{type:'collection.create',name:'Empty collection'}});await ui.setViewportSize({width:390,height:760});await until(async()=>(await ui.locator('#empty-state h3').innerText()).includes('Start'),'Empty state');await shot(ui,'panel-empty.png');

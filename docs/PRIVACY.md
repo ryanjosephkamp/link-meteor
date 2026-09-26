@@ -36,6 +36,8 @@ A private admin URL can contain sensitive information even without page content.
 
 The region overlay asks the background for the active collection's name and link count (`collection.active`) so its card can say where links will be saved. This stays inside the extension.
 
+The **About and help** area lists links to the guide, GitHub issues, the website, the source code, the creator's site and optional GitHub Sponsors. They are plain links: nothing is fetched to show them, and a page opens in a new tab only when you click one. Those sites have their own privacy practices. Reporting a bug is a public GitHub issue that you write yourself; Link Meteor never attaches collection data or pages to it.
+
 ## The website
 
 The [project website](https://ryanjosephkamp.github.io/link-meteor/) has its own privacy page. It uses no cookies, analytics, advertising or third-party requests; fonts are self-hosted; its demo and export preview run entirely in the visitor's browser. GitHub Pages hosts the site; GitHub operates those servers under its own privacy statement.

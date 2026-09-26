@@ -219,12 +219,16 @@
     const shield=$('.shield'), box=$('.rect'), badge=$('.badge'), hits=$('.hits'), bar=$('.bar');
     let dragging=false, start=null, pointer=null, frame=null, entries=[], selected=[], ticks=[], warnings=[],inaccessibleFrames=0,committed=false,destination='',destinationId='',chosen=!!lastDestinationId,collections=[],destinationRequest=0,saveInFlight=null,savedBatchId='',opening=null,pendingOpen=null;
     const swept=new Map();
-    const state={close,refreshDestination,progress};active=state;
+    const state={close,progress};active=state;
     for(const button of shadow.querySelectorAll('button[data-key]'))button.setAttribute('aria-keyshortcuts',button.dataset.key.toUpperCase());
 
     function close() {
-      if(frame)cancelAnimationFrame(frame);document.removeEventListener('keydown',escape,true);host.remove();if(active===state)active=null;held=false;
+      if(frame)cancelAnimationFrame(frame);document.removeEventListener('keydown',escape,true);try{chrome.storage.onChanged.removeListener(followState);}catch{/* extension reloaded */}host.remove();if(active===state)active=null;held=false;
     }
+    // Only an open card follows saved changes (its destination); a page without one never
+    // receives the whole saved state on every change, even with all-sites access.
+    function followState(changes,area){if(area==='local'&&changes.linkMeteorState)refreshDestination();}
+    try{chrome.storage.onChanged.addListener(followState);}catch{/* extension reloaded: saving reports it */}
     // Escape closes the innermost open part first: the menu, then an opening confirmation, then the card.
     function escape(event){
       if(event.key!=='Escape')return;
@@ -534,6 +538,5 @@
     if(message?.type==='content.configure'){holdEnabled=!!message.enabled;holdKey=message.holdKey;holdTrigger=message.holdTrigger==='modifier'?'modifier':'letter';held=false;pressStart=null;}
     if(message?.type==='links.progress')active?.progress(message);
   });
-  chrome.storage.onChanged.addListener((changes,area)=>{if(area==='local'&&changes.linkMeteorState){configure();active?.refreshDestination();}});
   globalThis.__linkMeteor={scan,arm};configure();
 })();

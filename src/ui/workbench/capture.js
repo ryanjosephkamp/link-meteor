@@ -126,9 +126,12 @@ export async function loadInventory() {
   return inventory;
 }
 
-// Checks whether the current page can be read now, without reading anything from it.
+// Checks whether the current page can be read now, without reading anything from it. Only needed
+// with the tabs permission (see pageAccessPlan). A readable page stays readable until it navigates
+// or a grant is removed, which clears the check.
 async function probePageAccess(target) {
-  if (!target?.url || !capturableUrl(target.url) || !chrome.scripting?.executeScript) return;
+  if (!target?.url || !capturableUrl(target.url) || !chrome.scripting?.executeScript || (grants.known && !grants.tabs)) return;
+  if (pageAccess?.ok && pageAccess.tabId === target.id && pageAccess.url === target.url) return;
   const check = { tabId: target.id, url: target.url };
   let ok = false;
   try { await chrome.scripting.executeScript({ target: { tabId: target.id }, func: () => true }); ok = true; } catch { /* not readable */ }
@@ -141,7 +144,7 @@ async function probePageAccess(target) {
 export function currentPagePlan() {
   const target = ui.inventory?.tabs.find((tab) => tab.id === ui.inventory.targetTabId);
   const origin = originOf(target?.url || '');
-  return { ...pageAccessPlan({ target, origin, probe: pageAccess, allSites: grants.allSites, originGranted: ui.originAccess.get(origin) === true }), origin, tabId: target?.id };
+  return { ...pageAccessPlan({ target, origin, probe: pageAccess, allSites: grants.allSites, originGranted: ui.originAccess.get(origin) === true, tabsGranted: !grants.known || grants.tabs }), origin, tabId: target?.id };
 }
 
 export function scheduleInventoryRefresh() {
@@ -342,8 +345,8 @@ export function watchTabs() {
   chrome.tabs.onUpdated.addListener(scheduleInventoryRefresh);
   chrome.tabs.onRemoved.addListener(scheduleInventoryRefresh);
   chrome.windows.onFocusChanged.addListener(scheduleInventoryRefresh);
-  chrome.permissions?.onAdded?.addListener(() => { ui.originAccess.clear(); renderInventory(); });
-  chrome.permissions?.onRemoved?.addListener(() => { ui.originAccess.clear(); renderInventory(); });
+  chrome.permissions?.onAdded?.addListener(() => { ui.originAccess.clear(); pageAccess = null; renderInventory(); scheduleInventoryRefresh(); });
+  chrome.permissions?.onRemoved?.addListener(() => { ui.originAccess.clear(); pageAccess = null; renderInventory(); scheduleInventoryRefresh(); });
   window.addEventListener('focus', scheduleInventoryRefresh);
   document.addEventListener('visibilitychange', () => { if (!document.hidden) scheduleInventoryRefresh(); });
 }

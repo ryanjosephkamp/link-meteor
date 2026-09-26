@@ -46,7 +46,7 @@ function stub({platform, trigger = 'modifier', key = 'z'}) {
         sendMessage: async (message) => { sent.push(JSON.parse(JSON.stringify(message))); try { return {ok: true, data: reply(message)}; } catch (error) { return {ok: false, error: error.message}; } },
         onMessage: {addListener: (fn) => { listener = fn; }},
       },
-      storage: {onChanged: {addListener() {}}},
+      storage: {onChanged: {addListener() {}, removeListener() {}}},
     };
     window.chrome = chrome; // writable, not configurable
     window.__stub = {sent, clicks, downs, deliver: (message) => listener?.(message)};
@@ -170,6 +170,7 @@ try {
   assert.equal(await shadow.locator('.open-label').innerText(), 'Open 3 in tabs', 'two ticked links share one PDF URL');
   await shadow.getByRole('button', {name: 'Copy text + URL', exact: true}).click();
   await page.waitForFunction(() => window.__stub.sent.some((m) => m.type === 'capture.copy'));
+  await statusMatches(page, /^Copied anchor text and URL/);
   let copy = (await sent(page, 'capture.copy')).at(-1);
   assert.equal(copy.links.length, 4); assert.equal(copy.format, 'tsv');
   assert.ok(!copy.links.some((link) => link.originalHref === '/papers/geometry.pdf?edition=2'));
@@ -183,6 +184,7 @@ try {
   await page.waitForFunction(() => window.__stub.sent.filter((m) => m.type === 'capture.copy').length === 2);
   copy = (await sent(page, 'capture.copy')).at(-1);
   assert.equal(copy.format, 'text');
+  await statusMatches(page, /^Copied 4 URLs, one per line/);
   await page.keyboard.press('k');
   await page.waitForFunction(() => window.__stub.sent.filter((m) => m.type === 'capture.copy').length === 3);
   assert.equal((await sent(page, 'capture.copy')).at(-1).format, 'markdown');

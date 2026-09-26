@@ -63,10 +63,13 @@ export function openOutcome(result, { total, mode = 'tabs', skipped = 0, groupTi
 
 // Capture this page: whether the click should first ask Chrome for the tab's site. It asks only
 // when the tab's site is known, the tab cannot already be read (a toolbar click, a site grant or
-// all-sites access) and no grant is known. `probe` is the latest {tabId, url, ok} check.
-export function pageAccessPlan({ target, origin, probe, allSites, originGranted }) {
+// all-sites access) and no grant is known. `probe` is the latest {tabId, url, ok} check. Without
+// the tabs permission, Chrome shows a tab's address only while Link Meteor can read that tab, so
+// a visible address means no prompt is needed, even if the last check is older than a toolbar click.
+export function pageAccessPlan({ target, origin, probe, allSites, originGranted, tabsGranted = true }) {
   if (!target) return { ask: false, reason: 'no-target' };
   if (!origin) return { ask: false, reason: target.url ? 'unsupported' : 'hidden' };
+  if (!tabsGranted) return { ask: false, reason: 'readable' };
   if (probe && probe.tabId === target.id && probe.url === target.url) return { ask: !probe.ok, reason: probe.ok ? 'readable' : 'blocked' };
   if (allSites || originGranted) return { ask: false, reason: 'granted' };
   return { ask: true, reason: 'unknown' };

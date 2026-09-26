@@ -56,4 +56,7 @@ test('Capture this page asks for the site only when it cannot already be read', 
   assert.deepEqual(pageAccessPlan({target: {id: 7, url: ''}, origin: '', probe: null, allSites: false, originGranted: false}), {ask: false, reason: 'hidden'});
   assert.deepEqual(pageAccessPlan({target: {id: 7, url: 'chrome://settings'}, origin: '', probe: null}), {ask: false, reason: 'unsupported'});
   assert.deepEqual(pageAccessPlan({target: null, origin: ''}), {ask: false, reason: 'no-target'});
+  // Without the tabs permission a visible address means the tab can be read (a toolbar click), even
+  // when the last check predates that click.
+  assert.deepEqual(pageAccessPlan({target, origin, probe: {tabId: 7, url: target.url, ok: false}, allSites: false, originGranted: false, tabsGranted: false}), {ask: false, reason: 'readable'});
 });

@@ -105,13 +105,18 @@ export async function syncHold({inject = []} = {}) {
     if (settings.holdScope === 'all' && !allSites) patch.holdScope = 'sites';
     return patch;
   });
-  const desired = holdRegistration(state.settings, allSites);
-  const registered = (await chrome.scripting.getRegisteredContentScripts()).filter(script => script.id.startsWith(SCRIPT_PREFIX));
-  if (!sameRegistration(registered, desired)) {
-    if (registered.length) await chrome.scripting.unregisterContentScripts({ids: registered.map(script => script.id)});
-    if (desired.length) await chrome.scripting.registerContentScripts(desired);
-  }
+  let problem = null;
+  try {
+    const desired = holdRegistration(state.settings, allSites);
+    const registered = (await chrome.scripting.getRegisteredContentScripts()).filter(script => script.id.startsWith(SCRIPT_PREFIX));
+    if (!sameRegistration(registered, desired)) {
+      if (registered.length) await chrome.scripting.unregisterContentScripts({ids: registered.map(script => script.id)});
+      if (desired.length) await chrome.scripting.registerContentScripts(desired);
+    }
+  } catch (error) { problem = error; }
+  // Open tabs follow the saved settings even when Chrome refused the registration.
   await configureTabs(state.settings, allSites, inject);
+  if (problem) throw new Error(`Your settings were saved, but Chrome could not update where hold-key drag runs: ${problem.message || problem}`);
   return state;
 }
 

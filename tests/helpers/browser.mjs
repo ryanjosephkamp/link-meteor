@@ -5,7 +5,8 @@ import {resolve,extname} from 'node:path';
 import {createRequire} from 'node:module';
 import {homedir} from 'node:os';
 const require=createRequire(import.meta.url);
-let playwright;
+// Exported for suites that launch Chrome for Testing themselves (see action.mjs).
+export let playwright;
 try { playwright=require('playwright'); }
 catch { playwright=require(process.env.LINK_METEOR_PLAYWRIGHT || resolve(homedir(),'.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright')); }
 export const root=resolve(import.meta.dirname,'../..');

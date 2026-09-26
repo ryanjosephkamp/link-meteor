@@ -2,7 +2,7 @@ import {serial, readState, mutate, onStateWritten} from './background/store.js';
 import {ordinaryUrl} from './background/urls.js';
 import {workbenchMessages as bookmarkMessages} from './background/bookmarks.js';
 import {workbenchMessages as backupMessages} from './background/backup.js';
-import {workbenchMessages as holdMessages, grantedSettings, followHoldWrites, forgetSettings, requestSync} from './background/hold.js';
+import {workbenchMessages as holdMessages, grantedSettings, followHoldWrites, requestSync} from './background/hold.js';
 import {openUrls, cancelOpen} from './background/open.js';
 import {WORKBENCH, occurrences, commitCapture, openWorkbench, pageMessages} from './background/card.js';
 
@@ -164,4 +164,3 @@ chrome.runtime.onStartup.addListener(() => requestSync());
 chrome.permissions.onAdded.addListener(() => requestSync());
 chrome.permissions.onRemoved.addListener(() => requestSync());
 onStateWritten(followHoldWrites);
-chrome.storage.onChanged.addListener((changes,area) => { if (area === 'local' && changes.linkMeteorState) forgetSettings(); });

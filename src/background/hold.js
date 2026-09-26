@@ -128,22 +128,23 @@ export function requestSync() {
 }
 
 // With all-sites access, every page load asks for settings.get, so the settings are kept in memory
-// between saved changes instead of reading the whole saved state each time. A restarted service
-// worker starts empty, and any change to the saved state replaces or clears the copy.
-let settingsCache = null;
-export function forgetSettings() { settingsCache = null; }
+// instead of reading the whole saved state each time. Every saved write replaces the copy
+// (followHoldWrites), and the copy is read again after SETTINGS_TTL_MS, which bounds how long a
+// change made outside the state queue (such as clearing extension storage) can go unseen.
+const SETTINGS_TTL_MS = 10000;
+let settingsCache = null, settingsCachedAt = 0;
 
 // onStateWritten listener: any saved change to hold settings, including a restore and its Undo,
 // re-registers scripts and reconfigures open tabs.
 export function followHoldWrites(previous, next) {
-  settingsCache = next?.settings || null;
+  settingsCache = next?.settings || null; settingsCachedAt = Date.now();
   const changed = HOLD_FIELDS.some(key => JSON.stringify(previous?.settings?.[key]) !== JSON.stringify(next?.settings?.[key]));
   if (changed) requestSync();
 }
 
 // settings.get: the saved settings, limited to what Chrome still grants.
 export async function grantedSettings() {
-  if (!settingsCache) settingsCache = (await serial(readState)).settings;
+  if (!settingsCache || Date.now() - settingsCachedAt > SETTINGS_TTL_MS) { settingsCache = (await serial(readState)).settings; settingsCachedAt = Date.now(); }
   const settings = settingsCache;
   const allSites = await allSitesGranted();
   const holdOrigins = [];

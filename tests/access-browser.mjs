@@ -330,6 +330,18 @@ try {
   assert.match(await rpcError({type: 'links.open', urls: Array.from({length: 501}, (_, i) => `${fixture.base}/x/${i}`), confirmed: true}), /at most 500/);
   pass('Workbench: 520 links are refused before anything opens, in the page and in the background');
 
+  /* 6. After an upgrade: a state saved by 0.2.2 (no welcomeSeen) shows the welcome card once. */
+  const current = await state();
+  await js(ui, `chrome.storage.local.set({linkMeteorState: ${JSON.stringify({...current, settings: {holdKey: 'r', holdOrigins: []}})}}).then(() => true)`);
+  await js(ui, 'location.reload(); true');
+  await sleep(1500);
+  await until(() => js(ui, `!!document.getElementById('welcome') && !document.getElementById('welcome').hidden`).catch(() => false), 'welcome card after an upgrade');
+  assert.equal(await text('welcome-key'), 'R');
+  assert.equal((await state()).settings.welcomeSeen, false);
+  await click('welcome-later');
+  await until(async () => (await state()).settings.welcomeSeen === true, 'answered after the upgrade');
+  pass('A state saved by 0.2.2 shows the welcome card once, with the saved hold key');
+
   result.result = 'PASS';
 } catch (error) {
   result.result = 'FAIL'; result.error = error.stack; console.error(error); process.exitCode = 1;

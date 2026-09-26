@@ -237,15 +237,16 @@ export async function runCapture() {
   // This page on a site Link Meteor cannot read yet: ask Chrome for that site in this same click,
   // before anything is awaited, then capture either way so a decline is reported as denied.
   const plan = ui.scope === 'current' ? currentPagePlan() : { ask: false };
-  const asking = plan.ask ? chrome.permissions.request({ origins: [`${plan.origin}/*`] }).then((granted) => ({ granted }), (error) => ({ granted: false, error })) : null;
+  const asking = plan.ask ? chrome.permissions.request({ origins: [`${plan.origin}/*`] }) : null;
   ui.busy = true; $('capture').disabled = true; renderCaptureButton();
   try {
     let tabIds = [];
     const reasons = new Map();
     if (asking) {
-      const answer = await asking;
-      ui.originAccess.set(plan.origin, answer.granted);
-      if (!answer.granted) reasons.set(plan.tabId, answer.error ? `Chrome could not ask for access to ${plan.origin}: ${answer.error.message}` : `You declined Chrome’s request for access to ${plan.origin}, so Link Meteor could not read this page. Capture it again to be asked again.`);
+      let granted = false, problem = null;
+      try { granted = await asking; } catch (error) { problem = error; }
+      ui.originAccess.set(plan.origin, granted);
+      if (!granted) reasons.set(plan.tabId, problem ? `Chrome could not ask for access to ${plan.origin}: ${problem.message}` : `You declined Chrome’s request for access to ${plan.origin}, so Link Meteor could not read this page. Capture it again to be asked again.`);
     } else if (ui.scope === 'current' && plan.reason === 'hidden') {
       reasons.set(ui.inventory?.targetTabId, 'Chrome hides this tab’s address and contents from Link Meteor, so it cannot ask for this site here. Click the Link Meteor toolbar icon while on the page, or allow all sites under Site access, then capture again.');
     }

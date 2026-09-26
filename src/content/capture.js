@@ -136,9 +136,10 @@
   function suppressNextClick() {
     const stop = event => { event.preventDefault(); event.stopImmediatePropagation(); done(); };
     const release = () => setTimeout(done,0);
-    function done() { window.removeEventListener('click',stop,true); window.removeEventListener('pointerup',release,true); }
+    function done() { window.removeEventListener('click',stop,true); window.removeEventListener('pointerup',release,true); window.removeEventListener('pointercancel',release,true); }
     window.addEventListener('click',stop,true);
     window.addEventListener('pointerup',release,true);
+    window.addEventListener('pointercancel',release,true);
   }
 
   function arm(startEvent, current) {

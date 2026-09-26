@@ -117,10 +117,8 @@ test('exceptions become excludeMatches and switch off open tabs of that site', a
 test('the Never list holds at most 1,000 sites', async () => {
   const before = structuredClone(local.linkMeteorState);
   local.linkMeteorState.settings.holdExceptions = Array.from({length: 1000}, (_, i) => `https://s${i}.test`);
-  storageChanged.fire({linkMeteorState: {}}, 'local');
   await refused({type: 'hold.exception', origin: 'https://one-more.test', excepted: true}, /at most 1,000 sites/);
   local.linkMeteorState = before;
-  storageChanged.fire({linkMeteorState: {}}, 'local');
   await ok({type: 'hold.exception', origin: 'https://b.test', excepted: true});
 });
 

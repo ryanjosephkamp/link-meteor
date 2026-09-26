@@ -118,6 +118,25 @@ try {
     await page.locator('[role=tab][data-format=csv]').focus(); await page.keyboard.press('ArrowRight'); assert.equal(await page.evaluate(() => document.activeElement.dataset.format), 'markdown');
     result.checks.push('Demo drag selects exactly the swept links; Select all selects 6; export preview uses real CSV/Markdown/XLSX output; tabs work with arrow keys');
     await page.evaluate(() => scrollTo(0, 0)); await page.screenshot({ path: resolve(evidence, 'site-home.png') }); await page.close(); }
+  // Videos: click to play only, local poster/MP4/WebVTT, a transcript, phone gutters and a playable file.
+  { const page = await browser.newPage({ viewport: { width: 390, height: 844 } }); watch(page, 'videos'); const videos = [];
+    for (const [path, id] of [['', 'link-meteor-demo'], ['install.html', 'link-meteor-install']]) {
+      await page.goto(base + path, { waitUntil: 'networkidle' });
+      const video = page.locator('figure.video video');
+      const v = await video.evaluate(el => ({ autoplay: el.autoplay, loop: el.loop, controls: el.controls, preload: el.preload, readyState: el.readyState, poster: el.getAttribute('poster'), src: el.querySelector('source').getAttribute('src'), track: el.querySelector('track').getAttribute('src'), trackKind: el.querySelector('track').kind, h264: el.canPlayType('video/mp4; codecs="avc1.640028"') }));
+      assert.deepEqual([v.autoplay, v.loop, v.controls, v.preload, v.readyState], [false, false, true, 'none', 0], `${id}: no autoplay, and nothing loads before play`);
+      assert.deepEqual([v.src, v.poster, v.track, v.trackKind], [`assets/video/${id}.mp4`, `assets/video/${id}-poster.jpg`, `assets/video/${id}.vtt`, 'captions']);
+      for (const file of [v.src, v.poster, v.track]) assert.equal((await page.request.get(base + file)).status(), 200, file);
+      assert.ok((await (await page.request.get(base + v.track)).text()).startsWith('WEBVTT'));
+      assert.ok(await page.locator('.transcript-box .transcript li').count() >= 4, `${id}: transcript`);
+      const box = await video.boundingBox(); assert.ok(box.x >= 15 && box.x + box.width <= 390 - 15, `${id}: phone gutters`);
+      let played = null;
+      if (v.h264) { played = await video.evaluate(async el => { el.muted = true; await el.play(); await new Promise(done => setTimeout(done, 1200)); el.pause(); return +el.currentTime.toFixed(2); }); assert.ok(played > 0.5, `${id}: plays`); }
+      videos.push({ id, h264: v.h264 || 'not supported by this test browser', playedSeconds: played });
+    }
+    result.videos = videos;
+    result.checks.push('Videos: controls, no autoplay or loop, preload none with nothing loaded before play, local MP4/poster/WebVTT captions, transcripts, phone gutters' + (videos.every(x => x.playedSeconds) ? ', and both files play' : ''));
+    await page.close(); }
   for (const [name, width, scheme, path] of [['site-home-mobile.png', 390, 'light', ''], ['site-home-dark.png', 1440, 'dark', ''], ['site-install.png', 1440, 'light', 'install.html'], ['site-practice-page.png', 1440, 'light', 'practice.html']]) {
     const page = await browser.newPage({ viewport: { width, height: width < 500 ? 844 : 1000 }, colorScheme: scheme, reducedMotion: 'reduce' }); await page.goto(base + path, { waitUntil: 'networkidle' }); await page.evaluate(() => document.fonts.ready); await page.waitForTimeout(1200); await page.screenshot({ path: resolve(evidence, name) }); await page.close();
   }

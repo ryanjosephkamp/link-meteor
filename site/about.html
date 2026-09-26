@@ -53,13 +53,14 @@
           <li><a href="#maker">Who makes it</a></li>
           <li><a href="#issues">Bugs and suggestions</a></li>
           <li><a href="#support">Support</a></li>
+          <li><a href="#videos">How the videos were made</a></li>
           <li><a href="#credits">License and credits</a></li>
         </ol>
       </nav>
       <div class="doc-body">
         <section aria-labelledby="maker">
           <h2 id="maker">Who makes it</h2>
-          <p>Link Meteor is designed and maintained by <strong>Ryan Kamp</strong>. The quickest way to reach him about Link Meteor is on GitHub, where the source code and issue tracker live.</p>
+          <p>Link Meteor is designed and maintained by <strong>Ryan Kamp</strong>. The quickest way to get in touch about Link Meteor is on GitHub, where the source code and issue tracker live.</p>
           <ul class="contact-list">
             <li><a href="https://ryanjosephkamp.github.io/"><svg aria-hidden="true"><use href="assets/img/icons.svg#globe"/></svg><span><strong>Website</strong> ryanjosephkamp.github.io</span></a></li>
             <li><a href="https://github.com/ryanjosephkamp/"><svg aria-hidden="true"><use href="assets/img/icons.svg#github"/></svg><span><strong>GitHub</strong> ryanjosephkamp</span></a></li>
@@ -91,13 +92,26 @@
           <p>Sharing the <a href="./">website</a> with someone who collects sources, or reporting a clear bug, helps too.</p>
         </section>
 
+        <section aria-labelledby="videos">
+          <h2 id="videos">How the videos were made</h2>
+          <p>The <a href="./#watch">demo</a> and the <a href="install.html#watch">install walkthrough</a> were recorded with Link Meteor 0.2.2 in Chrome for Testing, the automated build of Chrome used for this project's tests, on macOS. They use a fresh test profile and only the synthetic content of the <a href="practice.html">practice page</a>: no personal browsing data or real collections.</p>
+          <ul>
+            <li><strong>Recorded screens.</strong> The install page, Chrome's Extensions and Keyboard shortcuts pages, the full view and the side panel's contents appear as they were recorded. The pointer is drawn from the recorded pointer positions. The key caps are an on-screen graphic; the selection was started by the same command the shortcut sends.</li>
+            <li><strong>Selecting on the practice page.</strong> The automated browser couldn't be given site access without someone clicking Chrome's Allow button, so these scenes run Link Meteor's own selection script on the page, connected to the installed extension. The drag, highlights, count and card are the extension's code responding to real pointer input, and saving goes through the installed extension. That's why the same links then appear in the full view and side panel.</li>
+            <li><strong>Side panel.</strong> Its contents are shown at side-panel width next to a still of the page. Chrome's own side-panel frame isn't pictured.</li>
+            <li><strong>Illustrations.</strong> Unzipping, Chrome's file picker and pinning from the toolbar are drawn diagrams, marked <em>Illustration</em> in the corner.</li>
+            <li><strong>The spreadsheet.</strong> The workbook view is drawn from the file actually downloaded during recording, read with a file reader, not Microsoft Excel.</li>
+          </ul>
+          <p>Chrome for Testing labels the shortcut scope “In Chromium”; everyday Chrome says “In Chrome”. The videos have no sound or music. Captions are part of the picture, and each page also offers a caption track and a transcript.</p>
+        </section>
+
         <section aria-labelledby="credits">
           <h2 id="credits">License and credits</h2>
           <dl class="defs">
             <dt>Link Meteor</dt><dd>MIT license, © 2026 Ryan Kamp. The code, interface, mark and artwork are original. See the <a href="https://github.com/ryanjosephkamp/link-meteor/blob/main/LICENSE">license</a>.</dd>
             <dt>Fonts</dt><dd>Atkinson Hyperlegible Next and Atkinson Hyperlegible Mono by the Braille Institute, under the SIL Open Font License 1.1. Served from this site with their license files.</dd>
             <dt>Platform icons</dt><dd>The GitHub, LinkedIn, X and YouTube marks are based on <a href="https://simpleicons.org/">Simple Icons</a> (CC0 1.0). They are trademarks of their owners and are used only to link to profiles.</dd>
-            <dt>Videos</dt><dd>Original screen recordings of the extension on this site's synthetic practice page, with captions and a few labeled illustrations for steps that happen in Chrome's own windows. They have no sound or music.</dd>
+            <dt>Videos</dt><dd>Original recordings, captions and illustrations made for this site, with the Link Meteor artwork. No stock footage, sound or music. See <a href="#videos">how the videos were made</a>.</dd>
           </dl>
         </section>
       </div>

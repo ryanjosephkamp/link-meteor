@@ -52,6 +52,7 @@
         <h2 id="toc-title">On this page</h2>
         <ol>
           <li><a href="#before">Before you start</a></li>
+          <li><a href="#watch">Watch the steps</a></li>
           <li><a href="#download">Download</a></li>
           <li><a href="#load">Load it into Chrome</a></li>
           <li><a href="#first">First capture</a></li>
@@ -64,16 +65,66 @@
         <section aria-labelledby="before">
           <h2 id="before">Before you start</h2>
           <p>Link Meteor is built for <strong>desktop Google Chrome</strong>. It doesn't run on phones or tablets, and there are no Firefox or Safari versions.</p>
-          <div class="note warn"><svg aria-hidden="true"><use href="assets/img/icons.svg#alert"/></svg><div><p><strong>What has been tested so far.</strong> The 0.2.1 build passed automated Chrome for Testing checks on macOS using synthetic pages, including capture, exports, persistence, bookmarks and permission revocation. The project owner previously loaded 0.2.0 in everyday Google Chrome and reported that it worked; the specific steps were not itemized. That report does not establish human testing of 0.2.1. Link Meteor declares Chrome <span data-build="minimumChromeVersion">116</span> as its oldest supported version, but that version, Windows, Linux, native permission prompts and screen readers have not been independently verified. If something doesn't work for you, please <a href="https://github.com/ryanjosephkamp/link-meteor/issues">report it</a>.</p></div></div>
+          <div class="note warn"><svg aria-hidden="true"><use href="assets/img/icons.svg#alert"/></svg><div><p><strong>What has been tested so far.</strong> Version 0.2.2 adds an About and help area; its capture, export and storage code is byte-for-byte the same as 0.2.1. The 0.2.1 build passed automated Chrome for Testing checks on macOS using synthetic pages, including capture, exports, persistence, bookmarks and permission revocation. For 0.2.2, the unit tests and the loaded-extension presentation checks were rerun and passed; the capture suites that need site access were not rerun yet. The project owner previously loaded 0.2.0 in everyday Google Chrome and reported that it worked; the specific steps were not itemized. That report does not establish human testing of 0.2.1 or 0.2.2. Link Meteor declares Chrome <span data-build="minimumChromeVersion">116</span> as its oldest supported version, but that version, Windows, Linux, native permission prompts and screen readers have not been independently verified. If something doesn't work for you, please <a href="https://github.com/ryanjosephkamp/link-meteor/issues">report it</a>.</p></div></div>
           <p>A development build is installed with Chrome's <em>Developer mode</em>. That's a normal Chrome setting for loading extensions from a folder on your computer; it doesn't change anything else about your browser.</p>
+        </section>
+
+        <section aria-labelledby="watch">
+          <h2 id="watch">Watch the steps</h2>
+          <p>A 75-second walkthrough of this page: download, load the folder, pin the icon, capture a section of the practice page and export it. Steps that happen in your own file manager, Chrome's file picker or the toolbar are shown as labeled illustrations.</p>
+          <figure class="video">
+            <video controls preload="none" playsinline width="1920" height="1080" poster="assets/video/link-meteor-install-poster.jpg" aria-describedby="watch-note">
+              <source src="assets/video/link-meteor-install.mp4" type="video/mp4">
+              <track kind="captions" srclang="en" label="English" src="assets/video/link-meteor-install.vtt">
+              <p>Your browser can't play this video. <a href="assets/video/link-meteor-install.mp4">Download it (MP4, 7.1 MB)</a> or read the transcript below.</p>
+            </video>
+            <figcaption id="watch-note"><strong>No sound.</strong> Captions are part of the picture and are also available from the player's captions menu. 75 seconds, MP4, 7.1 MB. <a href="about.html#videos">How the videos were made</a></figcaption>
+            <details class="transcript-box">
+              <summary>Read the transcript</summary>
+          <!-- transcript:link-meteor-install -->
+          <ol class="transcript">
+            <li class="scene"><span class="t">0:00</span><p><span class="tag">Picture</span> The Link Meteor artwork with the title “Set up Link Meteor in desktop Chrome.”</p></li>
+            <li class="scene"><span class="t">0:03</span><p><span class="tag">Picture</span> The Link Meteor install page scrolls to the download card, and the Download link-meteor-0.2.2.zip button is clicked.</p></li>
+            <li><span class="t">0:03</span><p>Step 1: Download the ZIP from the install page.</p></li>
+            <li class="scene"><span class="t">0:07</span><p><span class="tag">Picture</span> Illustration: the ZIP file becomes a folder named link-meteor-0.2.2 containing background.js, content, core, icons, manifest.json and ui.</p></li>
+            <li><span class="t">0:07</span><p>Step 2: Unzip it into a folder you’ll keep. Chrome loads Link Meteor from there.</p></li>
+            <li class="scene"><span class="t">0:11</span><p><span class="tag">Picture</span> The Chrome Extensions page: the Developer mode switch is turned on, revealing Load unpacked, which the pointer moves to.</p></li>
+            <li><span class="t">0:12</span><p>Step 3: Open chrome://extensions and turn on Developer mode.</p></li>
+            <li><span class="t">0:15</span><p>Step 3: Then choose Load unpacked.</p></li>
+            <li class="scene"><span class="t">0:18</span><p><span class="tag">Picture</span> Illustration: in the file picker, the link-meteor-0.2.2 folder is selected; it contains manifest.json.</p></li>
+            <li><span class="t">0:18</span><p>Select the unzipped folder, the one that contains manifest.json.</p></li>
+            <li class="scene"><span class="t">0:22</span><p><span class="tag">Picture</span> The Extensions page shows the Link Meteor 0.2.2 card.</p></li>
+            <li><span class="t">0:23</span><p>Link Meteor 0.2.2 now appears in your extensions.</p></li>
+            <li class="scene"><span class="t">0:26</span><p><span class="tag">Picture</span> Illustration: the Extensions puzzle-piece menu is opened and Link Meteor is pinned, so its icon appears in the toolbar.</p></li>
+            <li><span class="t">0:27</span><p>Step 4: Pin it from the puzzle-piece menu so the icon stays in view.</p></li>
+            <li class="scene"><span class="t">0:30</span><p><span class="tag">Picture</span> On the practice page, the search results section is selected. The card reads “9 links selected.” Copy text + URL reports “Copied anchor text and URL as two spreadsheet columns,” then Add to collection saves them.</p></li>
+            <li><span class="t">0:31</span><p>Step 5: On the practice page, press the shortcut…</p></li>
+            <li><span class="t">0:34</span><p>Step 5: …and drag across one section.</p></li>
+            <li><span class="t">0:38</span><p>Compare the count with the section’s answer key: 9 links.</p></li>
+            <li><span class="t">0:40</span><p>Copy text + URL puts two columns on your clipboard.</p></li>
+            <li><span class="t">0:43</span><p>Or add them to a collection to review later.</p></li>
+            <li class="scene"><span class="t">0:46</span><p><span class="tag">Picture</span> The Link Meteor side panel lists the captured links beside the practice page. Export opens the export view, where CSV is chosen and downloaded.</p></li>
+            <li><span class="t">0:46</span><p>Step 6: Click the Link Meteor icon to open its side panel beside the page.</p></li>
+            <li><span class="t">0:50</span><p>Step 6: Export shows exactly which links it will use.</p></li>
+            <li><span class="t">0:54</span><p>Step 6: Pick a format and download. Here, CSV.</p></li>
+            <li class="scene"><span class="t">0:57</span><p><span class="tag">Picture</span> The Chrome keyboard shortcuts page shows Link Meteor’s “Select a region of links” shortcut.</p></li>
+            <li><span class="t">0:57</span><p>If the shortcut doesn’t work, change it at chrome://extensions/shortcuts.</p></li>
+            <li class="scene"><span class="t">1:01</span><p><span class="tag">Picture</span> In the side panel, the help button opens About and help, with the version, “made by Ryan Kamp,” and links to the guide, bug reports and suggestions, the website, source code and optional sponsorship.</p></li>
+            <li><span class="t">1:01</span><p>Help, bug reports and suggestions are under About and help.</p></li>
+            <li><span class="t">1:06</span><p>Reports are public, so leave out private URLs and data.</p></li>
+            <li class="scene"><span class="t">1:09</span><p><span class="tag">Picture</span> Closing card with the promises, the website address and “Made by Ryan Kamp.”</p></li>
+          </ol>
+          <!-- /transcript:link-meteor-install -->
+            </details>
+          </figure>
         </section>
 
         <section aria-labelledby="download">
           <h2 id="download">Download</h2>
           <div class="download-card">
-            <p><strong>Link Meteor <span data-build="version">0.2.1</span></strong>, development build · <span data-build="size">189 KB ZIP</span></p>
-            <a class="btn btn-ink" href="downloads/link-meteor-0.2.1.zip" data-build-href="file" download><svg aria-hidden="true"><use href="assets/img/icons.svg#download"/></svg>Download <span data-build="filename">link-meteor-0.2.1.zip</span></a>
-            <p class="hash">SHA-256 <code data-build="sha256">231f454f60a7aba45ad6834b559268e1ddaabc66304ce55be4a9e783a7d219e9</code></p>
+            <p><strong>Link Meteor <span data-build="version">0.2.2</span></strong>, development build · <span data-build="size">194 KB ZIP</span></p>
+            <a class="btn btn-ink" href="downloads/link-meteor-0.2.2.zip" data-build-href="file" download><svg aria-hidden="true"><use href="assets/img/icons.svg#download"/></svg>Download <span data-build="filename">link-meteor-0.2.2.zip</span></a>
+            <p class="hash">SHA-256 <code data-build="sha256">ceb6b778a0f93a6651e9c036fb6535773919ffa78b7ad4b88c692d35983b4e9d</code></p>
           </div>
           <p>To check the file, compare its SHA-256 with the value above. On a Mac, run <code>shasum -a 256</code> followed by the file's path in Terminal; on Windows, run <code>certutil -hashfile</code> with the path and <code>SHA256</code> in Command Prompt.</p>
           <h3>Or build it from source</h3>

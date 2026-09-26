@@ -8,8 +8,8 @@ This folder is published as-is at [Link Meteor](https://ryanjosephkamp.github.io
 
 | File | Purpose |
 | --- | --- |
-| `index.html` | Home: interactive capture demo, field separation, scopes, honest reporting, curation, export preview, privacy promise, limits. |
-| `install.html` | Development-build installation, update, removal and troubleshooting. Build details are filled from the packaged ZIP. |
+| `index.html` | Home: interactive capture demo, a short demo video, field separation, scopes, honest reporting, curation, export preview, privacy promise, limits. |
+| `install.html` | Development-build installation with a video walkthrough, update, removal and troubleshooting. Build details are filled from the packaged ZIP. |
 | `guide.html` | Full help reference. |
 | `privacy.html` | Extension and website privacy, with every permission explained. |
 | `about.html` | Creator credit, contact and social links, bug reports and suggestions through GitHub Issues, optional support, license and credits. |
@@ -18,6 +18,8 @@ This folder is published as-is at [Link Meteor](https://ryanjosephkamp.github.io
 | `404.html` | Not-found page. Uses absolute `/link-meteor/` paths because GitHub Pages serves it at any depth. |
 
 The home page's export preview imports `assets/js/core/export.js` and `xlsx.js`, exact copies of the extension's export modules. `downloads/` holds the development ZIP offered on the install page.
+
+`assets/video/` holds the two silent videos with their posters and WebVTT captions. They play only when a visitor presses play (`preload="none"`, no autoplay). `media/render.mjs` writes them and fills each page's transcript between its `<!-- transcript:… -->` markers; see [`../media/README.md`](../media/README.md).
 
 ## Keeping it in sync
 
@@ -33,7 +35,7 @@ The sync script keeps older ZIP downloads intact; it updates the current version
 ## Checks
 
 ```sh
-node tests/site-check.mjs      # all pages × 5 widths × light/dark, links, anchors, structure, contrast, demo
+node tests/site-check.mjs      # all pages × 5 widths × light/dark, links, anchors, structure, contrast, demo, videos
 node tests/site-preview.mjs    # ad-hoc screenshots into .scratch/site-preview
 ```
 

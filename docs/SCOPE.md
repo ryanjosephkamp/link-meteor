@@ -30,7 +30,7 @@ Provide real `.xlsx`, CSV, TSV, URL-list, Markdown, HTML and JSON downloads; cli
 
 With no selection, exports cover the full filtered view across pages. With selection, exports use selected occurrences that still match filters. JSON retains all exported grouped occurrences; other grouped formats use the displayed representative. Handle commas, quotes, newlines, Unicode and formula-like strings. CSV/TSV use an apostrophe for formula-safe import; originals remain unchanged in stored data, JSON and string-typed XLSX cells. Escape untrusted HTML/Markdown and validate action URL schemes. Captured `mailto:` and `tel:` can be exported but are not batch-opened/bookmarked.
 
-A textless bookmark uses the URL for its browser bookmark title without changing stored anchor text. Browser bookmark sync is separate from local collections. Opening tabs, downloading files, writing clipboard content and creating bookmarks happen only through user actions. Version 0.2.1 has no collection import/restore flow.
+A textless bookmark uses the URL for its browser bookmark title without changing stored anchor text. Browser bookmark sync is separate from local collections. Opening tabs, downloading files, writing clipboard content and creating bookmarks happen only through user actions. Version 0.2.2 has no collection import/restore flow.
 
 ## Architecture, access and privacy
 

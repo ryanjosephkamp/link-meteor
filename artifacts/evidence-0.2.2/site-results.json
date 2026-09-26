@@ -1,5 +1,5 @@
 {
-  "started": "2026-09-26T03:10:33.502Z",
+  "started": "2026-09-26T04:22:55.717Z",
   "base": "/link-meteor/",
   "pages": {
     "index.html": {
@@ -65,8 +65,8 @@
           "minContrast": 4.63
         }
       ],
-      "links": 10,
-      "anchors": 4,
+      "links": 12,
+      "anchors": 5,
       "structure": {
         "h1": 1,
         "headingLevelsSkip": false,
@@ -137,8 +137,8 @@
           "minContrast": 7.63
         }
       ],
-      "links": 19,
-      "anchors": 12,
+      "links": 22,
+      "anchors": 14,
       "structure": {
         "h1": 1,
         "headingLevelsSkip": false,
@@ -425,8 +425,8 @@
           "minContrast": 7.63
         }
       ],
-      "links": 14,
-      "anchors": 8,
+      "links": 17,
+      "anchors": 11,
       "structure": {
         "h1": 1,
         "headingLevelsSkip": false,
@@ -438,13 +438,26 @@
   "checks": [
     "404 page renders with its styles for a missing nested path",
     "Mobile menu opens from the keyboard and closes with Escape",
-    "Demo drag selects exactly the swept links; Select all selects 6; export preview uses real CSV/Markdown/XLSX output; tabs work with arrow keys"
+    "Demo drag selects exactly the swept links; Select all selects 6; export preview uses real CSV/Markdown/XLSX output; tabs work with arrow keys",
+    "Videos: controls, no autoplay or loop, preload none with nothing loaded before play, local MP4/poster/WebVTT captions, transcripts, phone gutters, and both files play"
   ],
   "limits": [
     "Automated Chromium checks; not a screen-reader, real-device or cross-browser audit.",
     "Contrast is measured against the nearest solid background and skips text over images."
   ],
+  "videos": [
+    {
+      "id": "link-meteor-demo",
+      "h264": "probably",
+      "playedSeconds": 1.2
+    },
+    {
+      "id": "link-meteor-install",
+      "h264": "probably",
+      "playedSeconds": 1.2
+    }
+  ],
   "problems": [],
   "result": "PASS",
-  "finished": "2026-09-26T03:11:30.335Z"
+  "finished": "2026-09-26T04:23:56.644Z"
 }

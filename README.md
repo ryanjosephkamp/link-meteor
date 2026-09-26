@@ -13,11 +13,11 @@ Capture the trail. Keep the source.
 
 Link Meteor is a free Chrome extension for collecting links with their **actual anchor text and URL in separate fields**, reviewing their sources, and exporting a useful research collection. It has no account, ads, telemetry, paid tier, or backend dependency.
 
-This repository contains the Chrome extension (development build 0.2.1) and its [live website](https://ryanjosephkamp.github.io/link-meteor/). Install the extension from the downloadable ZIP using Chrome's **Load unpacked** option. Browser-store distribution is deferred. See [testing and compatibility](docs/ACCEPTANCE.md) for the environments and workflows checked so far.
+This repository contains the Chrome extension (development build 0.2.2) and its [live website](https://ryanjosephkamp.github.io/link-meteor/). Install the extension from the downloadable ZIP using Chrome's **Load unpacked** option. Browser-store distribution is deferred. See [testing and compatibility](docs/ACCEPTANCE.md) for the environments and workflows checked so far.
 
 ## Try the development build
 
-1. [Download version 0.2.1](https://ryanjosephkamp.github.io/link-meteor/downloads/link-meteor-0.2.1.zip) and extract it to a folder you will keep. The ZIP is a development package, not a store installer.
+1. [Download version 0.2.2](https://ryanjosephkamp.github.io/link-meteor/downloads/link-meteor-0.2.2.zip) and extract it to a folder you will keep. The ZIP is a development package, not a store installer.
 2. Open `chrome://extensions` in Chrome and enable **Developer mode**.
 3. Choose **Load unpacked** and select the extracted folder containing `manifest.json`.
 4. Open an ordinary webpage (try the [practice page](https://ryanjosephkamp.github.io/link-meteor/practice.html)). Use the extension toolbar action for the side panel, or **Option+Shift+L** on Mac / **Alt+Shift+L** on Windows and Linux to select a region.
@@ -25,7 +25,7 @@ This repository contains the Chrome extension (development build 0.2.1) and its 
 
 Chrome manages shortcut assignments at `chrome://extensions/shortcuts`. A shortcut can conflict with another extension or system shortcut; use **Change shortcut** in Link Meteor to inspect it. Reload the extension at `chrome://extensions` after rebuilding, then reload test webpages so their injected script is current.
 
-For an existing installation, export any collections you want to retain, keep the same installation folder path, and follow the [update instructions](https://ryanjosephkamp.github.io/link-meteor/install.html). Loading a different unpacked path can create a separate extension with separate storage. JSON exports preserve captured link fields for reference, but are not a full backup of collection settings. Version 0.2.1 does not provide an import/restore flow.
+For an existing installation, export any collections you want to retain, keep the same installation folder path, and follow the [update instructions](https://ryanjosephkamp.github.io/link-meteor/install.html). Loading a different unpacked path can create a separate extension with separate storage. JSON exports preserve captured link fields for reference, but are not a full backup of collection settings. Version 0.2.2 does not provide an import/restore flow.
 
 ## What is included
 
@@ -37,6 +37,7 @@ For an existing installation, export any collections you want to retain, keep th
 - Real `.xlsx`, CSV, TSV, Markdown, HTML, JSON and URL-list downloads; clipboard columns/URLs/Markdown; bookmark folders; opening at most 20 HTTP(S) URLs per confirmed batch.
 - Ordered export columns. With no selection, exports include the entire filtered view across pages. When selection exists, exports use selected occurrences that still match the filters. JSON preserves every occurrence in each exported group. Other grouped exports use the displayed representative.
 - Side panel (compact views for links, collections and site settings, and export, with a bottom dock showing the exact export target) and full workbench (three columns, with anchor text, URL and source as separate columns), light/dark appearance, keyboard controls, visible focus and reduced-motion styling. The design system is documented in `docs/DESIGN.md`.
+- An **About and help** area in the side panel and full view (the **?** button opens it): the version, the creator credit, the guide, bug reports and suggestions, the website, the source code and optional sponsorship. Its links open in a new tab only when you choose them; nothing opens or is sent automatically.
 
 ## Fidelity and coverage
 
@@ -84,13 +85,15 @@ Tests store isolated profiles and cache under `.scratch/acceptance-final`, bind 
 
 ## Website
 
-`site/` is a static GitHub Pages site (home with an interactive demo and a live export preview, install, guide, privacy, and a practice page with verified answer keys). It makes no third-party requests and self-hosts its fonts. Visit [Link Meteor](https://ryanjosephkamp.github.io/link-meteor/). See `site/README.md` for structure, checks and the manual deployment steps; `.github/workflows/pages.yml` runs only when triggered by hand.
+`site/` is a static GitHub Pages site (home with an interactive demo, a short video and a live export preview, install with a video walkthrough, guide, privacy, about and contact, and a practice page with verified answer keys). It makes no third-party requests and self-hosts its fonts. Visit [Link Meteor](https://ryanjosephkamp.github.io/link-meteor/). See `site/README.md` for structure, checks and the manual deployment steps; `.github/workflows/pages.yml` runs only when triggered by hand.
 
 ```sh
 node scripts/sync-site.mjs          # copy the packaged ZIP, export modules and icons into site/
 node scripts/sync-site.mjs --check  # verify the site matches the build
-node tests/site-check.mjs           # pages × widths × themes, links, structure, contrast, demo
+node tests/site-check.mjs           # pages × widths × themes, links, structure, contrast, demo, videos
 ```
+
+The two silent site videos are made from recordings of the development build on the practice page. `media/` holds their recording scripts, timelines and compositor, and [`media/README.md`](media/README.md) explains how each scene was made, how to reproduce them and their limits.
 
 ## Privacy
 

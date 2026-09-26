@@ -1,0 +1,22 @@
+PASS Loaded actual extension and initialized state
+PASS Collection created through UI
+PASS 37 faithful occurrences including duplicates, empty anchor, shadow root, frame provenance and explicit partial coverage
+PASS Current page resolves the invoking page from full workbench
+PASS Region Escape leaves collection unchanged
+PASS Regional quick-copy reports successful two-column clipboard write
+PASS Real rectangle pointer drag highlights and saves exactly 5 links without navigating
+PASS Add-another-region does not duplicate an already saved region
+AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
++ actual - expected
+
++ '5 links selected'
+- '1 link selected'
+
+    at file:///<repository>/tests/browser.mjs:70:10 {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: '5 links selected',
+  expected: '1 link selected',
+  operator: 'strictEqual',
+  diff: 'simple'
+}

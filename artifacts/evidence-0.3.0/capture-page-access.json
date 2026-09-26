@@ -1,0 +1,48 @@
+{
+  "started": "2026-09-26T19:48:34.828Z",
+  "browser": "Chrome for Testing, headless, fresh temporary profile, real unpacked extension",
+  "method": "Toolbar clicks via DevTools protocol Extensions.triggerAction; the workbench in its own window stands in for the open side panel; the tab moves from 127.0.0.1 to localhost",
+  "result": "PASS",
+  "steps": [
+    {
+      "step": "toolbar-click-on-site-A",
+      "data": "clicked"
+    },
+    {
+      "step": "capture-site-A",
+      "data": {
+        "status": "success",
+        "count": 37,
+        "url": "http://127.0.0.1:52478/index.html"
+      }
+    },
+    {
+      "step": "site-B-persistent-access",
+      "data": false
+    },
+    {
+      "step": "capture-site-B-before-workaround",
+      "data": {
+        "status": "denied",
+        "count": 0,
+        "url": ""
+      }
+    },
+    {
+      "step": "toolbar-click-on-site-B",
+      "data": "clicked"
+    },
+    {
+      "step": "capture-site-B-after-workaround",
+      "data": {
+        "status": "success",
+        "count": 38,
+        "url": "http://localhost:52478/index.html"
+      }
+    },
+    {
+      "step": "site-B-persistent-access-after",
+      "data": false
+    }
+  ]
+}

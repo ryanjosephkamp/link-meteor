@@ -1,4 +1,4 @@
-import { writeXlsx } from './xlsx.js';
+import { writeXlsx, hyperlinkTarget, MAX_HYPERLINKS } from './xlsx.js';
 
 export const COLUMNS = [
   { key: 'anchorText', label: 'Anchor text' }, { key: 'url', label: 'URL' },
@@ -11,6 +11,10 @@ export const COLUMNS = [
 
 const LABELS = new Map(COLUMNS.map(column => [column.key, column.label]));
 const FORMATS = new Set(['csv', 'tsv', 'text', 'markdown', 'html', 'json', 'xlsx']);
+// The file extension each format downloads as.
+export const FORMAT_EXTENSIONS = Object.freeze({ csv: 'csv', tsv: 'tsv', text: 'txt', markdown: 'md', html: 'html', json: 'json', xlsx: 'xlsx' });
+// Columns whose web and mail addresses are clickable in a formatted workbook.
+const URL_COLUMNS = new Set(['url', 'originalHref', 'sourceUrl', 'frameUrl']);
 
 function cell(row, key) {
   const value = row[key];
@@ -86,13 +90,83 @@ export function exportFileName({ collection = '', extension, settings = {}, date
   return `${stem}.${extension}`;
 }
 
-export function makeExport(rows, { format, columns = ['anchorText', 'url'] } = {}) {
+function offset(date) {
+  const minutes = -date.getTimezoneOffset();
+  const sign = minutes < 0 ? '-' : '+';
+  return `${sign}${pad(Math.floor(Math.abs(minutes) / 60))}:${pad(Math.abs(minutes) % 60)}`;
+}
+
+function localDateTime(date) {
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+}
+
+// Checks an about block and fills the optional fields: count defaults to the row count,
+// columns to the export columns, view and version to '' and filters to none.
+function aboutBlock(about, rows, columns) {
+  if (!about || typeof about !== 'object' || Array.isArray(about)) throw new Error('Export about must be an object');
+  const { exportedAt, collection, count = rows.length, view = '', filters = [], version = '' } = about;
+  if (!(exportedAt instanceof Date) || Number.isNaN(exportedAt.valueOf())) throw new Error('Export about.exportedAt must be a valid date');
+  if (typeof collection !== 'string') throw new Error('Export about.collection must be a string');
+  if (!Number.isSafeInteger(count) || count < 0) throw new Error('Export about.count must be a whole number');
+  if (typeof view !== 'string') throw new Error('Export about.view must be a string');
+  if (!Array.isArray(filters) || filters.some(item => typeof item !== 'string')) throw new Error('Export about.filters must be a list of strings');
+  if (typeof version !== 'string') throw new Error('Export about.version must be a string');
+  const aboutColumns = about.columns ?? columns;
+  if (!Array.isArray(aboutColumns) || aboutColumns.some(key => !LABELS.has(key))) throw new Error('Export about.columns must list export columns');
+  return { exportedAt, collection, count, view, filters: [...filters], columns: [...aboutColumns], version };
+}
+
+// JSON metadata block. Columns are left out: JSON keeps every field of every row.
+function aboutJson(about) {
+  return {
+    exportedAt: about.exportedAt.toISOString(),
+    exportedAtLocal: `${localDateTime(about.exportedAt)}${offset(about.exportedAt)}`,
+    collection: about.collection, count: about.count, view: about.view, filters: about.filters, version: about.version,
+  };
+}
+
+// The About sheet: [label, value] rows, all text.
+function aboutRows(about, note) {
+  const date = about.exportedAt;
+  const rows = [
+    ['Exported (local time)', `${localDateTime(date).replace('T', ' ')} (UTC${offset(date)})`],
+    ['Exported (UTC)', `${date.toISOString().slice(0, 19).replace('T', ' ')} UTC`],
+    ['Collection', about.collection],
+    ['Links', String(about.count)],
+    ['View', about.view],
+    ...(about.filters.length ? about.filters.map(filter => ['Filter', filter]) : [['Filters', 'None']]),
+    ['Columns', about.columns.map(key => LABELS.get(key)).join(', ')],
+    ['Cells', 'Every cell is text. Nothing is a formula, number or date.'],
+    ['Link Meteor version', about.version],
+  ];
+  if (note) rows.splice(rows.length - 1, 0, ['Clickable links', note]);
+  return rows;
+}
+
+function formattedXlsx(rows, columns, headers, about) {
+  const values = rows.map(row => columns.map(key => cell(row, key)));
+  const linkColumns = columns.flatMap((key, index) => URL_COLUMNS.has(key) ? [index] : []);
+  let linkable = 0;
+  for (const row of values) for (const index of linkColumns) if (hyperlinkTarget(row[index])) linkable++;
+  const note = linkable > MAX_HYPERLINKS ? `The first ${MAX_HYPERLINKS.toLocaleString('en-US')} web and mail addresses are clickable; Excel allows no more on one sheet. The rest are exact text.` : '';
+  return writeXlsx(headers, values, { linkColumns, about: aboutRows(about, note) });
+}
+
+// Without about, every format is exactly what 0.2.2 produced. With about ({exportedAt: Date,
+// collection, count, view, filters, columns, version}), XLSX is formatted and gains an About
+// sheet, and JSON becomes {about, rows}; the other formats are unchanged.
+export function makeExport(rows, { format, columns = ['anchorText', 'url'], about } = {}) {
   if (!Array.isArray(rows)) throw new Error('rows must be an array');
   if (!FORMATS.has(format)) throw new Error(`Unsupported export format: ${format}`);
   if (!Array.isArray(columns) || columns.length === 0) throw new Error('Export columns must be a nonempty array');
   for (const key of columns) if (!LABELS.has(key)) throw new Error(`Unsupported export column: ${key}`);
   if (new Set(columns).size !== columns.length) throw new Error('Export columns must be unique');
   const headers = columns.map(key => LABELS.get(key));
+  if (about !== undefined) {
+    const block = aboutBlock(about, rows, columns);
+    if (format === 'json') return { data: JSON.stringify({ about: aboutJson(block), rows }, null, 2), mime: 'application/json;charset=utf-8', extension: 'json' };
+    if (format === 'xlsx') return { data: formattedXlsx(rows, columns, headers, block), mime: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', extension: 'xlsx' };
+  }
   switch (format) {
     case 'csv': return { data: delimited(rows, headers, columns, ','), mime: 'text/csv;charset=utf-8', extension: 'csv' };
     case 'tsv': return { data: delimited(rows, headers, columns, '\t'), mime: 'text/tab-separated-values;charset=utf-8', extension: 'tsv' };

@@ -38,4 +38,28 @@ const xlsx = join(out, 'workbook-fixture.xlsx');
 const json = join(out, 'workbook-fixture.expected.json');
 await writeFile(xlsx, exported.data);
 await writeFile(json, JSON.stringify(expected, null, 2) + '\n');
-console.log(JSON.stringify({ xlsx, expected: json, rows: rows.length, occurrences: links.length, columns }));
+
+// 0.3.0: the Export panel's formatted workbook, with an About sheet. The reader works out the
+// local time, the hyperlinks and the widths itself; only the About inputs are given here.
+const formattedColumns = ['anchorText', 'url', 'originalHref', 'sourceUrl', 'sourceTitle', 'notes'];
+const about = {
+  exportedAt: new Date(Date.UTC(2026, 8, 26, 21, 32, 59)), collection: 'Fixture: “grouped” sources', count: rows.length,
+  view: 'Unique URLs; capture order, ascending', filters: ['Search: “=1+1”', 'Selected links only'], columns: formattedColumns, version: '0.3.0',
+};
+const formatted = makeExport(rows, { format: 'xlsx', columns: formattedColumns, about });
+if (JSON.stringify(links) !== before) throw new Error('Formatted XLSX export mutated fixture input');
+const formattedExpected = {
+  formatted: true,
+  columns: formattedColumns,
+  rows: [
+    ['Anchor text', 'URL', 'Original href', 'Source page URL', 'Source page title', 'Notes'],
+    ...rows.map(row => formattedColumns.map(key => String(row[key] ?? ''))),
+  ],
+  urlColumns: ['URL', 'Original href', 'Source page URL', 'Frame URL'],
+  about: { exportedAtUtcSeconds: about.exportedAt.valueOf() / 1000, collection: about.collection, count: about.count, view: about.view, filters: about.filters, columns: 'Anchor text, URL, Original href, Source page URL, Source page title, Notes', version: about.version },
+};
+const formattedXlsx = join(out, 'workbook-fixture-formatted.xlsx');
+const formattedJson = join(out, 'workbook-fixture-formatted.expected.json');
+await writeFile(formattedXlsx, formatted.data);
+await writeFile(formattedJson, JSON.stringify(formattedExpected, null, 2) + '\n');
+console.log(JSON.stringify({ xlsx, expected: json, formattedXlsx, formattedExpected: formattedJson, rows: rows.length, occurrences: links.length, columns, formattedColumns }));

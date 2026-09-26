@@ -202,7 +202,23 @@ label > input, label > select, label > textarea { font-weight: 400; }
 .shortcut-keys { display: inline-flex; gap: 3px; }
 kbd, .shortcut-keys kbd, .btn-keys kbd { display: inline-grid; place-items: center; min-width: 20px; height: 20px; padding: 0 5px; border: 1px solid var(--line-strong); border-bottom-width: 2px; border-radius: 5px; background: var(--surface); color: var(--ink-2); font-size: var(--text-xs); }
 .btn-keys kbd { min-width: 18px; height: 18px; padding: 0 4px; font-size: 0.66rem; }
-.rail-foot { display: flex; gap: 7px; margin-top: auto; padding-top: 4px; color: var(--muted); font-size: var(--text-xs); line-height: 1.4; }
+.about { margin-top: auto; }
+.about-panel { border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--surface); }
+.about-panel > summary { display: flex; align-items: center; gap: 8px; min-height: 38px; padding: 6px 10px; border-radius: var(--r-lg); color: var(--ink-2); font-size: var(--text-sm); font-weight: 600; list-style: none; cursor: pointer; }
+.about-panel > summary::-webkit-details-marker { display: none; }
+.about-panel > summary:hover { color: var(--ink); background: var(--hover); }
+.about-panel[open] > summary { color: var(--ink); border-bottom: 1px solid var(--line); border-radius: var(--r-lg) var(--r-lg) 0 0; }
+.about-version { margin-left: auto; color: var(--muted); font-size: var(--text-xs); font-weight: 500; font-variant-numeric: tabular-nums; }
+.about-body { display: grid; gap: 10px; padding: 12px 10px 12px; }
+.about-credit { font-size: var(--text-sm); color: var(--ink); }
+.about-credit a, .about-links a { color: var(--ink); text-decoration: underline; text-decoration-color: var(--line-strong); text-underline-offset: 2px; }
+.about-credit a:hover, .about-links a:hover { text-decoration-color: currentColor; }
+.about-links { display: grid; gap: 2px; margin: 0 -4px; }
+.about-links a { display: flex; align-items: center; gap: 8px; min-height: 30px; padding: 3px 4px; border-radius: var(--r-sm); font-size: var(--text-sm); text-decoration: none; }
+.about-links a:hover { background: var(--hover); text-decoration: underline; }
+.about-links .icon { color: var(--muted); }
+.about-links .icon.heart { color: var(--danger); }
+.rail-foot { display: flex; gap: 7px; padding-top: 4px; color: var(--muted); font-size: var(--text-xs); line-height: 1.4; }
 .rail-foot .icon { width: 14px; height: 14px; margin-top: 1px; }
 
 /* Collection head ----------------------------------------------------------- */

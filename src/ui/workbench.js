@@ -919,6 +919,13 @@ function bindEvents() {
   $('open-full').addEventListener('click', () => action(async () => { await request({ type: 'ui.open' }); }));
   $('shortcut-settings').addEventListener('click', () => action(async () => { await chrome.tabs.create({ url: 'chrome://extensions/shortcuts' }); }));
   $('collection-switch').addEventListener('click', (event) => setView('collections', event.currentTarget));
+  // About and help lives at the foot of the collections rail; the header button reveals it in either layout.
+  $('help-toggle').addEventListener('click', (event) => {
+    $('about-panel').open = true;
+    if (!matchMedia('(min-width: 900px)').matches) setView('collections', event.currentTarget);
+    $('about-summary').scrollIntoView({ block: 'nearest' });
+    $('about-summary').focus({ preventScroll: true });
+  });
   $('rail-done').addEventListener('click', () => setView('links'));
   $('dock-export').addEventListener('click', (event) => setView('export', event.currentTarget));
   $('export-done').addEventListener('click', () => setView('links'));
@@ -1009,6 +1016,9 @@ async function init() {
   bindEvents(); renderColumns();
   chrome.commands?.getAll?.().then((commands) => { ui.shortcut = commands.find((command) => command.name === 'select-region')?.shortcut || ''; renderShortcut(); if (ui.state) renderLinks(); }).catch(() => {});
   chrome.tabs?.getCurrent?.().then((tab) => { if (tab) $('open-full').hidden = true; }).catch(() => {});
+  const version = chrome.runtime?.getManifest?.().version || '';
+  $('about-version').textContent = version ? `v${version}` : '';
+  $('about-version-full').textContent = version ? `version ${version}` : '';
   await reloadState();
   try { await loadInventory(); } catch (error) { ui.inventory = null; renderInventory(); show(`Current site preview unavailable: ${error.message}`, 'error'); }
   chrome.storage?.onChanged?.addListener((changes, area) => {

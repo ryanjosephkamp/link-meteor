@@ -361,6 +361,8 @@ Callers write a `ClipboardItem` with `text/html` and `text/plain`, and fall back
 - **`capture.commit`** accepts `skipSaved?: boolean`. It returns `{count, skipped, …}`: skipped links are left out, and `count` is what was added.
 - **`capture.copy`** accepts `format: 'rich'` and returns `{text, html}`.
 - **`capture.undoAdd`** `{collectionId, batchId}` removes the occurrences that one add created. It is refused if the collection no longer holds exactly that batch.
+- **`capture.preference`** `{contentOnly?, skipSaved?}` returns `{contentOnly, skipSaved}`. Page. It saves only those two settings, each a boolean, at least one; any other field is refused.
+- **`capture.includeLeftOut`** `{batchId}` returns `{state, count, skipped, total, collectionId, name}`. Workbench. It adds the navigation links that *Capture this page* left out (below) to the collection that capture went to.
 - **`diagnostics.get`** (workbench only) returns a JSON-safe object:
   - version, the user agent and brands, platform and language;
   - settings, with `holdOrigins` and `holdExceptions` reported as counts;
@@ -392,3 +394,35 @@ Callers write a `ClipboardItem` with `text/html` and `text/plain`, and fall back
   - About and help gains *Copy diagnostics*.
 - **Toolbar icon:** drawn with `OffscreenCanvas` from the mark in the theme's `highlight` color, and set with `chrome.action.setIcon` at startup and when the theme changes. The manifest's icons stay Meteor.
 - **Website:** the same palettes as CSS, a theme menu in the header kept in `localStorage`, and `?theme=<id>`, which About and help's links add. There is no `externally_connectable`: the site never detects the extension.
+
+### The capture card and Capture this page, as built
+
+**Messages**
+
+- `capture.saved` takes any sender (a page or the workbench). `urls` is an array of at most 20,000 strings, compared exactly with saved `url` values; the answer is unique and in the order asked. A chosen collection that no longer exists is an error.
+- `capture.commit` returns `{state, count, skipped, batchId, collectionId, warning}`. `batchId` is the new occurrences' batch, or `''` when nothing was added; `collectionId` is the destination. An absent `skipSaved` skips nothing, as in 0.3.0. Repeats of one URL within the same add are not "already saved".
+- `capture.copy` with `format: 'rich'` returns `richLinks()` of the ticked links. Any other format is refused.
+- `capture.undoAdd` is a page message, accepted only from the tab that made the add, and returns `{count}`. "Exactly that batch" means every occurrence the add created is still in that collection, with no notes or tags added. The workbench's removal Undo is kept. Each add is undone at most once.
+- `capture.run`: each result gains `leftOut` (navigation links left out) and `skipped` (links already saved), both numbers. The page script's `scan()` marks each candidate in page chrome with `pageChrome: true`; with `contentOnly`, those are left out. `skipSaved` applies to *Capture this page* too.
+- `capture.includeLeftOut` refuses a batch that isn't the one kept, and says so. With `skipSaved`, links already saved are skipped. Afterwards the kept links are removed, and the kept report gains `leftOutIncluded` (the number added), so a view that shows it later doesn't offer Include them again. A destination that no longer exists adds nothing and keeps the links.
+
+**Storage keys (session)**
+
+| Key | Contents |
+| --- | --- |
+| `linkMeteorLeftOut` | `{batchId, collectionId, total, links: Link[], createdAt}`: the latest *Capture this page*'s left-out links, at most 5,000 of `total`. The next capture replaces it, or removes it when nothing was left out. |
+| `linkMeteorRecentAdds` | `[{tabId, collectionId, batchId, count}]`: the 20 most recent adds from pages, for `capture.undoAdd`. |
+
+**The card**
+
+- **Page chrome** is checked through open shadow roots (a link counts when any shadow host around it is in page chrome) and same-origin frames (a frame inside page chrome makes all its links page chrome). The rule counts every `header` and `footer`, including those inside an `article`.
+- **After a drag** uses the links the card would start with ticked, so with `contentOnly` the navigation links are left out of the copy or the add. When none would be ticked, the card opens instead.
+- **The notice** (`.notice`) is a panel in the card's shadow root, in the card's colors, at the card's corner. Its text (`.notice-text`, a status region) reads "Copied 12 links as a table" (`as URLs`, `as Markdown`, `as rich links`, or `as plain text` when rich copy fell back), plus "Left out 9 navigation links." when any were; or "Added 12 links to “Thesis sources”." (with "; 4 were already saved" when some were skipped). Buttons: `.notice-undo` (after an add), `.notice-show` (*Show links*) and `.notice-close`. It closes itself 8 seconds after it last appeared, lost focus or lost the pointer, and never while it has focus or the pointer is over it. A new drag replaces it. Undo there says "Removed 12 links from “Thesis sources”." and lets the card add again; *Show links* after an add shows the receipt with an Undo button.
+- **Filters** (`.chips`, buttons with `aria-pressed` and a check mark when chosen) are one choice at a time. Choosing one ticks again what the previous filter unticked, then unticks what doesn't match; choosing it again, or *All*, returns to All. Ticks changed by hand stay as they are. A site is the host name without a leading `www.`; *Same site* and *Other sites* count only HTTP(S) links against the page's host; *PDFs* are links whose path ends in `.pdf`, in any case. Filters apply to every selected link, including those past the preview's first 1,000.
+- **Left out** (`.leftout`): "Left out 9 navigation links." with `.leftout-include` (*Include them*), then "Included 9 navigation links." with `.leftout-remember` (*Always include them*, shown while `contentOnly` is on), which sends `capture.preference {contentOnly: false}`.
+- **Already saved:** matching rows get a `.tag` reading "Saved". The *Skip saved* row (`.skip`, checkbox `.skip-saved`) shows only while some ticked links are already saved, and says how many. When the checkbox differs from the setting, `.skip-remember` (*Make this the default*) sends `capture.preference {skipSaved}`. With links skipped, the receipt reads "Added 8 links to “X”; 4 were already saved."; otherwise the card's receipt still reads "Saved 12 links to “X”."
+- **Copy as rich links** (`.m-rich`, shortcut L) writes a `ClipboardItem`. Where the async clipboard is unavailable, as on plain-HTTP pages, a copy event carries both types, and only then plain text.
+
+**The workbench's capture report**
+
+- The report ends with a line (`.report-left-out`): "Left out 9 navigation links." with *Include them*, then "Included 9 navigation links."; and "Skipped 4 links already saved." when any were. With several pages, each page's result also says how many.

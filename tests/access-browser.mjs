@@ -269,6 +269,103 @@ try {
   pass('Card with 30 links confirms first, then opens all 30 in batches');
   await js(page, card(`.querySelector('button.dismiss').click()`));
 
+  /* 4b. The 0.4.0 card messages end to end: Undo after adding right away, already saved, Skip saved,
+     the card's preferences, the rich copy payload, and content links only on Capture this page. */
+  await browser.navigate(page, `${fixture.base}/index.html`); await sleep(1200);
+  assert.equal(await browser.clickAction(fixture.base), 'clicked');
+  await sleep(500);
+  const savedCheck = (await rpc({type: 'state.mutate', action: {type: 'collection.create', name: 'Saved check'}})).activeCollectionId;
+  const links = async (id) => (await state()).collections.find((c) => c.id === id).links;
+  // A saved capture setting reaches the open page script through content.configure.
+  const setCapture = async (patch) => { await rpc({type: 'state.mutate', action: {type: 'settings.update', patch}}); await sleep(800); };
+  const cardValue = (expr) => js(page, card(expr));
+  const bibRegion = async (withGrid = false) => {
+    const r = await js(page, `(() => { const bib = document.getElementById('bibliography'); scrollTo(0, bib.getBoundingClientRect().top + scrollY - 20); const a = bib.getBoundingClientRect(), b = ${withGrid ? `document.querySelector('.grid').getBoundingClientRect()` : 'a'}; return {x: Math.min(a.x, b.x), y: a.y, w: Math.max(a.right, b.right) - Math.min(a.x, b.x), h: b.bottom - a.y}; })()`);
+    await rpc({type: 'capture.arm', tabId: pageTab});
+    await until(() => js(page, `!!document.getElementById('link-meteor-overlay')`), 'overlay for 0.4.0');
+    await drag(page, {x: r.x + 4, y: r.y + 4}, {x: r.x + r.w - 4, y: r.y + r.h - 4});
+  };
+
+  // Add right away, then Undo: capture.commit and capture.undoAdd through the real background.
+  await setCapture({afterDrag: 'add', skipSaved: false, contentOnly: false});
+  await bibRegion();
+  await until(async () => /^Added 5 links to “Saved check”\.$/.test(await cardValue(`.querySelector('.notice-text')?.textContent`)), 'added right away');
+  assert.equal((await links(savedCheck)).length, 5);
+  assert.equal(await cardValue(`.querySelector('.bar').style.display`), '', 'no card after adding right away');
+  const undoBefore = (await state()).undo;
+  await js(page, card(`.querySelector('.notice-undo').click()`));
+  await until(async () => /^Removed 5 links from “Saved check”\.$/.test(await cardValue(`.querySelector('.notice-text').textContent`)), 'undone');
+  assert.equal((await links(savedCheck)).length, 0, 'Undo removed exactly that add');
+  assert.deepEqual((await state()).undo, undoBefore, 'the workbench’s removal Undo is untouched');
+  await js(page, card(`.querySelector('.notice-show').click()`));
+  assert.equal(await cardValue(`.querySelector('button.add').disabled`), false, 'after Undo the card can add again');
+  await js(page, card(`.querySelector('button.add').click()`));
+  await until(async () => /^Saved 5 links to “Saved check”\./.test(await cardValue(`.querySelector('.status').textContent`)), 'saved from the card');
+  await key(page, 'Escape');
+  pass('Add right away saves at once and says so; Undo (capture.undoAdd) removes exactly that add; Show links then adds again from the card');
+
+  // Already saved and Skip saved on a region with 5 saved and 4 new links.
+  await setCapture({afterDrag: 'card', skipSaved: true});
+  await bibRegion(true);
+  await until(async () => (await cardValue(`.querySelector('.count')?.textContent`)) === '9 links selected', 'nine links');
+  await until(async () => (await cardValue(`.querySelectorAll('.preview .tag:not([hidden])').length`)) === 5, 'five marked Saved');
+  const marked = await js(page, `[...${card(`.querySelectorAll('.preview li')`)}].map((li) => li.querySelector('.t').textContent + (li.querySelector('.tag').hidden ? '' : ' [Saved]'))`);
+  assert.deepEqual(marked.filter((row) => row.endsWith('[Saved]')), ['Attention in small systems [Saved]', 'Geometry, “frames” & 雪 [Saved]', 'Download PDF [Saved]', 'No anchor text (labeled “Open illustrated appendix”) [Saved]', 'Visible label [Saved]'], JSON.stringify(marked));
+  assert.equal(await cardValue(`.querySelector('.skip-saved').checked`), true, 'Skip saved starts from the setting');
+  assert.equal(await cardValue(`.querySelector('.skip-text').textContent`), 'Skip the 5 links already saved');
+  // Make this the default: capture.preference saves skipSaved.
+  await js(page, card(`.querySelector('.skip-saved').click()`));
+  await js(page, card(`.querySelector('.skip-remember').click()`));
+  await until(async () => (await state()).settings.skipSaved === false, 'skipSaved saved from the card');
+  await js(page, card(`.querySelector('.skip-saved').click()`));
+  assert.equal(await cardValue(`.querySelector('.skip-saved').checked`), true);
+  pass('Already saved: the card asks capture.saved and marks the 5 saved rows; Skip saved starts from the setting; Make this the default saves it (capture.preference)', {marked});
+
+  // The rich copy payload: capture.copy with format 'rich' through the real background, on the clipboard.
+  await browser.send('Browser.grantPermissions', {origin: fixture.base, permissions: ['clipboardReadWrite', 'clipboardSanitizedWrite']});
+  await browser.send('Emulation.setFocusEmulationEnabled', {enabled: true}, page);
+  await js(page, card(`.querySelector('button.copy').focus()`));
+  await key(page, 'l');
+  await until(async () => /^Copied 9 links as rich links\./.test(await cardValue(`.querySelector('.status').textContent`)), 'rich copy');
+  const clip = await js(page, `navigator.clipboard.read().then(async ([item]) => ({types: item.types, html: await (await item.getType('text/html')).text(), text: await (await item.getType('text/plain')).text()}))`);
+  assert.ok(clip.types.includes('text/html') && clip.types.includes('text/plain'), JSON.stringify(clip.types));
+  assert.match(clip.html, new RegExp(`<a href="${fixture.base}/papers/attention\\.pdf">Attention in small systems</a>`));
+  assert.match(clip.html, /<a href="https:\/\/example\.org\/telescope">Open-sky telescope<\/a>/);
+  assert.match(clip.text, new RegExp(`^Attention in small systems \\(${fixture.base}/papers/attention\\.pdf\\)\\n`));
+  const payload = await rpc({type: 'capture.copy', format: 'rich', links: [{anchorText: 'A & B', url: `${fixture.base}/x?a=1&b=2`}, {anchorText: '', url: 'mailto:lab@example.org'}]});
+  assert.deepEqual(payload, {html: `<ul><li><a href="${fixture.base}/x?a=1&amp;b=2">A &amp; B</a></li><li><a href="mailto:lab@example.org">mailto:lab@example.org</a></li></ul>`, text: `A & B (${fixture.base}/x?a=1&b=2)\nmailto:lab@example.org`});
+  pass('Copy as rich links (L) puts the background’s HTML and plain text on the clipboard; the payload escapes anchor text and URLs', {types: clip.types});
+
+  // Adding with Skip saved: capture.commit skips the 5 saved links and says so.
+  await js(page, card(`.querySelector('button.add').click()`));
+  await until(async () => /^Added 4 links to “Saved check”; 5 were already saved\.$/.test(await cardValue(`.querySelector('.status').textContent`)), 'skipped');
+  assert.equal((await links(savedCheck)).length, 9);
+  await key(page, 'Escape');
+  pass('Skip saved: the card’s Add skips the 5 links already saved and says “Added 4 links …; 5 were already saved”');
+
+  // Content links only on Capture this page: page chrome is left out, reported, and Include them adds it.
+  await setCapture({contentOnly: true, skipSaved: false});
+  await js(page, `(() => { scrollTo(0, 0); document.querySelector('main').insertAdjacentHTML('afterbegin', '<header id="lm-header"></header><nav><a href="/nav/one">Nav one</a> <a href="/nav/two">Nav two</a></nav><aside><iframe id="lm-frame" src="/frame.html" style="height:60px"></iframe></aside><footer><a href="/foot">Footer link</a></footer>'); document.getElementById('lm-header').attachShadow({mode: 'open'}).innerHTML = '<a href="/banner">Banner link</a>'; return true; })()`);
+  await until(() => js(page, `!!document.getElementById('lm-frame').contentDocument?.getElementById('frame-link')`), 'frame in the aside');
+  await click('capture');
+  await until(async () => /37 links captured/.test(await text('capture-report')) && /Left out 5 navigation links/.test(await text('capture-report')), 'content-only capture');
+  const captured = await js(ui, `chrome.storage.session.get('linkMeteorCaptureReport').then((v) => v.linkMeteorCaptureReport.report)`);
+  assert.deepEqual(captured.results.map((r) => [r.status, r.count, r.leftOut]), [['success', 37, 5]]);
+  const inBatch = async () => (await links(savedCheck)).filter((l) => l.batchId === captured.batchId).map((l) => new URL(l.url).pathname);
+  assert.deepEqual((await inBatch()).filter((path) => /^\/(nav\/|foot$|banner$|frame-source$)/.test(path)), ['/frame-source'], 'page chrome is not saved; the page’s own content frame is');
+  assert.equal(await js(ui, `document.querySelector('#capture-report .report-left-out button')?.textContent`), 'Include them');
+  await shot(ui, 'access-capture-left-out.png');
+  await js(ui, `document.querySelector('#capture-report .report-left-out button').click(); true`);
+  await until(async () => /Included 5 navigation links/.test(await text('capture-report')), 'included');
+  const included = await inBatch();
+  assert.equal(included.length, 42);
+  assert.deepEqual(included.slice(-5).sort(), ['/banner', '/foot', '/frame-source', '/nav/one', '/nav/two']);
+  assert.match(await text('notice'), /Added 5 navigation links to “Saved check”/);
+  assert.equal((await js(ui, `chrome.storage.session.get('linkMeteorCaptureReport').then((v) => v.linkMeteorCaptureReport.report.leftOutIncluded)`)), 5);
+  assert.match(await rpcError({type: 'capture.includeLeftOut', batchId: captured.batchId}), /no longer kept/, 'only once');
+  await setCapture({contentOnly: false});
+  pass('Capture this page with content links only leaves out 5 links in header (shadow root), nav, aside (frame) and footer, reports them, and Include them adds them once', {captured: 37, leftOut: 5});
+
   /* 5. The workbench opener's tiers, with local fixture URLs. */
   const seed = async (name, n) => {
     const id = (await rpc({type: 'state.mutate', action: {type: 'collection.create', name}})).activeCollectionId;

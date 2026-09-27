@@ -68,8 +68,9 @@ export async function launchWithAction({extension = resolve(root, process.env.LI
   });
   const close = async () => {
     if (closed) return; closed = true;
-    chrome.kill(); await Promise.race([exited, sleep(3000)]);
-    await rm(profile, {recursive: true, force: true});
+    chrome.kill(); await Promise.race([exited, sleep(10000)]);
+    // Chrome's helper processes can still be writing the profile for a moment after it exits.
+    await rm(profile, {recursive: true, force: true, maxRetries: 10, retryDelay: 300});
   };
   try {
     // The extension is ready once target discovery reports its service worker. Target.getTargets

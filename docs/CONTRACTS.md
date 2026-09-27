@@ -370,6 +370,34 @@ Callers write a `ClipboardItem` with `text/html` and `text/plain`, and fall back
 
   It never includes URLs, origins, page titles, notes, tags or collection names.
 
+### Workbench extras, as built
+
+**`diagnostics.get`** is answered by `background/diagnostics.js`, which exports `workbenchMessages` like `bookmarks.js`, `backup.js` and `hold.js`. It returns:
+
+```js
+{createdAt,                      // ISO time
+ version,                        // the manifest's
+ browser: {userAgent, brands: [{brand, version}], mobile, platform, os, arch, language, uiLanguage},
+ settings: {holdKey, holdOrigins, holdTrigger, holdScope, holdExceptions, welcomeSeen, exportPrefix,
+   exportTimestamp, exportTimestampFormat, theme, appearance, afterDrag, afterDragFormat,
+   contentOnly, skipSaved, otherFields} | null,
+ permissions: {tabs, bookmarks, tabGroups, allSites, siteOriginCount},
+ scripts: {count, scope: 'none'|'sites'|'all'|'other'|'mixed'|'unknown', matchCount, excludeCount, matchesSettings},
+ storage: {bytesInUse, stateBytes, restoreUndoBytes},
+ data: {readable, collections, links, undoLinks}}
+```
+
+- Every value is a number, a boolean, `null`, a fixed choice or a fact about the browser. `holdOrigins` and `holdExceptions` are counts, and `exportPrefix` is its length, because they hold the person's own text. A saved value outside its fixed choices reads `'invalid'`, never the value; a field that isn't saved reads `'missing'`. `otherFields` counts settings a later version saved, without their names.
+- `SETTING_REPORTS` in `background/diagnostics.js` says how each setting is reported. A new setting needs an entry there; `tests/diagnostics.test.mjs` fails otherwise.
+- `siteOriginCount` counts granted origins other than the two all-sites patterns. `scripts` counts every registration and its match and exclude patterns, never the patterns themselves. `matchesSettings` says whether the registrations are what the saved settings and Chrome's grants call for.
+- When the saved state can't be read, `settings` is `null`, `data.readable` is false and its counts are `null`. A Chrome call that fails leaves `null` (or `false` for a permission) instead of failing the request.
+
+**Copy as rich links** (`#copy-rich`, the fourth button in the Export panel's copy grid) uses `targetRows()`, like the other copies, and `richLinks()`. It writes a `ClipboardItem` with `text/html` and `text/plain`. The status reads "Copied 24 links as rich links. Paste into Google Docs, Word or Notion to keep them clickable." If Chrome refuses the item, it writes the plain text alone and says the links won't paste as clickable links.
+
+**Copy diagnostics** (`#copy-diagnostics`, described by `#diagnostics-help`, in About and help) copies `diagnostics.get` as JSON indented by two spaces, with a final newline.
+
+**Website links carry the theme.** About and help's links to the Link Meteor website (the guide and the home page) are marked `data-site-link`. On every render they add `?theme=<id>` from `settings.theme`, except for Meteor or an unknown theme. The other links never change.
+
 ### Behaviors
 
 - **After a drag:**

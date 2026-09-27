@@ -5,7 +5,7 @@ import {workbenchMessages as backupMessages} from './background/backup.js';
 import {workbenchMessages as diagnosticsMessages} from './background/diagnostics.js';
 import {workbenchMessages as holdMessages, grantedSettings, followHoldWrites, requestSync} from './background/hold.js';
 import {openUrls, cancelOpen} from './background/open.js';
-import {WORKBENCH, occurrences, commitCapture, openWorkbench, pageMessages} from './background/card.js';
+import {WORKBENCH, occurrences, commitCapture, openWorkbench, pageMessages, appendLinks, keepLeftOut, includeLeftOut, LEFT_OUT_LIMIT} from './background/card.js';
 import {syncIcon, followThemeWrites} from './background/theme.js';
 
 const LAST_TARGET_KEY = 'linkMeteorTarget';
@@ -65,19 +65,22 @@ async function arm(tabId, callerTabId) {
   return {tabId:tab.id};
 }
 
+// With contentOnly, links the page marks as page chrome (navigation, headers, footers, sidebars)
+// are left out, counted per page and kept for the workbench's Include them. With skipSaved, links
+// the collection already holds are skipped and counted.
 async function captureTabs(tabIds,callerTabId) {
   const stateBefore = await serial(readState);
-  const collectionId = stateBefore.activeCollectionId;
+  const collectionId = stateBefore.activeCollectionId, contentOnly = stateBefore.settings.contentOnly === true;
   const ids = Array.isArray(tabIds) && tabIds.length ? [...new Set(tabIds)] : [(await resolveTarget(undefined,callerTabId)).id];
   if (ids.length > 100 || ids.some(id => !Number.isInteger(id))) throw new Error('Choose at most 100 tabs per capture. You can append another batch.');
-  const batchId = crypto.randomUUID(), results = [];
-  let state = stateBefore, capturedCount = 0;
+  const batchId = crypto.randomUUID(), results = [], leftOutLinks = [];
+  let state = stateBefore, capturedCount = 0, leftOutTotal = 0;
   for (const tabId of ids) {
     let tab;
     try {
       tab = await chrome.tabs.get(tabId);
       if (tab.incognito || (tab.url && !ordinaryUrl(tab.url))) {
-        results.push({tabId,title:tab.title || 'Restricted page',url:tab.url || '',status:'unsupported',count:0,
+        results.push({tabId,title:tab.title || 'Restricted page',url:tab.url || '',status:'unsupported',count:0,leftOut:0,skipped:0,
           warning:'Browser-internal pages, the Chrome Web Store, and incognito pages cannot be captured.',error:''});
         continue;
       }
@@ -85,18 +88,24 @@ async function captureTabs(tabIds,callerTabId) {
       const [{result}] = await chrome.scripting.executeScript({target:{tabId},func:() => globalThis.__linkMeteor.scan()});
       const after = await chrome.tabs.get(tabId);
       if (tab.url && after.url !== tab.url) throw new Error('The tab navigated during capture; retry on the new page.');
-      const links = occurrences(result.links, tab, batchId);
-      if (links.length) state = await mutate({type:'links.append',collectionId,links});
-      capturedCount += links.length;
-      results.push({tabId,title:tab.title || '',url:tab.url || '',status:'success',count:links.length,
+      const found = occurrences(result.links, tab, batchId);
+      const pageChrome = found.map((_, i) => contentOnly && result.links[i]?.pageChrome === true);
+      const links = found.filter((_, i) => !pageChrome[i]), leftOut = found.filter((_, i) => pageChrome[i]);
+      let count = 0, skipped = 0;
+      if (links.length) ({state, count, skipped} = await appendLinks(links,{collectionId,missing:'The active collection was deleted during the capture, so nothing was saved from this page.'}));
+      leftOutLinks.push(...leftOut.slice(0,Math.max(0,LEFT_OUT_LIMIT - leftOutLinks.length)));
+      leftOutTotal += leftOut.length;
+      capturedCount += count;
+      results.push({tabId,title:tab.title || '',url:tab.url || '',status:'success',count,leftOut:leftOut.length,skipped,
         warning:(result.warnings || []).join(' '),error:''});
       await rememberTarget(tab).catch(() => {});
     } catch (error) {
       const message = String(error.message || error);
-      results.push({tabId,title:tab?.title || 'Unavailable page',url:tab?.url || '',status:/permission|access.*contents|host permission/i.test(message)?'denied':'error',count:0,warning:'',error:message});
+      results.push({tabId,title:tab?.title || 'Unavailable page',url:tab?.url || '',status:/permission|access.*contents|host permission/i.test(message)?'denied':'error',count:0,leftOut:0,skipped:0,warning:'',error:message});
     }
   }
   const report = {batchId,results,capturedCount};
+  await keepLeftOut({batchId,collectionId,links:leftOutLinks,total:leftOutTotal});
   await chrome.storage.session.set({linkMeteorCaptureReport:{report,createdAt:new Date().toISOString()}}).catch(() => {});
   return {state,report};
 }
@@ -122,6 +131,7 @@ async function handle(message, sender) {
     case 'state.mutate': return mutate(message.action);
     case 'tabs.list': return inventory(sender.tab?.id);
     case 'capture.run': return captureTabs(message.tabIds,sender.tab?.id);
+    case 'capture.includeLeftOut': return includeLeftOut(message);
     case 'capture.arm': return arm(message.tabId,sender.tab?.id);
     case 'links.open': return openUrls(message,{notify:update => chrome.runtime.sendMessage(update).catch(() => {})});
     case 'links.cancel': return cancelOpen(message);

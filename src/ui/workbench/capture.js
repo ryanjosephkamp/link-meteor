@@ -171,11 +171,11 @@ export const REPORT_STATUS = {
 
 export function syncReportAction() {
   const box = $('capture-report');
-  const previous = box.querySelector('.report-actions');
+  const previous = box.querySelector('.report-actions:not(.report-left-out)');
   const hadFocus = previous?.contains(document.activeElement);
   previous?.remove();
   const report = ui.displayedReport;
-  if (!report?.capturedCount || !currentCollection()?.links.some((link) => link.batchId === report.batchId)) return;
+  if (!(report?.capturedCount || report?.leftOutIncluded) || !currentCollection()?.links.some((link) => link.batchId === report.batchId)) return;
   const actions = node('div', 'report-actions');
   const only = node('button', 'link-btn', ui.batchFilter === report.batchId ? 'Show all links' : 'Show only these links'); only.type = 'button';
   only.addEventListener('click', () => {
@@ -203,6 +203,47 @@ async function allowAllSites() {
   render();
   show('Link Meteor now works on all sites. Capturing this page again.');
   await runCapture();
+}
+
+// Content links only (0.4.0): how many navigation links the capture left out, with Include them,
+// which adds them to the collection the capture went to (capture.includeLeftOut). Also how many links
+// Skip saved left out.
+function reportLeftOut(box, report) {
+  const results = report.results || [];
+  const total = (key) => results.reduce((sum, result) => sum + (Number(result[key]) || 0), 0);
+  const leftOut = total('leftOut'), skipped = total('skipped');
+  if (!leftOut && !skipped) return;
+  const line = node('p', 'report-actions report-left-out');
+  const text = node('span', '');
+  const say = (parts) => { text.textContent = parts.filter(Boolean).join(' '); };
+  const skippedText = skipped ? `Skipped ${plural(skipped, 'link')} already saved.` : '';
+  line.append(text);
+  if (!leftOut) say([skippedText]);
+  else if (report.leftOutIncluded !== undefined) say([`Included ${plural(report.leftOutIncluded, 'navigation link')}.`, skippedText]);
+  else {
+    say([`Left out ${plural(leftOut, 'navigation link')}.`, skippedText]);
+    const include = button('Include them', 'link-btn');
+    include.addEventListener('click', () => action(async () => {
+      include.disabled = true;
+      try {
+        const result = await request({ type: 'capture.includeLeftOut', batchId: report.batchId });
+        report.leftOutIncluded = result.count;
+        ui.flashBatch = report.batchId; ui.flashStart = Date.now();
+        ui.state = result.state; render();
+        include.remove();
+        say([`Included ${plural(result.count, 'navigation link')}.`, skippedText]);
+        const parts = [`Added ${plural(result.count, 'navigation link')} to “${result.name}”.`];
+        if (result.skipped) parts.push(`${plural(result.skipped, 'link')} already saved ${result.skipped === 1 ? 'was' : 'were'} skipped.`);
+        if (result.total > result.count + result.skipped) parts.push(`Link Meteor keeps at most ${count(result.count + result.skipped)} left-out links per capture; capture again with navigation links included for the rest.`);
+        show(parts.join(' '));
+        syncReportAction();
+        // The Include button is gone; focus moves to the report's own action.
+        box.querySelector('.report-actions:not(.report-left-out) button')?.focus({ preventScroll: true });
+      } catch (error) { include.disabled = false; throw error; }
+    }));
+    line.append(' ', include);
+  }
+  box.append(line);
 }
 
 export function captureReport(report, { source = 'workbench', key = '', createdAt = '', reasons = new Map(), offerAllSites = new Set() } = {}) {
@@ -234,6 +275,9 @@ export function captureReport(report, { source = 'workbench', key = '', createdA
     item.append(icon(empty ? 'i-minus' : kind.icon), node('span', 'page', result.title || result.url || `Tab ${result.tabId}`), node('span', 'status', kind.label(result)));
     if (empty && !result.warning) item.append(node('span', 'detail', 'The page loaded, but it has no links Link Meteor can read.'));
     if (result.status === 'denied') item.append(node('span', 'detail', reasons.get(result.tabId) || 'Link Meteor does not have access to this site. Capture it again to be asked, or click the Link Meteor toolbar icon while on the page. If Chrome’s site access for Link Meteor (in the Extensions menu, the puzzle-piece icon) is set to “On click” or blocks this site, change it there.'));
+    // Per page only when there are several; the report's own line gives the totals.
+    if (result.leftOut && results.length > 1) item.append(node('span', 'detail', `Left out ${plural(result.leftOut, 'navigation link')}.`));
+    if (result.skipped && results.length > 1) item.append(node('span', 'detail', `Skipped ${plural(result.skipped, 'link')} already saved.`));
     if (result.warning) item.append(node('span', `detail${result.status === 'success' ? ' warn' : ''}`, result.warning));
     if (result.error) item.append(node('span', 'detail', result.status === 'denied' ? `Chrome: ${result.error}` : result.error));
     if (result.status === 'denied' && offerAllSites.has(result.tabId)) {
@@ -245,6 +289,7 @@ export function captureReport(report, { source = 'workbench', key = '', createdA
   }
   if (!results.length) list.append(node('li', 'report-item error', 'No tab results were returned.'));
   if (list.childNodes.length) box.append(list);
+  reportLeftOut(box, report);
   syncReportAction();
 }
 

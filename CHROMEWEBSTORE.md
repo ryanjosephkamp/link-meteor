@@ -1,8 +1,8 @@
 # Chrome Web Store Listing — Link Meteor
 
-> Last Updated: 2026-09-26
+> Last Updated: 2026-09-27
 >
-> **Status: draft.** Link Meteor is not on the Chrome Web Store yet. Submission is planned after version 0.3.0. Items marked **[Planned 0.3.0]** describe work in progress and must be checked against the released build, then kept or removed, before submission. This file is not part of the extension package.
+> **Status: draft.** Link Meteor is not on the Chrome Web Store yet. Submission is planned after the 0.3.0 release. The 0.3.0 features described here are built and tested in automation; the owner's hands-on check and the release come first, so check this text against the released build before submitting. This file is not part of the extension package.
 
 ## Store Listing
 
@@ -18,7 +18,7 @@ Capture links with their anchor text, organize local research collections, and e
 
 **Detailed Description** [REQUIRED]
 
-(Plain text for the dashboard. Remove the bracketed planned markers once each feature has shipped and been checked.)
+(Plain text for the dashboard. Check each feature against the released build before submitting.)
 
 ```text
 Link Meteor collects the links on web pages you choose, keeping each link's visible text, its exact address and the page it came from, so you can review them and export them your way.
@@ -31,11 +31,11 @@ WHAT IT DOES
 • Save named collections with notes and tags, kept in this browser only.
 • Export to Excel (.xlsx), CSV, TSV, Markdown, HTML, JSON or a plain URL list, or copy as a two-column table ready to paste into a spreadsheet. Cells that look like formulas stay plain text.
 • Save links as a bookmark folder, or open them in tabs.
-• [Planned 0.3.0] Hold a key and drag on any site: after one optional choice to allow Link Meteor on all sites, hold Z (or any letter, or Command on a Mac and Ctrl elsewhere) and drag. Add sites where it should never run.
-• [Planned 0.3.0] More on the capture card: open the selection in tabs, a new window or a tab group, copy it as Markdown or URLs, download it, or choose which collection it goes to.
-• [Planned 0.3.0] Export file names with the date and time, a name field for each export, and formatted Excel workbooks with an About sheet.
-• [Planned 0.3.0] Save bookmarks into an existing folder, skipping links already there.
-• [Planned 0.3.0] Back up every collection and setting to one file, and restore it on this or another computer, merged or replacing what is there, with Undo.
+• Hold a key and drag on any site: after one optional choice to allow Link Meteor on all sites, hold Z (or any letter, or Command on a Mac and Ctrl elsewhere) and drag. Add sites where it should never run.
+• More on the capture card: open the selection in tabs, a new window or a tab group, copy it as Markdown or URLs, download it, or choose which collection it goes to.
+• Export file names with the date and time, a name field for each export, and formatted Excel workbooks with an About sheet.
+• Save bookmarks into an existing folder, skipping links already there.
+• Back up every collection and setting to one file, and restore it on this or another computer, merged or replacing what is there, with Undo.
 
 HOW TO USE
 1. Click the Link Meteor icon in the toolbar to open the side panel.
@@ -49,8 +49,8 @@ Everything stays in your browser. Link Meteor has no account, no server, no anal
 PERMISSIONS
 • Access to the page you're on: only when you click the icon, use the shortcut or choose Link Meteor in the right-click menu.
 • Your open tabs: asked only when you choose to capture tabs, so you can pick them.
-• Bookmarks: asked only when you save a bookmark folder.
-• [Planned 0.3.0] All sites: asked once, only if you choose "Allow on all sites" so hold-key drag and page capture work everywhere. You can decline and allow sites one at a time instead.
+• Bookmarks: asked only when you save a bookmark folder or choose an existing one.
+• All sites: asked once, only if you choose "Allow on all sites" so hold-key drag and page capture work everywhere. You can decline and allow sites one at a time instead.
 
 SUPPORT
 Report a bug or suggest a feature: https://github.com/ryanjosephkamp/link-meteor/issues
@@ -90,7 +90,7 @@ Take them from the released 0.3.0 build in a task-owned test profile, on the pra
 2. The side panel beside a page, showing a collection with anchor text, URL and source columns.
 3. The Export panel with the format list, columns and the file name field.
 4. A grouped view with one row's source occurrences expanded, showing that repeated links are kept.
-5. [Planned 0.3.0] The welcome card with "Allow on all sites (recommended)" and "Choose sites later".
+5. The welcome card with "Allow on all sites (recommended)" and "Choose sites later".
 
 The site's existing product screenshots are not 1280×800 and show 0.2.2; they are not reused.
 
@@ -107,10 +107,10 @@ Each reason names the feature that uses the permission and when it is used. Chro
 | `contextMenus` | permissions | Adds "Link Meteor: select a region" and "Link Meteor: collect this page" to the right-click menu on pages. |
 | `clipboardWrite` | permissions | Copies the links the person selected, as a two-column table, URLs or Markdown, when they press a Copy button on the capture card or in the workbench. On the capture card the copy completes after Link Meteor formats the links, which can outlast the page's normal click window, so the permission keeps an explicit Copy press from failing. Link Meteor never reads the clipboard. |
 | `tabs` | optional permissions | Requested only when the person chooses the Pick tabs, This window or All windows capture scope. Link Meteor then lists open tabs' titles and addresses so the person can choose which pages to capture, and records each result's source page. Declining keeps page and region capture working. |
-| `bookmarks` | optional permissions | Requested only when the person presses Bookmark in the Export panel. Link Meteor creates the bookmark folder they named, containing the selected web links. [Planned 0.3.0] When saving into an existing folder, it also reads bookmark folder names to show the folder picker, and the chosen folder's links to skip ones already there. It never changes or removes other bookmarks. |
-| `http://*/*`, `https://*/*` | optional host permissions | Never requested at install. Today Chrome asks for one site at a time: for the sites of tabs the person chose to capture, or the one site where they turn on hold-key drag. [Planned 0.3.0] The person can also make one explicit choice, "Allow on all sites (recommended)" on the first-run welcome card or the matching settings switch, so hold-key drag, Capture this page and multi-tab capture work on any site without a prompt per site. They can exclude sites with a "Never on these sites" list, turn it off, or decline and keep the per-site route. On any site, Link Meteor reads link text and addresses only when the person captures or drags. It never sends page content anywhere: its own pages block all network connections. |
-| `tabGroups` | optional permissions | **[Planned 0.3.0]** Requested only when the person first chooses to open selected links as a tab group. It names the group after their collection so a large batch stays together and closes in one step. Without it, the tabs still open. |
-| `unlimitedStorage` | permissions | **[Planned 0.3.0]** Lets large research collections, and the one-step Undo kept after restoring a backup, grow past Chrome's default 10 MB extension storage limit. The data stays on the person's computer. |
+| `bookmarks` | optional permissions | Requested only when the person presses Bookmark in the Export panel or chooses to save into an existing folder. Link Meteor creates the bookmark folder they named, containing the selected web links. When saving into an existing folder, it also reads bookmark folder names to show the folder picker, and the chosen folder's links to skip ones already there. It never changes or removes other bookmarks. |
+| `http://*/*`, `https://*/*` | optional host permissions | Never requested at install. By default Chrome asks for one site at a time: for the sites of tabs the person chose to capture, for the current page when Capture this page has lost its temporary access, or for the one site where they turn on hold-key drag. The person can instead make one explicit choice, "Allow on all sites (recommended)": on the first-run welcome card, the matching Site access switch, or a capture result where Chrome hid the page from Link Meteor, so hold-key drag, Capture this page and multi-tab capture work on any site without a prompt per site. They can exclude sites with a "Never on these sites" list, turn it off, or decline and keep the per-site route. On any site, Link Meteor reads link text and addresses only when the person captures or drags. It never sends page content anywhere: its own pages block all network connections. |
+| `tabGroups` | optional permissions | Requested only when the person first chooses to open selected links as a tab group. It names the group after their collection so a large batch stays together and closes in one step. Without it, the tabs still open. |
+| `unlimitedStorage` | permissions | Lets large research collections, and the one-step Undo kept after restoring a backup, grow past Chrome's default 10 MB extension storage limit. The data stays on the person's computer. |
 
 Manifest notes for reviewers: `incognito` is `not_allowed`; there are no required host permissions; `optional_host_permissions` covers only `http://*/*` and `https://*/*`; the one keyboard command (`select-region`, suggested Alt+Shift+L) starts region selection; extension pages use the content security policy `script-src 'self'; object-src 'none'; base-uri 'none'; connect-src 'none'`.
 
@@ -189,7 +189,7 @@ Versions 0.1.0 to 0.2.2 were distributed only as a ZIP for Load unpacked and wer
 2. Click the Link Meteor toolbar icon. The side panel opens.
 3. Choose Select a region, drag across a section, and compare the count on the capture card with the section's answer.
 4. Choose Add to collection, then review, filter and export the links from the side panel.
-5. [Planned 0.3.0] On the welcome card, choose "Allow on all sites (recommended)", then hold Z and drag on any page.
+5. On the welcome card, choose "Allow on all sites (recommended)", then hold Z and drag on any page.
 
 ### Known Issues / Limitations
 

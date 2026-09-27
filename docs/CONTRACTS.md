@@ -79,9 +79,9 @@ Element IDs used by the browser suites are stable: `#collection-heading`, `#new-
 
 About and help (0.2.2): `#about-panel` is a `<details>` disclosure in the rail, closed by default, with `#about-summary`, `#about-version` and `#about-version-full` (both read from the manifest). `#help-toggle` in the header opens it; below 900 px it first switches to the collections view, then focuses `#about-summary`. Its six links (personal site, guide, issues, website, source, Sponsors) are ordinary `target=_blank rel="noopener noreferrer"` links. It adds no permission, message type or storage key.
 
-## Planned for 0.3.0
+## Added in 0.3.0
 
-Everything in this section is a contract for work in progress, not a shipped feature. [ACCEPTANCE.md](ACCEPTANCE.md) records what a release actually contains. Where a planned contract changes an existing message, the existing description above stays accurate for 0.2.2 until the change ships.
+These contracts were written before 0.3.0 was built and are now implemented on the 0.3.0 build, not yet released. [ACCEPTANCE.md](ACCEPTANCE.md) records what a release contains and how it was tested. Where 0.3.0 changes an existing message, the description above stays accurate for 0.2.2 and this section describes 0.3.0.
 
 ### Settings: additive schema-v1 fields
 
@@ -187,8 +187,8 @@ These keep the envelope and sender rules of the Browser message API above. "Work
 
 - Backing up needs no message. The workbench builds the file from its loaded state with `createBackup` and downloads it like an export.
 - The restore preview needs no message. The workbench reads the file, calls `planRestore` for merge and for replace, and shows both summaries. It also names hold-drag sites that would need Chrome's access again.
-- `backup.restore`, `{backup, mode:'merge'|'replace'}` => `{state, summary}`. Workbench. Validates, plans and saves inside the state queue. The new state and the Undo snapshot are saved in one storage write through `writeState`, at local key `linkMeteorRestoreUndo`: `{createdAt, summary, before:State}`. A failure changes nothing.
-- `backup.undo` => `{state}`. Workbench. Puts back `before` only while the saved state is still the one the restore wrote; otherwise it reports that Link Meteor changed since, and keeps both. Undo clears the snapshot.
+- `backup.restore`, `{backup, mode:'merge'|'replace'}` => `{state, summary}`. Workbench. Validates, plans and saves inside the state queue. The new state and the Undo snapshot are saved in one storage write through `writeState`, at local key `linkMeteorRestoreUndo`: `{createdAt, summary, before:State, written}`. `written` lets Undo check that the saved state is still the one the restore wrote: `{fingerprint, holdOrigins, holdScope}`, where `fingerprint` is a SHA-256 of the saved state as canonical JSON without those two fields. A failure changes nothing.
+- `backup.undo` => `{state}`. Workbench. Puts back `before` only while the saved state is still the one the restore wrote; otherwise it reports that Link Meteor changed since, and keeps both. The background's own access upkeep does not count as a change. That upkeep only removes hold-drag sites that Chrome no longer grants, in order, or sets `holdScope` back to `'sites'`. Adding a site or turning all-sites mode on does count. Undo clears the snapshot.
 - `backup.status` => `{undo: null | {createdAt, summary}}`. `backup.discardUndo` => `{}`. The snapshot is also replaced by the next restore.
 - The required `unlimitedStorage` permission raises Chrome's 10 MB extension storage limit, so large collections and the Undo snapshot fit. It shows no prompt.
 
@@ -196,14 +196,43 @@ These keep the envelope and sender rules of the Browser message API above. "Work
 
 - No new messages. On a single page the page checkbox is labeled "Select all". With more than one page, a "Select all N" button is always visible. "Remove all in this view" asks for inline confirmation, then sends `links.remove` with every occurrence in the view, keeping the existing Undo. "Empty this collection" in the collection editor does the same for every link in the collection.
 
+### Details settled while building
+
+**Access and capture**
+
+- `capture.open` also takes `collectionId?`, the card's destination, used for the group title, and `requestId?`. Its `links.progress` notifications go to the sender tab. `links.cancel` is accepted from a page only for openings that tab started.
+- `settings.get` reports `holdScope: 'sites'` while Chrome no longer grants all sites; the saved value is corrected by the next access upkeep.
+- `capture.commit` with `review: true` stores the open intent `{view:'links', batchId}`, so the full view shows that capture.
+- Hold-drag with the modifier: Chrome starts a native link or image drag after 4 pixels, before the 6-pixel threshold, so `dragstart` is cancelled while a modifier press may still become a selection. No other page event is cancelled before 6 pixels.
+- A `hold.*` request whose settings were saved but whose script registration Chrome refused returns an error saying the settings were saved; open tabs are still reconfigured.
+- With the tabs permission, the workbench checks whether the current page can be read by running an empty script there. Without it, a visible address already means the page is readable.
+- Page scripts listen for saved changes only while a capture card is open; hold settings reach open tabs through `content.configure`.
+- *Capture this page* when Chrome hides the tab's address, with no tabs permission and no site access: there is no single site to ask for. The capture still runs and is reported as denied with the reason. The result also offers "Allow on all sites": the welcome card's request, asked in that click. If Chrome grants it, the scope becomes `'all'`, `welcomeSeen` becomes true and the page is captured again.
+
+**Exports and bookmarks**
+
+- `bookmarks.folders` paths run from the top-level folder down to and including the folder itself. An untitled folder appears as "(untitled folder)" in `path`, while its `title` stays empty. Folders Chrome manages by policy can't be written, so they and their subfolders are left out.
+- The JSON `about` block is `{exportedAt (UTC ISO), exportedAtLocal (ISO with milliseconds and offset), collection, count, view, filters, version}`. It leaves out `columns`, because JSON keeps every field.
+- In `about`, only `exportedAt` and `collection` are required. `count` defaults to the row count, `columns` to the export columns, `view` and `version` to empty, and `filters` to none.
+- The About sheet also has a "Cells" row. It adds a "Clickable links" row only past Excel's 65,530 hyperlinks per sheet. An address longer than 2,079 characters stays exact text without a link.
+- A typed file name stays in the field for later downloads until it is cleared or the collection changes. Changing the format moves a typed matching extension to the new one.
+- "Skip links already in that folder" also applies to a new folder, where it skips repeats within one save. The Bookmark button then counts distinct web links.
+- `core/export.js` also exports `FORMAT_EXTENSIONS`, the file extension for each format.
+
+**Backup and restore**
+
+- Replace takes its confirmation from the restore preview, with Undo afterwards; there is no second "are you sure".
+- Backup files are compact one-line JSON, so about 80,000 links fit under the 50 MB restore limit. A larger backup still downloads, with a warning that it can't be restored in one step.
+- The backup file name keeps its date and time even when export names leave them out.
+
 ### Storage keys
 
 | Area | Key | Contents |
 | --- | --- | --- |
 | local | `linkMeteorState` | State (unchanged). |
-| local | `linkMeteorRestoreUndo` | Planned: the restore Undo snapshot above. |
+| local | `linkMeteorRestoreUndo` | The restore Undo snapshot above. |
 | session | `linkMeteorTarget`, `linkMeteorCaptureReport`, `linkMeteorCaptureReportDismissed`, `linkMeteorActivationError` | Unchanged. |
-| session | `linkMeteorOpenIntent` | Planned: `{view, batchId, createdAt}` from `ui.open`. |
+| session | `linkMeteorOpenIntent` | `{view, batchId, createdAt}` from `ui.open`, or from Review on the capture card. |
 
 ### Permissions
 
@@ -217,13 +246,32 @@ Every permission also needs a reason in the UI, in [PRIVACY.md](PRIVACY.md) and 
 
 ### Stable element IDs for 0.3.0 suites
 
-Mount points already in `ui/workbench.html`, hidden and empty until built: `#welcome` (top of the main column) and `#backup-panel` (in the rail, before About and help). Planned IDs:
+Suites may rely on these IDs; renaming one is a contract change.
 
-- Welcome and access: `#welcome-allow`, `#welcome-later`, `#all-sites`, `#hold-trigger`, `#hold-exceptions`, `#site-exception`.
-- Opening: `#open-confirm` and `#open-confirm-yes` (existing), `#open-confirm-window`, `#open-confirm-group`, `#open-cancel-progress`.
-- Export: `#export-name`, `#name-prefix`, `#name-timestamp`, `#name-timestamp-format`, `#bookmark-mode`, `#bookmark-folder`, `#bookmark-skip-existing`.
-- Backup: `#backup-download`, `#backup-file`, `#restore-preview`, `#restore-merge`, `#restore-replace`, `#restore-cancel`, `#restore-undo`.
-- Review: `#select-all` and `#select-everything` (existing), `#remove-view`, `#remove-view-confirm`, `#empty-collection`, `#empty-confirm`.
+- **Welcome card** (`#welcome`, top of the main column): `#welcome-ask`, `#welcome-title`, `#welcome-key`, `#welcome-allow`, `#welcome-later`, `#welcome-close`, `#welcome-outcome`, `#welcome-outcome-text`, `#welcome-done`.
+- **Site access** (the rail's site section):
+  - all sites: `#all-sites`, `#all-sites-help`, `#all-sites-note`, `#all-sites-remove`, `#all-sites-remove-text`, `#all-sites-remove-yes`, `#all-sites-remove-no`;
+  - this site: `#site-hold-row`, `#site-exception-row`, `#site-exception`, `#site-exception-help`;
+  - hold key: `#hold-trigger`, `#hold-trigger-help`, `#hold-letter-row`;
+  - exceptions: `#exceptions-title`, `#exception-count`, `#hold-exceptions` (list items `.exception-item`), `#hold-exceptions-empty`.
+- **Capture:** `#scope-access-help`. A denied result offering all sites has a `.report-allow` button.
+- **Opening links:**
+  - `#open-confirm`, `#open-confirm-yes` (both existing), `#open-confirm-window`, `#open-confirm-group`; `.open-confirm-strong` marks the stronger wording above 100;
+  - `#open-window`, `#open-group`, `#open-group-help`;
+  - `#open-progress`, `#open-progress-text`, `#open-progress-bar`, `#open-cancel-progress`.
+- **Export names:** `#export-name`, `#export-name-help`, `#name-settings`, `#name-prefix`, `#name-prefix-help`, `#name-timestamp`, `#name-timestamp-format`, `#name-pattern`.
+- **Bookmarks:**
+  - `#bookmark-mode`, a radio group: `#bookmark-mode input[value=new|existing]`, with `#bookmark-new` and `#bookmark-existing`;
+  - `#bookmark-folder-search`, `#bookmark-folder`, `#bookmark-folder-status`, `#bookmark-skip-existing`, `#bookmark-help`.
+- **Backup** (`#backup-panel`, in the rail before About and help): `#backup-title`, `#backup-help`, `#storage-help`, `#backup-download`, `#backup-file`.
+- **Restore:**
+  - preview: `#restore-preview`, `#restore-title`, `#restore-source`, `#restore-modes`, `#restore-merge`, `#restore-replace`, `#restore-cancel`;
+  - after a restore: `#restore-status`, `#restore-status-text`, `#restore-status-help`, `#restore-undo`, `#restore-discard`.
+- **Review:**
+  - existing: `#select-all`, `#select-everything`;
+  - new: `#select-all-label`, `#remove-view`, `#empty-undo`;
+  - Remove all in this view: `#remove-view-confirm`, `#remove-view-confirm-text`, `#remove-view-confirm-yes`, `#remove-view-confirm-no`;
+  - Empty this collection: `#empty-collection`, `#empty-confirm`, `#empty-confirm-text`, `#empty-confirm-yes`, `#empty-confirm-no`.
 
 ## Code layout (0.3.0)
 
@@ -237,16 +285,23 @@ The workbench entry `ui/workbench.js` binds each area and runs start-up in a fix
 | `collections.js` | The header, the rail list, create, switch, edit and delete. |
 | `review.js` | Filters, the link list, occurrence details, selection, removal and Undo, and `targetRows()`/`requiredRows()`, the rows an action uses. |
 | `capture.js` | Scope and tab inventory, running a capture and the capture report. |
-| `open.js` | Opening links, with confirmation. |
+| `open.js` | Opening links: confirmation tiers, new window, tab group, progress and Cancel. |
 | `export.js` | Format, columns, the export target, downloads and copies. |
 | `bookmarks.js` | Bookmark folders. |
-| `settings.js` | Hold key, this site and the region shortcut. |
+| `settings.js` | Site access: all sites, this site, exceptions, the hold trigger and key, and the region shortcut. |
+| `access.js` | Pure access and opening rules shared by the access modules: `ALL_SITES`, the 20/100/500 tiers, the hold gesture's name, page-access planning. |
+| `welcome.js` | The first-run welcome card. |
+| `names.js` | The File name field and the name pattern settings. |
+| `backup.js` | Backing up, the restore preview, restore and its Undo. |
 | `about.js` | Version and help. |
 
-The service worker entry `background.js` owns capture, hold-key registration, opening links and Chrome events. Shared pieces live in `background/`:
+The service worker entry `background.js` owns capture, routing and Chrome events. The rest lives in `background/`:
 
 - `store.js`: the serialized state queue, `readState`, `mutate`, `writeState(previous, next, extra)` and `onStateWritten(listener)`.
 - `urls.js`: URL rules.
-- `bookmarks.js` and `backup.js`: each exports `workbenchMessages`, a table of workbench-only message handlers. The entry routes them and refuses a type claimed twice.
+- `hold.js`: hold-key registration, the access upkeep that follows saved writes and permission changes, and its `hold.*` messages.
+- `open.js`: opening links in batches, with progress and Cancel.
+- `card.js`: the capture card's messages and the open intent.
+- `bookmarks.js`, `backup.js` and `hold.js` each export `workbenchMessages`, a table of workbench-only message handlers. The entry routes them and refuses a type claimed twice.
 
 The release contains the fixed files named in `scripts/release-files.mjs`, plus any `.js` or `.css` modules in `ui/workbench/` and `background/`. Any other file in `src/` stops the build.

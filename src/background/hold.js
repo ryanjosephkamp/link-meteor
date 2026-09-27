@@ -120,10 +120,15 @@ export async function syncHold({inject = []} = {}) {
   return state;
 }
 
-let pendingSync = null;
+let pendingSync = null, pendingInject = [];
 // Queues one sync after the current hold operation; requests made before it starts share it.
-export function requestSync() {
-  if (!pendingSync) pendingSync = serialHold(() => { pendingSync = null; return syncHold(); });
+export function requestSync({inject = []} = {}) {
+  pendingInject = pendingInject === 'all' || inject === 'all' ? 'all' : [...new Set([...pendingInject, ...inject])];
+  if (!pendingSync) pendingSync = serialHold(() => {
+    const inject = pendingInject;
+    pendingSync = null; pendingInject = [];
+    return syncHold({inject});
+  });
   return pendingSync.catch(() => {});
 }
 

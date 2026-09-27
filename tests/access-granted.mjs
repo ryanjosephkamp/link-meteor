@@ -26,7 +26,7 @@ try {
   const run = await launch(profile, {headless: process.env.LINK_METEOR_HEADED !== '1'});
   context = run.context;
   for (const old of context.pages()) await old.close();
-  const ui = await context.newPage();
+  let ui = await context.newPage();
   await ui.goto(`chrome-extension://${run.id}/ui/workbench.html`); await ui.locator('#collection-heading').waitFor();
   const grants = await ui.evaluate(() => chrome.permissions.getAll());
   result.grants = grants;
@@ -64,6 +64,23 @@ try {
   const after = await ui.evaluate(() => chrome.permissions.getAll());
   assert.deepEqual(after.origins.sort(), grants.origins.sort(), 'no new site grant was needed');
   pass('Hold-drag works on a second origin with no per-site grant and no prompt', {origin: localhost});
+
+  // Restart with this page open: startup must replace and configure its disconnected script.
+  await page.evaluate(() => { window.__keep = 1; });
+  const restarted = context.waitForEvent('serviceworker', {timeout: 15000});
+  await ui.evaluate(() => { setTimeout(() => chrome.runtime.reload(), 0); });
+  await restarted;
+  ui = await context.newPage();
+  await ui.goto(`chrome-extension://${run.id}/ui/workbench.html`); await ui.locator('#collection-heading').waitFor();
+  await ui.evaluate(() => { window.__requests = []; const original = chrome.permissions.request.bind(chrome.permissions); chrome.permissions.request = (request) => { window.__requests.push(request); return original(request); }; });
+  await sleep(800);
+  await drag('z', await bibliography());
+  await until(async () => (await overlay.locator('.count').innerText().catch(() => '')) === '5 links selected', 'hold-drag after extension restart');
+  assert.equal(await overlay.count(), 1);
+  assert.equal(await page.evaluate(() => window.__keep), 1, 'the fixture page was not reloaded');
+  await page.keyboard.press('Escape');
+  assert.equal(await overlay.count(), 0);
+  pass('After chrome.runtime.reload(), hold-drag works on the already-open page without reloading it');
 
   // The modifier trigger on a real page: drag selects, a plain modifier-click opens the link.
   await rpc(ui, {type: 'hold.settings', trigger: 'modifier'});
@@ -169,9 +186,7 @@ try {
   await until(() => ui.locator('#all-sites-remove').isVisible(), 'offer to remove Chrome’s grant');
   await ui.locator('#all-sites-remove-no').click();
   assert.match(await ui.locator('#all-sites-note').innerText(), /Chrome still lets Link Meteor read every site/);
-  // Click, then wait for the saved outcome. check() would also require the switch to stay on during the
-  // save, but a render in that moment currently shows the saved state (a known, recorded flicker).
-  await ui.locator('#all-sites').click();
+  await ui.locator('#all-sites').check();
   await until(async () => (await rpc(ui, {type: 'state.get'})).settings.holdScope === 'all' && await ui.locator('#all-sites').isChecked(), 'all sites again');
   pass('The switch turns all-sites off (offering to remove Chrome’s grant) and on again');
 

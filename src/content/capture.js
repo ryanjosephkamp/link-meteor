@@ -1,5 +1,25 @@
 (() => {
-  if (globalThis.__linkMeteor) return;
+  if (globalThis.__linkMeteor?.alive?.()) return;
+  globalThis.__linkMeteor?.dispose?.();
+  const listeners = [];
+  function listen(target, type, listener, options) {
+    target.addEventListener(type, listener, options);
+    listeners.push({target, type, listener, options});
+  }
+  function unlisten(target, type, listener, options) {
+    target.removeEventListener(type, listener, options);
+    const index = listeners.findIndex(item => item.target === target && item.type === type && item.listener === listener);
+    if (index !== -1) listeners.splice(index, 1);
+  }
+  function alive() {
+    try { return !!chrome.runtime?.id; } catch { return false; }
+  }
+  function dispose() {
+    active?.close();
+    for (const {target, type, listener, options} of listeners.splice(0)) target.removeEventListener(type, listener, options);
+    try { chrome.runtime.onMessage.removeListener(onMessage); } catch { /* extension reloaded */ }
+    held=false;holdEnabled=false;pressStart=null;
+  }
   const MAX_LINKS = 20000;
   // The card lists at most this many links for unticking; the rest stay included.
   const PREVIEW_LIMIT = 1000;
@@ -136,10 +156,10 @@
   function suppressNextClick() {
     const stop = event => { event.preventDefault(); event.stopImmediatePropagation(); done(); };
     const release = () => setTimeout(done,0);
-    function done() { window.removeEventListener('click',stop,true); window.removeEventListener('pointerup',release,true); window.removeEventListener('pointercancel',release,true); }
-    window.addEventListener('click',stop,true);
-    window.addEventListener('pointerup',release,true);
-    window.addEventListener('pointercancel',release,true);
+    function done() { unlisten(window,'click',stop,true); unlisten(window,'pointerup',release,true); unlisten(window,'pointercancel',release,true); }
+    listen(window,'click',stop,true);
+    listen(window,'pointerup',release,true);
+    listen(window,'pointercancel',release,true);
   }
 
   function arm(startEvent, current) {
@@ -225,7 +245,7 @@
     for(const button of shadow.querySelectorAll('button[data-key]'))button.setAttribute('aria-keyshortcuts',button.dataset.key.toUpperCase());
 
     function close() {
-      if(frame)cancelAnimationFrame(frame);document.removeEventListener('keydown',escape,true);try{chrome.storage.onChanged.removeListener(followState);}catch{/* extension reloaded */}host.remove();if(active===state)active=null;held=false;
+      if(frame)cancelAnimationFrame(frame);unlisten(document,'keydown',escape,true);try{chrome.storage.onChanged.removeListener(followState);}catch{/* extension reloaded */}host.remove();if(active===state)active=null;held=false;
     }
     // Only an open card follows saved changes (its destination); a page without one never
     // receives the whole saved state on every change, even with all-sites access.
@@ -240,7 +260,7 @@
       if(!$('.pick').hidden){togglePicker(false);return;}
       close();
     }
-    document.addEventListener('keydown',escape,true);
+    listen(document,'keydown',escape,true);
     $('.cancel').onclick=close;$('.dismiss').onclick=close;
 
     function begin(event, now) {
@@ -511,16 +531,16 @@
   async function configure() {
     try{configureFrom(await request({type:'settings.get'}));}catch{holdEnabled=false;}
   }
-  document.addEventListener('keydown',event=>{if(holdEnabled&&holdTrigger==='letter'&&!event.repeat&&!event.ctrlKey&&!event.metaKey&&!event.altKey&&!editable(event)&&event.key.toLowerCase()===holdKey)held=true;},true);
-  document.addEventListener('keyup',event=>{if(event.key.toLowerCase()===holdKey)held=false;},true);
-  window.addEventListener('blur',()=>{held=false;pressStart=null;});
-  document.addEventListener('pointerdown',event=>{
+  listen(document,'keydown',event=>{if(holdEnabled&&holdTrigger==='letter'&&!event.repeat&&!event.ctrlKey&&!event.metaKey&&!event.altKey&&!editable(event)&&event.key.toLowerCase()===holdKey)held=true;},true);
+  listen(document,'keyup',event=>{if(event.key.toLowerCase()===holdKey)held=false;},true);
+  listen(window,'blur',()=>{held=false;pressStart=null;});
+  listen(document,'pointerdown',event=>{
     pressStart=null;
     if(!holdEnabled||active||event.button!==0||!event.isPrimary||editable(event))return;
     if(holdTrigger==='letter'){if(held){event.preventDefault();event.stopImmediatePropagation();suppressNextClick();arm(event);}return;}
     if(modifierHeld(event)){const selection=getSelection();pressStart={x:event.clientX,y:event.clientY,pointerId:event.pointerId,selectionEmpty:!selection||selection.isCollapsed||!selection.rangeCount};}
   },true);
-  document.addEventListener('pointermove',event=>{
+  listen(document,'pointermove',event=>{
     if(!pressStart||event.pointerId!==pressStart.pointerId)return;
     if(!(event.buttons&1)||!modifierHeld(event)||!holdEnabled||active){pressStart=null;return;}
     if(Math.hypot(event.clientX-pressStart.x,event.clientY-pressStart.y)<DRAG_THRESHOLD)return;
@@ -531,14 +551,15 @@
     arm({button:0,clientX:from.x,clientY:from.y,pointerId:event.pointerId,preventDefault(){},stopImmediatePropagation(){}},{x:event.clientX,y:event.clientY});
   },true);
   const endPress=event=>{if(pressStart&&event.pointerId===pressStart.pointerId)pressStart=null;};
-  document.addEventListener('pointerup',endPress,true);
-  document.addEventListener('pointercancel',endPress,true);
+  listen(document,'pointerup',endPress,true);
+  listen(document,'pointercancel',endPress,true);
   // Chrome starts dragging a link or image after a few pixels, before the selection threshold.
   // While a modifier press may still become a selection, that native drag would end it.
-  document.addEventListener('dragstart',event=>{if(pressStart){event.preventDefault();}},true);
-  chrome.runtime.onMessage.addListener(message=>{
+  listen(document,'dragstart',event=>{if(pressStart){event.preventDefault();}},true);
+  const onMessage=message=>{
     if(message?.type==='content.configure'){holdEnabled=!!message.enabled;holdKey=message.holdKey;holdTrigger=message.holdTrigger==='modifier'?'modifier':'letter';held=false;pressStart=null;}
     if(message?.type==='links.progress')active?.progress(message);
-  });
-  globalThis.__linkMeteor={scan,arm};configure();
+  };
+  chrome.runtime.onMessage.addListener(onMessage);
+  globalThis.__linkMeteor={scan,arm,alive,dispose};configure();
 })();

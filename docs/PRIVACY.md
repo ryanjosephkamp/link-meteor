@@ -14,7 +14,7 @@ The current invoking tab and latest capture report are kept in session storage s
 - your answer to the welcome card;
 - your export file-name preferences.
 
-With all-sites access, the hold-key script is registered on every HTTP(S) site except the ones you exclude. Otherwise it runs only on the sites you enable.
+With all-sites access, the hold-key script is registered on every HTTP(S) site except the ones you exclude. Otherwise it runs only on the sites you enable. When Link Meteor starts, is installed or updated, or applies hold-key settings, it also loads that script into already-open tabs where hold-key drag is on, so those tabs work without a reload.
 
 Deleting a collection removes it from the saved state. Link removal keeps one undo snapshot until superseded or cleared by collection operations. Uninstalling the extension normally removes its extension storage. Back up or export anything you wish to retain before removing it.
 

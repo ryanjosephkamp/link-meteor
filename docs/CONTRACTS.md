@@ -207,6 +207,9 @@ These keep the envelope and sender rules of the Browser message API above. "Work
 - A `hold.*` request whose settings were saved but whose script registration Chrome refused returns an error saying the settings were saved; open tabs are still reconfigured.
 - With the tabs permission, the workbench checks whether the current page can be read by running an empty script there. Without it, a visible address already means the page is readable.
 - Page scripts listen for saved changes only while a capture card is open; hold settings reach open tabs through `content.configure`.
+- The page script's `globalThis.__linkMeteor` also has `alive()` and `dispose()`. `alive()` is true while the copy can still reach the extension; `dispose()` removes its listeners and overlay. When the script loads, a live copy already in the page stays and the new one exits. A copy that is not alive, or one from an earlier build without `alive()`, is disposed where possible and replaced.
+- On install, update and startup, the sync loads the page script into open tabs where hold-drag runs (`inject: 'all'`). Every sync also loads it into a tab where hold-drag should run but where no script answers `content.configure`. A page that begins loading while the extension starts can miss the registered script; 0.3.0 release candidate 1 found one, and release candidate 2 tests it.
+- The all-sites switch keeps showing the person's choice while that choice is being saved, and shows the saved state again once the save succeeds or fails.
 - *Capture this page* when Chrome hides the tab's address, with no tabs permission and no site access: there is no single site to ask for. The capture still runs and is reported as denied with the reason. The result also offers "Allow on all sites": the welcome card's request, asked in that click. If Chrome grants it, the scope becomes `'all'`, `welcomeSeen` becomes true and the page is captured again.
 
 **Exports and bookmarks**

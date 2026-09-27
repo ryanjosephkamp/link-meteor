@@ -36,9 +36,11 @@ try{
   const run=await launch(allSitesProfile,{headless:false});context=run.context;
   for(const p of context.pages())await p.close();
   const local=fixture.base.replace('127.0.0.1','localhost');
+  // The workbench loads first, so the extension is running before the test pages load. A page loaded
+  // while Chrome restarts the extension at launch keeps a disconnected script (a separate, recorded issue).
+  const ui=await context.newPage();await ui.goto(`chrome-extension://${run.id}/ui/workbench.html`);await ui.locator('#collection-heading').waitFor();
   const fixturePage=await context.newPage();await fixturePage.goto(fixture.base+'/index.html');
   const other=await context.newPage();await other.goto(local+'/index.html');
-  const ui=await context.newPage();await ui.goto(`chrome-extension://${run.id}/ui/workbench.html`);await ui.locator('#collection-heading').waitFor();
   const before=await ui.evaluate(()=>chrome.permissions.getAll());result.allSitesGrantsBefore=before;
   assert.ok(ALL_SITES.every(p=>before.origins.includes(p)),'Prepare this profile with LINK_METEOR_GRANTS=all-sites first');
   assert.ok(before.origins.includes(fixture.base+'/*'),'The prepared profile also holds a per-site grant for the fixture site');

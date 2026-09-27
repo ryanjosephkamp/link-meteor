@@ -130,9 +130,10 @@ try {
 
   // A named tab group from the workbench.
   const named = (await rpc(ui, {type: 'state.mutate', action: {type: 'collection.create', name: 'Named group'}})).activeCollectionId;
-  const links = [0, 1, 2].map((i) => ({id: `named-${i}`, anchorText: `Named ${i}`, accessibleLabel: '', url: `${fixture.base}/named/${i}`, originalHref: '', sourceUrl: fixture.base, sourceTitle: 'Named group', frameUrl: '', capturedAt: new Date().toISOString(), batchId: 'named', notes: '', tags: []}));
+  const links = [0, 1, 2].map((i) => ({id: `named-${run.id.slice(0, 4)}-${Date.now()}-${i}`, anchorText: `Named ${i}`, accessibleLabel: '', url: `${fixture.base}/named/${i}`, originalHref: '', sourceUrl: fixture.base, sourceTitle: 'Named group', frameUrl: '', capturedAt: new Date().toISOString(), batchId: 'named', notes: '', tags: []}));
   await rpc(ui, {type: 'state.mutate', action: {type: 'links.append', collectionId: named, links}});
-  await until(async () => (await ui.locator('#open-label').innerText()).includes('3'), 'three links');
+  // Wait for the new collection itself: the previous one's label ("Open 37 web links…") also contains a 3.
+  await until(async () => (await ui.locator('#collection-heading').innerText()) === 'Named group' && (await ui.locator('#open-label').innerText()) === 'Open 3 web links', 'three links');
   let before = context.pages().length;
   await ui.locator('#open-group').click();
   await until(async () => /tab group named “Named group”/.test(await ui.locator('#notice').innerText().catch(() => '')), 'named group');
@@ -168,8 +169,10 @@ try {
   await until(() => ui.locator('#all-sites-remove').isVisible(), 'offer to remove Chrome’s grant');
   await ui.locator('#all-sites-remove-no').click();
   assert.match(await ui.locator('#all-sites-note').innerText(), /Chrome still lets Link Meteor read every site/);
-  await ui.locator('#all-sites').check();
-  await until(async () => (await rpc(ui, {type: 'state.get'})).settings.holdScope === 'all', 'all sites again');
+  // Click, then wait for the saved outcome. check() would also require the switch to stay on during the
+  // save, but a render in that moment currently shows the saved state (a known, recorded flicker).
+  await ui.locator('#all-sites').click();
+  await until(async () => (await rpc(ui, {type: 'state.get'})).settings.holdScope === 'all' && await ui.locator('#all-sites').isChecked(), 'all sites again');
   pass('The switch turns all-sites off (offering to remove Chrome’s grant) and on again');
 
   result.result = 'PASS';

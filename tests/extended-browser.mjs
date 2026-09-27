@@ -30,17 +30,19 @@ try{
  // saving into an existing folder skips links already there (on by default) or saves repeats when turned off, and nothing else changes.
  const treeBefore=await ui.evaluate(()=>chrome.bookmarks.getTree());
  await ui.locator('#bookmark-mode input[value=existing]').check();await until(async()=>await ui.locator('#bookmark-folder option').count()>0,'Real folders listed',10000);
- const listed=await rpc(ui,{type:'bookmarks.folders'});assert.ok(listed.folders.some(f=>f.id===folder.id&&f.path==='Other bookmarks › Link Meteor automated fixture'&&f.depth===1));assert.ok(!listed.folders.some(f=>f.id==='0'));
+ // The parent's name comes from Chrome ("Other Bookmarks" in Chrome for Testing, "Other bookmarks" in some builds).
+ const folderPath=`${(await ui.evaluate(id=>chrome.bookmarks.get(id),folder.parentId))[0].title} › Link Meteor automated fixture`;
+ const listed=await rpc(ui,{type:'bookmarks.folders'});assert.ok(listed.folders.some(f=>f.id===folder.id&&f.path===folderPath&&f.depth===1));assert.ok(!listed.folders.some(f=>f.id==='0'));
  assert.equal(await ui.locator('#bookmark-folder option').count(),listed.folders.length);
  await ui.locator('#bookmark-folder-search').fill('automated other');const matches=await ui.locator('#bookmark-folder option').count();assert.ok(matches>=1&&matches<listed.folders.length);assert.match(await ui.locator('#bookmark-folder-status').innerText(),new RegExp(`^${matches} of ${listed.folders.length} folders\\.`));
- await ui.locator('#bookmark-folder').selectOption(folder.id);assert.match(await ui.locator('#bookmark-folder-status').innerText(),/Saves to Other bookmarks › Link Meteor automated fixture\.$/);
+ await ui.locator('#bookmark-folder').selectOption(folder.id);assert.ok((await ui.locator('#bookmark-folder-status').innerText()).endsWith(`Saves to ${folderPath}.`));
  assert.equal(await ui.locator('#bookmark-skip-existing').isChecked(),true);
- await ui.locator('#bookmark').click();await until(async()=>(await ui.locator('#notice').innerText()).startsWith('Saved to “Other bookmarks › Link Meteor automated fixture”: 0 saved, 1 skipped (already in the folder), 0 failed.'),'Skip existing',10000);
+ await ui.locator('#bookmark').click();await until(async()=>(await ui.locator('#notice').innerText()).startsWith(`Saved to “${folderPath}”: 0 saved, 1 skipped (already in the folder), 0 failed.`),'Skip existing',10000);
  await ui.locator('#search').fill('Large source 499');await until(async()=>await ui.locator('.link-row').count()===11,'Eleven sources');
- await ui.locator('#bookmark').click();await until(async()=>(await ui.locator('#notice').innerText()).startsWith('Saved to “Other bookmarks › Link Meteor automated fixture”: 10 saved, 1 skipped (already in the folder), 0 failed.'),'Existing folder save',10000);
+ await ui.locator('#bookmark').click();await until(async()=>(await ui.locator('#notice').innerText()).startsWith(`Saved to “${folderPath}”: 10 saved, 1 skipped (already in the folder), 0 failed.`),'Existing folder save',10000);
  await ui.locator('#search').fill('Large source 4999');await until(async()=>await ui.locator('.link-row').count()===1,'Back to one source');
- await ui.locator('#bookmark-skip-existing').uncheck();await ui.locator('#bookmark').click();await until(async()=>(await ui.locator('#notice').innerText()).startsWith('Saved to “Other bookmarks › Link Meteor automated fixture”: 1 saved, 0 skipped'),'Repeat saved with Skip off',10000);await ui.locator('#bookmark-skip-existing').check();
- const filled=await ui.evaluate(id=>chrome.bookmarks.getChildren(id),folder.id);assert.equal(filled.length,12);assert.deepEqual(filled.map(b=>b.url).sort(),[...Array.from({length:10},(_,i)=>fixture.base+'/large/'+(4990+i)),fixture.base+'/large/4999',fixture.base+'/large/4999',fixture.base+'/large/499'].sort());
+ await ui.locator('#bookmark-skip-existing').uncheck();await ui.locator('#bookmark').click();await until(async()=>(await ui.locator('#notice').innerText()).startsWith(`Saved to “${folderPath}”: 1 saved, 0 skipped`),'Repeat saved with Skip off',10000);await ui.locator('#bookmark-skip-existing').check();
+ const filled=await ui.evaluate(id=>chrome.bookmarks.getChildren(id),folder.id);assert.equal(filled.length,12);assert.deepEqual(filled.map(b=>b.url).sort(),[...Array.from({length:9},(_,i)=>fixture.base+'/large/'+(4990+i)),fixture.base+'/large/4999',fixture.base+'/large/4999',fixture.base+'/large/499'].sort());
  const strip=node=>({...node,dateGroupModified:undefined,children:node.id===folder.id?undefined:node.children?.map(strip)});assert.deepEqual(strip((await ui.evaluate(()=>chrome.bookmarks.getTree()))[0]),strip(treeBefore[0]),'no other bookmark changed');
  await ui.locator('#bookmark-folder-search').fill('');await ui.locator('#bookmark-mode input[value=new]').check();
  pass('Existing bookmark folder: real folders listed by path and searchable, skip-existing counts, repeats saved only with Skip off, other bookmarks unchanged',{folders:listed.folders.length,matches});

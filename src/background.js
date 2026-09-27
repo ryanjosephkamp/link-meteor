@@ -5,6 +5,7 @@ import {workbenchMessages as backupMessages} from './background/backup.js';
 import {workbenchMessages as holdMessages, grantedSettings, followHoldWrites, requestSync} from './background/hold.js';
 import {openUrls, cancelOpen} from './background/open.js';
 import {WORKBENCH, occurrences, commitCapture, openWorkbench, pageMessages} from './background/card.js';
+import {syncIcon, followThemeWrites} from './background/theme.js';
 
 const LAST_TARGET_KEY = 'linkMeteorTarget';
 
@@ -161,3 +162,7 @@ chrome.runtime.onStartup.addListener(() => requestSync({inject: 'all'}));
 chrome.permissions.onAdded.addListener(() => requestSync());
 chrome.permissions.onRemoved.addListener(() => requestSync());
 onStateWritten(followHoldWrites);
+// The toolbar icon follows the theme: at startup, on install and update, and when the theme changes.
+chrome.runtime.onStartup.addListener(() => syncIcon());
+chrome.runtime.onInstalled.addListener(() => syncIcon());
+onStateWritten(followThemeWrites);

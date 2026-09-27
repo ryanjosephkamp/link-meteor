@@ -603,6 +603,20 @@ try {
   await configure(CAPTURE);
   pass('Undo also works from the card after Show links; a refused Undo says why in the notice');
 
+  /* Page chrome is judged like HTML's landmarks: a header or footer counts only at page level. */
+  const articlePage = await context.newPage();
+  await load(articlePage, '/index.html', {platform: 'MacIntel', trigger: 'modifier'});
+  const chromeFlags = await articlePage.evaluate(() => {
+    document.body.innerHTML = `<header><a href="/site">Site home</a></header>
+      <main><article><header><h1><a href="/post">Post title</a></h1></header><p><a href="/cited">Cited paper</a></p><footer><a href="/tags">Post tags</a></footer></article>
+      <section><header><a href="/section-top">Section top</a></header></section></main>
+      <footer><a href="/about">About the site</a></footer>`;
+    return Object.fromEntries(globalThis.__linkMeteor.scan().links.map((link) => [new URL(link.url).pathname, !!link.pageChrome]));
+  });
+  assert.deepEqual(chromeFlags, {'/site': true, '/post': false, '/cited': false, '/tags': false, '/section-top': false, '/about': true});
+  await articlePage.close();
+  pass('Content links only keeps a post’s own header and footer links: only page-level headers and footers are page chrome', chromeFlags);
+
   /* Ctrl elsewhere: a Windows platform uses Ctrl, and Command does nothing. */
   const windows = await context.newPage();
   await load(windows, '/index.html', {platform: 'Win32', trigger: 'modifier'});

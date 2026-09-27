@@ -6,7 +6,7 @@ Link Meteor processes captured links locally in Chrome. It has no account, remot
 
 Named collections contain visible anchor text, separately labeled accessible text, destination URLs, original hrefs, source page URLs/titles, frame URLs, capture times/batch IDs and your notes/tags. These are stored in `chrome.storage.local` in the current browser profile. Collection data is not placed in Chrome Sync by this extension. Chrome's profile backup or operating-system backup behavior is separate.
 
-The current invoking tab and latest capture report are kept in session storage so separate views can show the same result. The session report can be dismissed. Settings persist locally:
+The current invoking tab and latest capture report are kept in session storage so separate views can show the same result. The session report can be dismissed. With "Leave out navigation links", the latest *Capture this page*'s left-out links (at most 5,000) wait there too, so *Include them* can add them; and the page card's 20 most recent adds are listed there, so Undo can take one back. Session storage is cleared when Chrome closes. Settings persist locally:
 
 - the hold key (a letter, or Command/Ctrl);
 - the sites where hold-key drag runs or never runs;
@@ -35,7 +35,7 @@ Deleting a collection removes it from the saved state. Link removal keeps one un
 | `storage` | Keep collections and settings locally and capture context for the session. |
 | `sidePanel` | Show review tools alongside the webpage. |
 | `contextMenus` | Offer regional and page capture from Chrome's context menu. |
-| `clipboardWrite` | Copy your selected export to the clipboard after an explicit action. |
+| `clipboardWrite` | Copy your selected export to the clipboard after an explicit action: a table, URLs, Markdown, rich links (HTML with plain text), or Copy diagnostics. |
 | Optional `tabs` | Preview and choose open tabs for multi-tab/window capture. |
 | Optional HTTP(S) site access | For selected tabs, Capture this page after its temporary access has ended, or hold-key drag, Chrome asks for access one site at a time. You can instead make one explicit choice, **Allow on all sites**: on the welcome card, the Site access switch, or a capture Chrome hid from Link Meteor. Hold-key drag and capture then work on every site except the ones you exclude. |
 | Optional `tabGroups` | Name a tab group after your collection when you choose to open links as a group. Without it, the tabs still open in an unnamed group. |

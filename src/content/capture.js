@@ -30,7 +30,10 @@
   // The notice after copying or adding right away closes itself after this long, unless it has focus.
   const NOTICE_MS = 8000;
   // Page chrome: links in navigation, headers, footers and sidebars, by element or landmark role.
-  const PAGE_CHROME = 'nav,header,footer,aside,[role~="navigation"],[role~="banner"],[role~="contentinfo"],[role~="complementary"]';
+  const PAGE_CHROME = 'nav,aside,[role~="navigation"],[role~="banner"],[role~="contentinfo"],[role~="complementary"]';
+  // A header or footer is page chrome only at page level, as HTML maps them to banner and
+  // contentinfo: one inside an article, main or section belongs to that content (a post's title).
+  const pageLevel = node => { const edge = node.closest('header,footer'); return !!edge && !edge.parentElement?.closest('article,main,section'); };
   const MAC = /mac/i.test(navigator.userAgentData?.platform || navigator.platform || '');
   const marker = 'data-link-meteor';
   let active = null, held = false, holdKey = 'z', holdTrigger = 'letter', holdEnabled = false, lastDestinationId = '';
@@ -91,7 +94,7 @@
 
   // Whether a link sits in page chrome, looking out through open shadow roots to their hosts.
   function inChrome(element) {
-    for (let node=element;node;node=node.getRootNode()?.host) if (node.closest(PAGE_CHROME)) return true;
+    for (let node=element;node;node=node.getRootNode()?.host) if (node.closest(PAGE_CHROME)||pageLevel(node)) return true;
     return false;
   }
 

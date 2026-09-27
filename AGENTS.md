@@ -8,9 +8,9 @@ Instructions for coding agents and people working in this repository. Link Meteo
 | --- | --- |
 | `src/manifest.json` | Version, permissions (optional ones are requested at runtime), minimum Chrome version. |
 | `src/background.js` | The service worker's entry point: messages, context menus, the command, install and startup. |
-| `src/background/` | Service worker areas: `store.js` (the one serialized queue for saved state), `hold.js` (hold-key drag, script registration, all-sites access), `card.js` (the on-page capture card's actions), `open.js` (opening up to 500 links), `bookmarks.js`, `backup.js`, `urls.js`. |
+| `src/background/` | Service worker areas: `store.js` (the one serialized queue for saved state), `hold.js` (hold-key drag, script registration, all-sites access), `card.js` (the on-page capture card's actions), `open.js` (opening up to 500 links), `theme.js` (the toolbar icon), `diagnostics.js` (Copy diagnostics), `bookmarks.js`, `backup.js`, `urls.js`. |
 | `src/content/capture.js` | The page script: region selection, hold-key drag and the capture card, in a shadow root. It is injected on demand and registered on sites where hold-key drag runs. |
-| `src/core/` | Pure modules with no Chrome or DOM access: `model.js` (state, reducer, migration, backup format), `export.js` (every export format and file names), `xlsx.js` (the workbook writer). |
+| `src/core/` | Pure modules with no Chrome or DOM access: `model.js` (state, reducer, migration, backup format), `export.js` (every export format, file names and rich links), `xlsx.js` (the workbook writer), `themes.js` (every theme's tokens and card colors). |
 | `src/ui/workbench.*`, `src/ui/workbench/` | The side panel and full view: one page in two widths, split into area modules. |
 | `scripts/` | `build.mjs` (copies `src/` to `dist/`), `package.mjs` (deterministic ZIP and receipt), `verify-package.mjs`, `sync-site.mjs`, `release-files.mjs` (the allowlist), `check.mjs`. |
 | `tests/` | `*.test.mjs` unit tests (Node's test runner), browser suites (`*.mjs`), `helpers/browser.mjs` (Playwright launch, fixture server, build fingerprints), `helpers/action.mjs` (Chrome over a DevTools pipe, for the toolbar action), `debug-session.mjs`, and `fixtures/`. |

@@ -167,8 +167,8 @@ function revertOnError(event, fn) {
 /* After a drag (0.4.0) --------------------------------------------------------- */
 const AFTER_DRAG_HELP = {
   card: 'The capture card lists the links, so you choose what to add or copy.',
-  copy: 'The links go to the clipboard at once. A small notice can show them.',
-  add: 'The links go into the current collection at once, with Undo.',
+  copy: 'The links go straight to the clipboard. A small notice says so, with Show links to see them.',
+  add: 'The links go straight into the card’s collection. A small notice says so, with Undo and Show links.',
 };
 // A choice being saved, shown in the meantime so a render from an earlier save doesn't flip it back.
 let captureDraft = null, captureSaving = 0;

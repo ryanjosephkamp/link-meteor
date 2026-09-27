@@ -409,7 +409,7 @@ Callers write a `ClipboardItem` with `text/html` and `text/plain`, and fall back
 
   Escape closes the notice.
 - **Content links only:**
-  - A link is page chrome when it sits inside `nav`, `header`, `footer` or `aside`, or inside `[role=navigation]`, `[role=banner]`, `[role=contentinfo]` or `[role=complementary]`.
+  - A link is page chrome when it sits inside `nav` or `aside`, inside `[role=navigation]`, `[role=banner]`, `[role=contentinfo]` or `[role=complementary]`, or inside a page-level `header` or `footer` (one that is not inside an `article`, `main` or `section`, as HTML maps them to banner and contentinfo). A post's own header and footer are content.
   - With `contentOnly`, the card starts with those links unticked and says how many, with *Include them*. *Capture this page* leaves them out and reports how many.
   - Captured occurrences are otherwise unchanged.
 - **Card filters:** chips (All, Other sites, PDFs, Same site) untick the preview's links that don't match. They are not saved.

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createState, reduceState, queryLinks } from '../src/core/model.js';
+import { createState, reduceState, queryLinks, SETTINGS_DEFAULTS } from '../src/core/model.js';
 
 const link = (id, overrides = {}) => ({
   id, anchorText: 'Paper', accessibleLabel: '', url: 'https://example.org/paper.pdf',
@@ -15,7 +15,7 @@ test('fresh state and collection lifecycle', () => {
   assert.equal(initial.collections.length, 1);
   assert.equal(initial.collections[0].name, 'My research');
   assert.equal(initial.activeCollectionId, initial.collections[0].id);
-  assert.deepEqual(initial.settings, { holdKey: 'z', holdOrigins: [] });
+  assert.deepEqual(initial.settings, { ...SETTINGS_DEFAULTS, holdOrigins: [], holdExceptions: [] });
   const created = reduceState(initial, { type: 'collection.create', name: 'Sources' });
   assert.equal(created.collections.length, 2);
   assert.equal(initial.collections.length, 1);

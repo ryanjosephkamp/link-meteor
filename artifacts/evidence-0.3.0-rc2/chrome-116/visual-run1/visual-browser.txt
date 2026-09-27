@@ -1,0 +1,10 @@
+AssertionError [ERR_ASSERTION]: strong confirmation contrast 1.04
+    at file://<repo>/tests/visual-browser.mjs:63:108 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: false,
+  expected: true,
+  operator: '==',
+  diff: 'simple'
+}
+{"result":"FAIL","checks":9,"screenshots":["panel-welcome.png","workbench-desktop.png","workbench-review.png","workbench-dark.png"]}

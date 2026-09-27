@@ -1,0 +1,239 @@
+{
+  "started": "2026-09-27T13:52:27.017Z",
+  "browser": "Chrome for Testing via Playwright, headless; real unpacked extension; no optional grants",
+  "checks": [
+    {
+      "name": "Fresh profile, no optional grants; seeded a collection with a colon, quotes and a slash in its name",
+      "status": "pass",
+      "links": 53,
+      "seed": "artifacts/evidence-0.2.2/exports/browser.json"
+    },
+    {
+      "name": "Every format downloads under the default name the Saves as line shows, with no colon",
+      "status": "pass",
+      "names": {
+        "xlsx": "Urban-heat-sources-2026_2026-09-27_0952.xlsx",
+        "csv": "Urban-heat-sources-2026_2026-09-27_0952.csv",
+        "tsv": "Urban-heat-sources-2026_2026-09-27_0952.tsv",
+        "markdown": "Urban-heat-sources-2026_2026-09-27_0952.md",
+        "html": "Urban-heat-sources-2026_2026-09-27_0952.html",
+        "json": "Urban-heat-sources-2026_2026-09-27_0952.json",
+        "text": "Urban-heat-sources-2026_2026-09-27_0952.txt"
+      }
+    },
+    {
+      "name": "CSV, TSV, Markdown, HTML and URL list downloads equal the packaged 0.2.2 export code for the same rows",
+      "status": "pass",
+      "rows": 53
+    },
+    {
+      "name": "JSON download is {about, rows}; rows equal the 0.2.2 array and about names the time, collection, count, view and version",
+      "status": "pass",
+      "about": {
+        "exportedAt": "2026-09-27T13:52:28.176Z",
+        "exportedAtLocal": "2026-09-27T09:52:28.176-04:00",
+        "collection": "Urban heat: “sources” / 2026",
+        "count": 53,
+        "view": "Every occurrence; sorted by capture order, ascending",
+        "filters": [],
+        "version": "0.3.0"
+      }
+    },
+    {
+      "name": "Downloaded workbook: bold frozen header, filters, fitted widths, exact hyperlinks, text-only cells and an About sheet (openpyxl)",
+      "status": "pass",
+      "openpyxl": "opened; exact cell values matched",
+      "hyperlinks": 52,
+      "widths": [
+        58,
+        54
+      ]
+    },
+    {
+      "name": "A typed File name overrides the pattern for a download, is not doubled, follows the format, and clearing it returns to the pattern",
+      "status": "pass"
+    },
+    {
+      "name": "Lab-notes-2026_Urban-heat-sources-2026_2026-09-27.xlsx",
+      "status": "pass"
+    },
+    {
+      "name": "The about block records the grouping, sort, search and selection behind an export",
+      "status": "pass",
+      "about": {
+        "exportedAt": "2026-09-27T13:52:29.127Z",
+        "exportedAtLocal": "2026-09-27T09:52:29.127-04:00",
+        "collection": "Urban heat: “sources” / 2026",
+        "count": 1,
+        "view": "Unique URLs; sorted by capture order, ascending",
+        "filters": [
+          "Search: “pdf”",
+          "Selected links only"
+        ],
+        "version": "0.3.0"
+      }
+    },
+    {
+      "name": "A typed name is dropped when the collection changes",
+      "status": "pass"
+    },
+    {
+      "name": "Bookmark access is requested only on choosing Existing folder or pressing Bookmark; declining is explained; the background refuses without access",
+      "status": "pass",
+      "requests": [
+        {
+          "permissions": [
+            "bookmarks"
+          ]
+        },
+        {
+          "permissions": [
+            "bookmarks"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Folder picker (stand-in background answers): paths listed with repeats told apart, search by words, choose, skip on by default, and saved/skipped/failed counts",
+      "status": "pass",
+      "mock": true
+    },
+    {
+      "name": "No horizontal overflow at 320 and 390 px; new controls labeled; measured text contrast at least 4.5:1 in light and dark",
+      "status": "pass",
+      "contrast": [
+        {
+          "scheme": "light",
+          "name": "file name field",
+          "ratio": 16.48
+        },
+        {
+          "scheme": "light",
+          "name": "file name help",
+          "ratio": 5.77
+        },
+        {
+          "scheme": "light",
+          "name": "pattern summary",
+          "ratio": 9.97
+        },
+        {
+          "scheme": "light",
+          "name": "pattern line",
+          "ratio": 5.77
+        },
+        {
+          "scheme": "light",
+          "name": "date checkbox label",
+          "ratio": 15.79
+        },
+        {
+          "scheme": "light",
+          "name": "saves as line",
+          "ratio": 5.77
+        },
+        {
+          "scheme": "light",
+          "name": "bookmark mode (checked)",
+          "ratio": 16.48
+        },
+        {
+          "scheme": "light",
+          "name": "bookmark mode (unchecked)",
+          "ratio": 5.42
+        },
+        {
+          "scheme": "light",
+          "name": "folder list",
+          "ratio": 16.48
+        },
+        {
+          "scheme": "light",
+          "name": "folder status",
+          "ratio": 5.77
+        },
+        {
+          "scheme": "light",
+          "name": "skip label",
+          "ratio": 15.79
+        },
+        {
+          "scheme": "light",
+          "name": "bookmark help",
+          "ratio": 5.77
+        },
+        {
+          "scheme": "dark",
+          "name": "file name field",
+          "ratio": 15.41
+        },
+        {
+          "scheme": "dark",
+          "name": "file name help",
+          "ratio": 7.78
+        },
+        {
+          "scheme": "dark",
+          "name": "pattern summary",
+          "ratio": 12.16
+        },
+        {
+          "scheme": "dark",
+          "name": "pattern line",
+          "ratio": 7.78
+        },
+        {
+          "scheme": "dark",
+          "name": "date checkbox label",
+          "ratio": 16.31
+        },
+        {
+          "scheme": "dark",
+          "name": "saves as line",
+          "ratio": 7.78
+        },
+        {
+          "scheme": "dark",
+          "name": "bookmark mode (checked)",
+          "ratio": 15.41
+        },
+        {
+          "scheme": "dark",
+          "name": "bookmark mode (unchecked)",
+          "ratio": 8.07
+        },
+        {
+          "scheme": "dark",
+          "name": "folder list",
+          "ratio": 15.41
+        },
+        {
+          "scheme": "dark",
+          "name": "folder status",
+          "ratio": 7.78
+        },
+        {
+          "scheme": "dark",
+          "name": "skip label",
+          "ratio": 16.31
+        },
+        {
+          "scheme": "dark",
+          "name": "bookmark help",
+          "ratio": 7.78
+        }
+      ]
+    },
+    {
+      "name": "No page errors or console errors",
+      "status": "pass"
+    }
+  ],
+  "limits": [
+    "No optional grants: bookmark prompts are answered by a page-level stand-in, never by Chrome.",
+    "Folder-picker checks use stand-in background answers (API mock); the real bookmark API is covered by tests/extended-browser.mjs with bookmark access.",
+    "openpyxl is a library reader, not Microsoft Excel."
+  ],
+  "result": "PASS",
+  "finished": "2026-09-27T13:52:31.094Z"
+}

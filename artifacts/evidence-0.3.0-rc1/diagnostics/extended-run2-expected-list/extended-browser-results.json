@@ -1,0 +1,24 @@
+{
+  "started": "2026-09-27T14:14:28.093Z",
+  "checks": [
+    {
+      "name": "5,037 real page occurrences captured; only 100 top-level rows and no closed details rendered",
+      "elapsedMs": 1138
+    },
+    {
+      "name": "Selection persists across pages and unselected export includes all 5,037 rows"
+    },
+    {
+      "name": "Filtering resets page and finds final loaded source"
+    },
+    {
+      "name": "Actual bookmark folder contains correct anchor title and URL"
+    }
+  ],
+  "limits": [
+    "Single-machine synthetic measurement, not a cross-device performance guarantee."
+  ],
+  "result": "FAIL",
+  "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:\n+ actual - expected\n... Skipped lines\n\n  [\n    'http://127.0.0.1:52478/large/499',\n    'http://127.0.0.1:52478/large/4990',\n    'http://127.0.0.1:52478/large/4991',\n    'http://127.0.0.1:52478/large/4992',\n...\n    'http://127.0.0.1:52478/large/4999',\n-   'http://127.0.0.1:52478/large/4999'\n  ]\n\n    at file:///<repository>/tests/extended-browser.mjs:45:119",
+  "finished": "2026-09-27T14:14:32.129Z"
+}

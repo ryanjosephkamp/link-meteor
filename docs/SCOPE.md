@@ -4,7 +4,12 @@ Link Meteor's Chrome release serves research and source collection, with the sam
 
 ## Capture and review
 
-- Arm regional capture with a configurable Chrome shortcut, drag a rectangle, see live matches/counts, cancel with Escape, scroll during selection and append additional regions. The optional hold-letter-and-drag gesture works only on explicitly permitted origins and excludes editable typing.
+- Arm regional capture with a configurable Chrome shortcut, drag a rectangle, see live matches/counts, cancel with Escape, scroll during selection and append additional regions. The optional hold-and-drag gesture uses a letter (Z by default) or Command (macOS) / Ctrl (Windows, Linux). A plain modifier-click still opens links normally; only a modifier-drag past a small threshold starts a selection. The gesture runs on sites you allow, either one at a time or on all sites after one explicit choice, never on sites you exclude. It never starts from editable fields. The capture card can:
+  - copy the selection;
+  - add it to a collection you choose;
+  - open it in tabs, a new window or a tab group;
+  - download it or bookmark it;
+  - untick individual links before any of these.
 - Capture the current page, selected open tabs, current window or all ordinary windows within the current Chrome profile. Show the scope before collection; retain successful results when other pages are denied, unsupported, empty or failed. A genuinely empty page must remain distinct from inaccessible content.
 - Review anchor text and URL in separate fields, alongside their source. Provide search, domain/file-type/internal/external filtering, sorting, row selection, removal and undo.
 - Save named local collections with notes/tags, per-occurrence notes/tags, append operations, explicit deletion and persistence across browser restarts. Failed writes preserve previously saved data and report recovery options.
@@ -22,15 +27,20 @@ Repeated destinations remain separate stored occurrences. Unique-URL and unique-
 
 A region captures an anchor if at least one of its visible, clipped client rectangles intersects with positive area. Wrapped links can have multiple rectangles; scrolling accumulates swept links. Capture scans loaded DOM links, open shadow roots and accessible same-origin frames. Inaccessible frames and partial coverage are reported. Browser-restricted pages, incognito and closed shadow roots are unsupported.
 
-Resource bounds are explicit: 20000 links per page/region, 100 tabs per capture and 20 URLs per opening action. Overlay highlighting is capped at 250 visual matches while selection counts still cover captured links up to the limit. Review pages contain 100 rows and grouped details load in increments of 100. These bounds must never become payment gates or silent truncation.
+Resource bounds are explicit: 20000 links per page/region, 100 tabs per capture and 500 URLs per opening action. Opening more than 20 asks first, with stronger wording above 100; tabs open in small batches that can be stopped. Overlay highlighting is capped at 250 visual matches while selection counts still cover captured links up to the limit. Review pages contain 100 rows and grouped details load in increments of 100. These bounds must never become payment gates or silent truncation.
 
 ## Exports and actions
 
-Provide real `.xlsx`, CSV, TSV, URL-list, Markdown, HTML and JSON downloads; clipboard columns, URLs and Markdown; bookmark folders; and bounded opening of selected HTTP(S) URLs. Anchor text and URL are the default separate spreadsheet/clipboard columns, and users can choose export columns and order.
+Provide real `.xlsx`, CSV, TSV, URL-list, Markdown, HTML and JSON downloads; clipboard columns, URLs and Markdown; bookmark folders, new or existing, skipping links already there; and bounded opening of selected HTTP(S) URLs. Anchor text and URL are the default separate spreadsheet/clipboard columns, and users can choose export columns and order.
+
+- **File names.** The default is the collection name plus the local date and time, with an optional prefix and date settings. A File name field overrides it for one export.
+- **Excel.** Workbooks from the Export panel have a bold, frozen header, filters, fitted column widths and clickable links whose text is the exact URL. They add an About sheet with the export time, collection, count, view, filters, columns and version. Every cell stays text.
+- **JSON** adds the same about block.
+- **CSV and TSV** stay plain.
 
 With no selection, exports cover the full filtered view across pages. With selection, exports use selected occurrences that still match filters. JSON retains all exported grouped occurrences; other grouped formats use the displayed representative. Handle commas, quotes, newlines, Unicode and formula-like strings. CSV/TSV use an apostrophe for formula-safe import; originals remain unchanged in stored data, JSON and string-typed XLSX cells. Escape untrusted HTML/Markdown and validate action URL schemes. Captured `mailto:` and `tel:` can be exported but are not batch-opened/bookmarked.
 
-A textless bookmark uses the URL for its browser bookmark title without changing stored anchor text. Browser bookmark sync is separate from local collections. Opening tabs, downloading files, writing clipboard content and creating bookmarks happen only through user actions. Version 0.2.2 has no collection import/restore flow.
+A textless bookmark uses the URL for its browser bookmark title without changing stored anchor text. Browser bookmark sync is separate from local collections. Opening tabs, downloading files, writing clipboard content and creating bookmarks happen only through user actions. Version 0.3.0 backs up every collection and setting to one file and restores it with a preview, as a merge or a replace, with Undo. It does not import other lists or files yet.
 
 ## Architecture, access and privacy
 
@@ -42,7 +52,7 @@ Current-page activation uses user-triggered access. Multi-tab capture and persis
 
 The website explains installation, features, privacy, limitations and usage, offers a synthetic practice page and a development ZIP, and remains useful and accessible without tracking or external media services. Branding, code, copy and assets are independently created; similar functionality does not establish name or trademark clearance.
 
-The next feature release is planned to add a one-time choice to allow Link Meteor on all sites, so hold-key drag and page capture work everywhere, with per-site exceptions; more actions on the capture card; opening larger batches of links after a confirmation; export file names and workbook formatting; saving bookmarks into existing folders; and backup and restore. After that release, Link Meteor is intended for the Chrome Web Store. Later releases may add color themes, imports and local research aids, such as context snippets and citation exports.
+After 0.3.0, Link Meteor is intended for the Chrome Web Store. Later releases may add color themes, imports and local research aids, such as context snippets and citation exports.
 
 Anything that contacts other sites, such as looking up a destination's details, would only ever be opt-in, per request. Firefox, Safari and mobile versions and AI integrations are not planned for now. Future capabilities must preserve originals and require explicit user choices about any new data destinations or costs. Existing structured exports do not imply a remote AI service. Until Store publication, ZIP plus Load unpacked is the supported installation route.
 

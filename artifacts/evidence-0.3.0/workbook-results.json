@@ -1,0 +1,22 @@
+{
+  "result": "PASS",
+  "reader": "openpyxl 3.0.10",
+  "source": "actual files downloaded by tests/browser.mjs",
+  "header": [
+    "Anchor text",
+    "URL"
+  ],
+  "actual_download_rows": 53,
+  "csv_rows": 53,
+  "json_rows": 53,
+  "exact_anchor_url_pairs": true,
+  "csv_matches_json_after_formula_prefix": true,
+  "tsv_matches_json_after_formula_prefix": true,
+  "html_exact_pairs_no_injected_markup": true,
+  "markdown_pairs_with_single_line_labels": true,
+  "text_exact_urls": true,
+  "empty_anchor_rows": 2,
+  "formula_like_rows": 1,
+  "xlsx_all_string_cells": true,
+  "excel_application_tested": false
+}

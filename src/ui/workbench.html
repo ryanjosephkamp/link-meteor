@@ -71,22 +71,81 @@
       </section>
 
       <section class="rail-section site-settings" aria-labelledby="site-title">
-        <h2 id="site-title" class="rail-title">This site</h2>
-        <p id="site-origin" class="site-origin">Current site unavailable</p>
+        <h2 id="site-title" class="rail-title">Site access</h2>
         <div class="hold-row">
+          <input id="all-sites" type="checkbox" role="switch" class="switch" aria-describedby="all-sites-help">
+          <label for="all-sites">Allow on all sites</label>
+        </div>
+        <p id="all-sites-help" class="help">Hold-key drag and Capture this page then work on every website without asking site by site. Link Meteor reads a page’s links only when you capture or drag, and keeps them in this browser.</p>
+        <p id="all-sites-note" class="access-note" role="status" hidden></p>
+        <div id="all-sites-remove" class="confirm" role="group" aria-labelledby="all-sites-remove-text" hidden>
+          <p id="all-sites-remove-text">Chrome still lets Link Meteor read every site. Remove that access too? This can also remove Chrome’s access to sites you allowed one by one. Hold-key drag then stops there until you allow them again.</p>
+          <div class="confirm-actions"><button id="all-sites-remove-yes" class="btn" type="button">Remove Chrome’s access</button><button id="all-sites-remove-no" class="btn quiet" type="button">Keep it</button></div>
+        </div>
+
+        <h3 class="rail-subtitle">This site</h3>
+        <p id="site-origin" class="site-origin">Current site unavailable</p>
+        <div id="site-hold-row" class="hold-row">
           <input id="hold-enabled" type="checkbox" role="switch" class="switch" aria-describedby="hold-help">
           <label for="hold-enabled">Hold-key drag on this site</label>
         </div>
         <p id="hold-help" class="help">Hold the key below and drag to select links, without opening Link Meteor first. Chrome asks for access to this site only.</p>
-        <div class="hold-key-row">
+        <div id="site-exception-row" class="hold-row" hidden>
+          <input id="site-exception" type="checkbox" role="switch" class="switch" aria-describedby="site-exception-help">
+          <label for="site-exception">Never on this site</label>
+        </div>
+        <p id="site-exception-help" class="help" hidden>Hold-key drag stays off here even though Link Meteor may run on all sites. Capture this page still works.</p>
+
+        <h3 class="rail-subtitle">Hold to drag</h3>
+        <div class="hold-trigger-row">
+          <label for="hold-trigger">Hold</label>
+          <select id="hold-trigger" aria-describedby="hold-trigger-help"><option value="letter">A letter key</option><option value="modifier">Command</option></select>
+        </div>
+        <div id="hold-letter-row" class="hold-key-row">
           <label for="hold-key">Hold key</label>
           <input id="hold-key" class="key-input" maxlength="1" pattern="[A-Za-z]" autocomplete="off" spellcheck="false">
           <button id="save-hold-key" class="btn small" type="button">Save key</button>
         </div>
+        <p id="hold-trigger-help" class="help"></p>
+
+        <h3 class="rail-subtitle" id="exceptions-title">Never on these sites <span id="exception-count" class="count-pill">0</span></h3>
+        <ul id="hold-exceptions" class="exception-list" aria-labelledby="exceptions-title"></ul>
+        <p id="hold-exceptions-empty" class="help">No sites yet. Turn on Never on this site while you are on one.</p>
+
         <div class="shortcut-row">
           <span class="shortcut-label">Region shortcut</span>
           <span id="shortcut-keys" class="shortcut-keys"><kbd>Alt</kbd><kbd>Shift</kbd><kbd>L</kbd></span>
           <button id="shortcut-settings" class="link-btn" type="button">Change<span class="sr-only"> region shortcut in Chrome settings</span></button>
+        </div>
+      </section>
+
+      <section id="backup-panel" class="rail-section backup" aria-labelledby="backup-title">
+        <h2 id="backup-title" class="rail-title">Backup and restore</h2>
+        <p id="backup-help" class="help">One file with every collection, link, note, tag and setting. It is saved to your downloads and goes nowhere else.</p>
+        <div class="backup-actions">
+          <button id="backup-download" class="btn" type="button"><svg class="icon" aria-hidden="true"><use href="#i-download"/></svg><span>Download a backup</span></button>
+          <input id="backup-file" class="backup-file sr-only" type="file" accept=".json,application/json">
+          <label for="backup-file" class="btn backup-choose"><svg class="icon" aria-hidden="true"><use href="#i-folders"/></svg><span>Restore from a backup…</span></label>
+        </div>
+        <p id="storage-help" class="help">Link Meteor can use more than Chrome's usual 10 MB of local storage, so large collections and a restore's Undo fit. It all stays in this browser.</p>
+        <section id="restore-preview" class="restore-preview" aria-labelledby="restore-title" hidden>
+          <h3 id="restore-title" tabindex="-1">Restore this backup?</h3>
+          <p id="restore-source" class="restore-source"></p>
+          <div id="restore-modes" class="restore-modes"></div>
+          <p class="help">Choosing a file changes nothing. Merge or Replace can be undone here afterwards.</p>
+          <div class="restore-actions">
+            <button id="restore-merge" class="btn primary" type="button">Merge</button>
+            <button id="restore-replace" class="btn danger-solid" type="button">Replace</button>
+            <button id="restore-cancel" class="btn quiet" type="button">Cancel</button>
+          </div>
+        </section>
+        <div id="restore-status" class="restore-status" role="group" aria-labelledby="restore-status-text" hidden>
+          <p id="restore-status-text" class="restore-status-text"></p>
+          <p id="restore-status-help" class="help">Undo puts back what was here before, as long as nothing has changed since.</p>
+          <div class="restore-actions">
+            <button id="restore-undo" class="btn" type="button"><svg class="icon" aria-hidden="true"><use href="#i-undo"/></svg>Undo restore</button>
+            <button id="restore-discard" class="btn quiet" type="button">Discard Undo</button>
+          </div>
         </div>
       </section>
 
@@ -112,6 +171,23 @@
     </aside>
 
     <main class="main" id="main">
+      <section id="welcome" class="welcome" aria-labelledby="welcome-title" hidden>
+        <div id="welcome-ask" class="welcome-ask">
+          <h2 id="welcome-title" class="welcome-title">Use Link Meteor on every site?</h2>
+          <p>With access to all sites, you can hold <kbd id="welcome-key">Z</kbd> and drag across links on any webpage, and Capture this page works without asking site by site. Chrome asks you once.</p>
+          <p class="help">Link Meteor reads a page’s links only when you capture or drag, and keeps what you save in this browser. You can list sites where it never runs, or turn this off, under Site access.</p>
+          <div class="welcome-actions">
+            <button id="welcome-allow" class="btn primary" type="button">Allow on all sites (recommended)</button>
+            <button id="welcome-later" class="btn" type="button">Choose sites later</button>
+          </div>
+        </div>
+        <div id="welcome-outcome" class="welcome-outcome" hidden>
+          <p id="welcome-outcome-text" role="status"></p>
+          <button id="welcome-done" class="btn small" type="button">Done</button>
+        </div>
+        <button id="welcome-close" class="btn quiet icon-btn welcome-close" type="button" aria-label="Close the welcome card" title="Close"><svg class="icon" aria-hidden="true"><use href="#i-x"/></svg></button>
+      </section>
+
       <header class="collection-head">
         <svg class="brand-mark compact-only" aria-hidden="true"><use href="#i-mark"/></svg>
         <div class="collection-title">
@@ -137,11 +213,18 @@
           <div class="editor-actions">
             <button class="btn primary" type="submit">Save details</button>
             <button id="cancel-edit" class="btn quiet" type="button">Close</button>
-            <button id="delete-collection" class="btn quiet danger" type="button"><svg class="icon" aria-hidden="true"><use href="#i-trash"/></svg>Delete collection</button>
+            <span class="editor-danger">
+              <button id="empty-collection" class="btn quiet danger" type="button">Empty this collection</button>
+              <button id="delete-collection" class="btn quiet danger" type="button"><svg class="icon" aria-hidden="true"><use href="#i-trash"/></svg>Delete collection</button>
+            </span>
           </div>
           <div id="delete-confirm" class="confirm danger-confirm" role="group" aria-labelledby="delete-confirm-text" hidden>
             <p id="delete-confirm-text"></p>
             <div class="confirm-actions"><button id="delete-confirm-yes" class="btn danger-solid" type="button">Delete permanently</button><button id="delete-confirm-no" class="btn quiet" type="button">Keep collection</button></div>
+          </div>
+          <div id="empty-confirm" class="confirm danger-confirm" role="group" aria-labelledby="empty-confirm-text" hidden>
+            <p id="empty-confirm-text"></p>
+            <div class="confirm-actions"><button id="empty-confirm-yes" class="btn danger-solid" type="button">Remove all links</button><button id="empty-confirm-no" class="btn quiet" type="button">Keep links</button></div>
           </div>
         </form>
       </section>
@@ -154,6 +237,7 @@
           <label class="seg"><input type="radio" name="scope" value="window"><svg class="icon" aria-hidden="true"><use href="#i-window"/></svg><span>This window</span></label>
           <label class="seg"><input type="radio" name="scope" value="all"><svg class="icon" aria-hidden="true"><use href="#i-windows"/></svg><span>All windows</span></label>
         </div>
+        <p id="scope-access-help" class="help" hidden>Pick tabs and the window scopes ask Chrome once to see your open tabs’ titles and addresses.</p>
         <p id="scope-preview" class="scope-preview" aria-live="polite">Checking the current page…</p>
         <fieldset id="tab-picker" class="tab-picker" hidden>
           <legend>Tabs to capture</legend>
@@ -190,13 +274,18 @@
         <ul id="active-filters" class="chips" aria-label="Active view options" hidden></ul>
 
         <div class="list-toolbar">
-          <label class="select-all"><input id="select-all" type="checkbox"><span>Select page</span></label>
+          <label class="select-all"><input id="select-all" type="checkbox"><span id="select-all-label">Select all</span></label>
           <span id="selection-count" class="selection-count">0 selected</span>
           <div class="toolbar-actions">
             <button id="select-everything" class="btn quiet small" type="button" hidden>Select all</button>
             <button id="clear-selection" class="btn quiet small" type="button" hidden>Clear</button>
             <button id="remove" class="btn quiet small danger" type="button" disabled><svg class="icon" aria-hidden="true"><use href="#i-trash"/></svg>Remove</button>
+            <button id="remove-view" class="btn quiet small danger" type="button" disabled>Remove all in this view</button>
             <button id="undo" class="btn quiet small" type="button" disabled><svg class="icon" aria-hidden="true"><use href="#i-undo"/></svg>Undo</button>
+          </div>
+          <div id="remove-view-confirm" class="confirm danger-confirm toolbar-confirm" role="group" aria-labelledby="remove-view-confirm-text" hidden>
+            <p id="remove-view-confirm-text"></p>
+            <div class="confirm-actions"><button id="remove-view-confirm-yes" class="btn danger-solid small" type="button">Remove all</button><button id="remove-view-confirm-no" class="btn quiet small" type="button">Keep them</button></div>
           </div>
         </div>
 
@@ -255,25 +344,57 @@
           </div>
           <p id="columns-help" class="help">Used by the Table copy and by CSV, TSV, Excel and HTML files.</p>
         </fieldset>
+        <label class="file-name">File name <input id="export-name" type="text" autocomplete="off" spellcheck="false" aria-describedby="export-name-help"></label>
+        <p id="export-name-help" class="help">Type a name for this download, or leave it empty to use the pattern.</p>
+        <details id="name-settings" class="name-settings">
+          <summary>File name pattern</summary>
+          <div class="name-settings-body">
+            <label>Prefix <input id="name-prefix" type="text" maxlength="80" placeholder="Optional, for example lab-notes" autocomplete="off" spellcheck="false" aria-describedby="name-prefix-help"></label>
+            <p id="name-prefix-help" class="help">Letters, digits, dots, underscores and hyphens, up to 40. Other characters become hyphens.</p>
+            <label class="name-check"><input id="name-timestamp" type="checkbox" checked><span>Add the date to file names</span></label>
+            <label>Date format <select id="name-timestamp-format"><option value="datetime">Date and time</option><option value="date">Date only</option></select></label>
+            <p id="name-pattern" class="help name-pattern"></p>
+          </div>
+        </details>
         <button id="download" class="btn primary wide" type="button"><svg class="icon" aria-hidden="true"><use href="#i-download"/></svg><span id="download-label">Download</span></button>
         <p id="download-name" class="help download-name"></p>
       </section>
 
       <section class="export-group" aria-labelledby="bookmark-title">
         <h3 id="bookmark-title">Save as bookmarks</h3>
-        <label>Folder name <input id="bookmark-name" placeholder="Collection name" autocomplete="off"></label>
+        <div id="bookmark-mode" class="bookmark-mode" role="radiogroup" aria-label="Bookmark folder">
+          <label class="bookmark-choice"><input type="radio" name="bookmark-mode" value="new" checked><span>New folder</span></label>
+          <label class="bookmark-choice"><input type="radio" name="bookmark-mode" value="existing"><span>Existing folder</span></label>
+        </div>
+        <div id="bookmark-new" class="bookmark-pane">
+          <label>Folder name <input id="bookmark-name" placeholder="Collection name" autocomplete="off"></label>
+        </div>
+        <div id="bookmark-existing" class="bookmark-pane" hidden>
+          <label>Find a folder <input id="bookmark-folder-search" type="search" placeholder="Search folder names" autocomplete="off" spellcheck="false" aria-controls="bookmark-folder" aria-describedby="bookmark-folder-status"></label>
+          <label class="sr-only" for="bookmark-folder">Bookmark folders</label>
+          <select id="bookmark-folder" class="bookmark-folders" size="6" aria-describedby="bookmark-folder-status"></select>
+          <p id="bookmark-folder-status" class="help" aria-live="polite"></p>
+        </div>
+        <label class="name-check"><input id="bookmark-skip-existing" type="checkbox" checked><span>Skip links already in that folder</span></label>
         <button id="bookmark" class="btn wide" type="button"><svg class="icon" aria-hidden="true"><use href="#i-bookmark"/></svg><span id="bookmark-label">Create bookmark folder</span></button>
-        <p class="help">Creates a new folder in Chrome's bookmarks. Web links only. Chrome may sync bookmarks according to your browser settings.</p>
+        <p id="bookmark-help" class="help">Creates a new folder in Other bookmarks. Web links only. Chrome may sync bookmarks according to your browser settings.</p>
       </section>
 
       <section class="export-group" aria-labelledby="open-title">
         <h3 id="open-title">Open in tabs</h3>
         <button id="open-links" class="btn wide" type="button"><svg class="icon" aria-hidden="true"><use href="#i-external"/></svg><span id="open-label">Open links…</span></button>
+        <div class="open-modes"><span class="open-modes-label">Or open in</span><button id="open-window" class="link-btn" type="button">a new window</button><button id="open-group" class="link-btn" type="button" aria-describedby="open-group-help">a tab group</button></div>
         <div id="open-confirm" class="confirm" role="group" aria-labelledby="open-confirm-text" hidden>
           <p id="open-confirm-text"></p>
-          <div class="confirm-actions"><button id="open-confirm-yes" class="btn primary" type="button">Open tabs</button><button id="open-confirm-no" class="btn quiet" type="button">Cancel</button></div>
+          <div class="confirm-actions"><button id="open-confirm-yes" class="btn primary" type="button">Open tabs</button><button id="open-confirm-window" class="btn" type="button">Open in a new window</button><button id="open-confirm-group" class="btn" type="button">Open as a tab group</button><button id="open-confirm-no" class="btn quiet" type="button">Cancel</button></div>
         </div>
-        <p class="help">Opens up to 20 web links at a time as background tabs.</p>
+        <div id="open-progress" class="open-progress" hidden>
+          <p id="open-progress-text" role="status"></p>
+          <progress id="open-progress-bar" max="1" value="0" aria-labelledby="open-progress-text"></progress>
+          <button id="open-cancel-progress" class="btn small" type="button">Cancel</button>
+        </div>
+        <p class="help">Opens up to 500 web links in background tabs, a few at a time. Link Meteor asks first above 20.</p>
+        <p id="open-group-help" class="help">A tab group is named after the collection when Chrome lets Link Meteor manage tab groups. Chrome asks the first time you choose one.</p>
       </section>
     </aside>
 

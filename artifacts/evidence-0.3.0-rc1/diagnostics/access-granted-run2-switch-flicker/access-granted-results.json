@@ -1,0 +1,56 @@
+{
+  "started": "2026-09-27T14:16:43.370Z",
+  "profile": "r030-rc1-all2",
+  "browser": "Chrome for Testing via Playwright, real unpacked extension, grants prepared through the product by the owner",
+  "checks": [
+    {
+      "name": "All-sites scope: one registered script covers http and https; the switch shows it on",
+      "registered": 1
+    },
+    {
+      "name": "Hold-drag works on a second origin with no per-site grant and no prompt",
+      "origin": "http://localhost:52478"
+    },
+    {
+      "name": "Modifier trigger on a real page: Meta-drag selects; a plain Meta-click opens the link as usual"
+    },
+    {
+      "name": "Never on these sites: off at once in the open tab, off after a reload, and back on without a reload"
+    },
+    {
+      "name": "This site, in all-sites scope, is the Never on this site toggle"
+    },
+    {
+      "name": "Capture this page on a never-visited origin needs no prompt with all-sites access",
+      "origin": "http://127.0.0.1:52488"
+    },
+    {
+      "name": "Open as a tab group names the group after the collection when tab groups are allowed"
+    },
+    {
+      "name": "Card: Open as a tab group is named after the destination; Bookmark this selection saves a folder"
+    }
+  ],
+  "grants": {
+    "origins": [
+      "http://*/*",
+      "http://127.0.0.1:52478/*",
+      "https://*/*"
+    ],
+    "permissions": [
+      "activeTab",
+      "bookmarks",
+      "clipboardWrite",
+      "contextMenus",
+      "storage",
+      "tabs",
+      "unlimitedStorage",
+      "tabGroups",
+      "scripting",
+      "sidePanel"
+    ]
+  },
+  "result": "FAIL",
+  "error": "locator.check: Clicking the checkbox did not change its state\nCall log:\n  - waiting for locator('#all-sites')\n    - locator resolved to <input role=\"switch\" id=\"all-sites\" class=\"switch\" type=\"checkbox\" aria-describedby=\"all-sites-help\"/>\n  - attempting click action\n    - waiting for element to be visible, enabled and stable\n    - element is visible, enabled and stable\n    - scrolling into view if needed\n    - done scrolling\n    - performing click action\n    - click action done\n    - waiting for scheduled navigations to finish\n    - navigations have finished\n\n    at <repository>/tests/access-granted.mjs:172:34",
+  "finished": "2026-09-27T14:16:53.456Z"
+}

@@ -1,0 +1,8 @@
+{"step":"toolbar-click-on-site-A","data":"{\"code\":-32601,\"message\":\"'Extensions.triggerAction' wasn't found\"}"}
+{"step":"capture-site-A","data":{"error":"Open a webpage and invoke Link Meteor from its toolbar icon or keyboard shortcut first."}}
+{"step":"site-B-persistent-access","data":false}
+{"step":"capture-site-B-before-workaround","data":{"error":"Open a webpage and invoke Link Meteor from its toolbar icon or keyboard shortcut first."}}
+{"step":"toolbar-click-on-site-B","data":"{\"code\":-32601,\"message\":\"'Extensions.triggerAction' wasn't found\"}"}
+{"step":"capture-site-B-after-workaround","data":{"error":"Open a webpage and invoke Link Meteor from its toolbar icon or keyboard shortcut first."}}
+{"step":"site-B-persistent-access-after","data":false}
+FAIL

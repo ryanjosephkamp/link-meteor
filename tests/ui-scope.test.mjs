@@ -6,16 +6,17 @@ import { readFileSync } from 'node:fs';
 import { runInNewContext } from 'node:vm';
 import test from 'node:test';
 
-const source = readFileSync(new URL('../src/ui/workbench.js', import.meta.url), 'utf8');
+const source = readFileSync(new URL('../src/ui/workbench/capture.js', import.meta.url), 'utf8');
 const start = source.indexOf('async function runCapture() {');
-const end = source.indexOf('\nasync function download()', start);
+const end = source.indexOf('\n}\n', start) + 2;
 assert.ok(start >= 0 && end > start, 'The product runCapture function must be available to this harness');
 const runCaptureSource = source.slice(start, end);
-// Formatting helpers used by runCapture's status messages, taken from the same product file.
+// Formatting helpers used by runCapture's status messages, taken from the product's helpers module.
+const helpers = readFileSync(new URL('../src/ui/workbench/helpers.js', import.meta.url), 'utf8');
 const helperSource = ['function count(', 'function plural('].map((signature) => {
-  const at = source.indexOf(signature);
+  const at = helpers.indexOf(signature);
   assert.ok(at >= 0, `${signature} must be available to this harness`);
-  return source.slice(at, source.indexOf('\n', at));
+  return helpers.slice(at, helpers.indexOf('\n', at));
 }).join('\n');
 
 const tab = (id, windowId, url) => ({ id, windowId, url });
@@ -26,15 +27,16 @@ function originOf(value) {
   } catch { return ''; }
 }
 
-function simulate({ scope, initialTabs, afterPermissionTabs, selectedIds = [] }) {
+function simulate({ scope, initialTabs, afterPermissionTabs, selectedIds = [], targetTabId, pagePlan = { ask: false } }) {
   const messages = [];
   const permissionCalls = [];
+  const reports = [];
   let visibleTabs = initialTabs;
   const captureButton = { disabled: false };
   const ui = {
     busy: false,
     scope,
-    inventory: { tabs: initialTabs, currentWindowId: 7 },
+    inventory: { tabs: initialTabs, currentWindowId: 7, targetTabId },
     selectedTabs: new Set(selectedIds),
     originAccess: new Map(),
     state: null,
@@ -46,7 +48,8 @@ function simulate({ scope, initialTabs, afterPermissionTabs, selectedIds = [] })
     originOf,
     show() {},
     render() {},
-    captureReport() {},
+    captureReport(report, options) { reports.push({ report, options }); },
+    currentPagePlan: () => pagePlan,
     renderCaptureButton() {},
     $: () => captureButton,
     chrome: {
@@ -66,7 +69,7 @@ function simulate({ scope, initialTabs, afterPermissionTabs, selectedIds = [] })
     },
   };
   const runCapture = runInNewContext(`${helperSource}\n${runCaptureSource}\nrunCapture`, dependencies);
-  return { runCapture, ui, captureButton, messages, permissionCalls };
+  return { runCapture, ui, captureButton, messages, permissionCalls, reports };
 }
 
 test('closed selected tab keeps its original ID for background error reporting', async () => {
@@ -114,4 +117,20 @@ test('surviving tab that changes origin stops before capture.run', async () => {
   assert.equal(harness.messages.some((m) => m.type === 'capture.run'), false);
   assert.equal(harness.ui.busy, false);
   assert.equal(harness.captureButton.disabled, false);
+});
+
+test('a current page whose address Chrome hides offers all sites instead of asking for one site', async () => {
+  const harness = simulate({
+    scope: 'current',
+    initialTabs: [tab(7, 7, '')],
+    afterPermissionTabs: [tab(7, 7, '')],
+    targetTabId: 7,
+    pagePlan: { ask: false, reason: 'hidden' },
+  });
+  await harness.runCapture();
+  assert.deepEqual(harness.permissionCalls, [], 'nothing is requested before the person chooses');
+  assert.deepEqual(Array.from(harness.messages.find((m) => m.type === 'capture.run').tabIds), []);
+  const { options } = harness.reports[0];
+  assert.deepEqual([...options.offerAllSites], [7]);
+  assert.match(options.reasons.get(7), /Allow Link Meteor on all sites/);
 });

@@ -5,12 +5,17 @@ import {resolve,extname} from 'node:path';
 import {createRequire} from 'node:module';
 import {homedir} from 'node:os';
 const require=createRequire(import.meta.url);
-let playwright;
+// Exported for suites that launch Chrome for Testing themselves (see action.mjs).
+export let playwright;
 try { playwright=require('playwright'); }
 catch { playwright=require(process.env.LINK_METEOR_PLAYWRIGHT || resolve(homedir(),'.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright')); }
 export const root=resolve(import.meta.dirname,'../..');
 export const scratch=resolve(root,'.scratch');
 export const evidence=resolve(root,process.env.LINK_METEOR_EVIDENCE_DIR || 'artifacts/evidence');
+// LINK_METEOR_CHROME_PATH runs the suites on another Chrome for Testing build, such as the oldest supported one.
+export const chromePath=()=>process.env.LINK_METEOR_CHROME_PATH ? resolve(root,process.env.LINK_METEOR_CHROME_PATH) : playwright.chromium.executablePath();
+// Before Chrome 132 a bare --headless (what Playwright passes) is the old headless mode, which runs no extensions.
+export const headlessArgs=(headless=true)=>headless&&process.env.LINK_METEOR_CHROME_PATH?['--headless=new']:[];
 
 export async function fixtureServer() {
   const server=createServer(async(req,res)=>{
@@ -34,10 +39,10 @@ export async function launch(profile='acceptance',{headless=true,scale=1,args=[]
   if(previous&&previous!==buildHash)throw new Error('Build changed since this profile was initialized. Use LINK_METEOR_TEST_PROFILE with a fresh task-owned profile, prepare optional grants, and repeat checks.');
   await writeFile(fingerprint,buildHash+'\n');
   const context=await playwright.chromium.launchPersistentContext(resolve(scratch,profile),{
-    executablePath:playwright.chromium.executablePath(),headless,
+    executablePath:chromePath(),headless,
     viewport:{width:1440,height:1000},deviceScaleFactor:scale,acceptDownloads:true,
     env:{...process.env,TMPDIR:scratch},
-    args:[`--disable-extensions-except=${extension}`,`--load-extension=${extension}`,'--disable-background-networking','--disable-component-update',`--disk-cache-dir=${resolve(scratch,profile+'-cache')}`,...args]
+    args:[...headlessArgs(headless),`--disable-extensions-except=${extension}`,`--load-extension=${extension}`,'--disable-background-networking','--disable-component-update',`--disk-cache-dir=${resolve(scratch,profile+'-cache')}`,...args]
   });
   const worker=context.serviceWorkers()[0] || await context.waitForEvent('serviceworker',{timeout:15000});
   const id=new URL(worker.url()).host;

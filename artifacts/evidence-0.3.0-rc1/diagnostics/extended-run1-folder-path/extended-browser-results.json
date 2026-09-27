@@ -1,0 +1,24 @@
+{
+  "started": "2026-09-27T14:13:35.560Z",
+  "checks": [
+    {
+      "name": "5,037 real page occurrences captured; only 100 top-level rows and no closed details rendered",
+      "elapsedMs": 662
+    },
+    {
+      "name": "Selection persists across pages and unselected export includes all 5,037 rows"
+    },
+    {
+      "name": "Filtering resets page and finds final loaded source"
+    },
+    {
+      "name": "Actual bookmark folder contains correct anchor title and URL"
+    }
+  ],
+  "limits": [
+    "Single-machine synthetic measurement, not a cross-device performance guarantee."
+  ],
+  "result": "FAIL",
+  "error": "AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:\n\n  assert.ok(listed.folders.some(f=>f.id===folder.id&&f.path==='Other bookmarks › Link Meteor automated fixture'&&f.depth===1))\n\n    at file:///<repository>/tests/extended-browser.mjs:33:63",
+  "finished": "2026-09-27T14:13:38.156Z"
+}

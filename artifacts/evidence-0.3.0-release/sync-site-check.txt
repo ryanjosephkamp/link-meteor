@@ -1,0 +1,1 @@
+{"check":"pass","version":"0.3.0","file":"downloads/link-meteor-0.3.0.zip","bytes":368539,"sha256":"25463687d2f0a7b9e280de7d4f905753cb9b8cc57b359129937f8ea5e98302c7","minimumChromeVersion":"116"}

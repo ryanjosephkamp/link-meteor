@@ -1,0 +1,1 @@
+{"result":"PASS","checks":13,"screenshots":["panel-welcome.png","workbench-desktop.png","workbench-review.png","workbench-dark.png","panel-dark.png","workbench-narrow.png","panel-export.png","panel-collections.png","workbench-about.png","panel-about.png","panel-empty.png"]}

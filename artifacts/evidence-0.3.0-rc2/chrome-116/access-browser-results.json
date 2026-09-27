@@ -1,0 +1,47 @@
+{
+  "started": "2026-09-27T16:53:56.877Z",
+  "browser": "Chrome for Testing, headless, fresh temporary profile, real unpacked extension, no optional grants",
+  "checks": [
+    {
+      "name": "Nothing opens a tab at install",
+      "pages": [
+        "about:blank"
+      ]
+    },
+    {
+      "name": "Welcome card on a fresh profile; keyboard order Allow, Later, Close at 320 px; Choose sites later sets welcomeSeen",
+      "order": [
+        "welcome-allow",
+        "welcome-later",
+        "welcome-close"
+      ]
+    },
+    {
+      "name": "Allow requests http and https in the click; a (simulated) decline says so plainly and sets welcomeSeen"
+    },
+    {
+      "name": "Close sets welcomeSeen"
+    },
+    {
+      "name": "Settings: the all-sites switch shows the true state; the trigger offers a letter or the modifier only; the Never list lists and removes; each permission has a reason",
+      "triggers": [
+        [
+          "letter",
+          "A letter key"
+        ],
+        [
+          "modifier",
+          "Command"
+        ]
+      ],
+      "reasons": {
+        "allSites": "Hold-key drag and Capture this page then work on every website without asking site by site. Link Meteor reads a page’s links only when you capture or drag, and keeps them in this browser.",
+        "site": "Hold the key below and drag to select links, without opening Link Meteor first. Chrome asks for access to this site only.",
+        "tabGroups": "A tab group is named after the collection when Chrome lets Link Meteor manage tab groups. Chrome asks the first time you choose one."
+      }
+    }
+  ],
+  "result": "FAIL",
+  "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n+ actual - expected\n\n+ `{\"code\":-32601,\"message\":\"'Extensions.triggerAction' wasn't found\"}`\n- 'clicked'\n\n    at file://<repo>/tests/access-browser.mjs:157:10\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)",
+  "finished": "2026-09-27T16:54:02.198Z"
+}

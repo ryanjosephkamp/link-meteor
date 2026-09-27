@@ -1,0 +1,94 @@
+{
+  "about": {
+    "exportedAt": "2026-09-27T16:54:47.410Z",
+    "exportedAtLocal": "2026-09-27T12:54:47.410-04:00",
+    "collection": "Urban heat: “sources” / 2026",
+    "count": 1,
+    "view": "Unique URLs; sorted by capture order, ascending",
+    "filters": [
+      "Search: “pdf”",
+      "Selected links only"
+    ],
+    "version": "0.3.0"
+  },
+  "rows": [
+    {
+      "accessibleLabel": "",
+      "anchorText": "Attention in small systems",
+      "batchId": "9591ac43-1704-47fe-a60b-0f69b629a3de",
+      "capturedAt": "2026-09-26T14:58:13.838Z",
+      "frameUrl": "http://127.0.0.1:52478/index.html",
+      "id": "0b3a6980-7500-4fcf-aeea-8c7f610ebfa5",
+      "notes": "",
+      "originalHref": "/papers/attention.pdf",
+      "sourceTitle": "Meteor Research Lab — deterministic fixture",
+      "sourceUrl": "http://127.0.0.1:52478/index.html",
+      "tags": [],
+      "url": "http://127.0.0.1:52478/papers/attention.pdf",
+      "occurrences": [
+        {
+          "accessibleLabel": "",
+          "anchorText": "Attention in small systems",
+          "batchId": "9591ac43-1704-47fe-a60b-0f69b629a3de",
+          "capturedAt": "2026-09-26T14:58:13.838Z",
+          "frameUrl": "http://127.0.0.1:52478/index.html",
+          "id": "0b3a6980-7500-4fcf-aeea-8c7f610ebfa5",
+          "notes": "",
+          "originalHref": "/papers/attention.pdf",
+          "sourceTitle": "Meteor Research Lab — deterministic fixture",
+          "sourceUrl": "http://127.0.0.1:52478/index.html",
+          "tags": [],
+          "url": "http://127.0.0.1:52478/papers/attention.pdf"
+        },
+        {
+          "accessibleLabel": "",
+          "anchorText": "Download PDF",
+          "batchId": "9591ac43-1704-47fe-a60b-0f69b629a3de",
+          "capturedAt": "2026-09-26T14:58:13.838Z",
+          "frameUrl": "http://127.0.0.1:52478/index.html",
+          "id": "39de1222-5530-49e6-a79f-3063a42bf85d",
+          "notes": "",
+          "originalHref": "/papers/attention.pdf",
+          "sourceTitle": "Meteor Research Lab — deterministic fixture",
+          "sourceUrl": "http://127.0.0.1:52478/index.html",
+          "tags": [],
+          "url": "http://127.0.0.1:52478/papers/attention.pdf"
+        },
+        {
+          "accessibleLabel": "",
+          "anchorText": "Attention in small systems",
+          "batchId": "68dd86f1-a6d3-449e-864a-5d60bc6c7515",
+          "capturedAt": "2026-09-26T14:58:15.051Z",
+          "frameUrl": "http://127.0.0.1:52478/index.html",
+          "id": "a17f9977-0bde-4029-b355-889fe76b3706",
+          "notes": "",
+          "originalHref": "/papers/attention.pdf",
+          "sourceTitle": "Meteor Research Lab — deterministic fixture",
+          "sourceUrl": "http://127.0.0.1:52478/index.html",
+          "tags": [],
+          "url": "http://127.0.0.1:52478/papers/attention.pdf"
+        },
+        {
+          "accessibleLabel": "",
+          "anchorText": "Download PDF",
+          "batchId": "68dd86f1-a6d3-449e-864a-5d60bc6c7515",
+          "capturedAt": "2026-09-26T14:58:15.051Z",
+          "frameUrl": "http://127.0.0.1:52478/index.html",
+          "id": "3794fe92-7ee4-469f-8870-4e5103e2c6ed",
+          "notes": "",
+          "originalHref": "/papers/attention.pdf",
+          "sourceTitle": "Meteor Research Lab — deterministic fixture",
+          "sourceUrl": "http://127.0.0.1:52478/index.html",
+          "tags": [],
+          "url": "http://127.0.0.1:52478/papers/attention.pdf"
+        }
+      ],
+      "occurrenceIds": [
+        "0b3a6980-7500-4fcf-aeea-8c7f610ebfa5",
+        "39de1222-5530-49e6-a79f-3063a42bf85d",
+        "a17f9977-0bde-4029-b355-889fe76b3706",
+        "3794fe92-7ee4-469f-8870-4e5103e2c6ed"
+      ]
+    }
+  ]
+}

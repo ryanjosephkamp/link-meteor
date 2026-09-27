@@ -8,7 +8,8 @@ import {launch,rpc,until,evidence} from './helpers/browser.mjs';
 const result={started:new Date().toISOString(),checks:[],screenshots:[],limits:['Keyboard/label/contrast spot checks in automated Chrome for Testing, not a complete screen-reader or WCAG audit.','Compact widths render the workbench page at side-panel widths in a tab; the native side-panel frame itself is not captured.']};
 const {context,id}=await launch(process.env.LINK_METEOR_VISUAL_PROFILE || 'visual-final',{headless:true});
 const shot=async(page,name,options={})=>{await page.screenshot({path:resolve(evidence,name),animations:'disabled',...options});result.screenshots.push(name);};
-const overflow=page=>page.evaluate(()=>document.documentElement.scrollWidth>innerWidth);
+// Measure the settled layout: after a resize, wait two animation frames so media queries and layout have caught up.
+const overflow=page=>page.evaluate(async()=>{await new Promise(done=>requestAnimationFrame(()=>requestAnimationFrame(done)));return document.documentElement.scrollWidth>innerWidth;});
 // Rasterizes any CSS color (including oklch) to sRGB, then computes WCAG contrast.
 const contrast=(page,pairs)=>page.evaluate(pairs=>{const canvas=document.createElement('canvas');canvas.width=canvas.height=1;const ctx=canvas.getContext('2d',{willReadFrequently:true});
   const rgb=color=>{ctx.clearRect(0,0,1,1);ctx.fillStyle='#000';ctx.fillStyle=color;ctx.fillRect(0,0,1,1);return [...ctx.getImageData(0,0,1,1).data].slice(0,3);};
@@ -17,9 +18,20 @@ const contrast=(page,pairs)=>page.evaluate(pairs=>{const canvas=document.createE
   return pairs.map(([name,selector])=>{const el=document.querySelector(selector);if(!el)return {name,missing:true};const a=lum(rgb(getComputedStyle(el).color)),b=lum(rgb(bg(el)));return {name,ratio:Math.round(((Math.max(a,b)+.05)/(Math.min(a,b)+.05))*100)/100};});},pairs);
 try{
  const ui=await context.newPage();await ui.goto(`chrome-extension://${id}/ui/workbench.html`);
- await ui.locator('#collection-heading').waitFor();// Seed with real captured occurrences: this run's browser-suite export, or an explicit earlier export (LINK_METEOR_SEED_JSON).
+ await ui.locator('#collection-heading').waitFor();
+ // 0.3.0 welcome card: a fresh profile shows it once. One screenshot, contrast in both themes, then answer it with Choose sites later.
+ await until(async()=>await ui.locator('#welcome').isVisible(),'Welcome card on a fresh profile');
+ const welcomePairs=[['welcome title','#welcome-title'],['welcome help','.welcome .help'],['welcome allow','#welcome-allow']];
+ await ui.setViewportSize({width:390,height:844});await shot(ui,'panel-welcome.png');
+ const welcomeLight=await contrast(ui,welcomePairs);await ui.emulateMedia({colorScheme:'dark',reducedMotion:'reduce'});await ui.waitForTimeout(250);
+ const welcomeDark=(await contrast(ui,welcomePairs)).map(entry=>({...entry,name:'dark '+entry.name}));await ui.emulateMedia({colorScheme:'light',reducedMotion:'reduce'});
+ for(const entry of [...welcomeLight,...welcomeDark]){assert.ok(!entry.missing,`${entry.name} missing`);assert.ok(entry.ratio>=4.5,`${entry.name} contrast ${entry.ratio}`);}
+ await ui.locator('#welcome-later').click();await until(async()=>!(await ui.locator('#welcome').isVisible()),'Welcome card answered');
+ result.checks.push({welcomeCard:{shownOnFreshProfile:true,answeredWith:'Choose sites later',contrast:[...welcomeLight,...welcomeDark]}});
+ await ui.setViewportSize({width:1440,height:1000});
+ // Seed with real captured occurrences: this run's browser-suite export, or an explicit earlier export (LINK_METEOR_SEED_JSON).
  const seed=process.env.LINK_METEOR_SEED_JSON?resolve(import.meta.dirname,'..',process.env.LINK_METEOR_SEED_JSON):resolve(evidence,'exports/browser.json');result.seed=seed.slice(resolve(import.meta.dirname,'..').length+1);
- const rows=JSON.parse(await readFile(seed,'utf8'));
+ const seedData=JSON.parse(await readFile(seed,'utf8'));const rows=Array.isArray(seedData)?seedData:seedData.rows;// 0.2.2 exports are an array; 0.3.0 Export panel JSON is {about, rows}.
  await rpc(ui,{type:'state.mutate',action:{type:'collection.create',name:'Research sources'}});
  const active=(await rpc(ui,{type:'state.get'})).activeCollectionId;
  await rpc(ui,{type:'state.mutate',action:{type:'collection.update',id:active,patch:{notes:'Synthetic fixture captures for checking labels, provenance and exports.',tags:['fixture','research']}}});
@@ -27,8 +39,10 @@ try{
  for(const width of [320,390,412,900,1440]){await ui.setViewportSize({width,height:1000});assert.equal(await overflow(ui),false,`overflow at ${width}`);result.checks.push({width,view:'links',horizontalOverflow:false});}
  for(const view of ['collections','export']){await ui.setViewportSize({width:320,height:900});await ui.locator(view==='export'?'#dock-export':'#collection-switch').click();assert.equal(await overflow(ui),false);result.checks.push({width:320,view,horizontalOverflow:false});await ui.locator(view==='export'?'#export-done':'#rail-done').click();}
 
+ // One exception, so the Never on these sites list has an entry to measure.
+ await rpc(ui,{type:'state.mutate',action:{type:'settings.update',patch:{holdExceptions:['https://maps.example.com']}}});await until(async()=>await ui.locator('.exception-item .origin').count()>0,'Exception listed');
  await ui.setViewportSize({width:1440,height:1000});await ui.evaluate(()=>scrollTo(0,0));await shot(ui,'workbench-desktop.png');
- const pairs=[['muted summary','#collection-summary'],['destructive action','#delete-collection'],['link action','#shortcut-settings'],['field label','label[for="hold-key"]'],['help text','#hold-help'],['tag help','#tags-help'],['input text','#collection-tags'],['toolbar count','#result-count'],['row URL','.cell-url .url'],['source cell','.cell-source'],['primary button','#capture']];
+ const pairs=[['all-sites help','#all-sites-help'],['hold trigger help','#hold-trigger-help'],['exception origin','.exception-item .origin'],['muted summary','#collection-summary'],['destructive action','#delete-collection'],['link action','#shortcut-settings'],['field label','label[for="hold-key"]'],['help text','#hold-help'],['tag help','#tags-help'],['input text','#collection-tags'],['toolbar count','#result-count'],['row URL','.cell-url .url'],['source cell','.cell-source'],['primary button','#capture']];
  await ui.locator('#edit-collection').click();const light=await contrast(ui,pairs);await ui.locator('#cancel-edit').click();
  await ui.locator('#filters-toggle').click();await ui.locator('#dedupe').selectOption('url');await ui.locator('.row-details summary').first().click();await ui.locator('#review').scrollIntoViewIfNeeded();await shot(ui,'workbench-review.png');
  await ui.locator('#dedupe').selectOption('none');await ui.locator('#filters-toggle').click();await ui.evaluate(()=>scrollTo(0,0));
@@ -36,6 +50,21 @@ try{
  await ui.locator('#edit-collection').click();const dark=(await contrast(ui,pairs)).map(entry=>({...entry,name:'dark '+entry.name}));await ui.locator('#cancel-edit').click();
  for(const entry of [...light,...dark]){assert.ok(!entry.missing,`${entry.name} missing`);assert.ok(entry.ratio>=4.5,`${entry.name} contrast ${entry.ratio}`);}
  result.checks.push({measuredTextContrast:[...light,...dark]});
+ // 0.3.0 states that are hard to hold still: the stronger confirmation comes from a real 150-link target (nothing opens); the
+ // all-sites note and the opening progress line are shown with sample text in their real elements, with their real styles.
+ await rpc(ui,{type:'state.mutate',action:{type:'collection.create',name:'Opening check'}});
+ const many=Array.from({length:150},(_,i)=>({id:`visual-open-${i}`,anchorText:`Source ${i}`,accessibleLabel:'',url:`https://example.test/source/${i}`,originalHref:`/source/${i}`,sourceUrl:'https://example.test/list',sourceTitle:'Synthetic opening check',frameUrl:'',capturedAt:'2026-09-27T00:00:00.000Z',batchId:'visual-open',notes:'',tags:[]}));
+ await rpc(ui,{type:'state.mutate',action:{type:'links.append',links:many}});await until(async()=>/150 links/.test(await ui.locator('#collection-summary').innerText()),'Opening check rows');
+ const pagesBeforeOpen=context.pages().length;await ui.locator('#open-links').click();await until(async()=>await ui.locator('#open-confirm.open-confirm-strong').isVisible(),'Stronger confirmation above 100');
+ await ui.evaluate(()=>{const note=document.getElementById('all-sites-note');note.textContent='Chrome no longer lets Link Meteor read every site, so hold-key drag runs only on the sites you chose.';note.hidden=false;document.getElementById('open-progress-text').textContent='Opening 10 of 150 links…';document.getElementById('open-progress').hidden=false;});
+ const statePairs=[['strong confirmation','#open-confirm-text'],['all-sites note','#all-sites-note'],['opening progress','#open-progress-text']];
+ const stateDark=(await contrast(ui,statePairs)).map(entry=>({...entry,name:'dark '+entry.name}));await ui.emulateMedia({colorScheme:'light',reducedMotion:'reduce'});await ui.waitForTimeout(250);
+ const stateLight=await contrast(ui,statePairs);
+ for(const entry of [...stateLight,...stateDark]){assert.ok(!entry.missing,`${entry.name} missing`);assert.ok(entry.ratio>=4.5,`${entry.name} contrast ${entry.ratio}`);}
+ await ui.evaluate(()=>{document.getElementById('open-progress').hidden=true;});await ui.keyboard.press('Escape');assert.equal(await ui.locator('#open-confirm').isVisible(),false);assert.equal(context.pages().length,pagesBeforeOpen,'No tab opened');
+ await rpc(ui,{type:'state.mutate',action:{type:'collection.activate',id:active}});await until(async()=>(await ui.locator('#collection-heading').innerText())==='Research sources','Back to Research sources');
+ result.checks.push({stateContrast:{strongConfirmationFromRealTarget:true,sampleTextIn:['#all-sites-note','#open-progress-text'],results:[...stateLight,...stateDark]}});
+ await ui.emulateMedia({colorScheme:'dark',reducedMotion:'reduce'});await ui.waitForTimeout(250);
  await ui.setViewportSize({width:390,height:844});await ui.evaluate(()=>scrollTo(0,0));await ui.waitForTimeout(250);await shot(ui,'panel-dark.png');
  await ui.emulateMedia({colorScheme:'light',reducedMotion:'reduce'});await ui.waitForTimeout(250);await shot(ui,'workbench-narrow.png');
  await ui.locator('#dock-export').click();await shot(ui,'panel-export.png',{fullPage:true});await ui.locator('#export-done').click();

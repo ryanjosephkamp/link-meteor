@@ -1,0 +1,59 @@
+
+> link-meteor@0.3.0 test
+> node --test tests/*.test.mjs
+
+▶ background adverse paths using explicit Chrome-API simulation
+  ✔ failed persistent write preserves saved collection (2.772791ms)
+  ✔ session bookkeeping failure does not contradict successful capture (1.741ms)
+  ✔ simultaneous hold settings serialize registration and retain last requested state (18.294417ms)
+  ✔ revoked permission prunes persisted hold origins and registered scripts (5.075042ms)
+  ✔ Review tab failure returns successful save and a separate warning (0.377417ms)
+  ✔ a stored 0.2.2 state reads with default settings and is upgraded by the next write (0.223583ms)
+  ✔ write listeners follow saved changes and cannot undo them (0.36275ms)
+  ✔ unreadable saved schema is preserved (0.086125ms)
+✔ background adverse paths using explicit Chrome-API simulation (29.879458ms)
+✔ a backup holds every collection and setting, not the undo snapshot, and survives JSON (5.091084ms)
+✔ files that are not valid backups are refused with a reason (14.457916ms)
+✔ readers keep only contract fields and fill settings missing from older backups (0.610417ms)
+✔ merging into a fresh install joins the default collection by name and adds the rest (0.55925ms)
+✔ merging keeps local names, notes, precedence and the undo snapshot (0.418708ms)
+✔ replacing restores the backup exactly and clears the removal undo (0.236958ms)
+✔ the backup.restore action saves the planned state (0.357041ms)
+✔ fresh state and collection lifecycle (4.220875ms)
+✔ append preserves occurrences, removal has one positional undo, updates are immutable (1.170416ms)
+✔ filters and reversible dedup retain matched provenance (0.703833ms)
+✔ invalid actions and payloads fail descriptively (0.400209ms)
+✔ mixed web, email, and telephone destinations retain separate occurrences (0.373791ms)
+✔ ordered CSV/TSV protect formulas and preserve distinct fields (1.627375ms)
+✔ text, Markdown, HTML, and JSON use safe data and retain provenance (0.810542ms)
+✔ XLSX is a ZIP with ordered inline string cells and no formulas (1.716084ms)
+✔ unsupported format or columns are rejected (0.246459ms)
+✔ text keeps valid destination strings exactly; Markdown encodes only its delimiters (0.250792ms)
+✔ XLSX escapes OOXML control tokens and supports columns past Z (1.591084ms)
+✔ Markdown preserves a genuinely empty anchor label (0.082208ms)
+✔ export file names follow the pattern settings, in local time and without colons (1.919458ms)
+✔ typed file names and collection names become safe file names (1.237042ms)
+﹣ release ZIP members are the current extension source (4.174666ms) # no ZIP is packaged for 0.3.0 yet; run npm run build and npm run package before a release
+✔ a source change outside the site copy pairs invalidates the ZIP (36.605667ms)
+✔ a corrupted ZIP member is rejected before comparing source (1.1645ms)
+✔ a fresh state has every setting at its default, with its own lists (1.63675ms)
+✔ migration fills only absent settings and keeps stored 0.2.2 data exactly (0.288166ms)
+✔ reducers accept a stored 0.2.2 state and write the migrated shape (1.191041ms)
+✔ the packaged 0.2.2 reducer keeps 0.3.0 settings when it writes (16.7425ms)
+✔ settings.update validates every new field (2.615292ms)
+✔ export prefixes must already be safe file-name parts (0.882083ms)
+✔ a site cannot be both a hold-drag site and an exception (0.143833ms)
+✔ invalid stored values are reported, not replaced (0.180875ms)
+✔ unknown settings fields from a later version are kept through writes (0.077ms)
+✔ closed selected tab keeps its original ID for background error reporting (15.774958ms)
+✔ new tab in the current window is excluded from this capture (0.750167ms)
+✔ new tab in any window is excluded from all-windows capture (0.445792ms)
+✔ surviving tab that changes origin stops before capture.run (0.545583ms)
+ℹ tests 46
+ℹ suites 0
+ℹ pass 45
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 1
+ℹ todo 0
+ℹ duration_ms 98.307708

@@ -1,0 +1,10 @@
+PASS Removing all-sites access returns the saved scope to 'sites'
+AssertionError [ERR_ASSERTION]: Chrome keeps the per-site grant after all-sites access is removed
+    at file:///<repository>/tests/permission-browser.mjs:55:10 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: false,
+  expected: true,
+  operator: '==',
+  diff: 'simple'
+}

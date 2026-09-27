@@ -1,0 +1,177 @@
+{
+  "started": "2026-09-26T19:47:11.238Z",
+  "checks": [
+    {
+      "width": 320,
+      "view": "links",
+      "horizontalOverflow": false
+    },
+    {
+      "width": 390,
+      "view": "links",
+      "horizontalOverflow": false
+    },
+    {
+      "width": 412,
+      "view": "links",
+      "horizontalOverflow": false
+    },
+    {
+      "width": 900,
+      "view": "links",
+      "horizontalOverflow": false
+    },
+    {
+      "width": 1440,
+      "view": "links",
+      "horizontalOverflow": false
+    },
+    {
+      "width": 320,
+      "view": "collections",
+      "horizontalOverflow": false
+    },
+    {
+      "width": 320,
+      "view": "export",
+      "horizontalOverflow": false
+    },
+    {
+      "measuredTextContrast": [
+        {
+          "name": "muted summary",
+          "ratio": 5.77
+        },
+        {
+          "name": "destructive action",
+          "ratio": 5.57
+        },
+        {
+          "name": "link action",
+          "ratio": 5.1
+        },
+        {
+          "name": "field label",
+          "ratio": 9.37
+        },
+        {
+          "name": "help text",
+          "ratio": 5.42
+        },
+        {
+          "name": "tag help",
+          "ratio": 6.02
+        },
+        {
+          "name": "input text",
+          "ratio": 16.48
+        },
+        {
+          "name": "toolbar count",
+          "ratio": 5.77
+        },
+        {
+          "name": "row URL",
+          "ratio": 5.77
+        },
+        {
+          "name": "source cell",
+          "ratio": 5.77
+        },
+        {
+          "name": "primary button",
+          "ratio": 13.41
+        },
+        {
+          "name": "dark muted summary",
+          "ratio": 7.78
+        },
+        {
+          "name": "dark destructive action",
+          "ratio": 8.37
+        },
+        {
+          "name": "dark link action",
+          "ratio": 14
+        },
+        {
+          "name": "dark field label",
+          "ratio": 12.61
+        },
+        {
+          "name": "dark help text",
+          "ratio": 8.07
+        },
+        {
+          "name": "dark tag help",
+          "ratio": 7.36
+        },
+        {
+          "name": "dark input text",
+          "ratio": 15.41
+        },
+        {
+          "name": "dark toolbar count",
+          "ratio": 7.78
+        },
+        {
+          "name": "dark row URL",
+          "ratio": 7.78
+        },
+        {
+          "name": "dark source cell",
+          "ratio": 7.78
+        },
+        {
+          "name": "dark primary button",
+          "ratio": 13.41
+        }
+      ]
+    },
+    {
+      "unlabeledFormControls": 0,
+      "keyboardFocusReachedControl": true,
+      "firstFocusRing": {
+        "tag": "BUTTON",
+        "outline": "solid",
+        "width": "2px"
+      }
+    },
+    {
+      "aboutAndHelp": {
+        "links": 6,
+        "version": "v0.3.0",
+        "startsCollapsed": true,
+        "keyboardCompact": true,
+        "noAutomaticNavigation": true
+      }
+    },
+    {
+      "longCollectionNameOverflow": false,
+      "widths": [
+        320,
+        390,
+        1440
+      ]
+    }
+  ],
+  "screenshots": [
+    "workbench-desktop.png",
+    "workbench-review.png",
+    "workbench-dark.png",
+    "panel-dark.png",
+    "workbench-narrow.png",
+    "panel-export.png",
+    "panel-collections.png",
+    "workbench-about.png",
+    "panel-about.png",
+    "panel-empty.png"
+  ],
+  "limits": [
+    "Keyboard/label/contrast spot checks in automated Chrome for Testing, not a complete screen-reader or WCAG audit.",
+    "Compact widths render the workbench page at side-panel widths in a tab; the native side-panel frame itself is not captured."
+  ],
+  "seed": "artifacts/evidence-0.2.2/exports/browser.json",
+  "result": "PASS",
+  "finished": "2026-09-26T19:47:15.485Z"
+}

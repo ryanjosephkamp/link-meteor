@@ -52,6 +52,7 @@
         <h2 id="toc-title">On this page</h2>
         <ol>
           <li><a href="#before">Before you start</a></li>
+          <li><a href="#works">Works in</a></li>
           <li><a href="#watch">Watch the steps</a></li>
           <li><a href="#download">Download</a></li>
           <li><a href="#load">Load it into Chrome</a></li>
@@ -65,13 +66,23 @@
         <section aria-labelledby="before">
           <h2 id="before">Before you start</h2>
           <p>Link Meteor is built for <strong>desktop Google Chrome</strong>. It doesn't run on phones or tablets, and there are no Firefox or Safari versions.</p>
-          <div class="note warn"><svg aria-hidden="true"><use href="assets/img/icons.svg#alert"/></svg><div><p><strong>What has been tested so far.</strong> Version 0.2.2 adds an About and help area; its capture, export and storage code is byte-for-byte the same as 0.2.1. The 0.2.1 build passed automated Chrome for Testing checks on macOS using synthetic pages, including capture, exports, persistence, bookmarks and permission revocation. For 0.2.2, the unit tests, presentation checks and the same capture, export, bookmark and permission suites were rerun in Chrome for Testing and passed. The project owner previously loaded 0.2.0 in everyday Google Chrome and reported that it worked; the specific steps were not itemized. That report does not establish human testing of 0.2.1 or 0.2.2. Link Meteor declares Chrome <span data-build="minimumChromeVersion">116</span> as its oldest supported version, but that version, Windows, Linux, native permission prompts and screen readers have not been independently verified. If something doesn't work for you, please <a href="https://github.com/ryanjosephkamp/link-meteor/issues">report it</a>.</p></div></div>
+          <div class="note warn"><svg aria-hidden="true"><use href="assets/img/icons.svg#alert"/></svg><div><p><strong>What has been tested so far.</strong> Version 0.3.0 passed automated checks in Chrome for Testing on macOS, using synthetic pages. They cover capture, exports, bookmarks, backup and restore, site access and permission removal, including Chrome's own permission prompts, which the project owner answered by hand. The project owner then used 0.3.0 in everyday Google Chrome on macOS, going through every new feature, and everything worked. They also tested it in Brave and Microsoft Edge. The checks that need no extra permissions also passed in Chrome <span data-build="minimumChromeVersion">116</span>, the oldest version Link Meteor supports. Windows, Linux and screen readers haven't been tested yet. If something doesn't work for you, please <a href="https://github.com/ryanjosephkamp/link-meteor/issues">report it</a>.</p></div></div>
           <p>A development build is installed with Chrome's <em>Developer mode</em>. That's a normal Chrome setting for loading extensions from a folder on your computer; it doesn't change anything else about your browser.</p>
+        </section>
+
+        <section aria-labelledby="works">
+          <h2 id="works">Works in</h2>
+          <dl class="defs">
+            <dt>Google Chrome</dt><dd>Tested on macOS. Link Meteor needs Chrome <span data-build="minimumChromeVersion">116</span> or newer, and that oldest version passed the automated checks that need no extra permissions.</dd>
+            <dt>Brave and Microsoft Edge</dt><dd>Tested by hand on macOS. Load the ZIP the same way, from the browser's own extensions page with Developer mode on.</dd>
+            <dt>Firefox and Safari</dt><dd>Not supported.</dd>
+          </dl>
+          <p>Windows and Linux haven't been tested yet. If you try Link Meteor there, or in another Chromium-based browser, a <a href="https://github.com/ryanjosephkamp/link-meteor/issues">report</a> of what worked helps.</p>
         </section>
 
         <section aria-labelledby="watch">
           <h2 id="watch">Watch the steps</h2>
-          <p>A 74-second walkthrough of this page: download, load the folder, pin the icon, capture a section of the practice page and export it. Steps that happen in your own file manager, Chrome's file picker or the toolbar are shown as labeled illustrations.</p>
+          <p>A 74-second walkthrough of this page: download, load the folder, pin the icon, capture a section of the practice page and export it. Steps that happen in your own file manager, Chrome's file picker or the toolbar are shown as labeled illustrations. It was recorded with version 0.2.2; the steps are the same for the current version.</p>
           <figure class="video">
             <video controls preload="none" playsinline width="1920" height="1080" poster="assets/video/link-meteor-install-poster.jpg" aria-describedby="watch-note">
               <source src="assets/video/link-meteor-install.mp4" type="video/mp4">
@@ -122,9 +133,9 @@
         <section aria-labelledby="download">
           <h2 id="download">Download</h2>
           <div class="download-card">
-            <p><strong>Link Meteor <span data-build="version">0.2.2</span></strong>, development build · <span data-build="size">194 KB ZIP</span></p>
-            <a class="btn btn-ink" href="downloads/link-meteor-0.2.2.zip" data-build-href="file" download><svg aria-hidden="true"><use href="assets/img/icons.svg#download"/></svg>Download <span data-build="filename">link-meteor-0.2.2.zip</span></a>
-            <p class="hash">SHA-256 <code data-build="sha256">ceb6b778a0f93a6651e9c036fb6535773919ffa78b7ad4b88c692d35983b4e9d</code></p>
+            <p><strong>Link Meteor <span data-build="version">0.3.0</span></strong>, development build · <span data-build="size">360 KB ZIP</span></p>
+            <a class="btn btn-ink" href="downloads/link-meteor-0.3.0.zip" data-build-href="file" download><svg aria-hidden="true"><use href="assets/img/icons.svg#download"/></svg>Download <span data-build="filename">link-meteor-0.3.0.zip</span></a>
+            <p class="hash">SHA-256 <code data-build="sha256">25463687d2f0a7b9e280de7d4f905753cb9b8cc57b359129937f8ea5e98302c7</code></p>
           </div>
           <p>To check the file, compare its SHA-256 with the value above. On a Mac, run <code>shasum -a 256</code> followed by the file's path in Terminal; on Windows, run <code>certutil -hashfile</code> with the path and <code>SHA256</code> in Command Prompt.</p>
           <h3>Or build it from source</h3>
@@ -137,7 +148,7 @@
             <li><div><strong>Unzip the download into a folder you'll keep.</strong> Chrome loads the extension from that folder every time it starts, so don't delete or move it afterward.</div></li>
             <li><div><strong>Open <code>chrome://extensions</code>.</strong> Type it into the address bar and press Enter.</div></li>
             <li><div><strong>Turn on Developer mode.</strong> The switch is at the top right of the Extensions page.</div></li>
-            <li><div><strong>Choose Load unpacked</strong> and select the unzipped folder, the one that contains <code>manifest.json</code>.</div></li>
+            <li><div><strong>Choose Load unpacked</strong> and select the unzipped folder, the one that contains <code>manifest.json</code>. It holds <code>background.js</code> and <code>manifest.json</code>, and the folders <code>background</code>, <code>content</code>, <code>core</code>, <code>icons</code> and <code>ui</code>.</div></li>
             <li><div><strong>Pin it.</strong> Open the puzzle-piece menu in Chrome's toolbar and pin Link Meteor so its icon stays visible.</div></li>
           </ol>
           <p>Chrome may occasionally remind you that developer-mode extensions are turned on. That reminder is expected for any extension loaded this way.</p>
@@ -154,7 +165,7 @@
             <img src="assets/img/shot-sidepanel.webp" width="1600" height="1000" loading="lazy" alt="The practice page on the left and Link Meteor's side panel on the right, showing the collection Urban heat islands: sources with 102 links, capture options with a note about the previous capture of 95 links, a search box and the first captured links with their URLs and source page.">
             <figcaption>Two actual screenshots side by side: the practice page, and the workbench rendered at side-panel width. Chrome's own side-panel frame isn't shown.</figcaption>
           </figure>
-          <p>Chrome will ask for extra permission only if you use a feature that needs it, such as capturing several tabs at once. The <a href="privacy.html#permissions">privacy page</a> lists every permission and why it's asked for.</p>
+          <p>The first time you open the side panel, a welcome card offers <em>Allow on all sites (recommended)</em>, so you can <a href="guide.html#hold">hold a key and drag</a> on any site, or <em>Choose sites later</em>. Chrome asks once if you allow all sites. Otherwise, it asks for extra permission only when you use a feature that needs it, such as capturing several tabs at once. The <a href="privacy.html#permissions">privacy page</a> lists every permission and why it's asked for.</p>
         </section>
 
         <section aria-labelledby="shortcut">
@@ -166,9 +177,9 @@
         <section aria-labelledby="update">
           <h2 id="update">Update or remove</h2>
           <h3>Update</h3>
-          <p>Download the new build and replace the contents of your Link Meteor folder with it. Then open <code>chrome://extensions</code>, press the reload button on Link Meteor's card, and reload any pages you had open. Your collections are kept.</p>
+          <p>Download the new build and replace the contents of your Link Meteor folder with it, keeping the same folder. Then open <code>chrome://extensions</code>, press the reload button on Link Meteor's card, and reload any pages you had open. Your collections are kept. From version 0.3.0 on, you can also <a href="guide.html#collections">download a backup</a> first.</p>
           <h3>Remove</h3>
-          <p>Choose <em>Remove</em> on Link Meteor's card in <code>chrome://extensions</code>. <strong>This deletes your saved collections</strong>, because they are stored only in this browser. Export anything you want to keep first.</p>
+          <p>Choose <em>Remove</em> on Link Meteor's card in <code>chrome://extensions</code>. <strong>This deletes your saved collections</strong>, because they are stored only in this browser. Download a backup or export anything you want to keep first.</p>
         </section>
 
         <section aria-labelledby="trouble">
@@ -177,7 +188,8 @@
             <dt>Nothing happens on a page</dt><dd>Chrome doesn't let extensions run on its own pages (like <code>chrome://</code> addresses), the Chrome Web Store or incognito windows. On ordinary pages that were already open when you installed or updated, reload the page once.</dd>
             <dt>The shortcut doesn't respond</dt><dd>Check <code>chrome://extensions/shortcuts</code>. Another extension or your operating system may be using the same keys.</dd>
             <dt>Some links weren't captured</dt><dd>Links inside frames from other sites and closed shadow roots can't be read, and content that hasn't loaded yet isn't there. The capture report says when frames were skipped. See <a href="guide.html#limits">limits and coverage</a>.</dd>
-            <dt>Capture this page says Link Meteor doesn't have access</dt><dd>This happens when the side panel stays open and the tab moves to a new site. Chrome gives Link Meteor access to a page when you click its toolbar icon on that page, and that access ends when the tab goes somewhere else. Click the Link Meteor icon again while you're on the new page (it may be under the puzzle-piece menu), then choose <em>Capture this page</em>. To stop being asked on a site you use often, turn on <a href="guide.html#hold">hold-key drag</a> there, which gives Link Meteor lasting access to that site.</dd>
+            <dt>Capture this page says Link Meteor doesn't have access</dt><dd>Chrome gives Link Meteor access to a page when you click its toolbar icon there, and that access ends when the tab moves to another site. If you allowed all sites, this doesn't come up. Otherwise, Link Meteor asks Chrome for the new site in the same click; if you decline, the capture reports that access was denied. When Chrome hides the page's address, Link Meteor offers <em>Allow on all sites</em> instead. You can also click the Link Meteor icon again while you're on the page (it may be under the puzzle-piece menu), then choose <em>Capture this page</em>.</dd>
+            <dt>Hold-key drag doesn't start on a site</dt><dd>Check that the site isn't under <em>Never on these sites</em> in Link Meteor's Site access settings. If Chrome's own site access for Link Meteor (in the puzzle-piece menu) is set to <em>On click</em>, hold-key drag can't run, and Link Meteor explains why. Typing in a text box, search field or editor never starts a selection.</dd>
             <dt>A multi-tab capture says Access denied</dt><dd>Chrome asked whether Link Meteor could read those sites, and the request was declined or the permission was later removed. Capture again to be asked again.</dd>
           </dl>
         </section>

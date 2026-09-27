@@ -75,7 +75,8 @@ async function grantTabGroups(){
   const collection=(await rpc(ui,{type:'state.mutate',action:{type:'collection.create',name:'Grant preparation group'}})).activeCollectionId;
   const links=[0,1,2].map(i=>({id:`grant-group-${i}`,anchorText:`Group source ${i}`,accessibleLabel:'',url:`${fixture.base}/group/${i}`,originalHref:'',sourceUrl:`${fixture.base}/index.html`,sourceTitle:'Grant preparation',frameUrl:'',capturedAt:new Date().toISOString(),batchId:'grant-group',notes:'',tags:[]}));
   await rpc(ui,{type:'state.mutate',action:{type:'links.append',collectionId:collection,links}});
-  await until(async()=>(await ui.locator('#open-label').innerText()).includes('3'),'three links to open');
+  // Wait for the new collection itself: the previous one's label ("Open 37 web links…") also contains a 3.
+  await until(async()=>(await ui.locator('#collection-heading').innerText())==='Grant preparation group'&&(await ui.locator('#open-label').innerText())==='Open 3 web links','three links to open');
   const pagesBefore=context.pages().length;
   if(!await has({permissions:['tabGroups']})){log('awaiting-native-allow',{permission:'tabGroups',via:'Open as a tab group'});}
   await ui.locator('#open-group').click();

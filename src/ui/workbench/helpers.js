@@ -24,7 +24,6 @@ export function originOf(value) { const safe = capturableUrl(value); return safe
 export function hostOf(value) { try { return new URL(value).host; } catch { return ''; } }
 export function labelFor(link) { return link.anchorText || link.accessibleLabel || '(textless link)'; }
 export function tags(value) { return [...new Set(value.split(',').map((part) => part.trim()).filter(Boolean))]; }
-export function filename(name) { return (name || 'links').normalize('NFKD').replace(/[^\p{L}\p{N}._-]+/gu, '-').replace(/^-+|-+$/g, '').slice(0, 70) || 'links'; }
 export const DOCUMENT_TYPES = new Set(['pdf', 'csv', 'tsv', 'xls', 'xlsx', 'ods', 'doc', 'docx', 'odt', 'rtf', 'txt', 'md', 'ppt', 'pptx', 'odp', 'epub', 'json', 'xml', 'zip', 'gz', 'tar', 'png', 'jpg', 'jpeg', 'gif', 'svg', 'webp', 'tif', 'tiff', 'mp3', 'mp4', 'wav', 'mov', 'webm', 'bib', 'ris']);
 // Path suffix after the last dot, when it looks like a file extension (letters first, as the file-type filter expects).
 export function fileType(value) {

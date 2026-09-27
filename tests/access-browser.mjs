@@ -12,6 +12,7 @@ import {mkdir, mkdtemp, readdir, readFile, rm, writeFile} from 'node:fs/promises
 import {resolve} from 'node:path';
 import {fixtureServer, root, scratch} from './helpers/browser.mjs';
 import {launchWithAction} from './helpers/action.mjs';
+import {THEMES} from '../src/core/themes.js';
 
 const evidence = resolve(root, process.env.LINK_METEOR_EVIDENCE_DIR || '.scratch/evidence-access-capture');
 const result = {started: new Date().toISOString(), browser: 'Chrome for Testing, headless, fresh temporary profile, real unpacked extension, no optional grants', checks: []};
@@ -288,6 +289,21 @@ try {
     await drag(page, {x: r.x + 4, y: r.y + 4}, {x: r.x + r.w - 4, y: r.y + r.h - 4});
   };
 
+  // A theme or appearance change reaches a card already open on the page, through the real background.
+  const hostVar = (name) => js(page, `document.getElementById('link-meteor-overlay')?.style.getPropertyValue('${name}').trim()`);
+  await setCapture({afterDrag: 'card'});
+  await bibRegion();
+  await until(async () => (await cardValue(`.querySelector('.count')?.textContent`)) === '5 links selected', 'card for the theme check');
+  await setCapture({theme: 'ember', appearance: 'dark'});
+  await until(async () => (await hostVar('--k-accent')) === THEMES.ember.card.dark.accent, 'Ember dark reaches the open card');
+  assert.equal(await hostVar('color-scheme'), 'dark');
+  await setCapture({appearance: 'light'});
+  await until(async () => (await hostVar('--k-ground')) === THEMES.ember.card.light.ground && (await hostVar('color-scheme')) === 'light', 'the light scheme reaches the open card');
+  assert.equal(await hostVar('--k-hl'), THEMES.ember.highlight);
+  await setCapture({theme: 'meteor', appearance: 'system'});
+  await key(page, 'Escape');
+  pass('A theme or appearance change restyles a card already open on the page, without a reload (content.configure from the background)');
+
   // Add right away, then Undo: capture.commit and capture.undoAdd through the real background.
   await setCapture({afterDrag: 'add', skipSaved: false, contentOnly: false});
   await bibRegion();
@@ -345,9 +361,9 @@ try {
   await key(page, 'Escape');
   pass('Skip saved: the card’s Add skips the 5 links already saved and says “Added 4 links …; 5 were already saved”');
 
-  // Content links only on Capture this page: page chrome is left out, reported, and Include them adds it.
+  // Content links only on Capture this page: page chrome (a page-level header and footer, nav, aside) is left out, reported, and Include them adds it.
   await setCapture({contentOnly: true, skipSaved: false});
-  await js(page, `(() => { scrollTo(0, 0); document.querySelector('main').insertAdjacentHTML('afterbegin', '<header id="lm-header"></header><nav><a href="/nav/one">Nav one</a> <a href="/nav/two">Nav two</a></nav><aside><iframe id="lm-frame" src="/frame.html" style="height:60px"></iframe></aside><footer><a href="/foot">Footer link</a></footer>'); document.getElementById('lm-header').attachShadow({mode: 'open'}).innerHTML = '<a href="/banner">Banner link</a>'; return true; })()`);
+  await js(page, `(() => { scrollTo(0, 0); document.body.insertAdjacentHTML('afterbegin', '<header id="lm-header"></header>'); document.querySelector('main').insertAdjacentHTML('afterbegin', '<nav><a href="/nav/one">Nav one</a> <a href="/nav/two">Nav two</a></nav><aside><iframe id="lm-frame" src="/frame.html" style="height:60px"></iframe></aside>'); document.body.insertAdjacentHTML('beforeend', '<footer><a href="/foot">Footer link</a></footer>'); document.getElementById('lm-header').attachShadow({mode: 'open'}).innerHTML = '<a href="/banner">Banner link</a>'; return true; })()`);
   await until(() => js(page, `!!document.getElementById('lm-frame').contentDocument?.getElementById('frame-link')`), 'frame in the aside');
   await click('capture');
   await until(async () => /37 links captured/.test(await text('capture-report')) && /Left out 5 navigation links/.test(await text('capture-report')), 'content-only capture');

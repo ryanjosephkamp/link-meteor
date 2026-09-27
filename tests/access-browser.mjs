@@ -1,4 +1,6 @@
-// Access and capture (0.3.0) on the loaded extension, with no optional grants: Chrome for Testing,
+// Access and capture (0.3.0), and the capture card's 0.4.0 messages end to end (already saved, Skip
+// saved, Undo after adding right away, the rich copy payload, content links only on Capture this
+// page), on the loaded extension, with no optional grants: Chrome for Testing,
 // headless, in a fresh temporary profile under .scratch/ (deleted afterwards), the real unpacked
 // build, and Chrome's own toolbar action through tests/helpers/action.mjs for temporary page
 // access. The workbench in its own window stands in for the side panel. Native permission prompts

@@ -2,6 +2,8 @@
 // local fixture server in Chrome for Testing, with a stub `chrome` object standing in for the
 // extension. Pointer, keyboard and click events are real browser input; every Link Meteor message
 // is answered by the stub, so this checks the page script's own behavior, not the background.
+// 0.4.0: After a drag (card, copy in every format, add with Undo), the notice, content links only
+// with Include them, the filters, already saved, Skip saved and rich copy on the clipboard.
 // Writes access-content-results.json to LINK_METEOR_EVIDENCE_DIR (default .scratch/evidence-access-capture).
 import assert from 'node:assert/strict';
 import {mkdir, readFile, writeFile} from 'node:fs/promises';

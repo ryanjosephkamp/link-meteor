@@ -4,8 +4,12 @@
 Reads artifacts/evidence/exports/browser.{xlsx,csv,json} (written by tests/browser.mjs) with
 openpyxl and Python's csv module, then writes artifacts/evidence/workbook-results.json.
 This is a library-level reader check, not Microsoft Excel application acceptance.
+
+The JSON download is a plain row array before 0.3.0 and {about, rows} from 0.3.0. With an about
+block, the workbook is the formatted one, and tests/verify-workbook.py's openpyxl checks run on it.
 """
 import csv
+import importlib.util
 import json
 import os
 import re
@@ -51,8 +55,22 @@ def unformula(value):
     return value[1:] if value.startswith("'") and value[1:2] and value[1:2] in "=+-@\t\r" else value
 
 
+def formatted_checks(about, expected):
+    sys.dont_write_bytecode = True  # no __pycache__ beside the tests
+    spec = importlib.util.spec_from_file_location("verify_workbook", root / "tests" / "verify-workbook.py")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    # The workbook and the JSON were separate downloads of the same view, so only the time differs.
+    wanted = {"exportedAtUtcSeconds": None, "collection": about["collection"], "count": about["count"],
+              "view": about["view"], "filters": about["filters"], "columns": "Anchor text, URL", "version": about["version"]}
+    return module.check_formatted(exports / "browser.xlsx", [["Anchor text", "URL"], *expected],
+                                  ["URL", "Original href", "Source page URL", "Frame URL"], wanted)
+
+
 def main():
-    rows = json.loads((exports / "browser.json").read_text(encoding="utf-8"))
+    data = json.loads((exports / "browser.json").read_text(encoding="utf-8"))
+    about = data.get("about") if isinstance(data, dict) else None
+    rows = data["rows"] if isinstance(data, dict) else data
     expected = [[row["anchorText"], row["url"]] for row in rows]
     with zipfile.ZipFile(exports / "browser.xlsx") as archive:
         if archive.testzip():
@@ -100,8 +118,15 @@ def main():
         "empty_anchor_rows": sum(1 for anchor, _ in expected if anchor == ""),
         "formula_like_rows": sum(1 for anchor, _ in expected if anchor and anchor[:1] in "=+-@"),
         "xlsx_all_string_cells": string_cells == total_cells,
+        "json_shape": "{about, rows}" if about is not None else "array",
         "excel_application_tested": False,
     }
+    if about is not None:
+        result["json_about"] = about
+        result["json_about_count_matches"] = about.get("count") == len(rows)
+        result.update(formatted_checks(about, expected))
+    if about is not None and not result["json_about_count_matches"]:
+        result["result"] = "FAIL"
     if not (all(result[key] for key in ["exact_anchor_url_pairs", "csv_matches_json_after_formula_prefix", "tsv_matches_json_after_formula_prefix", "html_exact_pairs_no_injected_markup", "markdown_pairs_with_single_line_labels", "text_exact_urls", "xlsx_all_string_cells"]) and header == ["Anchor text", "URL"] and csv_rows[0] == header and tsv_rows[0] == header):
         result["result"] = "FAIL"
     out.write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")

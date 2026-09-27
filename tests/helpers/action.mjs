@@ -33,11 +33,17 @@ export async function launchWithAction({extension = resolve(root, process.env.LI
   const profile = await mkdtemp(resolve(scratch, profilePrefix));
   const chrome = spawn(chromePath(), [
     ...(headless ? ['--headless=new'] : []), '--remote-debugging-pipe', '--enable-unsafe-extension-debugging',
+    // Ubuntu blocks the unprivileged namespaces Chrome's sandbox needs; Playwright's launches turn it off too.
+    ...(process.platform === 'linux' ? ['--no-sandbox'] : []),
     `--user-data-dir=${profile}`, `--disable-extensions-except=${extension}`, `--load-extension=${extension}`,
     '--no-first-run', '--disable-background-networking', '--disable-component-update', ...args, 'about:blank',
   ], {stdio: ['ignore', 'ignore', 'pipe', 'pipe', 'pipe']});
-  chrome.stderr.resume();
+  // Keep Chrome's last output, to explain a Chrome that exits at startup.
+  let stderr = '';
+  chrome.stderr.on('data', (data) => { stderr = (stderr + data).slice(-4000); });
   const out = chrome.stdio[3], inp = chrome.stdio[4];
+  const exitedEarly = new Promise((done) => chrome.once('exit', (code, signal) => done(new Error(`Chrome exited (${signal || code}) before answering. Its last output:\n${stderr.trim().split('\n').slice(-8).join('\n')}`))));
+  for (const stream of [out, inp]) stream.on('error', () => {}); // a closed pipe is reported by the exit above
   let buffer = '', nextId = 1, closed = false;
   const pending = new Map(), workers = new Map(), listeners = new Set(); // workers: url -> targetId
   inp.on('data', (data) => {
@@ -71,7 +77,7 @@ export async function launchWithAction({extension = resolve(root, process.env.LI
     let extensionId = await unpackedExtensionId(extension);
     let worker = `chrome-extension://${extensionId}/background.js`;
     // A Chrome that never answers (for example one too old for these flags) fails here instead of hanging.
-    await Promise.race([send('Target.setDiscoverTargets', {discover: true}), sleep(15000).then(() => { throw new Error('Chrome did not answer over the DevTools pipe'); })]);
+    await Promise.race([send('Target.setDiscoverTargets', {discover: true}), exitedEarly.then((error) => { throw error; }), sleep(15000).then(() => { throw new Error('Chrome did not answer over the DevTools pipe'); })]);
     for (const start = Date.now(); !workers.has(worker); await sleep(100)) {
       // If the computed ID ever disagrees with Chrome's, fall back to the one unpacked
       // extension worker named background.js, and only when there is exactly one.

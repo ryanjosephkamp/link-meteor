@@ -1,8 +1,85 @@
 # Testing and compatibility
 
-The current development build is **0.2.2**. It adds an About and help area to 0.2.1. Its background worker, capture script, export and model code and icons are byte-identical to 0.2.1; only `manifest.json` (the version) and the three workbench UI files changed, as the two per-file receipts show. The 0.2.2 unit, presentation, website and functional browser checks passed on September 25–26, 2026. This is evidence for those workflows and environments, not universal browser/site compatibility or a complete accessibility certification.
+The current development build is **0.3.0**. It adds:
+- one optional choice to allow Link Meteor on all sites, with exceptions and a Command or Ctrl hold key;
+- a welcome card and more actions on the capture card;
+- opening up to 500 links;
+- export file names and formatted workbooks;
+- existing bookmark folders;
+- backup and restore.
 
-## Current build (0.2.2)
+Its automated checks passed on September 27, 2026, in Chrome for Testing on macOS, both without optional grants and after the project owner clicked Allow on every native prompt. The owner then checked it by hand in everyday Chrome, and every item passed. This is evidence for those workflows and environments, not universal browser/site compatibility or a complete accessibility certification.
+
+## Current build (0.3.0)
+
+- Package: [`artifacts/link-meteor-0.3.0.zip`](../artifacts/link-meteor-0.3.0.zip), 368539 bytes.
+- SHA-256: `25463687d2f0a7b9e280de7d4f905753cb9b8cc57b359129937f8ea5e98302c7`.
+- Product source: `src/` as tested at `bd3f6b59123868f6534a9a7a25135442859a7eae` (release candidate 2), unchanged when packaged at `a1901dbc5af70ac50b66134a19c22a8bf434dd6a`.
+- [Per-file receipt](../artifacts/link-meteor-0.3.0.sha256.json): 35 package members, each matching `src/`. The ZIP's contents are also byte-identical to the copy the owner checked by hand.
+- Evidence: [`artifacts/evidence-0.3.0-rc2/`](../artifacts/evidence-0.3.0-rc2/README.md). Earlier stages are kept in [release candidate 1](../artifacts/evidence-0.3.0-rc1/README.md), whose granted run found three issues that release candidate 2 fixes, and the [foundation](../artifacts/evidence-0.3.0/README.md).
+
+### Checks without optional grants
+
+Headless Chrome for Testing 151, fresh task-owned profiles.
+
+| Check | Result | What it establishes and its limits |
+| --- | --- | --- |
+| `npm test` | 94/94 | Model, settings migration, backup format, export names and content, opening limits, storage and race tests. Now that the ZIP exists, this includes the check that its members match `src/`. [Output](../artifacts/evidence-0.3.0-release/node-tests.txt). |
+| `tests/access-browser.mjs` | 20/20 | The welcome card, Site access settings, opening tiers, the capture card through Chrome's real toolbar action, and the offer to allow all sites when Chrome hides a page, with Chrome's prompt stubbed to decline. After an in-place reinstall with a page open, region selection still works without a reload. [Results](../artifacts/evidence-0.3.0-rc2/access-browser-results.json). |
+| `tests/access-content.mjs` | 22/22, simulation | The page script in ordinary pages with real input and a stubbed `chrome` object: the Command and Ctrl hold key, card shortcuts, unticking links, and the opening confirmations and refusal above 500. [Results](../artifacts/evidence-0.3.0-rc2/access-content-results.json). |
+| `tests/exports-browser.mjs` | 13/13 | File names and name settings, the formatted workbook read by openpyxl, the bookmark folder picker with a stand-in background, and CSV and TSV byte for byte against 0.2.2. [Results](../artifacts/evidence-0.3.0-rc2/exports-browser-results.json). |
+| `tests/backup-browser.mjs` | 19/19 | Backup, preview, merge, replace, Undo, invalid files, Select all, Remove all in this view, Empty this collection, and a synthetic 20,000-link restore. [Results](../artifacts/evidence-0.3.0-rc2/backup-browser-results.json). |
+| `tests/capture-page-access.mjs` | Pass | *Capture this page* after the tab moves to a new site, driven through Chrome's own toolbar action. [Results](../artifacts/evidence-0.3.0-rc2/capture-page-access.json). |
+| `tests/audit-overlay.mjs`, `audit-actions.mjs`, `audit-regressions.mjs` | 4, 9 and 7 checks, pass | Earlier fixes still hold. [Overlay](../artifacts/evidence-0.3.0-rc2/audit-overlay.json), [actions](../artifacts/evidence-0.3.0-rc2/audit-actions.json), [regressions](../artifacts/evidence-0.3.0-rc2/audit-regressions.json). |
+| `tests/visual-browser.mjs` | 13 checks, pass | Widths from 320 to 1440 px, labels, focus and sampled contrast in both themes, including the welcome card, Site access, the stronger opening confirmation and the all-sites note. The lowest measured ratio is 5.1:1. [Results](../artifacts/evidence-0.3.0-rc2/visual-results.json). |
+
+### Allow clicks and granted suites
+
+The owner clicked Allow on every native prompt in visible Chrome for Testing windows, and each request came from the product itself with an active user gesture:
+- **Per-site profile, 4 prompts:** tabs, the fixture site, bookmarks, and a newly visited site, which *Capture this page* asked for in the same click.
+- **All-sites profile, 5 prompts:** tabs, the fixture site, all sites from the welcome card, tab groups and bookmarks.
+
+The suites then ran in visible windows, with the owner's pointer parked away from them.
+
+| Check | Result | What it establishes and its limits |
+| --- | --- | --- |
+| `tests/browser.mjs` | 27/27 | Capture, clipboard, collections, filtering, Undo, exports and restart persistence, as in 0.2.2. [Results](../artifacts/evidence-0.3.0-rc2/browser-results.json). |
+| `tests/extended-browser.mjs` | 9/9 | Includes saving into an existing bookmark folder with Chrome's real bookmark API. [Results](../artifacts/evidence-0.3.0-rc2/extended-browser-results.json). |
+| `tests/site-browser.mjs` | Pass | All eight practice answer keys, and 95 links for the whole page. [Results](../artifacts/evidence-0.3.0-rc2/site-browser-results.json). |
+| `tests/audit-granted-regressions.mjs` | 4/4 | [Results](../artifacts/evidence-0.3.0-rc2/granted-regressions.json). |
+| `tests/verify-downloads.py` | Pass | openpyxl 3.0.10 read the formatted workbook, not Microsoft Excel. [Results](../artifacts/evidence-0.3.0-rc2/workbook-results.json). |
+| `tests/access-granted.mjs` | 10/10 | Covers:<br>• hold-drag on a second site with no prompt;<br>• Command-drag, while a plain Command-click still opens the link;<br>• exceptions without a reload;<br>• capture on a never-visited site;<br>• named tab groups;<br>• the card's bookmark folder;<br>• the all-sites switch staying on while it saves.<br>A page opened as the browser starts gets hold-drag on the first try. [Results](../artifacts/evidence-0.3.0-rc2/access-granted-results.json). |
+| `tests/permission-browser.mjs` | 10/10, run last | Per-site hold-drag works before revocation and stops after it. Removing all-sites access returns to per-site mode, following what Chrome still grants. That can include removing a site allowed one at a time, which Chrome also takes away. [Results](../artifacts/evidence-0.3.0-rc2/permission-browser-results.json). |
+
+### Chrome 116
+
+The manifest declares Chrome 116 as the oldest supported version. The checks that need no grants were run on Chrome for Testing 116.0.5845.96 for macOS:
+- **Passed:** `access-content` 22/22, `exports-browser` 13/13, `backup-browser` 19/19, the three audits, and `visual-browser` 13/13 (on a rerun, after one timing flake).
+- **Partly run:** `access-browser` passed its first 5 checks.
+- **Couldn't run:** `capture-page-access`, and the rest of `access-browser`. They press Chrome's toolbar button through DevTools commands (`Extensions.triggerAction` and `Extensions.loadUnpacked`) that Chrome 116 doesn't have.
+
+No product failure was found, and every extension API and web feature the source uses was available by Chrome 116, so the minimum stays at 116. The granted suites were not run on 116. [Details](../artifacts/evidence-0.3.0-rc2/chrome-116/README.md).
+
+## Hands-on use (0.3.0)
+
+On September 27, 2026, the project owner loaded the release candidate 2 copy, byte-identical to this ZIP, in everyday Google Chrome on macOS. They worked through a 12-item walkthrough and reported that every item passed. These are human observations, reported for the walkthrough as a whole rather than item by item, and kept separate from the automated results above.
+
+| Area | Result |
+| --- | --- |
+| Welcome card: Allow on all sites, with Chrome's prompt | Passed |
+| Hold-drag on a real site, with the Z key and then Command; a plain Command-click still opens a link | Passed |
+| *Capture this page* after the tab moves to another site, with the side panel open | Passed; the 0.2.2 friction is gone |
+| Never on these sites: add a site, then remove it | Passed |
+| Capture card: open more than 20 links, open as a tab group, change the destination | Passed |
+| Excel export: file name, bold frozen header, filters, clickable links, About sheet, opened in Microsoft Excel | Passed |
+| Save into an existing bookmark folder, skipping links already there | Passed |
+| Backup, delete a collection, restore by Merge, Undo | Passed |
+| Chrome's own site-access menu set to On click: hold-drag stops and Link Meteor explains why | Passed |
+| All sites off, then a native Deny on *Capture this page* reports the denial | Passed |
+
+Windows, Linux and other Chromium-based browsers were not part of this check.
+
+## Earlier build (0.2.2)
 
 - Package: [`artifacts/link-meteor-0.2.2.zip`](../artifacts/link-meteor-0.2.2.zip), 198835 bytes.
 - SHA-256: `ceb6b778a0f93a6651e9c036fb6535773919ffa78b7ad4b88c692d35983b4e9d`.
@@ -27,7 +104,7 @@ The functional suites used a new profile whose optional grants (tabs, the local 
 
 **Diagnostic runs.** The first visible run of `tests/browser.mjs` failed its sixth check. The live badge had reached 5 links, but after release the card read `3 links selected` (`AssertionError: '3 links selected' !== '5 links selected'`, line 61). A screenshot taken just before release shows the selection's corner displaced to a point unrelated to the drag. That is consistent with the Mac's real pointer resting over the visible test window, and the project owner confirmed it was. A second run without a visible window passed that check, but it can't complete the later wheel-scroll check, which needs a rendered window. After the project owner was asked to move the pointer off the test window, a third, visible run passed 27/27. The download verifier's first attempt failed only because the first browser run stopped before writing its exports. The first two runs are kept in [`artifacts/evidence-0.2.2/diagnostics/`](../artifacts/evidence-0.2.2/diagnostics/).
 
-## Hands-on use (0.2.2)
+### Hands-on use (0.2.2)
 
 These results come from the project owner using 0.2.2 by hand in everyday Google Chrome on macOS, on September 26, 2026. They are human observations, reported without itemized steps, and are kept separate from the automated results above.
 
@@ -64,7 +141,7 @@ Optional tabs, local-origin and bookmark permissions were established through ac
 
 ## Presentation and website checks
 
-The 0.2.2 visual and site results are listed above. The site's four product screenshots were regenerated from the 0.2.2 `tests/site-browser.mjs` run, and their alt text describes what each one shows. The 0.2.1 [visual results](../artifacts/audit-0.2.0/repair-ui/visual-results.json) cover responsive widths, long names, labeled controls, keyboard focus and sampled contrast. They are not a complete screen-reader or WCAG audit. Panel-width screenshots render the workbench at a compact width; they do not prove native side-panel framing or resizing.
+The 0.3.0 visual results are listed above, and the site checks for the 0.3.0 release are in [`artifacts/evidence-0.3.0-release/`](../artifacts/evidence-0.3.0-release/README.md). The site's four product screenshots still come from the 0.2.2 `tests/site-browser.mjs` run, and their alt text describes what each one shows, including the 0.2.2 version. The 0.2.1 [visual results](../artifacts/audit-0.2.0/repair-ui/visual-results.json) cover responsive widths, long names, labeled controls, keyboard focus and sampled contrast. They are not a complete screen-reader or WCAG audit. Panel-width screenshots render the workbench at a compact width; they do not prove native side-panel framing or resizing.
 
 The 0.2.1-era [site results](../artifacts/audit-0.2.0/repair-ui/site-results.json) checked five pages across five widths and light/dark themes, internal links, semantic structure, sampled contrast, keyboard menu use, interactive demo, nested 404 handling and export preview contents. These are automated Chromium checks.
 
@@ -86,8 +163,9 @@ See the [README](../README.md#develop-and-verify) for Node, installed Playwright
 - Native side-panel resizing, beyond the owner's check of its frame.
 - Spreadsheet applications other than Microsoft Excel.
 - Screen readers and other assistive technologies.
-- Windows and Linux, native shortcuts on those systems, and Chrome 116. The manifest's minimum version is a declaration, not proof of testing that release.
-- Other Chromium-based browsers, such as Brave and Edge.
+- Windows and Linux, and native shortcuts on those systems.
+- Chrome 116 by hand, its toolbar-button behavior, and the checks that need Allow clicks. The automated checks that could run there passed (see above).
+- Other Chromium-based browsers, such as Brave and Edge. They are expected to work, because they run Chrome extensions, but they haven't been tested.
 - The website on physical phones and non-Chromium browsers.
 
-Version 0.2.0 received an informal report of successful everyday Chrome use without itemized steps. The 0.2.2 hands-on results above are the first owner report for the current build. Firefox and Safari are not supported ports. Chrome Web Store distribution is planned after the next feature release.
+Version 0.2.0 received an informal report of successful everyday Chrome use without itemized steps. The 0.3.0 hands-on results above are the owner's report for the current build. Firefox and Safari are not supported ports. Chrome Web Store submission is planned for 0.3.0.

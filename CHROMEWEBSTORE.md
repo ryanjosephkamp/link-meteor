@@ -2,7 +2,7 @@
 
 > Last Updated: 2026-09-27
 >
-> **Status: draft.** Link Meteor is not on the Chrome Web Store yet. Submission is planned after the 0.3.0 release. The 0.3.0 features described here are built and tested in automation; the owner's hands-on check and the release come first, so check this text against the released build before submitting. This file is not part of the extension package.
+> **Status: draft.** Link Meteor is not on the Chrome Web Store yet. Version 0.3.0 is packaged, and the owner's hands-on check of it passed on 2026-09-27. Submission comes after 0.3.0 is released. Before submitting, create the screenshots and promo tiles below and check this text against the released build. This file is not part of the extension package.
 
 ## Store Listing
 
@@ -148,7 +148,7 @@ Actions the person takes can move data, as described in the privacy policy: copy
 
 https://ryanjosephkamp.github.io/link-meteor/privacy.html
 
-Before submission, it must describe every 0.3.0 permission above (all-sites access, `tabGroups`, `unlimitedStorage`) and the backup file, matching `docs/PRIVACY.md`.
+The page describes every 0.3.0 permission above (all-sites access, `tabGroups`, `unlimitedStorage`) and the backup file, matching `docs/PRIVACY.md`. It goes live with the next site deployment; check it at this address before submitting.
 
 ## Distribution
 
@@ -177,7 +177,7 @@ https://ryanjosephkamp.github.io/link-meteor/
 
 | Version | Date | Changes | Status |
 |---------|------|---------|--------|
-| 0.3.0 | Planned | First submission: all-sites choice with exceptions and a Command or Ctrl hold key, a welcome card, more capture card actions, opening up to 500 links, export file names and formatted workbooks, existing bookmark folders, backup and restore. | Draft |
+| 0.3.0 | 2026-09-27 (packaged) | First submission: all-sites choice with exceptions and a Command or Ctrl hold key, a welcome card, more capture card actions, opening up to 500 links, export file names and formatted workbooks, existing bookmark folders, backup and restore. New permissions: optional `tabGroups`, and `unlimitedStorage`. ZIP SHA-256 `25463687d2f0a7b9e280de7d4f905753cb9b8cc57b359129937f8ea5e98302c7`. | Packaged, not yet submitted |
 
 Versions 0.1.0 to 0.2.2 were distributed only as a ZIP for Load unpacked and were never submitted.
 
@@ -195,7 +195,7 @@ Versions 0.1.0 to 0.2.2 were distributed only as a ZIP for Load unpacked and wer
 
 - Chrome does not allow extensions on its own pages, the Chrome Web Store or incognito windows (Link Meteor does not request incognito access).
 - Links inside closed page components cannot be seen or captured. Frames from other sites are reported as unreadable, not skipped silently.
-- Tested on macOS in Chrome and Chrome for Testing. Windows, Linux and other Chromium browsers are listed as untested in `docs/ACCEPTANCE.md` until checked.
+- Tested on macOS in Chrome and Chrome for Testing, including the automated checks that need no grants on Chrome for Testing 116, the declared minimum. Windows, Linux and other Chromium browsers are listed as untested in `docs/ACCEPTANCE.md` until checked.
 
 ### Rejection History
 

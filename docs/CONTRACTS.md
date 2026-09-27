@@ -81,7 +81,7 @@ About and help (0.2.2): `#about-panel` is a `<details>` disclosure in the rail, 
 
 ## Added in 0.3.0
 
-These contracts were written before 0.3.0 was built and are now implemented on the 0.3.0 build, not yet released. [ACCEPTANCE.md](ACCEPTANCE.md) records what a release contains and how it was tested. Where 0.3.0 changes an existing message, the description above stays accurate for 0.2.2 and this section describes 0.3.0.
+These contracts were written before 0.3.0 was built and are implemented in 0.3.0. [ACCEPTANCE.md](ACCEPTANCE.md) records what a release contains and how it was tested. Where 0.3.0 changes an existing message, the description above stays accurate for 0.2.2 and this section describes 0.3.0.
 
 ### Settings: additive schema-v1 fields
 

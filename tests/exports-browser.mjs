@@ -127,7 +127,9 @@ try {
     about: {exportedAtUtcSeconds: null, collection: COLLECTION, count: rows.length, view: 'Every occurrence; sorted by capture order, ascending', filters: [], columns: 'Anchor text, URL', version: '0.3.0'}};
   const expectedPath = resolve(exportsDir, 'lane.xlsx.expected.json');
   await writeFile(expectedPath, JSON.stringify(workbookExpected, null, 2) + '\n');
-  const reader = JSON.parse((await run('python3', [resolve(root, 'tests/verify-workbook.py'), names.xlsx.path, expectedPath])).stdout);
+  // Windows installs Python as python; LINK_METEOR_PYTHON picks another interpreter.
+  const python = process.env.LINK_METEOR_PYTHON || (process.platform === 'win32' ? 'python' : 'python3');
+  const reader = JSON.parse((await run(python, [resolve(root, 'tests/verify-workbook.py'), names.xlsx.path, expectedPath])).stdout);
   assert.equal(reader.formatted, 'pass');
   assert.ok(reader.formatted_checks.hyperlinks >= rows.filter((row) => /^(https?|mailto):/.test(row.url)).length);
   await writeFile(resolve(evidence, 'lane-workbook-results.json'), JSON.stringify(reader, null, 2) + '\n');

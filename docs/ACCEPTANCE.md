@@ -155,7 +155,7 @@ The earlier 0.2.0 package has separate [historical test results](../artifacts/ev
 
 ## Reproduce
 
-See the [README](../README.md#develop-and-verify) for Node, installed Playwright discovery, fixture server settings and isolated profile setup. The browser suite resets collections in the selected test profile: never use a personal profile. Prepare actual optional permissions with `tests/prepare-grants.mjs` before functional suites, and run `tests/permission-browser.mjs` last because it revokes the fixture-origin grant.
+See the [README](../README.md#develop-and-verify) and [`AGENTS.md`](../AGENTS.md) for Node, installed Playwright discovery, fixture server settings and isolated profile setup. `npm run check` runs every check that needs no grants in one command. The browser suite resets collections in the selected test profile: never use a personal profile. Prepare actual optional permissions with `tests/prepare-grants.mjs` before functional suites, and run `tests/permission-browser.mjs` last because it revokes the fixture-origin grant.
 
 `tests/xlsx-fixture.mjs` and `tests/verify-workbook.py` also check OOXML and independent workbook parsing. Without openpyxl, the reader reports structural-only coverage. Actual downloaded files are under [`artifacts/audit-0.2.0/resume-01/exports/`](../artifacts/audit-0.2.0/resume-01/exports/).
 

@@ -61,8 +61,12 @@ Building from source requires Node.js 22 or newer. There are no package dependen
 ```sh
 npm run build
 npm test
+npm run check -- .scratch/check   # every check that needs no grants, with results in that folder
+npm run debug                     # the extension in a fresh profile, streaming its background console and errors
 npm run package
 ```
+
+[`AGENTS.md`](AGENTS.md) is the working guide for people and coding agents: the code map, which tests need a person's Allow clicks, test settings, rules and common failures. The same checks without grants run on macOS, Windows and Linux for every pull request (`.github/workflows/check.yml`).
 
 The build copies only packaged extension files. Packaging refuses stale source/build differences and emits a deterministic ZIP plus file hashes and truthful Git identity/dirty flags.
 

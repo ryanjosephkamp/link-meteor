@@ -19,9 +19,12 @@ import {chromePath, root, scratch} from './browser.mjs';
 const sleep = (ms) => new Promise((done) => setTimeout(done, ms));
 
 // Chrome names an unpacked extension after its folder: the first 32 hex digits of the SHA-256
-// of the absolute path (UTF-8 on macOS and Linux), with 0-f written as a-p.
+// of the absolute path, with 0-f written as a-p. The path is hashed as UTF-8 on macOS and Linux,
+// and as UTF-16LE with an uppercase drive letter on Windows.
 export async function unpackedExtensionId(folder) {
-  const digest = createHash('sha256').update(await realpath(folder)).digest('hex').slice(0, 32);
+  const path = await realpath(folder);
+  const bytes = process.platform === 'win32' ? Buffer.from(path.replace(/^[a-z]:/, (drive) => drive.toUpperCase()), 'utf16le') : Buffer.from(path);
+  const digest = createHash('sha256').update(bytes).digest('hex').slice(0, 32);
   return [...digest].map((digit) => String.fromCharCode(97 + parseInt(digit, 16))).join('');
 }
 
@@ -36,14 +39,15 @@ export async function launchWithAction({extension = resolve(root, process.env.LI
   chrome.stderr.resume();
   const out = chrome.stdio[3], inp = chrome.stdio[4];
   let buffer = '', nextId = 1, closed = false;
-  const pending = new Map(), workers = new Set();
+  const pending = new Map(), workers = new Map(), listeners = new Set(); // workers: url -> targetId
   inp.on('data', (data) => {
     buffer += data.toString();
     let end;
     while ((end = buffer.indexOf('\0')) >= 0) {
       const message = JSON.parse(buffer.slice(0, end)); buffer = buffer.slice(end + 1);
       const target = message.params?.targetInfo;
-      if (message.method === 'Target.targetCreated' && target.type === 'service_worker') workers.add(target.url);
+      if (message.method === 'Target.targetCreated' && target.type === 'service_worker') workers.set(target.url, target.targetId);
+      if (message.method) for (const listener of listeners) listener(message);
       if (message.id && pending.has(message.id)) {
         const {ok, no} = pending.get(message.id); pending.delete(message.id);
         message.error ? no(new Error(JSON.stringify(message.error))) : ok(message.result);
@@ -64,11 +68,15 @@ export async function launchWithAction({extension = resolve(root, process.env.LI
   try {
     // The extension is ready once target discovery reports its service worker. Target.getTargets
     // does not list extension workers, and Chrome's own component extensions have workers too.
-    const extensionId = await unpackedExtensionId(extension);
-    const worker = `chrome-extension://${extensionId}/background.js`;
+    let extensionId = await unpackedExtensionId(extension);
+    let worker = `chrome-extension://${extensionId}/background.js`;
     // A Chrome that never answers (for example one too old for these flags) fails here instead of hanging.
     await Promise.race([send('Target.setDiscoverTargets', {discover: true}), sleep(15000).then(() => { throw new Error('Chrome did not answer over the DevTools pipe'); })]);
     for (const start = Date.now(); !workers.has(worker); await sleep(100)) {
+      // If the computed ID ever disagrees with Chrome's, fall back to the one unpacked
+      // extension worker named background.js, and only when there is exactly one.
+      const found = [...workers.keys()].filter((url) => /^chrome-extension:\/\/[a-p]{32}\/background\.js$/.test(url));
+      if (Date.now() - start > 5000 && found.length === 1) { worker = found[0]; extensionId = new URL(worker).host; break; }
       if (Date.now() - start > 15000) throw new Error(`The extension service worker ${worker} did not start`);
     }
     const tabTarget = async (urlPrefix) => {
@@ -77,6 +85,9 @@ export async function launchWithAction({extension = resolve(root, process.env.LI
     };
     return {
       extensionId, extension, profile, send, close,
+      // Every DevTools event (Target.*, and Runtime.* or Log.* from attached sessions); returns an unsubscribe function.
+      onEvent: (listener) => { listeners.add(listener); return () => listeners.delete(listener); },
+      workerTargetId: () => workers.get(worker),
       extensionUrl: (path = 'ui/workbench.html') => `chrome-extension://${extensionId}/${path}`,
       newTab: (url) => send('Target.createTarget', {url}),
       newWindow: (url) => send('Target.createTarget', {url, newWindow: true}),

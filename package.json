@@ -6,6 +6,8 @@
   "scripts": {
     "build": "node scripts/build.mjs",
     "test": "node --test tests/*.test.mjs",
+    "check": "node scripts/check.mjs",
+    "debug": "node tests/debug-session.mjs",
     "test:browser": "node tests/browser.mjs",
     "package": "node scripts/package.mjs"
   },

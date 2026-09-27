@@ -4,7 +4,7 @@
   "version": "0.3.0",
   "description": "Capture links with their anchor text, organize local research collections, and export them your way. Free, private, and local.",
   "minimum_chrome_version": "116",
-  "permissions": ["activeTab", "scripting", "storage", "sidePanel", "contextMenus", "clipboardWrite"],
+  "permissions": ["activeTab", "scripting", "storage", "unlimitedStorage", "sidePanel", "contextMenus", "clipboardWrite"],
   "optional_permissions": ["tabs", "bookmarks"],
   "optional_host_permissions": ["http://*/*", "https://*/*"],
   "background": { "service_worker": "background.js", "type": "module" },

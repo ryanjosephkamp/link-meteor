@@ -495,4 +495,38 @@ kbd, .shortcut-keys kbd, .btn-keys kbd { display: inline-grid; place-items: cent
 /* End of area: export file names, workbook formatting, bookmark folders */
 
 /* Area: backup and restore, selecting and removing all */
+.backup { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
+.backup .rail-title { margin-bottom: 0; }
+.backup-actions { display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px; }
+.backup-actions .btn { justify-content: flex-start; width: 100%; }
+label.backup-choose { display: inline-flex; cursor: pointer; }
+/* The file input stays focusable but visually hidden; the shared input sizing would widen it. */
+#backup-file { width: 1px; min-width: 0; height: 1px; min-height: 0; padding: 0; border: 0; }
+.backup-file:focus-visible + .backup-choose { outline: 2px solid var(--focus); outline-offset: 2px; }
+.backup-file:disabled + .backup-choose { opacity: 0.45; cursor: not-allowed; }
+.restore-preview, .restore-status { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; padding: 12px; border: 1px solid var(--line-strong); border-radius: var(--r); background: var(--surface); font-size: var(--text-sm); }
+.restore-preview h3 { font-size: var(--text-sm); font-weight: 650; line-height: 1.35; color: var(--ink); }
+.restore-preview h3:focus { outline: none; }
+.restore-preview h3:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.restore-source { display: grid; gap: 1px; color: var(--ink-2); font-size: var(--text-xs); line-height: 1.45; }
+.restore-file { color: var(--ink); font-weight: 600; overflow-wrap: anywhere; }
+.restore-modes { display: grid; gap: 10px; }
+.restore-mode { display: grid; gap: 4px; padding-top: 10px; border-top: 1px solid var(--line); }
+.restore-mode-title { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 6px; font-weight: 650; color: var(--ink); }
+.restore-mode-note { color: var(--ink-2); font-weight: 400; font-size: var(--text-xs); }
+.restore-mode ul { display: grid; gap: 3px; color: var(--ink-2); line-height: 1.4; }
+.restore-mode li { overflow-wrap: anywhere; }
+.restore-mode > ul > li { position: relative; padding-left: 12px; }
+.restore-mode > ul > li::before { content: ""; position: absolute; left: 2px; top: 0.6em; width: 4px; height: 4px; border-radius: 50%; background: var(--muted); }
+.restore-settings { margin-top: 3px; padding-left: 2px; font-size: var(--text-xs); }
+.restore-mode li.restore-access { color: var(--warn); font-weight: 600; }
+.restore-mode li.restore-access::before { background: var(--warn); }
+.restore-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+.restore-status { background: var(--accent-wash); border-color: var(--accent-edge); color: var(--ink); }
+.list-toolbar .toolbar-actions { flex-wrap: wrap; justify-content: flex-end; row-gap: 2px; }
+.list-toolbar .toolbar-confirm { flex: 1 0 100%; margin: 2px 0 8px; }
+.editor-danger { display: flex; flex-wrap: wrap; gap: 6px; margin-left: auto; }
+.editor-danger .danger { margin-left: 0; }
+.restore-status-text { font-weight: 600; line-height: 1.4; }
+.restore-status .help { color: var(--ink-2); }
 /* End of area: backup and restore, selecting and removing all */

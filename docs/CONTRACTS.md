@@ -386,9 +386,15 @@ Callers write a `ClipboardItem` with `text/html` and `text/plain`, and fall back
 - **Already saved:** the card asks `capture.saved` for its destination and marks matching rows *Saved*. A *Skip saved* checkbox follows `skipSaved`.
 - **Workbench:**
   - `<html>` gets `data-theme` and `data-scheme`, and a style element holds `themeCss`;
-  - the last theme and scheme are cached in `localStorage` for the first paint;
+  - the last theme and scheme are cached in `localStorage` for the first paint: the key `linkMeteorTheme` holds `{theme, scheme, appearance}`, and the module script is render-blocking (`blocking="render"`), so the first frame already has them. For System, the scheme is read from `prefers-color-scheme` at startup and followed while the page is open;
   - Settings gains Appearance (theme and System, Light or Dark) and After a drag (with the two capture defaults);
   - the Export panel gains *Copy as rich links*;
   - About and help gains *Copy diagnostics*.
 - **Toolbar icon:** drawn with `OffscreenCanvas` from the mark in the theme's `highlight` color, and set with `chrome.action.setIcon` at startup and when the theme changes. The manifest's icons stay Meteor.
+  - The image data is 16 and 32 px, with the geometry of `assets/brand/icon-16.svg` and `icon.svg`: the tile in the theme's light `mark-tile`, and the trail and head in `highlight`.
+  - Meteor sets the manifest's `action.default_icon` paths, so it is the packaged icon exactly.
+  - It is set on `runtime.onStartup`, on `runtime.onInstalled` (install and update), and after any saved write that changes `theme`, including a restore.
 - **Website:** the same palettes as CSS, a theme menu in the header kept in `localStorage`, and `?theme=<id>`, which About and help's links add. There is no `externally_connectable`: the site never detects the extension.
+  - `site/assets/css/site.css` has a `:root[data-theme="<id>"]` block per theme and scheme, derived from `THEMES`; `tests/themes.test.mjs` checks them. Meteor is the site's own `:root`.
+  - The header's inline script sets `data-theme` before first paint: a known `?theme=<id>` wins and is kept (key `linkMeteorSiteTheme`), then the kept choice, then Meteor. An unknown id is ignored.
+  - The menu is a menu button with `menuitemradio` items. Choosing a theme keeps it and removes `?theme=` from the address.

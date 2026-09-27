@@ -12,7 +12,11 @@ The current invoking tab and latest capture report are kept in session storage s
 - the sites where hold-key drag runs or never runs;
 - whether you chose to allow all sites;
 - your answer to the welcome card;
-- your export file-name preferences.
+- your export file-name preferences;
+- your theme, and whether it is light, dark or follows the system;
+- what releasing a drag does, and the two capture defaults (leave out navigation links, skip links already saved).
+
+The side panel and full view also keep the last theme and light or dark choice in their own page storage, so they open in it without a flash.
 
 With all-sites access, the hold-key script is registered on every HTTP(S) site except the ones you exclude. Otherwise it runs only on the sites you enable. When Link Meteor starts, is installed or updated, or applies hold-key settings, it also loads that script into already-open tabs where hold-key drag is on, so those tabs work without a reload.
 
@@ -54,6 +58,6 @@ The **About and help** area lists links to the guide, GitHub issues, the website
 
 ## The website
 
-The [project website](https://ryanjosephkamp.github.io/link-meteor/) has its own privacy page. It uses no cookies, analytics, advertising or third-party requests; fonts are self-hosted; its demo and export preview run entirely in the visitor's browser. GitHub Pages hosts the site; GitHub operates those servers under its own privacy statement.
+The [project website](https://ryanjosephkamp.github.io/link-meteor/) has its own privacy page. It uses no cookies, analytics, advertising or third-party requests; fonts are self-hosted; its demo and export preview run entirely in the visitor's browser. A theme chosen from its menu is kept in that browser's local storage for the site and is never sent anywhere. GitHub Pages hosts the site; GitHub operates those servers under its own privacy statement.
 
 This document describes the current development build. Installation uses the downloadable ZIP and Chrome's Load unpacked option. Browser-store distribution is deferred.

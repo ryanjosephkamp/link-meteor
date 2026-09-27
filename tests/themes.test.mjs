@@ -3,7 +3,7 @@
 // they stay readable under protanopia, deuteranopia and tritanopia simulations.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { THEME_IDS, THEMES, WORKBENCH_TOKENS, CARD_ROLES, themeCss, cardVars, cardTheme } from '../src/core/themes.js';
 import { reduceState, createState } from '../src/core/model.js';
@@ -139,6 +139,54 @@ test('every theme keeps text, highlight and accent readable under color-vision s
   }
   assert.deepEqual(problems, []);
   assert.ok(lowest.text >= 4.5 && lowest.highlight >= 0.08 && lowest.accent >= 1, JSON.stringify(lowest));
+});
+
+// The website's theme tokens, derived from the same palettes. Meteor is the site's own :root. The
+// hued themes and Graphite keep the site's lightness steps, tinted toward the theme's neutral hue
+// (read from its ink token), with the accent family from the theme. High contrast uses its tokens.
+const SITE_STEPS = {
+  night: { night: [0.2, 0.035], 'night-2': [0.245, 0.04], 'night-3': [0.29, 0.04], 'night-line': [0.36, 0.035], 'night-ink': [0.96, 0.008], 'night-muted': [0.78, 0.02] },
+  light: { paper: [0.985, 0.004], 'paper-2': [0.962, 0.007], ink: [0.23, 0.03], 'ink-2': [0.36, 0.03], muted: [0.48, 0.024], line: [0.9, 0.01], 'line-strong': [0.82, 0.014] },
+  dark: { paper: [0.155, 0.016], 'paper-2': [0.19, 0.02], card: [0.215, 0.022], ink: [0.955, 0.007], 'ink-2': [0.86, 0.012], muted: [0.74, 0.02], line: [0.31, 0.022], 'line-strong': [0.42, 0.025] },
+};
+const parts = (color) => /^oklch\(([\d.]+) ([\d.]+) ([\d.]+)\)$/.exec(color).slice(1).map(Number);
+const oklchText = (l, c, h, alpha) => `oklch(${+l.toFixed(4)} ${+c.toFixed(4)} ${c ? +h.toFixed(2) : 0}${alpha ? ` / ${alpha}` : ''})`;
+function siteTokens(id, scheme) {
+  const theme = THEMES[id], t = theme[scheme], [fl, fc, fh] = parts(theme.dark.accent);
+  const accent = { lime: theme.dark.accent, 'lime-hover': theme.dark['accent-hover'], 'lime-deep': t['accent-text'], 'lime-mark': oklchText(fl, fc, fh, scheme === 'dark' ? 0.32 : 0.55), 'lime-edge': theme.edge, 'logo-head': theme.highlight, warn: t.warn, danger: t.danger };
+  if (id === 'contrast') {
+    const d = theme.dark;
+    return { night: d.bg, 'night-2': d.surface, 'night-3': d.hover, 'night-line': d.line, 'night-ink': d.ink, 'night-muted': d.muted, paper: t.bg, 'paper-2': t.sunken, card: t.surface, ink: t.ink, 'ink-2': t['ink-2'], muted: t.muted, line: t.line, 'line-strong': t['line-strong'], ...accent, 'lime-wash': t['accent-wash'] };
+  }
+  const [, chroma, hue] = parts(theme.light.ink), scale = chroma / 0.03;
+  const steps = { ...SITE_STEPS.night, ...(scheme === 'light' ? { ...SITE_STEPS.light, card: [1, 0] } : SITE_STEPS.dark) };
+  const neutrals = Object.fromEntries(Object.entries(steps).map(([key, [l, c]]) => [key, oklchText(l, c * scale, hue)]));
+  return { ...neutrals, ...accent, 'lime-wash': scheme === 'dark' ? oklchText(0.27, fc * 0.25, fh + 4) : oklchText(0.955, fc * 0.3, fh - 2) };
+}
+function siteThemeCss() {
+  const block = (id, scheme, indent) => `${indent}:root[data-theme="${id}"] { ${Object.entries(siteTokens(id, scheme)).map(([key, value]) => `--${key}: ${value};`).join(' ')} }`;
+  const ids = THEME_IDS.filter((id) => id !== 'meteor');
+  return ['/* Themes (0.4.0): generated from src/core/themes.js, and checked by tests/themes.test.mjs. Meteor is :root above. */', ...ids.map((id) => block(id, 'light', '')), '@media (prefers-color-scheme: dark) {', ...ids.map((id) => block(id, 'dark', '  ')), '}', '/* End of themes */'].join('\n');
+}
+
+test('the website’s theme tokens match the palettes', async () => {
+  const css = await readFile(resolve(root, 'site/assets/css/site.css'), 'utf8');
+  const start = css.indexOf('/* Themes (0.4.0)'), end = css.indexOf('/* End of themes */');
+  const expected = siteThemeCss(), actual = start < 0 || end < 0 ? '' : css.slice(start, end + '/* End of themes */'.length);
+  if (actual !== expected) {
+    await mkdir(resolve(root, '.scratch'), { recursive: true });
+    await writeFile(resolve(root, '.scratch/site-themes.css'), expected + '\n');
+  }
+  assert.ok(actual === expected, 'site/assets/css/site.css has stale theme tokens: replace its Themes block with .scratch/site-themes.css');
+  // The site's own Meteor values are the defaults; the header script and the menu know every theme.
+  const header = await readFile(resolve(root, 'site/index.html'), 'utf8');
+  for (const id of THEME_IDS) assert.ok(header.includes(`data-theme-id="${id}"`) && header.includes(`'${id}'`), `site header offers ${id}`);
+  for (const id of THEME_IDS.filter((id) => id !== 'meteor')) for (const scheme of ['light', 'dark']) {
+    const tokens = siteTokens(id, scheme);
+    for (const [text, ground] of [['ink', 'paper'], ['ink-2', 'paper'], ['muted', 'paper'], ['muted', 'paper-2'], ['ink', 'card'], ['lime-deep', 'paper'], ['lime-deep', 'card'], ['ink', 'lime-wash'], ['night-ink', 'night'], ['night-muted', 'night'], ['night-muted', 'night-2'], ['lime', 'night'], ['night', 'lime']]) {
+      assert.ok(ratio(tokens[text], tokens[ground]) >= 4.5, `site ${id} ${scheme} ${text} on ${ground} ${ratio(tokens[text], tokens[ground]).toFixed(2)}`);
+    }
+  }
 });
 
 test('settings accept exactly the theme ids', () => {

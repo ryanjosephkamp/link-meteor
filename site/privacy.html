@@ -15,6 +15,7 @@
 </head>
 <body>
   <!-- site-header -->
+  <script>/* The site theme before first paint: ?theme= wins and is kept, then the kept choice, then Meteor. */(() => { const ids = ['meteor', 'comet', 'aurora', 'ember', 'nebula', 'graphite', 'contrast']; let id = new URLSearchParams(location.search).get('theme'); try { if (ids.includes(id)) localStorage.setItem('linkMeteorSiteTheme', id); else id = localStorage.getItem('linkMeteorSiteTheme'); } catch { /* not kept */ } document.documentElement.dataset.theme = ids.includes(id) ? id : 'meteor'; })();</script>
   <a class="skip" href="#main">Skip to content</a>
   <header class="site-header">
     <div class="wrap">
@@ -34,6 +35,18 @@
           <li><a class="gh" href="https://github.com/ryanjosephkamp/link-meteor">Source<svg aria-hidden="true"><use href="assets/img/icons.svg#external"/></svg><span class="sr-only"> (GitHub)</span></a></li>
         </ul>
       </nav>
+      <div class="theme-menu">
+        <button class="theme-toggle" id="theme-toggle" type="button" title="Theme" aria-haspopup="menu" aria-expanded="false" aria-controls="theme-list"><span class="theme-dot" aria-hidden="true"></span><span class="theme-toggle-label">Theme</span><span class="sr-only">: <span class="theme-current">Meteor</span></span></button>
+        <ul class="theme-list" id="theme-list" role="menu" aria-labelledby="theme-toggle" hidden>
+          <li role="none"><button type="button" role="menuitemradio" aria-checked="true" tabindex="-1" data-theme-id="meteor"><span class="theme-dot" style="--dot: #c3f344" aria-hidden="true"></span>Meteor<svg aria-hidden="true"><use href="assets/img/icons.svg#check"/></svg></button></li>
+          <li role="none"><button type="button" role="menuitemradio" aria-checked="false" tabindex="-1" data-theme-id="comet"><span class="theme-dot" style="--dot: oklch(0.86 0.12 205)" aria-hidden="true"></span>Comet<svg aria-hidden="true"><use href="assets/img/icons.svg#check"/></svg></button></li>
+          <li role="none"><button type="button" role="menuitemradio" aria-checked="false" tabindex="-1" data-theme-id="aurora"><span class="theme-dot" style="--dot: oklch(0.85 0.14 168)" aria-hidden="true"></span>Aurora<svg aria-hidden="true"><use href="assets/img/icons.svg#check"/></svg></button></li>
+          <li role="none"><button type="button" role="menuitemradio" aria-checked="false" tabindex="-1" data-theme-id="ember"><span class="theme-dot" style="--dot: oklch(0.78 0.15 42)" aria-hidden="true"></span>Ember<svg aria-hidden="true"><use href="assets/img/icons.svg#check"/></svg></button></li>
+          <li role="none"><button type="button" role="menuitemradio" aria-checked="false" tabindex="-1" data-theme-id="nebula"><span class="theme-dot" style="--dot: oklch(0.8 0.14 315)" aria-hidden="true"></span>Nebula<svg aria-hidden="true"><use href="assets/img/icons.svg#check"/></svg></button></li>
+          <li role="none"><button type="button" role="menuitemradio" aria-checked="false" tabindex="-1" data-theme-id="graphite"><span class="theme-dot" style="--dot: oklch(0.9 0 0)" aria-hidden="true"></span>Graphite<svg aria-hidden="true"><use href="assets/img/icons.svg#check"/></svg></button></li>
+          <li role="none"><button type="button" role="menuitemradio" aria-checked="false" tabindex="-1" data-theme-id="contrast"><span class="theme-dot" style="--dot: oklch(0.92 0.19 105)" aria-hidden="true"></span>High contrast<svg aria-hidden="true"><use href="assets/img/icons.svg#check"/></svg></button></li>
+        </ul>
+      </div>
     </div>
   </header>
   <!-- /site-header -->
@@ -80,8 +93,11 @@
             <li>the sites where hold-key drag runs or never runs;</li>
             <li>whether you chose to allow all sites;</li>
             <li>your answer to the welcome card;</li>
-            <li>your export file-name preferences.</li>
+            <li>your export file-name preferences;</li>
+            <li>your theme, and whether it is light, dark or follows the system;</li>
+            <li>what releasing a drag does, and the two capture defaults.</li>
           </ul>
+          <p>The side panel and full view also keep the last theme and light or dark choice in their own page storage, so they open in it without a flash.</p>
           <p>After you restore a backup, the state from just before is kept once in the same local storage, so the restore can be undone. It's replaced by the next restore, and cleared when you discard it or change anything else.</p>
         </section>
 
@@ -130,7 +146,7 @@
 
         <section aria-labelledby="site">
           <h2 id="site">This website</h2>
-          <p>This site has no cookies, analytics, advertising, trackers or embedded third-party content. Its fonts, images and scripts are served from the site itself. The interactive demo and the export preview run entirely in your browser and send nothing anywhere.</p>
+          <p>This site has no cookies, analytics, advertising, trackers or embedded third-party content. Its fonts, images and scripts are served from the site itself. The interactive demo and the export preview run entirely in your browser and send nothing anywhere. If you choose a theme from the menu, your choice is kept in this browser’s local storage for this site. It is never sent anywhere.</p>
           <p>The site is intended to be hosted on GitHub Pages. GitHub operates those servers and, like any web host, may process technical information such as IP addresses to deliver and secure the site. GitHub's own privacy statement covers that.</p>
           <p>Questions or concerns can be raised on the project's <a href="https://github.com/ryanjosephkamp/link-meteor/issues">GitHub issues page</a>. This page describes the current development build; the extension hasn't yet been submitted to the Chrome Web Store.</p>
         </section>

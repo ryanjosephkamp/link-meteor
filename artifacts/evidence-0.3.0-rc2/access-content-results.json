@@ -1,0 +1,86 @@
+{
+  "started": "2026-09-27T15:58:00.903Z",
+  "kind": "simulation: real page script, stub chrome object, real input events in Chrome for Testing",
+  "checks": [
+    {
+      "name": "Plain Command-click on a link passes through to the page untouched"
+    },
+    {
+      "name": "A Command-press that moves 5 px stays a click and starts no selection"
+    },
+    {
+      "name": "A drag without the modifier does nothing"
+    },
+    {
+      "name": "Command-drag of 6 px or more starts selection; the ending click is suppressed once",
+      "pageTextSelected": 0
+    },
+    {
+      "name": "Only one click is suppressed; the next click reaches the page"
+    },
+    {
+      "name": "Command-drag that starts on a link selects instead of dragging the link"
+    },
+    {
+      "name": "A Command-drag that starts in a text field starts no selection"
+    },
+    {
+      "name": "content.configure switches off, then to the letter Q, without a reload"
+    },
+    {
+      "name": "Unticking a link in the preview leaves it out of every action",
+      "sent": 4
+    },
+    {
+      "name": "Shortcuts U and K copy URLs and Markdown while focus is in the card",
+      "shortcuts": "CAORNMWGUKDB"
+    },
+    {
+      "name": "Typing in the page does not trigger card shortcuts"
+    },
+    {
+      "name": "The More menu lists six actions, moves with the arrow keys and closes on Escape",
+      "items": [
+        "Open in a new window",
+        "Open as a tab group",
+        "Copy URLs",
+        "Copy as Markdown",
+        "Download this selection",
+        "Bookmark this selection"
+      ]
+    },
+    {
+      "name": "The destination picker sends collectionId and the receipt names that collection"
+    },
+    {
+      "name": "Review after saving opens the full view at that capture (ui.open with view and batchId)"
+    },
+    {
+      "name": "Open 3 in tabs opens at once, with no confirmation"
+    },
+    {
+      "name": "Download this selection saves the file name the background chose",
+      "file": "My-research_2026-09-26_1432.csv"
+    },
+    {
+      "name": "Bookmark without access explains it and offers the full view at the export panel"
+    },
+    {
+      "name": "45 links: the card confirms (Open 45, New window, Cancel) before opening"
+    },
+    {
+      "name": "150 links: stronger wording; Escape cancels only the confirmation"
+    },
+    {
+      "name": "520 links: refused before anything is sent"
+    },
+    {
+      "name": "The card shows progress and cancels its own opening"
+    },
+    {
+      "name": "On Windows and Linux the modifier is Ctrl, not Command"
+    }
+  ],
+  "result": "PASS",
+  "finished": "2026-09-27T15:58:06.625Z"
+}

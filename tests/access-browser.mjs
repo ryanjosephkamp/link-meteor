@@ -18,7 +18,7 @@ const sleep = (ms) => new Promise((done) => setTimeout(done, ms));
 await mkdir(evidence, {recursive: true});
 const fixture = await fixtureServer();
 const siteB = fixture.base.replace('127.0.0.1', 'localhost');
-const browser = await launchWithAction({profilePrefix: 'access-profile-'});
+const browser = await launchWithAction({profilePrefix: 'rc2-access-profile-'});
 const downloads = await mkdtemp(resolve(scratch, 'access-downloads-'));
 
 /* A small DevTools-protocol toolkit over the pipe. */
@@ -72,7 +72,7 @@ try {
   await width(page, 1280, 1000);
   await sleep(1200);
   const {targetId: uiTarget} = await browser.newWindow(browser.extensionUrl());
-  const ui = await browser.attach(uiTarget);
+  let ui = await browser.attach(uiTarget);
   await until(() => js(ui, `!!document.getElementById('collection-heading') && !!window.chrome?.runtime`), 'workbench loaded');
   await sleep(600);
   const rpc = (message) => js(ui, `chrome.runtime.sendMessage(${JSON.stringify(message)}).then((r) => { if (!r?.ok) throw new Error(r?.error || 'no response'); return r.data; })`);
@@ -348,6 +348,32 @@ try {
   await click('welcome-later');
   await until(async () => (await state()).settings.welcomeSeen === true, 'answered after the upgrade');
   pass('A state saved by 0.2.2 shows the welcome card once, with the saved hold key');
+
+  /* 7. After Link Meteor restarts in place (reinstalled from its folder, as an update does), region
+     selection still works on a page that was already open, without reloading it. The test does not
+     use chrome.runtime.reload(): in Chrome for Testing that unloads a command-line extension for good. */
+  await js(page, 'window.__keep = 1');
+  assert.equal(await browser.clickAction(fixture.base), 'clicked');
+  await click('arm');
+  await until(() => js(page, `!!document.getElementById('link-meteor-overlay')`), 'region selection before restart');
+  await key(page, 'Escape');
+  await js(ui, 'chrome.storage.session.set({restartProbe: 1}).then(() => true)');
+  const reinstalled = await browser.send('Extensions.loadUnpacked', {path: browser.extension});
+  assert.equal(reinstalled.id, browser.extensionId);
+  await sleep(2000);
+  const reopened = await browser.newWindow(browser.extensionUrl());
+  ui = await browser.attach(reopened.targetId);
+  await until(() => js(ui, `!!document.getElementById('collection-heading') && !!chrome.runtime?.id`).catch(() => false), 'workbench reopened');
+  assert.deepEqual(await js(ui, `chrome.storage.session.get('restartProbe')`), {}, 'the restart cleared session storage, so it really happened');
+  assert.equal(await browser.clickAction(fixture.base), 'clicked');
+  await sleep(600);
+  const {tabId} = await rpc({type: 'capture.arm'});
+  await until(() => js(page, `document.querySelectorAll('#link-meteor-overlay').length === 1`), 'region selection after restart');
+  assert.equal(await js(ui, `chrome.tabs.sendMessage(${tabId}, {type: 'links.progress'}).then(() => 'delivered', (error) => error.message)`), 'delivered', 'a connected page script answers');
+  assert.equal(await js(page, 'window.__keep'), 1, 'the fixture page was not reloaded');
+  await key(page, 'Escape');
+  assert.equal(await js(page, `document.querySelectorAll('#link-meteor-overlay').length`), 0);
+  pass('After Link Meteor restarts in place, region selection works on the same unreloaded page and its script answers messages');
 
   result.result = 'PASS';
 } catch (error) {

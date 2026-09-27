@@ -154,10 +154,10 @@ chrome.runtime.onInstalled.addListener(async () => {
   await chrome.contextMenus.removeAll();
   chrome.contextMenus.create({id:'meteor-region',title:'Link Meteor: select a region',contexts:['page','link','selection']});
   chrome.contextMenus.create({id:'meteor-page',title:'Link Meteor: collect this page',contexts:['page','link','selection']});
-  await requestSync();
+  await requestSync({inject: 'all'});
 });
 // Keeping access honest: hold-drag follows Chrome's grants and every saved change to its settings.
-chrome.runtime.onStartup.addListener(() => requestSync());
+chrome.runtime.onStartup.addListener(() => requestSync({inject: 'all'}));
 chrome.permissions.onAdded.addListener(() => requestSync());
 chrome.permissions.onRemoved.addListener(() => requestSync());
 onStateWritten(followHoldWrites);

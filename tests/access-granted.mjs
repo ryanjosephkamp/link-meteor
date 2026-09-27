@@ -26,7 +26,30 @@ try {
   const run = await launch(profile, {headless: process.env.LINK_METEOR_HEADED !== '1'});
   context = run.context;
   for (const old of context.pages()) await old.close();
-  const ui = await context.newPage();
+  // A page opened as the browser starts can load before Chrome runs the registered hold-drag script
+  // (release candidate 1 found this). When Link Meteor starts, and whenever it syncs hold settings, it
+  // loads the script into open tabs where hold-drag should run but no script answers, so hold-drag must
+  // work on this page within seconds, with no reload and no settings change.
+  const startupSettings = await run.worker.evaluate(async () => (await chrome.storage.local.get('linkMeteorState')).linkMeteorState.settings);
+  const startupPage = await context.newPage();
+  await startupPage.goto(localhost + '/index.html'); await startupPage.locator('#bibliography').waitFor();
+  const startupDrag = async () => {
+    const box = await startupPage.locator('#bibliography').boundingBox();
+    await startupPage.bringToFront(); await startupPage.keyboard.down(startupSettings.holdKey);
+    await startupPage.mouse.move(box.x + 4, box.y + 4); await startupPage.mouse.down();
+    await startupPage.mouse.move(box.x + box.width - 4, box.y + box.height - 4, {steps: 12}); await startupPage.mouse.up();
+    await startupPage.keyboard.up(startupSettings.holdKey); await sleep(300);
+    const found = await startupPage.locator('#link-meteor-overlay').count();
+    if (found) await startupPage.keyboard.press('Escape');
+    return found;
+  };
+  const startupBegan = Date.now();
+  let startupAttempts = 0, startupWorks = 0;
+  while (!startupWorks && Date.now() - startupBegan < 15000) { startupAttempts++; startupWorks = await startupDrag(); if (!startupWorks) await sleep(1000); }
+  assert.equal(startupWorks, 1, 'hold-drag works on a page opened as the browser started');
+  pass('A page opened as the browser starts gets hold-drag within seconds, without a reload', {attempts: startupAttempts, seconds: Math.round((Date.now() - startupBegan) / 1000)});
+  await startupPage.close();
+  let ui = await context.newPage();
   await ui.goto(`chrome-extension://${run.id}/ui/workbench.html`); await ui.locator('#collection-heading').waitFor();
   const grants = await ui.evaluate(() => chrome.permissions.getAll());
   result.grants = grants;
@@ -169,9 +192,7 @@ try {
   await until(() => ui.locator('#all-sites-remove').isVisible(), 'offer to remove Chrome’s grant');
   await ui.locator('#all-sites-remove-no').click();
   assert.match(await ui.locator('#all-sites-note').innerText(), /Chrome still lets Link Meteor read every site/);
-  // Click, then wait for the saved outcome. check() would also require the switch to stay on during the
-  // save, but a render in that moment currently shows the saved state (a known, recorded flicker).
-  await ui.locator('#all-sites').click();
+  await ui.locator('#all-sites').check();
   await until(async () => (await rpc(ui, {type: 'state.get'})).settings.holdScope === 'all' && await ui.locator('#all-sites').isChecked(), 'all sites again');
   pass('The switch turns all-sites off (offering to remove Chrome’s grant) and on again');
 

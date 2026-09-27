@@ -87,7 +87,13 @@ async function configureTabs(settings, allSites, inject) {
       try { await chrome.scripting.executeScript({target: {tabId: tab.id}, files: ['content/capture.js']}); } catch { /* the page loads it on its next visit */ }
     }
     try { await chrome.tabs.sendMessage(tab.id, {type: 'content.configure', holdKey: settings.holdKey, holdTrigger: settings.holdTrigger, enabled}); }
-    catch { /* no page script in this tab */ }
+    catch {
+      // No page script answered. A page that loaded while the extension was starting can miss the
+      // registered script, so load it where hold-drag should run; the fresh copy configures itself.
+      if (enabled && !tab.incognito && !tab.discarded) {
+        try { await chrome.scripting.executeScript({target: {tabId: tab.id}, files: ['content/capture.js']}); } catch { /* the page loads it on its next visit */ }
+      }
+    }
   }));
 }
 
@@ -120,10 +126,15 @@ export async function syncHold({inject = []} = {}) {
   return state;
 }
 
-let pendingSync = null;
+let pendingSync = null, pendingInject = [];
 // Queues one sync after the current hold operation; requests made before it starts share it.
-export function requestSync() {
-  if (!pendingSync) pendingSync = serialHold(() => { pendingSync = null; return syncHold(); });
+export function requestSync({inject = []} = {}) {
+  pendingInject = pendingInject === 'all' || inject === 'all' ? 'all' : [...new Set([...pendingInject, ...inject])];
+  if (!pendingSync) pendingSync = serialHold(() => {
+    const inject = pendingInject;
+    pendingSync = null; pendingInject = [];
+    return syncHold({inject});
+  });
   return pendingSync.catch(() => {});
 }
 

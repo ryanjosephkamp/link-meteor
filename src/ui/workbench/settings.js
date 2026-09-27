@@ -49,7 +49,7 @@ export function renderSite() {
   const excepted = !!origin && settings.holdExceptions.includes(origin);
 
   // All sites: the saved scope and Chrome's grant together.
-  $('all-sites').checked = scope === 'all';
+  $('all-sites').checked = allSitesPending ?? scope === 'all';
   const note = $('all-sites-note');
   note.replaceChildren();
   if (settings.holdScope === 'all' && grants.known && !grants.allSites) {
@@ -138,7 +138,7 @@ async function removeAllSites() {
   const removed = await chrome.permissions.remove({ origins: ALL_SITES });
   offerRemoval = false;
   await refreshGrants();
-  show(removed ? 'Chrome no longer lets Link Meteor read every site. Sites you allowed one by one keep their access.' : 'Chrome kept Link Meteor’s access to all sites. You can change it in Chrome’s extension settings.');
+  show(removed ? 'Chrome no longer lets Link Meteor read every site. This can also remove Chrome’s access to sites you allowed one by one. Hold-key drag then stops there until you allow them again.' : 'Chrome kept Link Meteor’s access to all sites. You can change it in Chrome’s extension settings.');
   $('all-sites').focus();
 }
 
@@ -154,6 +154,10 @@ export function loadShortcut() {
 }
 
 // When a change did not happen, the switches show the saved state and Chrome's grant again.
+// The switch position the person just chose, kept while it is being saved so a render in the
+// meantime (a reload after another saved change, for example) does not flip it back.
+let allSitesPending = null;
+
 function revertOnError(event, fn) {
   return action(async () => { try { await fn(event.target.checked); } catch (error) { renderSite(); throw error; } });
 }
@@ -171,7 +175,10 @@ export function bindSettings() {
     if (!ui.currentOrigin) throw new Error('Open an HTTP(S) page to choose where hold-key drag runs.');
     return setException(ui.currentOrigin, excepted);
   }));
-  $('all-sites').addEventListener('change', (event) => revertOnError(event, setAllSites));
+  $('all-sites').addEventListener('change', (event) => {
+    allSitesPending = event.target.checked;
+    revertOnError(event, async (on) => { try { await setAllSites(on); } finally { allSitesPending = null; renderSite(); } });
+  });
   $('all-sites-remove-yes').addEventListener('click', () => action(removeAllSites));
   $('all-sites-remove-no').addEventListener('click', () => { offerRemoval = false; renderSite(); $('all-sites').focus(); });
   $('hold-trigger').addEventListener('change', (event) => action(async () => {

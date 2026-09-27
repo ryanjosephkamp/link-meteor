@@ -1,0 +1,55 @@
+{
+  "started": "2026-09-27T16:03:57.949Z",
+  "checks": [
+    "The per-site gesture opens an overlay before its grant is revoked",
+    "Actual host permission revocation prunes saved hold origin and dynamic content registration",
+    "Already loaded page no longer starts the revoked hold-key gesture",
+    "Capture after grant revocation is a denied result, not successful zero",
+    "Removing all-sites access returns the saved scope to 'sites'",
+    "Saved hold origins and registrations match the grants Chrome still reports",
+    "An open tab of a site no longer allowed stops the gesture without a reload",
+    "The already-open per-site fixture follows Chrome’s remaining grant",
+    "Capture on the no-longer-allowed site is denied",
+    "The all-sites switch shows off after Chrome’s grant is removed"
+  ],
+  "allSitesGrantsBefore": {
+    "origins": [
+      "http://*/*",
+      "http://127.0.0.1:52478/*",
+      "https://*/*"
+    ],
+    "permissions": [
+      "activeTab",
+      "bookmarks",
+      "clipboardWrite",
+      "contextMenus",
+      "storage",
+      "tabs",
+      "unlimitedStorage",
+      "tabGroups",
+      "scripting",
+      "sidePanel"
+    ]
+  },
+  "allSitesGrantsAfter": {
+    "origins": [],
+    "permissions": [
+      "activeTab",
+      "bookmarks",
+      "clipboardWrite",
+      "contextMenus",
+      "storage",
+      "tabs",
+      "unlimitedStorage",
+      "tabGroups",
+      "scripting",
+      "sidePanel"
+    ]
+  },
+  "remainingHoldOrigins": [],
+  "result": "PASS",
+  "limits": [
+    "Native Deny button was not verified. This suite removes existing grants through chrome.permissions.remove and verifies actual revoked access. Chrome’s site-access menu is not driven. Grant preparation and any user-reported approvals are recorded separately."
+  ],
+  "finished": "2026-09-27T16:04:04.018Z"
+}

@@ -7,7 +7,7 @@ PASS Capture this page: no prompt after a toolbar press; on a new site whose add
 PASS Card destination picker saves the ticked links to the chosen collection {"saved":4}
 PASS Card copy formats: table, URLs (U) and Markdown (K) 
 PASS Card Open 3 in tabs opens the unique ticked web links at once {"opened":["/appendix","/papers/attention.pdf","/papers/geometry.pdf"]}
-PASS Card Download this selection (D) saves a workbook named after the chosen collection {"file":"Card-target_2026-09-27_1157.xlsx"}
+PASS Card Download this selection (D) saves a workbook named after the chosen collection {"file":"Card-target_2026-09-27_1131.xlsx"}
 PASS Card Bookmark this selection without access explains it and offers the full view 
 PASS Card Review opens the full view at that capture, in its collection, once 
 PASS Card with 30 links confirms first, then opens all 30 in batches 
@@ -17,4 +17,7 @@ PASS Workbench: 45 links confirm inline (Open 45 tabs, new window, tab group, Ca
 PASS Workbench: 150 links use stronger wording, open in batches with progress, and Cancel stops before the next batch {"openedBeforeStop":10}
 PASS Workbench: 520 links are refused before anything opens, in the page and in the background 
 PASS A state saved by 0.2.2 shows the welcome card once, with the saved hold key 
-PASS After Link Meteor restarts in place, region selection works on the same unreloaded page and its script answers messages 
+PASS Region selection works through the toolbar action before the extension restarts 
+Error: restart closed the old workbench (timed out; last: false)
+    at until (file://<repository>/tests/access-browser.mjs:29:9)
+    at async file://<repository>/tests/access-browser.mjs:360:3

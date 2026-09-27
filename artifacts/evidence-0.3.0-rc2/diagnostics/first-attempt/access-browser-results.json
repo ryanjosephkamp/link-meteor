@@ -1,5 +1,5 @@
 {
-  "started": "2026-09-27T15:57:24.706Z",
+  "started": "2026-09-27T15:31:36.633Z",
   "browser": "Chrome for Testing, headless, fresh temporary profile, real unpacked extension, no optional grants",
   "checks": [
     {
@@ -60,7 +60,7 @@
     },
     {
       "name": "Card Download this selection (D) saves a workbook named after the chosen collection",
-      "file": "Card-target_2026-09-27_1157.xlsx"
+      "file": "Card-target_2026-09-27_1131.xlsx"
     },
     {
       "name": "Card Bookmark this selection without access explains it and offers the full view"
@@ -110,9 +110,10 @@
       "name": "A state saved by 0.2.2 shows the welcome card once, with the saved hold key"
     },
     {
-      "name": "After Link Meteor restarts in place, region selection works on the same unreloaded page and its script answers messages"
+      "name": "Region selection works through the toolbar action before the extension restarts"
     }
   ],
-  "result": "PASS",
-  "finished": "2026-09-27T15:57:57.849Z"
+  "result": "FAIL",
+  "error": "Error: restart closed the old workbench (timed out; last: false)\n    at until (file://<repository>/tests/access-browser.mjs:29:9)\n    at async file://<repository>/tests/access-browser.mjs:360:3",
+  "finished": "2026-09-27T15:32:16.469Z"
 }

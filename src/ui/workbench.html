@@ -155,14 +155,18 @@
           <div class="about-body">
             <p class="about-credit">Link Meteor <span id="about-version-full"></span>, made by <a href="https://ryanjosephkamp.github.io/" target="_blank" rel="noopener noreferrer">Ryan Kamp</a>.</p>
             <ul class="about-links">
-              <li><a href="https://ryanjosephkamp.github.io/link-meteor/guide.html" target="_blank" rel="noopener noreferrer"><svg class="icon" aria-hidden="true"><use href="#i-book"/></svg>Guide and limits</a></li>
+              <li><a href="https://ryanjosephkamp.github.io/link-meteor/guide.html" data-site-link target="_blank" rel="noopener noreferrer"><svg class="icon" aria-hidden="true"><use href="#i-book"/></svg>Guide and limits</a></li>
               <li><a href="https://github.com/ryanjosephkamp/link-meteor/issues" target="_blank" rel="noopener noreferrer"><svg class="icon" aria-hidden="true"><use href="#i-bug"/></svg>Report a bug or suggest a feature</a></li>
-              <li><a href="https://ryanjosephkamp.github.io/link-meteor/" target="_blank" rel="noopener noreferrer"><svg class="icon" aria-hidden="true"><use href="#i-globe"/></svg>Link Meteor website</a></li>
+              <li><a href="https://ryanjosephkamp.github.io/link-meteor/" data-site-link target="_blank" rel="noopener noreferrer"><svg class="icon" aria-hidden="true"><use href="#i-globe"/></svg>Link Meteor website</a></li>
               <li><a href="https://github.com/ryanjosephkamp/link-meteor" target="_blank" rel="noopener noreferrer"><svg class="icon" aria-hidden="true"><use href="#i-code"/></svg>Source code</a></li>
               <li><a href="https://github.com/sponsors/ryanjosephkamp" target="_blank" rel="noopener noreferrer"><svg class="icon heart" aria-hidden="true"><use href="#i-heart"/></svg>Sponsor on GitHub (optional)</a></li>
             </ul>
-            <p class="help">Bug reports are public on GitHub. Leave out private URLs, collection contents and notes; the practice page makes a good example.</p>
             <p class="help">Every feature is free. Sponsoring never unlocks anything. These links open in a new tab only when you choose them.</p>
+            <p class="help">Bug reports are public on GitHub. Leave out private URLs, collection contents and notes; the practice page makes a good example.</p>
+            <div class="about-diagnostics">
+              <button id="copy-diagnostics" class="btn small" type="button" aria-describedby="diagnostics-help"><svg class="icon" aria-hidden="true"><use href="#i-copy"/></svg>Copy diagnostics</button>
+              <p id="diagnostics-help" class="help">Copies versions, settings, permissions and counts for a bug report, never addresses, site names, page titles, notes, tags or collection names.</p>
+            </div>
           </div>
         </details>
       </section>
@@ -319,6 +323,7 @@
           <button id="copy-table" class="btn copy-btn" type="button"><svg class="icon" aria-hidden="true"><use href="#i-copy"/></svg><span class="copy-main">Table</span><span id="copy-table-note" class="copy-note">Anchor text · URL</span></button>
           <button id="copy-urls" class="btn copy-btn" type="button"><svg class="icon" aria-hidden="true"><use href="#i-copy"/></svg><span class="copy-main">URLs</span><span class="copy-note">One per line</span></button>
           <button id="copy-markdown" class="btn copy-btn" type="button"><svg class="icon" aria-hidden="true"><use href="#i-copy"/></svg><span class="copy-main">Markdown</span><span class="copy-note">[text](URL)</span></button>
+          <button id="copy-rich" class="btn copy-btn" type="button"><svg class="icon" aria-hidden="true"><use href="#i-copy"/></svg><span class="copy-main">Rich links</span><span class="copy-note">Clickable anchor text</span></button>
         </div>
       </section>
 

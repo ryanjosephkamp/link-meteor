@@ -4,6 +4,11 @@
 // code, the formatted workbook read by tests/verify-workbook.py (openpyxl), and when bookmark
 // access is requested. Runs headless in a fresh task-owned profile.
 //
+// 0.4.0 workbench extras: Copy as rich links (the exact HTML and text read back from the clipboard,
+// and the plain-text fallback), Copy diagnostics (valid indented JSON with no addresses or names),
+// and About and help's website links carrying ?theme=. Clipboard reads use permissions granted to
+// the test context; headless Chrome keeps its own clipboard, so the system clipboard is untouched.
+//
 // Bookmark prompts are never shown: a page-level stand-in for chrome.permissions.request records
 // each request and answers it. Where the folder picker is exercised, the page's own messages to
 // the background are also stood in for (an API mock, labeled as such in the results); the real
@@ -19,7 +24,7 @@ const VERSION = JSON.parse(await readFile(new URL('../src/manifest.json', import
 process.env.LINK_METEOR_EVIDENCE_DIR ||= '.scratch/evidence-exports-bookmarks';
 process.env.LINK_METEOR_FIXTURE_PORT ||= '52482';
 const {launch, rpc, until, evidence, root, scratch} = await import('./helpers/browser.mjs');
-const {exportFileName, fileNamePart, FORMAT_EXTENSIONS} = await import('../src/core/export.js');
+const {exportFileName, fileNamePart, FORMAT_EXTENSIONS, richLinks} = await import('../src/core/export.js');
 const {queryLinks} = await import('../src/core/model.js');
 const {readPackagedMembers} = await import('../scripts/verify-package.mjs');
 
@@ -307,7 +312,7 @@ try {
     const bg = (el) => { for (let n = el; n; n = n.parentElement) { const c = getComputedStyle(n).backgroundColor; if (c && !/rgba\(0, 0, 0, 0\)|transparent/.test(c) && !/\/ 0\)$/.test(c)) return c; } return getComputedStyle(document.body).backgroundColor; };
     return pairs.map(([name, selector]) => { const el = document.querySelector(selector); if (!el) return {name, missing: true}; const a = lum(rgb(getComputedStyle(el).color)), b = lum(rgb(bg(el))); return {name, ratio: Math.round(((Math.max(a, b) + .05) / (Math.min(a, b) + .05)) * 100) / 100}; });
   }, pairs);
-  const pairs = [['file name field', '#export-name'], ['file name help', '#export-name-help'], ['pattern summary', '#name-settings > summary'], ['pattern line', '#name-pattern'], ['date checkbox label', '.name-check span'], ['saves as line', '#download-name'], ['bookmark mode (checked)', '.bookmark-choice:has(input:checked) span'], ['bookmark mode (unchecked)', '.bookmark-choice:has(input:not(:checked)) span'], ['folder list', '#bookmark-folder'], ['folder status', '#bookmark-folder-status'], ['skip label', 'label:has(#bookmark-skip-existing) span'], ['bookmark help', '#bookmark-help']];
+  const pairs = [['file name field', '#export-name'], ['file name help', '#export-name-help'], ['pattern summary', '#name-settings > summary'], ['pattern line', '#name-pattern'], ['date checkbox label', '.name-check span'], ['saves as line', '#download-name'], ['bookmark mode (checked)', '.bookmark-choice:has(input:checked) span'], ['bookmark mode (unchecked)', '.bookmark-choice:has(input:not(:checked)) span'], ['folder list', '#bookmark-folder'], ['folder status', '#bookmark-folder-status'], ['skip label', 'label:has(#bookmark-skip-existing) span'], ['bookmark help', '#bookmark-help'], ['rich links note', '#copy-rich .copy-note']];
   const measured = [];
   for (const scheme of ['light', 'dark']) {
     await ui.emulateMedia({colorScheme: scheme, reducedMotion: 'reduce'});
@@ -330,6 +335,95 @@ try {
   check('No horizontal overflow at 320 and 390 px; new controls labeled; measured text contrast at least 4.5:1 in light and dark', {contrast: measured});
 
   await ui.evaluate(() => { chrome.runtime.sendMessage = window.__originalSend; });
+
+  // 12. Copy as rich links: the same rows as the other copies, as exact HTML and plain text.
+  await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+  const clipboard = () => ui.evaluate(async () => {
+    const [item] = await navigator.clipboard.read();
+    const read = async (type) => item.types.includes(type) ? (await item.getType(type)).text() : null;
+    return {types: [...item.types].sort(), html: await read('text/html'), text: await read('text/plain')};
+  });
+  const notice = async (start) => until(async () => { const text = await ui.locator('#notice').innerText(); return await ui.locator('#notice').isVisible() && text.startsWith(start) && text; }, `Notice: ${start}`);
+  const clearNotice = () => ui.evaluate(() => { for (const id of ['notice', 'error']) { const box = document.getElementById(id); box.hidden = true; box.replaceChildren(); } });
+  await clearNotice();
+  assert.equal(await ui.locator('#copy-rich').isEnabled(), true);
+  await ui.locator('#copy-rich').click();
+  assert.equal(await notice('Copied'), `Copied ${rows.length} links as rich links. Paste into Google Docs, Word or Notion to keep them clickable.`);
+  const expected = richLinks(rows);
+  const copied = await clipboard();
+  assert.deepEqual(copied, {types: ['text/html', 'text/plain'], html: expected.html, text: expected.text});
+  assert.ok(expected.html.startsWith('<ul><li><a href="') && expected.text.split('\n').length === rows.length);
+  // A selection narrows it, exactly as for the other copies.
+  await clearNotice();
+  await ui.locator('.row-select').nth(0).check(); await ui.locator('.row-select').nth(1).check();
+  await ui.locator('#copy-rich').click();
+  assert.equal(await notice('Copied'), 'Copied 2 links as rich links. Paste into Google Docs, Word or Notion to keep them clickable.');
+  assert.deepEqual(await clipboard(), {types: ['text/html', 'text/plain'], ...richLinks(rows.slice(0, 2))});
+  await ui.locator('#clear-selection').click();
+  // Chrome refusing the HTML falls back to the plain text, and says so.
+  await clearNotice();
+  await ui.evaluate(() => { navigator.clipboard.write = () => Promise.reject(new DOMException('Refused for this check', 'NotAllowedError')); });
+  await ui.locator('#copy-rich').click();
+  assert.equal(await notice('Copied'), `Copied ${rows.length} links as plain text, each with its URL, because Chrome didn't accept rich links here. They won't paste as clickable links.`);
+  assert.deepEqual(await clipboard(), {types: ['text/plain'], html: null, text: expected.text});
+  await ui.evaluate(() => { delete navigator.clipboard.write; });
+  check('Copy as rich links puts the exact HTML and plain text on the clipboard for the rows in view or the selection, and falls back to plain text with a clear status', {links: rows.length, htmlBytes: expected.html.length});
+
+  // 13. Copy diagnostics: indented JSON with counts and choices, and no addresses or names.
+  await clearNotice();
+  await ui.locator('#help-toggle').click();
+  assert.equal(await ui.locator('#about-panel').evaluate((details) => details.open), true);
+  await ui.locator('#copy-diagnostics').click();
+  assert.equal(await notice('Copied diagnostics'), 'Copied diagnostics as indented JSON: versions, settings, permissions and counts. Paste them into your bug report.');
+  const diagnosticsText = (await clipboard()).text;
+  const diagnostics = JSON.parse(diagnosticsText);
+  assert.equal(diagnosticsText, `${JSON.stringify(diagnostics, null, 2)}\n`, 'indented JSON');
+  const everything = await state();
+  const hosts = links.flatMap((item) => [item.url, item.sourceUrl, item.frameUrl]).map((value) => { try { return new URL(value).hostname; } catch { return ''; } });
+  const forbidden = [...new Set([...links.flatMap((item) => [item.url, item.originalHref, item.sourceUrl, item.sourceTitle, item.frameUrl, item.notes, ...item.tags]), ...hosts, ...everything.collections.map((item) => item.name)])].filter((value) => value && value.length > 3);
+  assert.deepEqual(forbidden.filter((value) => diagnosticsText.includes(value)), []);
+  assert.doesNotMatch(diagnosticsText, /:\/\/|https?:|mailto:|tel:/i);
+  assert.equal(diagnostics.version, VERSION);
+  assert.deepEqual(diagnostics.data, {readable: true, collections: everything.collections.length, links: everything.collections.reduce((n, item) => n + item.links.length, 0), undoLinks: 0});
+  assert.deepEqual(diagnostics.permissions, {tabs: false, bookmarks: false, tabGroups: false, allSites: false, siteOriginCount: 0});
+  assert.deepEqual([diagnostics.settings.theme, diagnostics.settings.holdOrigins, diagnostics.settings.exportPrefix, diagnostics.scripts.scope], ['meteor', 0, 0, 'none']);
+  assert.ok(diagnostics.storage.bytesInUse > 0 && diagnostics.browser.userAgent && diagnostics.browser.brands.length);
+  await writeFile(resolve(evidence, 'lane-diagnostics.json'), diagnosticsText);
+  assert.equal(await ui.locator('#copy-diagnostics').getAttribute('aria-describedby'), 'diagnostics-help');
+  assert.match(await ui.locator('#diagnostics-help').innerText(), /never addresses, site names, page titles, notes, tags or collection names/);
+  const aboutMeasured = [];
+  for (const scheme of ['light', 'dark']) {
+    await ui.emulateMedia({colorScheme: scheme, reducedMotion: 'reduce'});
+    for (const entry of await contrast([['diagnostics button', '#copy-diagnostics'], ['diagnostics help', '#diagnostics-help']])) { assert.ok(!entry.missing, `${entry.name} missing`); assert.ok(entry.ratio >= 4.5, `${scheme} ${entry.name} contrast ${entry.ratio}`); aboutMeasured.push({scheme, ...entry}); }
+  }
+  await ui.emulateMedia({colorScheme: 'light', reducedMotion: 'reduce'});
+  await ui.locator('#about-panel').screenshot({path: resolve(evidence, 'lane-about-desktop.png'), animations: 'disabled'});
+  await ui.setViewportSize({width: 320, height: 900});
+  if (await ui.locator('#export-done').isVisible()) await ui.locator('#export-done').click();
+  await ui.locator('#about-panel').evaluate((details) => { details.open = false; });
+  await ui.locator('#help-toggle').click();
+  assert.deepEqual(await ui.evaluate(() => [document.getElementById('app').dataset.view, document.getElementById('about-panel').open]), ['collections', true]);
+  await clearNotice();
+  assert.equal(await overflow(), false, 'About and help at 320 px');
+  await ui.screenshot({path: resolve(evidence, 'lane-about-320.png'), fullPage: true, animations: 'disabled'});
+  await ui.keyboard.press('Escape');
+  await ui.setViewportSize({width: 1440, height: 1000});
+  check('Copy diagnostics puts indented JSON on the clipboard with version, counts and permissions, and no address, host, title, note, tag or collection name; its line says so; contrast at least 4.5:1', {collections: diagnostics.data.collections, links: diagnostics.data.links, contrast: aboutMeasured});
+
+  // 14. About and help's website links carry the theme; Meteor, the default, adds nothing.
+  const aboutLinks = () => ui.evaluate(() => [...document.querySelectorAll('#about-panel a')].map((a) => a.href));
+  const plain = ['https://ryanjosephkamp.github.io/', 'https://ryanjosephkamp.github.io/link-meteor/guide.html', 'https://github.com/ryanjosephkamp/link-meteor/issues', 'https://ryanjosephkamp.github.io/link-meteor/', 'https://github.com/ryanjosephkamp/link-meteor', 'https://github.com/sponsors/ryanjosephkamp'];
+  const themed = (id) => plain.map((href, i) => [1, 3].includes(i) ? `${href}?theme=${id}` : href);
+  assert.deepEqual(await aboutLinks(), plain);
+  await rpc(ui, {type: 'state.mutate', action: {type: 'settings.update', patch: {theme: 'aurora'}}});
+  await until(async () => (await aboutLinks()).join() === themed('aurora').join(), 'Theme reached the About links');
+  await rpc(ui, {type: 'state.mutate', action: {type: 'settings.update', patch: {theme: 'contrast'}}});
+  await ui.reload(); await ui.locator('#collection-heading').waitFor();
+  await until(async () => (await aboutLinks()).join() === themed('contrast').join(), 'Themed links after reopening');
+  await rpc(ui, {type: 'state.mutate', action: {type: 'settings.update', patch: {theme: 'meteor'}}});
+  await until(async () => (await aboutLinks()).join() === plain.join(), 'Back to Meteor');
+  check('About and help links to the website add ?theme= after a theme change and after reopening; Meteor and the other links stay plain', {aurora: themed('aurora').filter((href) => href.includes('?theme=')), meteor: plain});
+
   assert.deepEqual(errors, [], 'no page errors');
   check('No page errors or console errors');
   result.result = 'PASS';

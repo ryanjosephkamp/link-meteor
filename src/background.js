@@ -2,6 +2,7 @@ import {serial, readState, mutate, onStateWritten} from './background/store.js';
 import {ordinaryUrl} from './background/urls.js';
 import {workbenchMessages as bookmarkMessages} from './background/bookmarks.js';
 import {workbenchMessages as backupMessages} from './background/backup.js';
+import {workbenchMessages as diagnosticsMessages} from './background/diagnostics.js';
 import {workbenchMessages as holdMessages, grantedSettings, followHoldWrites, requestSync} from './background/hold.js';
 import {openUrls, cancelOpen} from './background/open.js';
 import {WORKBENCH, occurrences, commitCapture, openWorkbench, pageMessages} from './background/card.js';
@@ -10,7 +11,7 @@ const LAST_TARGET_KEY = 'linkMeteorTarget';
 
 // Workbench-only messages answered by area modules. A type may be claimed by one module only.
 const AREA_MESSAGES = new Map();
-for (const table of [bookmarkMessages, backupMessages, holdMessages]) {
+for (const table of [bookmarkMessages, backupMessages, holdMessages, diagnosticsMessages]) {
   for (const [type, handler] of Object.entries(table)) {
     if (AREA_MESSAGES.has(type)) throw new Error(`Duplicate Link Meteor message handler: ${type}`);
     AREA_MESSAGES.set(type, handler);

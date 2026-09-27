@@ -218,6 +218,7 @@ kbd, .shortcut-keys kbd, .btn-keys kbd { display: inline-grid; place-items: cent
 .about-links a:hover { background: var(--hover); text-decoration: underline; }
 .about-links .icon { color: var(--muted); }
 .about-links .icon.heart { color: var(--danger); }
+.about-diagnostics { display: grid; justify-items: start; gap: 6px; }
 .rail-foot { display: flex; gap: 7px; padding-top: 4px; color: var(--muted); font-size: var(--text-xs); line-height: 1.4; }
 .rail-foot .icon { width: 14px; height: 14px; margin-top: 1px; }
 
@@ -433,7 +434,7 @@ kbd, .shortcut-keys kbd, .btn-keys kbd { display: inline-grid; place-items: cent
 .app.is-blank .dock { display: none; }
 .export-group { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; padding: 16px 0; border-top: 1px solid var(--line); }
 .export-group h3 { font-size: var(--text-sm); font-weight: 650; color: var(--ink); }
-.copy-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.copy-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
 .copy-btn { display: grid; grid-template-columns: 1fr; justify-items: start; gap: 2px; min-height: 64px; padding: 9px 10px; text-align: left; white-space: normal; }
 .copy-btn .icon { margin-bottom: 3px; color: var(--muted); }
 .copy-main { font-size: var(--text-sm); }

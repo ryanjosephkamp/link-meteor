@@ -1,5 +1,5 @@
-// Export: format, columns, what an export covers, downloads and clipboard copies.
-import { COLUMNS, makeExport } from '../../core/export.js';
+// Export: format, columns, what an export covers, downloads and clipboard copies, including rich links.
+import { COLUMNS, makeExport, richLinks } from '../../core/export.js';
 import { $, node, icon, count, plural } from './helpers.js';
 import { ui, action, show, currentCollection, DEFAULT_COLUMNS } from './state.js';
 import { targetRows, requiredRows } from './review.js';
@@ -77,7 +77,7 @@ export function renderExportTarget() {
   if (selected) notes.push('Only selected links that match the current filters are used.');
   else if (filtered) notes.push(`Filtered from ${plural(collection.links.length, 'link')}. Every matching link is used, across all pages.`);
   else if (rows.length) notes.push('Every link in the collection, across all pages.');
-  if (grouped && rows.length) notes.push('Grouped rows use their first link for tables, text and Markdown. JSON keeps every occurrence and source.');
+  if (grouped && rows.length) notes.push('Grouped rows use their first link for tables, text, Markdown and rich links. JSON keeps every occurrence and source.');
   $('export-scope').textContent = notes.join(' ');
   const format = $('format').value;
   $('download-label').textContent = `Download ${{ xlsx: 'Excel file', csv: 'CSV file', tsv: 'TSV file', markdown: 'Markdown file', html: 'HTML file', json: 'JSON file', text: 'URL list' }[format]}`;
@@ -86,7 +86,7 @@ export function renderExportTarget() {
   $('columns-help').textContent = ['markdown', 'json', 'text'].includes(format)
     ? 'Columns apply to the Table copy and to CSV, TSV, Excel and HTML files. This format ignores them.'
     : 'Columns apply to the Table copy and to CSV, TSV, Excel and HTML files.';
-  for (const id of ['copy-table', 'copy-urls', 'copy-markdown', 'download', 'dock-copy']) $(id).disabled = !rows.length;
+  for (const id of ['copy-table', 'copy-urls', 'copy-markdown', 'copy-rich', 'download', 'dock-copy']) $(id).disabled = !rows.length;
   renderBookmarkTarget(rows);
   renderOpenTarget(rows);
 }
@@ -140,6 +140,23 @@ export async function copy(format, columns) {
     : `Copied ${plural(n, 'row')} as a table (${columns.map(columnLabel).join(', ')}). Paste into any spreadsheet.`);
 }
 
+// Rich links: HTML that Google Docs, Word and Notion paste as clickable anchor text, with a plain
+// text copy alongside. If Chrome refuses the HTML, the plain text alone is copied and the status
+// says so.
+export async function copyRich() {
+  const rows = requiredRows();
+  const { html, text } = richLinks(rows);
+  const n = rows.length;
+  try {
+    await navigator.clipboard.write([new ClipboardItem({ 'text/html': new Blob([html], { type: 'text/html' }), 'text/plain': new Blob([text], { type: 'text/plain' }) })]);
+  } catch {
+    await navigator.clipboard.writeText(text);
+    show(`Copied ${plural(n, 'link')} as plain text, each with its URL, because Chrome didn't accept rich links here. They won't paste as clickable links.`);
+    return;
+  }
+  show(`Copied ${plural(n, 'link')} as rich links. Paste into Google Docs, Word or Notion to keep them clickable.`);
+}
+
 export function bindExport() {
   $('dock-copy').addEventListener('click', () => action(() => copy('tsv', ui.columns)));
   $('format').addEventListener('change', () => { followFormatChange(); renderExportTarget(); });
@@ -150,4 +167,5 @@ export function bindExport() {
   $('copy-table').addEventListener('click', () => action(() => copy('tsv', ui.columns)));
   $('copy-urls').addEventListener('click', () => action(() => copy('text', ui.columns)));
   $('copy-markdown').addEventListener('click', () => action(() => copy('markdown', ui.columns)));
+  $('copy-rich').addEventListener('click', () => action(copyRich));
 }

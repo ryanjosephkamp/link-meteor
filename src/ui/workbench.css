@@ -489,6 +489,40 @@ kbd, .shortcut-keys kbd, .btn-keys kbd { display: inline-grid; place-items: cent
 /* 0.3.0 areas. Add each area's rules between its own two markers, so parallel work merges cleanly. */
 
 /* Area: all-sites access, hold key, welcome card, opening many links */
+/* Welcome card: shown once, at the top of the main column. */
+.welcome { position: relative; display: grid; gap: 10px; margin-bottom: 16px; padding: 14px 44px 14px 14px; border: 1px solid var(--accent-edge); border-radius: var(--r-lg); background: var(--accent-wash); font-size: var(--text-sm); }
+.welcome-ask, .welcome-outcome { display: grid; gap: 8px; }
+.welcome-title { font-size: var(--text-md); font-weight: 700; line-height: 1.3; color: var(--ink); }
+.welcome .help { color: var(--ink-2); }
+.welcome kbd { vertical-align: 1px; }
+.welcome-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 2px; }
+.welcome-actions .btn { white-space: normal; text-align: center; min-height: 36px; }
+.welcome-outcome { justify-items: start; }
+.welcome-outcome p { color: var(--ink); }
+.welcome-close { position: absolute; top: 8px; right: 8px; }
+@media (max-width: 420px) { .welcome-actions .btn { flex: 1 1 100%; } }
+
+/* Site access in the rail. */
+.rail-subtitle { display: flex; align-items: center; gap: 7px; margin-top: 6px; padding-top: 10px; border-top: 1px solid var(--line); font-size: var(--text-sm); font-weight: 650; color: var(--ink-2); }
+.access-note { padding: 8px 10px; border-radius: var(--r); background: var(--warn-wash); color: var(--ink); font-size: var(--text-xs); line-height: 1.45; }
+.access-note .link-btn { margin-left: 4px; }
+.hold-trigger-row { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 8px; }
+.hold-trigger-row label { font-weight: 500; }
+.exception-list { display: grid; gap: 2px; max-height: 220px; overflow-y: auto; margin: -4px -6px 0; }
+.exception-list:empty { display: none; }
+.exception-item { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 6px; padding: 3px 6px; border-radius: var(--r-sm); }
+.exception-item:hover { background: var(--hover); }
+.exception-item .origin { font: 500 var(--text-xs)/1.4 var(--mono); color: var(--ink-2); overflow-wrap: anywhere; }
+
+/* Opening many links in the export panel. */
+.open-modes { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; margin-top: -4px; font-size: var(--text-xs); color: var(--muted); }
+.open-modes .link-btn { font-size: var(--text-xs); }
+.open-modes .link-btn:disabled { opacity: 0.45; cursor: not-allowed; text-decoration: none; }
+.open-confirm-strong { background: var(--warn-wash); border-color: var(--warn); }
+.open-progress { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 6px 10px; padding: 10px 12px; border-radius: var(--r); background: var(--sunken); font-size: var(--text-sm); }
+.open-progress p { grid-column: 1; }
+.open-progress progress { grid-column: 1; width: 100%; height: 6px; accent-color: var(--accent-text); }
+.open-progress .btn { grid-column: 2; grid-row: 1 / span 2; }
 /* End of area: all-sites access, hold key, welcome card, opening many links */
 
 /* Area: export file names, workbook formatting, bookmark folders */

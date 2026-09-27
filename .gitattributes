@@ -1,0 +1,5 @@
+# Check out text files with LF line endings on every system, so the source matches the packaged
+# ZIP byte for byte on Windows too. Exported spreadsheets keep their CRLF rows exactly as written.
+* text=auto eol=lf
+*.csv -text
+*.tsv -text

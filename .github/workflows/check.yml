@@ -1,0 +1,50 @@
+# Runs the checks that need no optional grants (npm run check) on macOS, Windows and Linux, for
+# every pull request and on demand. Suites that need a person's Allow clicks never run here.
+# Playwright and openpyxl are installed only for the run; nothing is added to package.json.
+name: Checks without grants
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: check-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, windows-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install openpyxl for the workbook reader
+        run: python -m pip install openpyxl==3.1.5
+      - name: Install Playwright and its Chrome for Testing
+        run: |
+          npm install --no-save --no-package-lock playwright@1.62.1
+          npx playwright install --with-deps chromium
+      - name: npm run check
+        run: npm run check -- check-results
+        env:
+          LINK_METEOR_PYTHON: python
+      - name: Keep the results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: check-${{ matrix.os }}
+          path: check-results
+          retention-days: 14

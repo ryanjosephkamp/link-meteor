@@ -152,6 +152,7 @@ test('typed file names and collection names become safe file names', () => {
 
 import { readFile, mkdir, mkdtemp, writeFile, rm } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { readPackagedMembers } from '../scripts/verify-package.mjs';
 import { MAX_HYPERLINKS, hyperlinkTarget } from '../src/core/xlsx.js';
 
@@ -183,7 +184,7 @@ test('without about, every format is byte-for-byte the packaged 0.2.2 export', a
   try {
     await mkdir(join(temp, 'core'));
     for (const name of ['core/export.js', 'core/xlsx.js']) await writeFile(join(temp, name), packaged.get(name));
-    const old = await import(join(temp, 'core', 'export.js'));
+    const old = await import(pathToFileURL(join(temp, 'core', 'export.js')).href);
     for (const columns of [undefined, ['anchorText', 'url'], ['url', 'anchorText', 'sourceTitle', 'notes', 'tags', 'frameUrl', 'originalHref']]) {
       for (const format of ALL_FORMATS) {
         const input = format === 'text' || format === 'markdown' ? webRows : fixtureRows;

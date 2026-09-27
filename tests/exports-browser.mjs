@@ -12,6 +12,7 @@ import assert from 'node:assert/strict';
 import {execFile} from 'node:child_process';
 import {mkdir, mkdtemp, readFile, rm, writeFile} from 'node:fs/promises';
 import {join, resolve} from 'node:path';
+import {pathToFileURL} from 'node:url';
 import {promisify} from 'node:util';
 
 process.env.LINK_METEOR_EVIDENCE_DIR ||= '.scratch/evidence-exports-bookmarks';
@@ -34,7 +35,7 @@ const oldDir = await mkdtemp(join(scratch, 'export-022-'));
 const packaged = readPackagedMembers(await readFile(join(root, 'artifacts', 'link-meteor-0.2.2.zip')));
 await mkdir(join(oldDir, 'core'));
 for (const name of ['core/export.js', 'core/xlsx.js']) await writeFile(join(oldDir, name), packaged.get(name));
-const old = await import(join(oldDir, 'core', 'export.js'));
+const old = await import(pathToFileURL(join(oldDir, 'core', 'export.js')).href);
 
 const seedPath = resolve(root, process.env.LINK_METEOR_SEED_JSON || 'artifacts/evidence-0.2.2/exports/browser.json');
 const seedData = JSON.parse(await readFile(seedPath, 'utf8'));
@@ -127,7 +128,9 @@ try {
     about: {exportedAtUtcSeconds: null, collection: COLLECTION, count: rows.length, view: 'Every occurrence; sorted by capture order, ascending', filters: [], columns: 'Anchor text, URL', version: '0.3.0'}};
   const expectedPath = resolve(exportsDir, 'lane.xlsx.expected.json');
   await writeFile(expectedPath, JSON.stringify(workbookExpected, null, 2) + '\n');
-  const reader = JSON.parse((await run('python3', [resolve(root, 'tests/verify-workbook.py'), names.xlsx.path, expectedPath])).stdout);
+  // Windows installs Python as python; LINK_METEOR_PYTHON picks another interpreter.
+  const python = process.env.LINK_METEOR_PYTHON || (process.platform === 'win32' ? 'python' : 'python3');
+  const reader = JSON.parse((await run(python, [resolve(root, 'tests/verify-workbook.py'), names.xlsx.path, expectedPath])).stdout);
   assert.equal(reader.formatted, 'pass');
   assert.ok(reader.formatted_checks.hyperlinks >= rows.filter((row) => /^(https?|mailto):/.test(row.url)).length);
   await writeFile(resolve(evidence, 'lane-workbook-results.json'), JSON.stringify(reader, null, 2) + '\n');

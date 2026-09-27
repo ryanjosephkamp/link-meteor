@@ -29,10 +29,15 @@ async function until(fn, message, timeout = 8000) {
   throw new Error(`${message} (timed out; last: ${JSON.stringify(last)})`);
 }
 const pages = async () => (await browser.send('Target.getTargets')).targetInfos.filter((t) => t.type === 'page');
+// Tabs opened since the snapshot `before`, by identity, so tabs still closing from an earlier
+// step can't make the count wrong.
+const newPages = async (before) => { const keep = new Set(before.map((t) => t.targetId)); return (await pages()).filter((t) => !keep.has(t.targetId)); };
 async function closeOpened(before) {
-  const keep = new Set(before.map((t) => t.targetId));
-  for (const target of await pages()) if (!keep.has(target.targetId)) await browser.send('Target.closeTarget', {targetId: target.targetId}).catch(() => {});
-  await sleep(200);
+  const closing = await newPages(before);
+  for (const target of closing) await browser.send('Target.closeTarget', {targetId: target.targetId}).catch(() => {});
+  // Wait until Chrome has really closed them, so the next step starts from a settled tab list.
+  const ids = new Set(closing.map((t) => t.targetId));
+  for (const start = Date.now(); Date.now() - start < 10000 && (await pages()).some((t) => ids.has(t.targetId));) await sleep(100);
 }
 async function mouse(session, type, x, y, {buttons = 0, modifiers = 0} = {}) {
   await browser.send('Input.dispatchMouseEvent', {type, x, y, button: type === 'mouseMoved' ? (buttons ? 'left' : 'none') : 'left', buttons, clickCount: type === 'mouseMoved' ? 0 : 1, modifiers}, session);
@@ -259,7 +264,7 @@ try {
   before = await pages();
   await js(page, card(`.querySelector('.confirm-yes').click()`));
   await until(async () => /Opened 30 links in new tabs/.test(await js(page, card(`.querySelector('.status').textContent`))), 'thirty opened', 20000);
-  assert.equal((await pages()).length - before.length, 30);
+  assert.equal((await newPages(before)).length, 30);
   await closeOpened(before);
   pass('Card with 30 links confirms first, then opens all 30 in batches');
   await js(page, card(`.querySelector('button.dismiss').click()`));
@@ -278,7 +283,7 @@ try {
   await click('open-links');
   await until(async () => /Opened 20 links in new tabs/.test(await text('notice')), 'twenty opened', 20000);
   assert.equal(await visible('open-confirm'), false, 'no confirmation up to 20');
-  assert.equal((await pages()).length - before.length, 20);
+  assert.equal((await newPages(before)).length, 20);
   await closeOpened(before);
   pass('Workbench: 20 links open without a confirmation');
 
@@ -301,13 +306,13 @@ try {
   before = await pages();
   await click('open-confirm-no');
   await sleep(300);
-  assert.equal((await pages()).length, before.length, 'Cancel opens nothing');
+  assert.equal((await newPages(before)).length, 0, 'Cancel opens nothing');
   await click('open-links'); await until(() => visible('open-confirm'), 'confirmation again');
   const windowsBefore = await js(ui, `chrome.windows.getAll().then((w) => w.length)`);
   await click('open-confirm-window');
   await until(async () => /Opened 45 links in a new window/.test(await text('notice')), 'window opened', 30000);
   assert.equal(await js(ui, `chrome.windows.getAll().then((w) => w.length)`), windowsBefore + 1);
-  assert.equal((await pages()).length - before.length, 45);
+  assert.equal((await newPages(before)).length, 45);
   await closeOpened(before);
   pass('Workbench: 45 links confirm inline (Open 45 tabs, new window, tab group, Cancel); a new window opens all 45', {buttons});
 
@@ -323,7 +328,7 @@ try {
   await shot(ui, 'access-open-progress.png');
   await click('open-cancel-progress');
   await until(async () => /Stopped after opening \d+ of 150 links/.test(await text('notice')), 'stopped', 20000);
-  const stoppedAt = (await pages()).length - before.length;
+  const stoppedAt = (await newPages(before)).length;
   assert.ok(stoppedAt >= 10 && stoppedAt < 150, `opened ${stoppedAt}`);
   await closeOpened(before);
   pass('Workbench: 150 links use stronger wording, open in batches with progress, and Cancel stops before the next batch', {openedBeforeStop: stoppedAt});
@@ -333,7 +338,7 @@ try {
   await click('open-links');
   await until(async () => /opens at most 500 at a time, so nothing was opened/.test(await text('error')), 'refused');
   assert.equal(await visible('open-confirm'), false);
-  assert.equal((await pages()).length, before.length);
+  assert.equal((await newPages(before)).length, 0);
   assert.match(await rpcError({type: 'links.open', urls: Array.from({length: 501}, (_, i) => `${fixture.base}/x/${i}`), confirmed: true}), /at most 500/);
   pass('Workbench: 520 links are refused before anything opens, in the page and in the background');
 

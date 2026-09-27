@@ -14,7 +14,7 @@ import {spawn} from 'node:child_process';
 import {createHash} from 'node:crypto';
 import {mkdir, mkdtemp, realpath, rm} from 'node:fs/promises';
 import {resolve} from 'node:path';
-import {playwright, root, scratch} from './browser.mjs';
+import {chromePath, root, scratch} from './browser.mjs';
 
 const sleep = (ms) => new Promise((done) => setTimeout(done, ms));
 
@@ -28,7 +28,7 @@ export async function unpackedExtensionId(folder) {
 export async function launchWithAction({extension = resolve(root, process.env.LINK_METEOR_EXTENSION_PATH || 'dist'), headless = true, profilePrefix = 'action-profile-', args = []} = {}) {
   await mkdir(scratch, {recursive: true});
   const profile = await mkdtemp(resolve(scratch, profilePrefix));
-  const chrome = spawn(playwright.chromium.executablePath(), [
+  const chrome = spawn(chromePath(), [
     ...(headless ? ['--headless=new'] : []), '--remote-debugging-pipe', '--enable-unsafe-extension-debugging',
     `--user-data-dir=${profile}`, `--disable-extensions-except=${extension}`, `--load-extension=${extension}`,
     '--no-first-run', '--disable-background-networking', '--disable-component-update', ...args, 'about:blank',
@@ -66,7 +66,8 @@ export async function launchWithAction({extension = resolve(root, process.env.LI
     // does not list extension workers, and Chrome's own component extensions have workers too.
     const extensionId = await unpackedExtensionId(extension);
     const worker = `chrome-extension://${extensionId}/background.js`;
-    await send('Target.setDiscoverTargets', {discover: true});
+    // A Chrome that never answers (for example one too old for these flags) fails here instead of hanging.
+    await Promise.race([send('Target.setDiscoverTargets', {discover: true}), sleep(15000).then(() => { throw new Error('Chrome did not answer over the DevTools pipe'); })]);
     for (const start = Date.now(); !workers.has(worker); await sleep(100)) {
       if (Date.now() - start > 15000) throw new Error(`The extension service worker ${worker} did not start`);
     }

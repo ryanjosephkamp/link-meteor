@@ -11,8 +11,8 @@ import {launchWithAction} from './helpers/action.mjs';
 const steps = [];
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const log = (step, data) => { steps.push({step, data}); console.log(JSON.stringify({step, data})); };
-const fixture = await fixtureServer();
 const browser = await launchWithAction({profilePrefix: 'workaround-profile-'});
+const fixture = await fixtureServer();
 try {
   // Page tab on site A (127.0.0.1).
   const {targetId: pageTarget} = await browser.newTab(`${fixture.base}/index.html`);

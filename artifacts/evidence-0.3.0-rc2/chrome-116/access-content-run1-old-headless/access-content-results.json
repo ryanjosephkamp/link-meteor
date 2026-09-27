@@ -1,0 +1,38 @@
+{
+  "started": "2026-09-27T16:54:12.074Z",
+  "kind": "simulation: real page script, stub chrome object, real input events in Chrome for Testing",
+  "checks": [
+    {
+      "name": "Plain Command-click on a link passes through to the page untouched"
+    },
+    {
+      "name": "A Command-press that moves 5 px stays a click and starts no selection"
+    },
+    {
+      "name": "A drag without the modifier does nothing"
+    },
+    {
+      "name": "Command-drag of 6 px or more starts selection; the ending click is suppressed once",
+      "pageTextSelected": 0
+    },
+    {
+      "name": "Only one click is suppressed; the next click reaches the page"
+    },
+    {
+      "name": "Command-drag that starts on a link selects instead of dragging the link"
+    },
+    {
+      "name": "A Command-drag that starts in a text field starts no selection"
+    },
+    {
+      "name": "content.configure switches off, then to the letter Q, without a reload"
+    },
+    {
+      "name": "Unticking a link in the preview leaves it out of every action",
+      "sent": 4
+    }
+  ],
+  "result": "FAIL",
+  "error": "page.waitForFunction: Timeout 30000ms exceeded.\n    at <repo>/tests/access-content.mjs:189:14",
+  "finished": "2026-09-27T16:54:44.318Z"
+}

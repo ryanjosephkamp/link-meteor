@@ -16,9 +16,9 @@ const result = {started: new Date().toISOString(), browser: 'Chrome for Testing,
 const pass = (name, data = {}) => { result.checks.push({name, ...data}); console.log('PASS', name, Object.keys(data).length ? JSON.stringify(data) : ''); };
 const sleep = (ms) => new Promise((done) => setTimeout(done, ms));
 await mkdir(evidence, {recursive: true});
+const browser = await launchWithAction({profilePrefix: 'access-profile-'});
 const fixture = await fixtureServer();
 const siteB = fixture.base.replace('127.0.0.1', 'localhost');
-const browser = await launchWithAction({profilePrefix: 'rc2-access-profile-'});
 const downloads = await mkdtemp(resolve(scratch, 'access-downloads-'));
 
 /* A small DevTools-protocol toolkit over the pipe. */

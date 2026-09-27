@@ -1,0 +1,5 @@
+Google Chrome for Testing 116.0.5845.96 
+Playwright 1.62.1
+Probe over the DevTools pipe (tests/helpers/action.mjs launch, then two commands):
+Extensions.triggerAction -> {"code":-32601,"message":"'Extensions.triggerAction' wasn't found"}
+Extensions.loadUnpacked -> {"code":-32601,"message":"'Extensions.loadUnpacked' wasn't found"}

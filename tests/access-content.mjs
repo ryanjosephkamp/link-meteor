@@ -6,7 +6,7 @@
 import assert from 'node:assert/strict';
 import {mkdir, readFile, writeFile} from 'node:fs/promises';
 import {resolve} from 'node:path';
-import {fixtureServer, playwright, root} from './helpers/browser.mjs';
+import {chromePath, fixtureServer, headlessArgs, playwright, root} from './helpers/browser.mjs';
 
 const evidence = resolve(root, process.env.LINK_METEOR_EVIDENCE_DIR || '.scratch/evidence-access-capture');
 const source = await readFile(resolve(root, 'src/content/capture.js'), 'utf8');
@@ -58,7 +58,7 @@ function stub({platform, trigger = 'modifier', key = 'z'}) {
 }
 
 const fixture = await fixtureServer();
-const browser = await playwright.chromium.launch({executablePath: playwright.chromium.executablePath(), headless: true});
+const browser = await playwright.chromium.launch({executablePath: chromePath(), headless: true, args: headlessArgs()});
 const sleep = (ms) => new Promise((done) => setTimeout(done, ms));
 const card = (page) => page.locator('#link-meteor-overlay');
 async function load(page, path, options) {

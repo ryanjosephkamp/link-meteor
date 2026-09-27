@@ -48,6 +48,10 @@ The project owner clicked Allow on every native prompt, in visible Chrome for Te
 | `tests/access-granted.mjs` | 10/10 | [Results](access-granted-results.json). New: a page opened as the browser starts gets hold-drag on the first try, about a second after it loads. The all-sites switch passes Playwright's strict `check()`, so it stays on while saving. |
 | `tests/permission-browser.mjs` | 10/10, run last | [Results](permission-browser-results.json). The per-site gesture works before revocation and stops after it. With pages opened as the browser starts, removing all-sites access returns the scope to `'sites'`, and saved hold sites and registrations match what Chrome still grants. The open page stops without a reload, capture there is denied, and the switch shows off. |
 
+## Chrome 116
+
+The checks that need no grants were also run on Chrome for Testing 116, the oldest version the manifest declares. No product failure was found; two toolbar suites can't run there because 116 lacks the DevTools commands they use. See [`chrome-116/`](chrome-116/).
+
 ## Diagnostics
 
 [`diagnostics/first-attempt/`](diagnostics/first-attempt/) and the two `access-browser-run*` folders hold an earlier attempt on this branch. It stopped at a restart check that used `chrome.runtime.reload()`, which cannot work in this setup; that check was replaced.

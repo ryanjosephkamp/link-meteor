@@ -88,7 +88,7 @@ For a changed build, create a new isolated profile and prepare its grants throug
 
 Tests store isolated profiles and cache under `.scratch/acceptance-final`, bind the local synthetic fixture server to `127.0.0.1:52478`, and fail if that port is occupied. `LINK_METEOR_TEST_PROFILE` and `LINK_METEOR_FIXTURE_PORT` can change these isolated resources. The browser suite **resets collections in its selected test profile**, so never point it at a personal browser profile. Prepare permission grants through the extension in the isolated browser. The harness records a build fingerprint and refuses reuse after packaged bytes change; prepare a fresh named test profile for a changed build. Headless optional-permission behavior was not accepted as native evidence.
 
-`tests/xlsx-fixture.mjs` and `tests/verify-workbook.py` independently check OOXML and, when available, openpyxl parsing. See `docs/ACCEPTANCE.md` for current executed results, commands, native checks and limits. The declared Chrome minimum, 116, passed the checks that need no grants in Chrome for Testing 116; its toolbar and granted checks were not run there. Other operating systems, other Chromium browsers and screen-reader use still need human review.
+`tests/xlsx-fixture.mjs` and `tests/verify-workbook.py` independently check OOXML and, when available, openpyxl parsing. See `docs/ACCEPTANCE.md` for current executed results, commands, native checks and limits. The declared Chrome minimum, 116, passed the checks that need no grants in Chrome for Testing 116; its toolbar and granted checks were not run there. The owner also checked 0.3.0 by hand in Brave and Microsoft Edge on macOS. Other operating systems, other Chromium browsers and screen-reader use still need human review.
 
 ## Website
 

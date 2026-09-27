@@ -195,7 +195,11 @@ Versions 0.1.0 to 0.2.2 were distributed only as a ZIP for Load unpacked and wer
 
 - Chrome does not allow extensions on its own pages, the Chrome Web Store or incognito windows (Link Meteor does not request incognito access).
 - Links inside closed page components cannot be seen or captured. Frames from other sites are reported as unreadable, not skipped silently.
-- Tested on macOS in Chrome and Chrome for Testing, including the automated checks that need no grants on Chrome for Testing 116, the declared minimum. Windows, Linux and other Chromium browsers are listed as untested in `docs/ACCEPTANCE.md` until checked.
+- Tested on macOS:
+  - by hand in Chrome, Brave and Microsoft Edge;
+  - in automation in Chrome for Testing, including the checks that need no grants on Chrome for Testing 116, the declared minimum.
+
+  Windows and Linux are listed as untested in `docs/ACCEPTANCE.md` until checked.
 
 ### Rejection History
 

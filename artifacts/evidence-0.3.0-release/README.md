@@ -22,7 +22,11 @@ These checks cover the packaged 0.3.0 ZIP and the website that offers it. The ex
 | `tests/site-check.mjs` | Pass | [Results](site-results.json). Covers:<br>• pages across widths and light and dark themes;<br>• links, structure and sampled contrast;<br>• the keyboard menu and the interactive demo;<br>• the export preview, using the synced 0.3.0 export modules;<br>• 404 handling and both videos. |
 
 What changed on the site for 0.3.0:
-- **Install page:** the download, the tested-so-far note, a new **Works in** section, the folder listing in the Load step, update and troubleshooting.
+- **Install page:**
+  - the download and the tested-so-far note;
+  - a new **Works in** section: Chrome, Brave and Microsoft Edge tested by hand on macOS; Firefox and Safari not supported;
+  - the folder listing in the Load step;
+  - update and troubleshooting.
 - **Privacy page:** all-sites access, `tabGroups`, `unlimitedStorage`, bookmark folder reading, backups and the restore Undo.
 - **Guide:** hold-key drag, the capture card, opening up to 500, export names and workbooks, existing bookmark folders, backup and restore.
 - **Home page:** the hold key, output options and limits.

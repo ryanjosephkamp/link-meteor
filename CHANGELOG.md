@@ -49,7 +49,12 @@ A feature release. The main additions:
 ### Known issues
 
 - Removing all-sites access, with Link Meteor's **Remove Chrome's access** or with Chrome's own controls, can also remove access to sites you allowed one at a time. That is Chrome's behavior. Link Meteor turns hold-key drag off where it no longer has access, and asks again when needed.
-- Tested on macOS only: automated checks in Chrome for Testing 151, the owner's hands-on check in everyday Chrome, and the checks that need no grants on Chrome for Testing 116. Windows, Linux, screen readers, Brave and Edge are not yet tested. See [testing and compatibility](docs/ACCEPTANCE.md).
+- Tested on macOS only:
+  - automated checks in Chrome for Testing 151;
+  - the owner's hands-on checks in everyday Chrome, Brave and Microsoft Edge;
+  - the checks that need no grants on Chrome for Testing 116.
+
+  Windows, Linux and screen readers are not yet tested. See [testing and compatibility](docs/ACCEPTANCE.md).
 - The site's videos and product screenshots still show 0.2.2.
 
 ## 0.2.2 (2026-09-26)

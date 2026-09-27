@@ -8,7 +8,7 @@ The current development build is **0.3.0**. It adds:
 - existing bookmark folders;
 - backup and restore.
 
-Its automated checks passed on September 27, 2026, in Chrome for Testing on macOS, both without optional grants and after the project owner clicked Allow on every native prompt. The owner then checked it by hand in everyday Chrome, and every item passed. This is evidence for those workflows and environments, not universal browser/site compatibility or a complete accessibility certification.
+Its automated checks passed on September 27, 2026, in Chrome for Testing on macOS, both without optional grants and after the project owner clicked Allow on every native prompt. The owner then checked it by hand in everyday Chrome, where every item passed, and in Brave and Microsoft Edge, where everything worked. This is evidence for those workflows and environments, not universal browser/site compatibility or a complete accessibility certification.
 
 ## Current build (0.3.0)
 
@@ -77,7 +77,9 @@ On September 27, 2026, the project owner loaded the release candidate 2 copy, by
 | Chrome's own site-access menu set to On click: hold-drag stops and Link Meteor explains why | Passed |
 | All sites off, then a native Deny on *Capture this page* reports the denial | Passed |
 
-Windows, Linux and other Chromium-based browsers were not part of this check.
+Windows and Linux were not part of this check.
+
+**Brave and Microsoft Edge.** The owner then tested 0.3.0 by hand in Brave and Microsoft Edge on macOS, as thoroughly as they could. Everything worked as intended in both, as in Chrome. This was reported as a whole, without itemized steps or browser versions.
 
 ## Earlier build (0.2.2)
 
@@ -165,7 +167,7 @@ See the [README](../README.md#develop-and-verify) for Node, installed Playwright
 - Screen readers and other assistive technologies.
 - Windows and Linux, and native shortcuts on those systems.
 - Chrome 116 by hand, its toolbar-button behavior, and the checks that need Allow clicks. The automated checks that could run there passed (see above).
-- Other Chromium-based browsers, such as Brave and Edge. They are expected to work, because they run Chrome extensions, but they haven't been tested.
+- Chromium-based browsers other than Chrome, Brave and Edge, and Brave and Edge on Windows and Linux.
 - The website on physical phones and non-Chromium browsers.
 
 Version 0.2.0 received an informal report of successful everyday Chrome use without itemized steps. The 0.3.0 hands-on results above are the owner's report for the current build. Firefox and Safari are not supported ports. Chrome Web Store submission is planned for 0.3.0.

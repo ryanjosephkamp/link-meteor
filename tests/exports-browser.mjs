@@ -14,6 +14,7 @@ import {mkdir, mkdtemp, readFile, rm, writeFile} from 'node:fs/promises';
 import {join, resolve} from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {promisify} from 'node:util';
+const VERSION = JSON.parse(await readFile(new URL('../src/manifest.json', import.meta.url), 'utf8')).version;
 
 process.env.LINK_METEOR_EVIDENCE_DIR ||= '.scratch/evidence-exports-bookmarks';
 process.env.LINK_METEOR_FIXTURE_PORT ||= '52482';
@@ -119,13 +120,13 @@ try {
   const exportedAt = new Date(json.about.exportedAt);
   assert.ok(exportedAt >= new Date(names.json.before.valueOf() - 1000) && exportedAt <= names.json.after, 'export time is the download time');
   assert.equal(new Date(json.about.exportedAtLocal).valueOf(), exportedAt.valueOf(), 'local time with offset names the same instant');
-  assert.deepEqual({...json.about, exportedAt: 0, exportedAtLocal: 0}, {exportedAt: 0, exportedAtLocal: 0, collection: COLLECTION, count: rows.length, view: 'Every occurrence; sorted by capture order, ascending', filters: [], version: '0.3.0'});
+  assert.deepEqual({...json.about, exportedAt: 0, exportedAtLocal: 0}, {exportedAt: 0, exportedAtLocal: 0, collection: COLLECTION, count: rows.length, view: 'Every occurrence; sorted by capture order, ascending', filters: [], version: VERSION});
   check('JSON download is {about, rows}; rows equal the 0.2.2 array and about names the time, collection, count, view and version', {about: json.about});
 
   // 4. The formatted workbook, read independently.
   const workbookExpected = {formatted: true, columns: ['anchorText', 'url'], rows: [['Anchor text', 'URL'], ...rows.map((row) => [row.anchorText, row.url])],
     urlColumns: ['URL', 'Original href', 'Source page URL', 'Frame URL'],
-    about: {exportedAtUtcSeconds: null, collection: COLLECTION, count: rows.length, view: 'Every occurrence; sorted by capture order, ascending', filters: [], columns: 'Anchor text, URL', version: '0.3.0'}};
+    about: {exportedAtUtcSeconds: null, collection: COLLECTION, count: rows.length, view: 'Every occurrence; sorted by capture order, ascending', filters: [], columns: 'Anchor text, URL', version: VERSION}};
   const expectedPath = resolve(exportsDir, 'lane.xlsx.expected.json');
   await writeFile(expectedPath, JSON.stringify(workbookExpected, null, 2) + '\n');
   // Windows installs Python as python; LINK_METEOR_PYTHON picks another interpreter.

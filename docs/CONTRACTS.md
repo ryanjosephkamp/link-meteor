@@ -308,3 +308,87 @@ The service worker entry `background.js` owns capture, routing and Chrome events
 - `bookmarks.js`, `backup.js` and `hold.js` each export `workbenchMessages`, a table of workbench-only message handlers. The entry routes them and refuses a type claimed twice.
 
 The release contains the fixed files named in `scripts/release-files.mjs`, plus any `.js` or `.css` modules in `ui/workbench/` and `background/`. Any other file in `src/` stops the build.
+
+## Added in 0.4.0
+
+These contracts were written before the 0.4.0 features were built. [ACCEPTANCE.md](ACCEPTANCE.md) records what a release contains and how it was tested.
+
+### Settings: more additive schema-v1 fields
+
+| Field | Type and default | Meaning |
+| --- | --- | --- |
+| `theme` | one of `THEME_IDS`, `'meteor'` | The look of the workbench, the on-page card and the toolbar icon. |
+| `appearance` | `'system'`, `'light'` or `'dark'`, `'system'` | Light or dark for the workbench and the on-page card. System follows the computer. |
+| `afterDrag` | `'card'`, `'copy'` or `'add'`, `'card'` | What releasing a region selection does: show the card, copy right away, or add right away with Undo. |
+| `afterDragFormat` | `'tsv'`, `'text'`, `'markdown'` or `'rich'`, `'tsv'` | The copy format for `afterDrag: 'copy'`. |
+| `contentOnly` | boolean, `false` | Leave out links in page navigation, headers, footers and sidebars. |
+| `skipSaved` | boolean, `false` | When adding, skip links whose URL the destination collection already holds. |
+
+`migrateState` fills absent fields as before. **Backup format 2:** `BACKUP_FORMAT_VERSION` is 2, so 0.3.0 refuses a 0.4.0 backup with an update message instead of dropping these settings. `readBackup` still reads format 1 files; missing settings take their defaults.
+
+### Themes (`src/core/themes.js`, pure data)
+
+- `THEME_IDS`: `meteor`, `comet`, `aurora`, `ember`, `nebula`, `graphite`, `contrast` (High contrast).
+- `THEMES[id]` has `name`, `blurb` and `swatch`, plus:
+  - `light` and `dark`: every workbench token in `WORKBENCH_TOKENS` (the custom properties of `ui/workbench.css`);
+  - `card.light` and `card.dark`: every role in `CARD_ROLES` (`ground`, `ground2`, `strong`, `ink`, `soft`, `muted`, `faint`, `warn`, `accent`, `accent-hover`, `on-accent`, `link`, `link-hover`, `focus`);
+  - `highlight` and `edge`: the selection box and matched links, the same in both schemes.
+- **Meteor** is the 0.3.0 look, value for value (`tests/themes.test.mjs` checks it against the stylesheet and the page script).
+- `themeCss(id, scheme)` returns `:root{color-scheme:…;--token:…}` with every token, so it fully replaces the stylesheet's own values in either scheme.
+- `cardVars(id, scheme)` returns the card's custom properties (`--k-<role>`, `--k-hl`, `--k-edge`, `--k-shadow-45`, `--k-shadow-25`, `color-scheme`).
+- `cardTheme(id, appearance)` returns `{theme, appearance, light, dark}`.
+- An unknown id falls back to Meteor.
+
+### The page script's colors and settings
+
+- **Colors.** The card's style names every color by role: `:host` defaults are Meteor's dark card, and the theme's `cardVars` override them on the host element. The selection box and matched links use `--k-hl` and `--k-edge`, with the same dark navy ring on every page.
+- **Scheme.** The card picks `light` or `dark` from `appearance`, or for System from `prefers-color-scheme`, and follows a change while it is open.
+- **What carries the theme.** `settings.get` adds `card` (`cardTheme(settings.theme, settings.appearance)`). `content.configure` adds `card` and `capture` (`{afterDrag, afterDragFormat, contentOnly, skipSaved}`).
+- **When it's sent.** A saved change to `theme`, `appearance` or a capture setting reconfigures open tabs, as hold settings do. Script registration changes only with the hold fields.
+
+### Clipboard: rich links
+
+`core/export.js` exports `richLinks(rows)`, which returns `{html, text}`:
+- `html` is a `<ul>` of `<a href>` items with escaped anchor text; an empty anchor shows its URL;
+- `text` has one link per line, as `anchor text (URL)`, or just the URL;
+- only HTTP(S), `mailto:` and `tel:` URLs are accepted.
+
+Callers write a `ClipboardItem` with `text/html` and `text/plain`, and fall back to plain text.
+
+### Messages
+
+- **`capture.saved`** `{collectionId?, urls}` returns `{saved: string[]}`: which of those URLs the collection (default: the active one) already holds. It returns nothing else about the collection.
+- **`capture.commit`** accepts `skipSaved?: boolean`. It returns `{count, skipped, …}`: skipped links are left out, and `count` is what was added.
+- **`capture.copy`** accepts `format: 'rich'` and returns `{text, html}`.
+- **`capture.undoAdd`** `{collectionId, batchId}` removes the occurrences that one add created. It is refused if the collection no longer holds exactly that batch.
+- **`diagnostics.get`** (workbench only) returns a JSON-safe object:
+  - version, the user agent and brands, platform and language;
+  - settings, with `holdOrigins` and `holdExceptions` reported as counts;
+  - permission booleans for `tabs`, `bookmarks`, `tabGroups` and all sites, plus the count of per-site origins;
+  - script registrations (count and scope);
+  - storage bytes in use, collection count, total link count, and the time.
+
+  It never includes URLs, origins, page titles, notes, tags or collection names.
+
+### Behaviors
+
+- **After a drag:**
+  - `card` is the 0.3.0 card;
+  - `copy` copies the selection at once in `afterDragFormat` and shows a small notice with *Show links*, which opens the card;
+  - `add` commits at once to the destination and shows a notice with *Undo* (`capture.undoAdd`) and *Show links*.
+
+  Escape closes the notice.
+- **Content links only:**
+  - A link is page chrome when it sits inside `nav`, `header`, `footer` or `aside`, or inside `[role=navigation]`, `[role=banner]`, `[role=contentinfo]` or `[role=complementary]`.
+  - With `contentOnly`, the card starts with those links unticked and says how many, with *Include them*. *Capture this page* leaves them out and reports how many.
+  - Captured occurrences are otherwise unchanged.
+- **Card filters:** chips (All, Other sites, PDFs, Same site) untick the preview's links that don't match. They are not saved.
+- **Already saved:** the card asks `capture.saved` for its destination and marks matching rows *Saved*. A *Skip saved* checkbox follows `skipSaved`.
+- **Workbench:**
+  - `<html>` gets `data-theme` and `data-scheme`, and a style element holds `themeCss`;
+  - the last theme and scheme are cached in `localStorage` for the first paint;
+  - Settings gains Appearance (theme and System, Light or Dark) and After a drag (with the two capture defaults);
+  - the Export panel gains *Copy as rich links*;
+  - About and help gains *Copy diagnostics*.
+- **Toolbar icon:** drawn with `OffscreenCanvas` from the mark in the theme's `highlight` color, and set with `chrome.action.setIcon` at startup and when the theme changes. The manifest's icons stay Meteor.
+- **Website:** the same palettes as CSS, a theme menu in the header kept in `localStorage`, and `?theme=<id>`, which About and help's links add. There is no `externally_connectable`: the site never detects the extension.

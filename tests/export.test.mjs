@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { makeExport, COLUMNS, exportFileName, fileNamePart } from '../src/core/export.js';
+import { makeExport, COLUMNS, exportFileName, fileNamePart, richLinks } from '../src/core/export.js';
 import { writeXlsx } from '../src/core/xlsx.js';
 import { queryLinks } from '../src/core/model.js';
 
@@ -336,4 +336,15 @@ test('exportFileName: overrides, the pattern settings and the extension map', as
   assert.equal(exportFileName({ collection: 'Heat', extension: 'csv', date, override: '12:30 notes' }), '12-30-notes.csv', 'never a colon');
   assert.equal(exportFileName({ collection: 'Heat', extension: 'csv', date, settings: { exportPrefix: 'lab', exportTimestamp: false } }), 'lab_Heat.csv');
   assert.equal(exportFileName({ collection: 'Heat', extension: 'csv', date, settings: { exportPrefix: 'lab', exportTimestampFormat: 'date' } }), 'lab_Heat_2026-09-26.csv');
+});
+
+test('rich links: clickable HTML with escaped text, the URL for empty anchors, and a plain-text version', () => {
+  const rich = richLinks([
+    { anchorText: 'Heat <maps> & "shade"', url: 'https://example.org/a?b=1&c=2' },
+    { anchorText: '  ', url: 'https://example.org/empty' },
+    { anchorText: 'Write to us', url: 'mailto:team@example.org' },
+  ]);
+  assert.equal(rich.html, '<ul><li><a href="https://example.org/a?b=1&amp;c=2">Heat &lt;maps&gt; &amp; &quot;shade&quot;</a></li><li><a href="https://example.org/empty">https://example.org/empty</a></li><li><a href="mailto:team@example.org">Write to us</a></li></ul>');
+  assert.equal(rich.text, 'Heat <maps> & "shade" (https://example.org/a?b=1&c=2)\nhttps://example.org/empty\nWrite to us (mailto:team@example.org)');
+  assert.throws(() => richLinks([{ anchorText: 'x', url: 'javascript:alert(1)' }]), /Unsupported link URL/);
 });

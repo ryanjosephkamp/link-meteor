@@ -1,5 +1,6 @@
 // Pure collection state and non-destructive review views.
 import { fileNamePart } from './export.js';
+import { THEME_IDS } from './themes.js';
 
 const LINK_STRINGS = ['id', 'anchorText', 'accessibleLabel', 'url', 'originalHref', 'sourceUrl', 'sourceTitle', 'frameUrl', 'capturedAt', 'batchId', 'notes'];
 const SORTS = new Set(['page', 'anchor', 'url', 'domain', 'newest']);
@@ -20,16 +21,26 @@ export const SETTINGS_DEFAULTS = Object.freeze({
   exportPrefix: '',                 // optional file-name prefix, already a safe file-name part
   exportTimestamp: true,            // add the export date to default file names
   exportTimestampFormat: 'datetime',// 'datetime' (YYYY-MM-DD_HHmm) or 'date' (YYYY-MM-DD)
+  theme: 'meteor',                  // one of THEME_IDS (core/themes.js)
+  appearance: 'system',             // 'system', 'light' or 'dark', for the workbench and the page card
+  afterDrag: 'card',                // what releasing a drag does: 'card', 'copy' or 'add'
+  afterDragFormat: 'tsv',           // the copy format for afterDrag 'copy': 'tsv', 'text', 'markdown' or 'rich'
+  contentOnly: false,               // leave out navigation, header, footer and sidebar links
+  skipSaved: false,                 // when adding, skip URLs already in the destination collection
 });
 const HOLD_TRIGGERS = new Set(['letter', 'modifier']);
 const HOLD_SCOPES = new Set(['sites', 'all']);
 const TIMESTAMP_FORMATS = new Set(['datetime', 'date']);
+const APPEARANCES = new Set(['system', 'light', 'dark']);
+const AFTER_DRAG = new Set(['card', 'copy', 'add']);
+const AFTER_DRAG_FORMATS = new Set(['tsv', 'text', 'markdown', 'rich']);
 export const MAX_HOLD_EXCEPTIONS = 1000;
 export const MAX_EXPORT_PREFIX = 40;
 
 // Backup files have their own format version, independent of the storage schema.
 export const BACKUP_FORMAT = 'link-meteor-backup';
-export const BACKUP_FORMAT_VERSION = 1;
+// Format 2 (0.4.0) adds the appearance and capture settings; format 1 files still restore.
+export const BACKUP_FORMAT_VERSION = 2;
 // Backups travel through extension messaging, which carries at most 64 MiB per message.
 export const BACKUP_LIMITS = Object.freeze({ bytes: 50 * 1024 * 1024, collections: 10000, links: 250000 });
 
@@ -158,7 +169,7 @@ function settingsField(key, value, name = key) {
     case 'holdScope':
       if (!HOLD_SCOPES.has(value)) throw new Error(`${name} must be 'sites' or 'all'`);
       return value;
-    case 'welcomeSeen': case 'exportTimestamp':
+    case 'welcomeSeen': case 'exportTimestamp': case 'contentOnly': case 'skipSaved':
       if (typeof value !== 'boolean') throw new Error(`${name} must be true or false`);
       return value;
     case 'exportPrefix':
@@ -168,6 +179,18 @@ function settingsField(key, value, name = key) {
       return value;
     case 'exportTimestampFormat':
       if (!TIMESTAMP_FORMATS.has(value)) throw new Error(`${name} must be 'datetime' or 'date'`);
+      return value;
+    case 'theme':
+      if (!THEME_IDS.includes(value)) throw new Error(`${name} must be one of ${THEME_IDS.join(', ')}`);
+      return value;
+    case 'appearance':
+      if (!APPEARANCES.has(value)) throw new Error(`${name} must be 'system', 'light' or 'dark'`);
+      return value;
+    case 'afterDrag':
+      if (!AFTER_DRAG.has(value)) throw new Error(`${name} must be 'card', 'copy' or 'add'`);
+      return value;
+    case 'afterDragFormat':
+      if (!AFTER_DRAG_FORMATS.has(value)) throw new Error(`${name} must be 'tsv', 'text', 'markdown' or 'rich'`);
       return value;
     default: throw new Error(`Unsupported settings field: ${key}`);
   }
@@ -339,7 +362,7 @@ export function queryLinks(links, options = {}) {
 
 /* Backup files ------------------------------------------------------------------------------
    A backup is UTF-8 JSON:
-   {format:'link-meteor-backup', formatVersion:1, createdAt, extensionVersion,
+   {format:'link-meteor-backup', formatVersion:2, createdAt, extensionVersion,
     state:{schemaVersion:1, activeCollectionId, collections, settings}}
    The removal undo snapshot is not included. Readers keep only contract fields, so a release
    that adds stored fields must raise BACKUP_FORMAT_VERSION: older releases then refuse the

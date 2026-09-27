@@ -12,6 +12,7 @@ import {readFile, writeFile, mkdir, rm, cp} from 'node:fs/promises';
 import {resolve} from 'node:path';
 import {launch, fixtureServer, rpc, until, evidence, scratch, root} from './helpers/browser.mjs';
 import {createState, reduceState, createBackup, readBackup, BACKUP_LIMITS} from '../src/core/model.js';
+const VERSION = JSON.parse(await readFile(new URL('../src/manifest.json', import.meta.url), 'utf8')).version;
 
 const stamp = new Date().toISOString().replace(/[:.]/g, '-');
 const result = {started: new Date().toISOString(), browser: 'Chrome for Testing through Playwright, headless, unpacked extension', profiles: [], checks: [], timings: {}, screenshots: [],
@@ -115,7 +116,7 @@ try {
   await noticeIncludes(A.ui, `Downloaded ${fileName}`);
   const backupText = await readFile(backupPath, 'utf8');
   const backup = readBackup(backupText);
-  assert.equal(backup.extensionVersion, '0.3.0');
+  assert.equal(backup.extensionVersion, VERSION);
   assert.deepEqual(backup.state.collections, savedA.collections);
   assert.deepEqual(backup.state.settings, savedA.settings);
   assert.equal(backup.state.activeCollectionId, savedA.activeCollectionId);
@@ -134,7 +135,7 @@ try {
   const invalid = {
     'not-json.json': ['{"format":', 'This file is not a Link Meteor backup: it is not valid JSON.'],
     'not-a-backup.json': ['[]', 'This file is not a Link Meteor backup.'],
-    'newer-format.json': [JSON.stringify({...backup, formatVersion: 2}), 'This backup was made by a newer version of Link Meteor (backup format 2). Update Link Meteor, then restore it.'],
+    'newer-format.json': [JSON.stringify({...backup, formatVersion: 3}), 'This backup was made by a newer version of Link Meteor (backup format 3). Update Link Meteor, then restore it.'],
     'bad-url.json': [JSON.stringify({...backup, state: {...backup.state, collections: [{...backup.state.collections[0], links: [{...backup.state.collections[0].links[0], url: 'javascript:alert(1)'}]}, ...backup.state.collections.slice(1)]}}), "This backup can't be restored: link.url must be an HTTP(S), mailto, or tel URL."],
     'oversized.json': [' '.repeat(BACKUP_LIMITS.bytes + 1), 'This backup is larger than 50 MB, the most Link Meteor can restore at once.'],
   };
@@ -154,7 +155,7 @@ try {
   assert.equal(await B.ui.locator('#restore-status').isVisible(), false);
   let shown = await preview(B.ui, backupPath);
   assert.deepEqual(await state(B.ui), S0, 'choosing a file changes nothing');
-  for (const phrase of [fileName, 'Made ', 'with Link Meteor 0.3.0', '2 collections · 6 links',
+  for (const phrase of [fileName, 'Made ', `with Link Meteor ${VERSION}`, '2 collections · 6 links',
     'Merge', 'Adds 6 links', '1 new collection, 1 joined with a collection here', 'Never on these sites: adds maps.example',
     'Replace', 'Removes 1 empty collection here', 'Restores 2 collections and 6 links from the backup',
     'Hold key: Z → Q', 'Export name prefix: none → link-meteor-research', 'Date in export names: on → off', 'Export date format: date and time → date only', 'Welcome card: not answered → answered']) {

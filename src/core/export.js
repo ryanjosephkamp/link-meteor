@@ -58,6 +58,20 @@ function markdownUrl(value) {
   return safeLinkUrl(value).replace(/[<>()[\]\\]/g, char => `%${char.codePointAt(0).toString(16).toUpperCase()}`);
 }
 
+// Rich links (0.4.0) for the clipboard: HTML that Google Docs, Word and Notion paste as clickable
+// anchor text, and a plain-text version for everything else. A link with no anchor text shows its
+// URL. Page text is escaped; only web, mail and phone URLs become links.
+export function richLinks(rows) {
+  const items = rows.map(row => {
+    const url = safeLinkUrl(row.url), text = normalizeLabel(row.anchorText);
+    return { url, text };
+  });
+  const html = `<ul>${items.map(({ url, text }) => `<li><a href="${htmlEscape(url)}">${htmlEscape(text || url)}</a></li>`).join('')}</ul>`;
+  const text = items.map(({ url, text }) => text ? `${text} (${url})` : url).join('\n');
+  return { html, text };
+}
+function normalizeLabel(value) { return String(value || '').replace(/\s+/gu, ' ').trim(); }
+
 const WINDOWS_RESERVED = /^(con|prn|aux|nul|com[1-9]|lpt[1-9])$/i;
 
 // One file-name part: accents folded to plain letters, any other run of characters outside

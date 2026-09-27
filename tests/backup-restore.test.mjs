@@ -123,7 +123,7 @@ test('a failed restore write changes neither the state nor an earlier snapshot, 
 test('invalid files and modes are refused with the reader\'s message before anything is written', async () => {
   const fresh = reset();
   await assert.rejects(call('backup.restore', { backup: '{"format":', mode: 'merge' }), /not valid JSON/);
-  await assert.rejects(call('backup.restore', { backup: { ...backup, formatVersion: 2 }, mode: 'merge' }), /newer version of Link Meteor/);
+  await assert.rejects(call('backup.restore', { backup: { ...backup, formatVersion: 3 }, mode: 'merge' }), /newer version of Link Meteor/);
   const bad = structuredClone(backup); bad.state.collections[0].links[0].url = 'javascript:alert(1)';
   await assert.rejects(call('backup.restore', { backup: bad, mode: 'replace' }), /url/);
   await assert.rejects(call('backup.restore', { backup: backupText, mode: 'overwrite' }), /merge' or 'replace/);

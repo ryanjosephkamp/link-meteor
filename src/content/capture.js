@@ -30,11 +30,26 @@
   const MAC = /mac/i.test(navigator.userAgentData?.platform || navigator.platform || '');
   const marker = 'data-link-meteor';
   let active = null, held = false, holdKey = 'z', holdTrigger = 'letter', holdEnabled = false, lastDestinationId = '';
+  // The card's theme ({theme, appearance, light, dark}, from settings.get or content.configure) and
+  // the capture settings the card follows. Until they arrive, the card keeps its built-in look.
+  let cardTheme = null, captureSettings = {afterDrag: 'card', afterDragFormat: 'tsv', contentOnly: false, skipSaved: false}, overlayHost = null;
+  const darkScheme = matchMedia('(prefers-color-scheme: dark)');
+  const cardScheme = () => cardTheme?.appearance === 'light' || cardTheme?.appearance === 'dark' ? cardTheme.appearance : (darkScheme.matches ? 'dark' : 'light');
+  // Sets the theme's custom properties on the card's host, where the page's own styles can't reach.
+  function themeHost(host) {
+    if (!host || !cardTheme) return;
+    for (const [name, value] of Object.entries(cardTheme[cardScheme()] || {})) host.style.setProperty(name, value, name === 'color-scheme' ? 'important' : '');
+  }
+  function followSettings(settings) {
+    if (settings?.card) cardTheme = settings.card;
+    for (const key of Object.keys(captureSettings)) if (key in (settings || {})) captureSettings[key] = settings[key];
+    themeHost(overlayHost);
+  }
   const normalize = value => String(value || '').replace(/\s+/gu,' ').trim();
   const intersect = (a,b) => ({left:Math.max(a.left,b.left),top:Math.max(a.top,b.top),right:Math.min(a.right,b.right),bottom:Math.min(a.bottom,b.bottom)});
   const positive = r => r.right > r.left && r.bottom > r.top;
   const svg = body => `<svg viewBox="0 0 20 20" aria-hidden="true" focusable="false">${body}</svg>`;
-  const mark = id => `<svg class="mark" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><defs><linearGradient id="lm-${id}" x1="15.7" y1="8.3" x2="4" y2="20" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#c3f344"/><stop offset="1" stop-color="#c3f344" stop-opacity=".2"/></linearGradient></defs><path d="M13.2 4.6 19.4 10.8 4.6 20.4Q3.6 19.4 4.6 18.4Z" fill="url(#lm-${id})"/><circle cx="16.3" cy="7.7" r="4.4" fill="#c3f344"/></svg>`;
+  const mark = id => `<svg class="mark" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><defs><linearGradient id="lm-${id}" x1="15.7" y1="8.3" x2="4" y2="20" gradientUnits="userSpaceOnUse"><stop offset="0" style="stop-color:var(--k-hl)"/><stop offset="1" style="stop-color:var(--k-hl)" stop-opacity=".2"/></linearGradient></defs><path d="M13.2 4.6 19.4 10.8 4.6 20.4Q3.6 19.4 4.6 18.4Z" fill="url(#lm-${id})"/><circle cx="16.3" cy="7.7" r="4.4" style="fill:var(--k-hl)"/></svg>`;
   const ICON_X = svg('<path d="m5.5 5.5 9 9M14.5 5.5l-9 9"/>');
   const ICON_COPY = svg('<rect x="7" y="7" width="10" height="10.5" rx="1.5"/><path d="M13 7V4a1.5 1.5 0 0 0-1.5-1.5h-7A1.5 1.5 0 0 0 3 4v8.5A1.5 1.5 0 0 0 4.5 14H7"/>');
   const ICON_PLUS = svg('<path d="M10 4.5v11M4.5 10h11"/>');
@@ -168,68 +183,69 @@
     const host=document.createElement('div');
     host.setAttribute(marker,'overlay');host.id='link-meteor-overlay';
     host.style.cssText='all:initial!important;position:fixed!important;inset:0!important;z-index:2147483647!important;pointer-events:none!important;';
+    overlayHost=host;themeHost(host);
     const shadow=host.attachShadow({mode:'open'});
     shadow.innerHTML=`<style>
-      :host{color-scheme:light dark}
+      :host{color-scheme:light dark;--k-ground:#161d2d;--k-ground2:#0f1422;--k-strong:#fff;--k-ink:#eef0f4;--k-soft:#dfe3ea;--k-muted:#a2a8b5;--k-faint:#7d8394;--k-warn:#f4c26a;--k-accent:#c3f344;--k-accent-hover:#d4f86f;--k-on-accent:#161d2d;--k-link:#c3f344;--k-link-hover:#d4f86f;--k-focus:#c3f344;--k-hl:#c3f344;--k-edge:rgba(126,168,27,.95);--k-shadow-45:rgba(8,11,20,.45);--k-shadow-25:rgba(8,11,20,.25)}
       *{box-sizing:border-box}
       .shield{position:fixed;inset:0;pointer-events:auto;cursor:crosshair;touch-action:none}
-      .rect{position:fixed;border:1.5px solid #c3f344;background:rgba(195,243,68,.08);box-shadow:0 0 0 1px rgba(22,29,45,.55),inset 0 0 0 1px rgba(22,29,45,.3);border-radius:3px;pointer-events:none}
-      .hit{position:fixed;background:rgba(195,243,68,.38);outline:1px solid rgba(126,168,27,.95);box-shadow:0 0 0 1px rgba(22,29,45,.22);border-radius:3px;pointer-events:none}
-      .badge{position:fixed;display:flex;align-items:center;gap:6px;pointer-events:none;background:#161d2d;color:#fff;border-radius:999px;padding:4px 10px 4px 8px;font:700 12px/1.2 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;box-shadow:0 4px 14px rgba(0,0,0,.25);white-space:nowrap}
-      .badge::before{content:"";width:7px;height:7px;border-radius:50%;background:#c3f344;box-shadow:0 0 0 3px rgba(195,243,68,.22)}
-      .panel{position:fixed;pointer-events:auto;background:#161d2d;color:#eef0f4;border:1px solid rgba(255,255,255,.1);box-shadow:0 18px 50px rgba(8,11,20,.45),0 2px 6px rgba(8,11,20,.25);font:400 13px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;border-radius:14px;max-width:calc(100vw - 24px);-webkit-font-smoothing:antialiased}
+      .rect{position:fixed;border:1.5px solid var(--k-hl);background:color-mix(in srgb,var(--k-hl) 8%,transparent);box-shadow:0 0 0 1px rgba(22,29,45,.55),inset 0 0 0 1px rgba(22,29,45,.3);border-radius:3px;pointer-events:none}
+      .hit{position:fixed;background:color-mix(in srgb,var(--k-hl) 38%,transparent);outline:1px solid var(--k-edge);box-shadow:0 0 0 1px rgba(22,29,45,.22);border-radius:3px;pointer-events:none}
+      .badge{position:fixed;display:flex;align-items:center;gap:6px;pointer-events:none;background:var(--k-ground);color:var(--k-strong);border-radius:999px;padding:4px 10px 4px 8px;font:700 12px/1.2 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;box-shadow:0 4px 14px rgba(0,0,0,.25);white-space:nowrap}
+      .badge::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--k-accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--k-accent) 22%,transparent)}
+      .panel{position:fixed;pointer-events:auto;background:var(--k-ground);color:var(--k-ink);border:1px solid color-mix(in srgb,var(--k-strong) 10%,transparent);box-shadow:0 18px 50px var(--k-shadow-45),0 2px 6px var(--k-shadow-25);font:400 13px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;border-radius:14px;max-width:calc(100vw - 24px);-webkit-font-smoothing:antialiased}
       .hint{top:14px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:12px;padding:8px 8px 8px 12px}
-      .hint strong{font-weight:650;color:#fff}.hint span{color:#a2a8b5}
+      .hint strong{font-weight:650;color:var(--k-strong)}.hint span{color:var(--k-muted)}
       .mark{width:22px;height:22px;flex:none;display:block}
       .bar{right:16px;bottom:16px;width:400px;max-height:calc(100vh - 32px);overflow:auto;overscroll-behavior:contain;display:none;padding:14px;animation:rise .18s cubic-bezier(.22,1,.36,1)}
       .head{display:flex;align-items:flex-start;gap:10px}
       .titles{flex:1;min-width:0}
-      .count{font-size:16px;font-weight:700;line-height:1.3;color:#fff;font-variant-numeric:tabular-nums}
+      .count{font-size:16px;font-weight:700;line-height:1.3;color:var(--k-strong);font-variant-numeric:tabular-nums}
       .dest-row{display:flex;align-items:baseline;gap:6px;min-width:0;margin-top:1px}
-      .dest{min-width:0;color:#a2a8b5;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-      .dest b{color:#dfe3ea;font-weight:600}
-      .dest-change{flex:none;min-height:0;padding:0 2px;border:0;background:none;color:#c3f344;font-size:12px;font-weight:600;text-decoration:underline;text-underline-offset:2px}
-      .dest-change:hover:not(:disabled){background:none;color:#d4f86f}
+      .dest{min-width:0;color:var(--k-muted);font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+      .dest b{color:var(--k-soft);font-weight:600}
+      .dest-change{flex:none;min-height:0;padding:0 2px;border:0;background:none;color:var(--k-link);font-size:12px;font-weight:600;text-decoration:underline;text-underline-offset:2px}
+      .dest-change:hover:not(:disabled){background:none;color:var(--k-link-hover)}
       .pick{margin-top:10px}
-      .pick label{display:flex;align-items:center;gap:8px;font-size:12px;color:#a2a8b5}
-      select{flex:1;min-width:0;min-height:30px;font:500 12.5px/1.2 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:#0f1422;color:#fff;border:1px solid rgba(255,255,255,.22);border-radius:7px;padding:4px 6px}
-      select:focus-visible{outline:2px solid #c3f344;outline-offset:2px}
-      .preview{list-style:none;margin:12px 0 0;padding:6px 8px;border-radius:9px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.07);display:grid;grid-template-columns:minmax(0,1fr);gap:1px;max-height:10.5em;overflow:auto;overscroll-behavior:contain}
+      .pick label{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--k-muted)}
+      select{flex:1;min-width:0;min-height:30px;font:500 12.5px/1.2 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--k-ground2);color:var(--k-strong);border:1px solid color-mix(in srgb,var(--k-strong) 22%,transparent);border-radius:7px;padding:4px 6px}
+      select:focus-visible{outline:2px solid var(--k-focus);outline-offset:2px}
+      .preview{list-style:none;margin:12px 0 0;padding:6px 8px;border-radius:9px;background:color-mix(in srgb,var(--k-strong) 5%,transparent);border:1px solid color-mix(in srgb,var(--k-strong) 7%,transparent);display:grid;grid-template-columns:minmax(0,1fr);gap:1px;max-height:10.5em;overflow:auto;overscroll-behavior:contain}
       .preview li{min-width:0}
       .preview label{display:flex;align-items:center;gap:8px;min-width:0;padding:2px 0;cursor:pointer;font-size:12.5px}
-      .preview input{flex:none;margin:0;width:14px;height:14px;accent-color:#c3f344}
-      .preview input:focus-visible{outline:2px solid #c3f344;outline-offset:2px}
-      .preview .t{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#eef0f4}
-      .preview .h{flex:none;max-width:38%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#a2a8b5;font-size:11.5px}
-      .preview li.empty .t{color:#a2a8b5;font-style:italic}
-      .preview li.off .t,.preview li.off .h{text-decoration:line-through;color:#7d8394}
-      .note{margin:6px 2px 0;color:#a2a8b5;font-size:12px}
-      .warning{margin-top:10px;color:#f4c26a;font-size:12px;overflow-wrap:anywhere}
+      .preview input{flex:none;margin:0;width:14px;height:14px;accent-color:var(--k-accent)}
+      .preview input:focus-visible{outline:2px solid var(--k-focus);outline-offset:2px}
+      .preview .t{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--k-ink)}
+      .preview .h{flex:none;max-width:38%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--k-muted);font-size:11.5px}
+      .preview li.empty .t{color:var(--k-muted);font-style:italic}
+      .preview li.off .t,.preview li.off .h{text-decoration:line-through;color:var(--k-faint)}
+      .note{margin:6px 2px 0;color:var(--k-muted);font-size:12px}
+      .warning{margin-top:10px;color:var(--k-warn);font-size:12px;overflow-wrap:anywhere}
       .warning:empty,.status:empty,.preview:empty,.dest:empty,.note:empty{display:none}
       .actions{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:12px}
-      button{display:inline-flex;align-items:center;justify-content:center;gap:6px;font:600 12.5px/1.2 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;border:1px solid rgba(255,255,255,.16);border-radius:8px;padding:0 12px;min-height:34px;background:rgba(255,255,255,.07);color:#fff;cursor:pointer;transition:background-color .15s,border-color .15s}
-      button:hover:not(:disabled){background:rgba(255,255,255,.14);border-color:rgba(255,255,255,.28)}
-      button:focus-visible{outline:2px solid #c3f344;outline-offset:2px}
+      button{display:inline-flex;align-items:center;justify-content:center;gap:6px;font:600 12.5px/1.2 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;border:1px solid color-mix(in srgb,var(--k-strong) 16%,transparent);border-radius:8px;padding:0 12px;min-height:34px;background:color-mix(in srgb,var(--k-strong) 7%,transparent);color:var(--k-strong);cursor:pointer;transition:background-color .15s,border-color .15s}
+      button:hover:not(:disabled){background:color-mix(in srgb,var(--k-strong) 14%,transparent);border-color:color-mix(in srgb,var(--k-strong) 28%,transparent)}
+      button:focus-visible{outline:2px solid var(--k-focus);outline-offset:2px}
       button:disabled{opacity:.45;cursor:default}
       button svg{width:15px;height:15px;flex:none;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
-      .primary{background:#c3f344;border-color:#c3f344;color:#161d2d}
-      .primary:hover:not(:disabled){background:#d4f86f;border-color:#d4f86f}
-      .icon{width:30px;min-height:30px;padding:0;border-color:transparent;background:transparent;color:#a2a8b5}
-      .icon:hover:not(:disabled){background:rgba(255,255,255,.1);border-color:transparent;color:#fff}
+      .primary{background:var(--k-accent);border-color:var(--k-accent);color:var(--k-on-accent)}
+      .primary:hover:not(:disabled){background:var(--k-accent-hover);border-color:var(--k-accent-hover)}
+      .icon{width:30px;min-height:30px;padding:0;border-color:transparent;background:transparent;color:var(--k-muted)}
+      .icon:hover:not(:disabled){background:color-mix(in srgb,var(--k-strong) 10%,transparent);border-color:transparent;color:var(--k-strong)}
       .cancel{min-height:30px}
-      .menu-toggle[aria-expanded="true"]{background:rgba(255,255,255,.16);border-color:rgba(255,255,255,.3)}
-      .menu{display:grid;gap:1px;margin-top:6px;padding:4px;border-radius:10px;background:#0f1422;border:1px solid rgba(255,255,255,.12)}
+      .menu-toggle[aria-expanded="true"]{background:color-mix(in srgb,var(--k-strong) 16%,transparent);border-color:color-mix(in srgb,var(--k-strong) 30%,transparent)}
+      .menu{display:grid;gap:1px;margin-top:6px;padding:4px;border-radius:10px;background:var(--k-ground2);border:1px solid color-mix(in srgb,var(--k-strong) 12%,transparent)}
       .menu button{justify-content:space-between;min-height:31px;border-color:transparent;background:transparent;font-weight:500;padding:0 10px}
-      .menu button:hover:not(:disabled),.menu button:focus-visible{background:rgba(255,255,255,.1);border-color:transparent;outline-offset:-2px}
-      kbd{font:600 11px/1 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;color:#a2a8b5;border:1px solid rgba(255,255,255,.18);border-radius:4px;padding:2px 5px}
-      .confirm{margin-top:12px;padding:10px;border-radius:9px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.16)}
-      .confirm.strong{background:rgba(244,194,106,.1);border-color:rgba(244,194,106,.6)}
-      .confirm p{margin:0 0 8px;font-size:12.5px;color:#fff;overflow-wrap:anywhere}
+      .menu button:hover:not(:disabled),.menu button:focus-visible{background:color-mix(in srgb,var(--k-strong) 10%,transparent);border-color:transparent;outline-offset:-2px}
+      kbd{font:600 11px/1 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;color:var(--k-muted);border:1px solid color-mix(in srgb,var(--k-strong) 18%,transparent);border-radius:4px;padding:2px 5px}
+      .confirm{margin-top:12px;padding:10px;border-radius:9px;background:color-mix(in srgb,var(--k-strong) 6%,transparent);border:1px solid color-mix(in srgb,var(--k-strong) 16%,transparent)}
+      .confirm.strong{background:color-mix(in srgb,var(--k-warn) 10%,transparent);border-color:color-mix(in srgb,var(--k-warn) 60%,transparent)}
+      .confirm p{margin:0 0 8px;font-size:12.5px;color:var(--k-strong);overflow-wrap:anywhere}
       .confirm-actions{display:flex;flex-wrap:wrap;gap:6px}
-      .progress{margin-top:10px;display:flex;align-items:center;gap:8px;font-size:12px;color:#dfe3ea}
+      .progress{margin-top:10px;display:flex;align-items:center;gap:8px;font-size:12px;color:var(--k-soft)}
       .progress span{flex:1;min-width:0}
       .progress button{min-height:28px}
-      .status{margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,.1);font-size:12px;color:#dfe3ea;overflow-wrap:anywhere}
+      .status{margin-top:10px;padding-top:10px;border-top:1px solid color-mix(in srgb,var(--k-strong) 10%,transparent);font-size:12px;color:var(--k-soft);overflow-wrap:anywhere}
       .status button{margin-top:8px;min-height:30px}
       @keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
       @media(max-width:460px){.bar{left:12px;right:12px;bottom:12px;width:auto}.hint span{display:none}}
@@ -245,7 +261,7 @@
     for(const button of shadow.querySelectorAll('button[data-key]'))button.setAttribute('aria-keyshortcuts',button.dataset.key.toUpperCase());
 
     function close() {
-      if(frame)cancelAnimationFrame(frame);unlisten(document,'keydown',escape,true);try{chrome.storage.onChanged.removeListener(followState);}catch{/* extension reloaded */}host.remove();if(active===state)active=null;held=false;
+      if(frame)cancelAnimationFrame(frame);unlisten(document,'keydown',escape,true);try{chrome.storage.onChanged.removeListener(followState);}catch{/* extension reloaded */}host.remove();if(overlayHost===host)overlayHost=null;if(active===state)active=null;held=false;
     }
     // Only an open card follows saved changes (its destination); a page without one never
     // receives the whole saved state on every change, even with all-sites access.
@@ -524,6 +540,7 @@
   let pressStart=null;
   const modifierHeld=event=>MAC?event.metaKey:event.ctrlKey;
   function configureFrom(settings) {
+    followSettings(settings);
     holdKey=settings.holdKey;holdTrigger=settings.holdTrigger==='modifier'?'modifier':'letter';
     const origin=location.origin,exceptions=settings.holdExceptions || [];
     holdEnabled=!exceptions.includes(origin)&&(settings.holdScope==='all'||(settings.holdOrigins || []).includes(origin));
@@ -557,9 +574,11 @@
   // While a modifier press may still become a selection, that native drag would end it.
   listen(document,'dragstart',event=>{if(pressStart){event.preventDefault();}},true);
   const onMessage=message=>{
-    if(message?.type==='content.configure'){holdEnabled=!!message.enabled;holdKey=message.holdKey;holdTrigger=message.holdTrigger==='modifier'?'modifier':'letter';held=false;pressStart=null;}
+    if(message?.type==='content.configure'){holdEnabled=!!message.enabled;holdKey=message.holdKey;holdTrigger=message.holdTrigger==='modifier'?'modifier':'letter';held=false;pressStart=null;followSettings({card:message.card,...message.capture});}
     if(message?.type==='links.progress')active?.progress(message);
   };
   chrome.runtime.onMessage.addListener(onMessage);
+  // With the System appearance, an open card follows the computer switching between light and dark.
+  listen(darkScheme,'change',()=>themeHost(overlayHost));
   globalThis.__linkMeteor={scan,arm,alive,dispose};configure();
 })();

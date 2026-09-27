@@ -52,7 +52,7 @@ test('files that are not valid backups are refused with a reason', () => {
   refuse('[]', /not a Link Meteor backup/);
   refuse(JSON.stringify([good.state.collections[0].links]), /not a Link Meteor backup/);
   refuse(variant((b) => { b.format = 'other'; }), /not a Link Meteor backup/);
-  refuse(variant((b) => { b.formatVersion = 2; }), /newer version of Link Meteor \(backup format 2\)\. Update Link Meteor/);
+  refuse(variant((b) => { b.formatVersion = BACKUP_FORMAT_VERSION + 1; }), new RegExp(`newer version of Link Meteor \\(backup format ${BACKUP_FORMAT_VERSION + 1}\\)\\. Update Link Meteor`));
   refuse(variant((b) => { b.formatVersion = '1'; }), /unknown format version/);
   refuse(variant((b) => { b.state.schemaVersion = 2; }), /schema version 1/);
   refuse(variant((b) => { b.state.collections = []; }), /nonempty array/);
@@ -77,7 +77,7 @@ test('readers keep only contract fields and fill settings missing from older bac
   const raw = structuredClone(good);
   raw.state.collections[0].links[0].secret = 'x';
   raw.state.collections[0].color = 'red';
-  raw.state.settings = { holdKey: 'q', holdOrigins: ['https://a.example'], theme: 'ember' };
+  raw.state.settings = { holdKey: 'q', holdOrigins: ['https://a.example'], theme: 'ember', palette: 'sunset' };
   raw.state.undo = { collectionId: 'x', links: [], indices: [] };
   // JSON.parse makes "__proto__" an own property; it must not reach the saved objects.
   const text = JSON.stringify(raw).replace('"secret":"x"', '"secret":"x","__proto__":{"polluted":true}');
@@ -91,7 +91,20 @@ test('readers keep only contract fields and fill settings missing from older bac
   assert.equal({}.polluted, undefined);
   assert.equal('color' in read.state.collections[0], false);
   assert.equal('undo' in read.state, false);
-  assert.deepEqual(read.state.settings, { ...createState().settings, holdKey: 'q', holdOrigins: ['https://a.example'] });
+  assert.deepEqual(read.state.settings, { ...createState().settings, holdKey: 'q', holdOrigins: ['https://a.example'], theme: 'ember' });
+});
+
+test('backup format 2 (0.4.0) still reads a format 1 file from 0.3.0, filling the new settings', () => {
+  const one = structuredClone(createBackup(machineA(), { extensionVersion: '0.3.0' }));
+  one.formatVersion = 1;
+  for (const key of ['theme', 'appearance', 'afterDrag', 'afterDragFormat', 'contentOnly', 'skipSaved']) delete one.state.settings[key];
+  const read = readBackup(JSON.stringify(one));
+  assert.equal(read.formatVersion, 2);
+  assert.equal(read.state.settings.theme, 'meteor');
+  assert.equal(read.state.settings.appearance, 'system');
+  assert.equal(read.state.settings.afterDrag, 'card');
+  assert.equal(read.state.settings.skipSaved, false);
+  assert.equal(BACKUP_FORMAT_VERSION, 2);
 });
 
 test('merging into a fresh install joins the default collection by name and adds the rest', () => {

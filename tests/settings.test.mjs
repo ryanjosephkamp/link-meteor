@@ -118,7 +118,20 @@ test('settings.update validates every new field', () => {
   assert.throws(() => set({ exportTimestamp: 0 }), /exportTimestamp/);
   assert.equal(set({ exportTimestampFormat: 'date' }).exportTimestampFormat, 'date');
   assert.throws(() => set({ exportTimestampFormat: 'time' }), /exportTimestampFormat/);
-  assert.throws(() => set({ theme: 'ember' }), /Unsupported settings field: theme/);
+  // 0.4.0: appearance and capture settings.
+  for (const theme of ['meteor', 'comet', 'aurora', 'ember', 'nebula', 'graphite', 'contrast']) assert.equal(set({ theme }).theme, theme);
+  assert.throws(() => set({ theme: 'sunset' }), /theme must be one of/);
+  assert.equal(set({ appearance: 'dark' }).appearance, 'dark');
+  assert.throws(() => set({ appearance: 'auto' }), /appearance/);
+  assert.equal(set({ afterDrag: 'add' }).afterDrag, 'add');
+  assert.throws(() => set({ afterDrag: 'open' }), /afterDrag/);
+  assert.equal(set({ afterDragFormat: 'rich' }).afterDragFormat, 'rich');
+  assert.throws(() => set({ afterDragFormat: 'html' }), /afterDragFormat/);
+  assert.equal(set({ contentOnly: true }).contentOnly, true);
+  assert.throws(() => set({ contentOnly: 'yes' }), /contentOnly/);
+  assert.equal(set({ skipSaved: true }).skipSaved, true);
+  assert.throws(() => set({ skipSaved: 1 }), /skipSaved/);
+  assert.throws(() => set({ palette: 'ember' }), /Unsupported settings field: palette/);
 });
 
 test('export prefixes must already be safe file-name parts', () => {

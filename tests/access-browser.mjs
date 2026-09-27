@@ -345,7 +345,7 @@ try {
   await js(page, card(`.querySelector('button.copy').focus()`));
   await key(page, 'l');
   await until(async () => /^Copied 9 links as rich links\./.test(await cardValue(`.querySelector('.status').textContent`)), 'rich copy');
-  const clip = await js(page, `navigator.clipboard.read().then(async ([item]) => ({types: item.types, html: await (await item.getType('text/html')).text(), text: await (await item.getType('text/plain')).text()}))`);
+  const clip = await js(page, `navigator.clipboard.read().then(async ([item]) => ({types: item.types, html: await (await item.getType('text/html')).text(), text: (await (await item.getType('text/plain')).text()).replace(/\\r\\n/g, '\\n')}))`);
   assert.ok(clip.types.includes('text/html') && clip.types.includes('text/plain'), JSON.stringify(clip.types));
   assert.match(clip.html, new RegExp(`<a href="${fixture.base}/papers/attention\\.pdf">Attention in small systems</a>`));
   assert.match(clip.html, /<a href="https:\/\/example\.org\/telescope">Open-sky telescope<\/a>/);

@@ -349,7 +349,7 @@ try {
   const cardWait = (fn, arg) => page.waitForFunction(([source, arg]) => { const root = document.getElementById('link-meteor-overlay')?.shadowRoot; return !!root && new Function('root', 'arg', `return (${source})(root, arg)`)(root, arg); }, [fn.toString(), arg]);
   const rowState = () => inCard((root) => [...root.querySelectorAll('.preview li')].map((li) => ({text: li.querySelector('.t').textContent, on: li.querySelector('input').checked, saved: !li.querySelector('.tag').hidden})));
   const ticked = async () => (await rowState()).filter((row) => row.on).map((row) => row.text);
-  const clipboard = () => page.evaluate(async () => { const [item] = await navigator.clipboard.read(); const read = async (type) => item.types.includes(type) ? (await item.getType(type)).text() : ''; return {types: item.types, html: await read('text/html'), text: await read('text/plain')}; });
+  const clipboard = () => page.evaluate(async () => { const [item] = await navigator.clipboard.read(); const read = async (type) => item.types.includes(type) ? (await (await item.getType(type)).text()).replace(/\r\n/g, '\n') : ''; return {types: item.types, html: await read('text/html'), text: await read('text/plain')}; }); // Windows keeps CRLF on the clipboard
   const noticeShown = () => inCard((root) => !!root && !root.querySelector('.notice').hidden);
   // A page with links in every kind of page chrome, including an open shadow root and a same-origin frame.
   async function landmarks() {

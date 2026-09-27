@@ -340,7 +340,8 @@ try {
   await context.grantPermissions(['clipboard-read', 'clipboard-write']);
   const clipboard = () => ui.evaluate(async () => {
     const [item] = await navigator.clipboard.read();
-    const read = async (type) => item.types.includes(type) ? (await item.getType(type)).text() : null;
+    // Windows stores clipboard text with CRLF line endings; compare the content, not the platform's newlines.
+    const read = async (type) => item.types.includes(type) ? (await (await item.getType(type)).text()).replace(/\r\n/g, '\n') : null;
     return {types: [...item.types].sort(), html: await read('text/html'), text: await read('text/plain')};
   });
   const notice = async (start) => until(async () => { const text = await ui.locator('#notice').innerText(); return await ui.locator('#notice').isVisible() && text.startsWith(start) && text; }, `Notice: ${start}`);

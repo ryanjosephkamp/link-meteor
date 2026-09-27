@@ -87,7 +87,13 @@ async function configureTabs(settings, allSites, inject) {
       try { await chrome.scripting.executeScript({target: {tabId: tab.id}, files: ['content/capture.js']}); } catch { /* the page loads it on its next visit */ }
     }
     try { await chrome.tabs.sendMessage(tab.id, {type: 'content.configure', holdKey: settings.holdKey, holdTrigger: settings.holdTrigger, enabled}); }
-    catch { /* no page script in this tab */ }
+    catch {
+      // No page script answered. A page that loaded while the extension was starting can miss the
+      // registered script, so load it where hold-drag should run; the fresh copy configures itself.
+      if (enabled && !tab.incognito && !tab.discarded) {
+        try { await chrome.scripting.executeScript({target: {tabId: tab.id}, files: ['content/capture.js']}); } catch { /* the page loads it on its next visit */ }
+      }
+    }
   }));
 }
 

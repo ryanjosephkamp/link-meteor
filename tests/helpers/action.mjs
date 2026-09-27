@@ -75,7 +75,7 @@ export async function launchWithAction({extension = resolve(root, process.env.LI
       return targetInfos.find((target) => target.url.startsWith(urlPrefix))?.targetId;
     };
     return {
-      extensionId, profile, send, close,
+      extensionId, extension, profile, send, close,
       extensionUrl: (path = 'ui/workbench.html') => `chrome-extension://${extensionId}/${path}`,
       newTab: (url) => send('Target.createTarget', {url}),
       newWindow: (url) => send('Target.createTarget', {url, newWindow: true}),

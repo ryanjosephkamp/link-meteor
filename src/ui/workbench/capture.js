@@ -1,10 +1,10 @@
 // Capture: scope and tab inventory, running a capture, and the capture report.
-import { $, node, icon, count, plural, capturableUrl, originOf, hostOf } from './helpers.js';
+import { $, node, icon, button, count, plural, capturableUrl, originOf, hostOf } from './helpers.js';
 import { ui, request, action, mutate, show, fail, currentCollection } from './state.js';
 import { render, setView } from './rendering.js';
 import { renderLinks } from './review.js';
 import { renderSite } from './settings.js';
-import { grants, pageAccessPlan } from './access.js';
+import { ALL_SITES, grants, pageAccessPlan } from './access.js';
 
 let inventoryTimer, inventoryRequestSequence = 0;
 // Whether the current page's tab can be read right now (a toolbar click, a site grant or all-sites
@@ -186,7 +186,26 @@ export function syncReportAction() {
   if (hadFocus) only.focus({ preventScroll: true });
 }
 
-export function captureReport(report, { source = 'workbench', key = '', createdAt = '', reasons = new Map() } = {}) {
+// Where Chrome hides a page from Link Meteor, there is no single site to ask for. The denied result
+// then offers the welcome card's request instead: all sites, asked in this click, then the capture
+// runs again. Declining changes nothing.
+async function allowAllSites() {
+  let granted = false, problem = '';
+  try { granted = await chrome.permissions.request({ origins: ALL_SITES }); }
+  catch (error) { problem = error.message || String(error); }
+  if (!granted) {
+    show(problem ? `Chrome could not ask for access to all sites (${problem}). Click the Link Meteor toolbar icon while on the page to capture it once.` : 'Chrome’s request for access to all sites was declined, so nothing changed. Click the Link Meteor toolbar icon while on the page to capture it once.', 'error');
+    return;
+  }
+  grants.allSites = true;
+  ui.state = await request({ type: 'hold.scope', scope: 'all' });
+  if (!ui.state.settings.welcomeSeen) await mutate({ type: 'settings.update', patch: { welcomeSeen: true } });
+  render();
+  show('Link Meteor now works on all sites. Capturing this page again.');
+  await runCapture();
+}
+
+export function captureReport(report, { source = 'workbench', key = '', createdAt = '', reasons = new Map(), offerAllSites = new Set() } = {}) {
   const box = $('capture-report'); box.replaceChildren(); box.hidden = false;
   ui.displayedReportKey = key;
   ui.displayedReport = report;
@@ -217,6 +236,11 @@ export function captureReport(report, { source = 'workbench', key = '', createdA
     if (result.status === 'denied') item.append(node('span', 'detail', reasons.get(result.tabId) || 'Link Meteor does not have access to this site. Capture it again to be asked, or click the Link Meteor toolbar icon while on the page. If Chrome’s site access for Link Meteor (in the Extensions menu, the puzzle-piece icon) is set to “On click” or blocks this site, change it there.'));
     if (result.warning) item.append(node('span', `detail${result.status === 'success' ? ' warn' : ''}`, result.warning));
     if (result.error) item.append(node('span', 'detail', result.status === 'denied' ? `Chrome: ${result.error}` : result.error));
+    if (result.status === 'denied' && offerAllSites.has(result.tabId)) {
+      const allow = button('Allow on all sites', 'btn small report-allow');
+      allow.addEventListener('click', () => action(allowAllSites));
+      item.append(allow);
+    }
     list.append(item);
   }
   if (!results.length) list.append(node('li', 'report-item error', 'No tab results were returned.'));
@@ -241,14 +265,15 @@ export async function runCapture() {
   ui.busy = true; $('capture').disabled = true; renderCaptureButton();
   try {
     let tabIds = [];
-    const reasons = new Map();
+    const reasons = new Map(), offerAllSites = new Set();
     if (asking) {
       let granted = false, problem = null;
       try { granted = await asking; } catch (error) { problem = error; }
       ui.originAccess.set(plan.origin, granted);
       if (!granted) reasons.set(plan.tabId, problem ? `Chrome could not ask for access to ${plan.origin}: ${problem.message}` : `You declined Chrome’s request for access to ${plan.origin}, so Link Meteor could not read this page. Capture it again to be asked again.`);
     } else if (ui.scope === 'current' && plan.reason === 'hidden') {
-      reasons.set(ui.inventory?.targetTabId, 'Chrome hides this tab’s address and contents from Link Meteor, so it cannot ask for this site here. Click the Link Meteor toolbar icon while on the page, or allow all sites under Site access, then capture again.');
+      reasons.set(ui.inventory?.targetTabId, 'Chrome hides this tab’s address and contents from Link Meteor, so it cannot ask for this one site. Allow Link Meteor on all sites to capture it now, or click the Link Meteor toolbar icon while on the page, then capture again.');
+      offerAllSites.add(ui.inventory?.targetTabId);
     }
     if (ui.scope !== 'current') {
       if (!ui.inventory) throw new Error('Tab preview is unavailable. Choose the scope again to refresh it.');
@@ -275,7 +300,7 @@ export async function runCapture() {
     }
     const { state, report } = await request({ type: 'capture.run', tabIds });
     ui.flashBatch = report.batchId; ui.flashStart = Date.now();
-    ui.state = state; render(); captureReport(report, { reasons });
+    ui.state = state; render(); captureReport(report, { reasons, offerAllSites });
     clearTimeout(inventoryTimer);
     let previewError;
     try { await loadInventory(); } catch (error) { previewError = error; }

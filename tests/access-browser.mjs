@@ -166,11 +166,18 @@ try {
   await until(async () => /Access denied/.test(await text('capture-report')), 'denied on the new site');
   assert.match(await text('capture-report'), /Chrome hides this tab’s address and contents from Link Meteor/);
   assert.deepEqual(await js(ui, 'window.__requests'), [], 'no site to ask for while Chrome hides the address');
+  // The denied result offers the welcome card's request instead. The prompt is stubbed to decline here.
+  assert.equal(await js(ui, `document.querySelector('#capture-report .report-allow')?.textContent`), 'Allow on all sites');
+  await js(ui, `document.querySelector('#capture-report .report-allow').click(); true`);
+  await until(async () => /request for access to all sites was declined/.test(await text('error')), 'declined all-sites offer');
+  assert.deepEqual(await js(ui, 'window.__requests'), [{origins: ['http://*/*', 'https://*/*']}], 'the denied result asks for all sites in the click');
+  assert.equal(await js(ui, `chrome.runtime.sendMessage({type:'state.get'}).then((reply) => reply.data.settings.holdScope)`), 'sites', 'a decline changes nothing');
+  await js(ui, 'window.__requests = []; true');
   assert.equal(await browser.clickAction(siteB), 'clicked');
   await sleep(800);
   await click('capture');
   await until(async () => /38 links captured/.test(await text('capture-report')), 'capture after the second toolbar press');
-  pass('Capture this page: no prompt after a toolbar press; on a new site whose address Chrome hides, a denied result says why; a toolbar press there allows it');
+  pass('Capture this page: no prompt after a toolbar press; on a new site whose address Chrome hides, a denied result says why and offers all sites (a decline changes nothing); a toolbar press there allows it');
 
   /* 4. The capture card, armed through the toolbar action. */
   await browser.navigate(page, `${fixture.base}/index.html`); await sleep(1200);

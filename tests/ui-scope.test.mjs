@@ -27,15 +27,16 @@ function originOf(value) {
   } catch { return ''; }
 }
 
-function simulate({ scope, initialTabs, afterPermissionTabs, selectedIds = [] }) {
+function simulate({ scope, initialTabs, afterPermissionTabs, selectedIds = [], targetTabId, pagePlan = { ask: false } }) {
   const messages = [];
   const permissionCalls = [];
+  const reports = [];
   let visibleTabs = initialTabs;
   const captureButton = { disabled: false };
   const ui = {
     busy: false,
     scope,
-    inventory: { tabs: initialTabs, currentWindowId: 7 },
+    inventory: { tabs: initialTabs, currentWindowId: 7, targetTabId },
     selectedTabs: new Set(selectedIds),
     originAccess: new Map(),
     state: null,
@@ -47,7 +48,8 @@ function simulate({ scope, initialTabs, afterPermissionTabs, selectedIds = [] })
     originOf,
     show() {},
     render() {},
-    captureReport() {},
+    captureReport(report, options) { reports.push({ report, options }); },
+    currentPagePlan: () => pagePlan,
     renderCaptureButton() {},
     $: () => captureButton,
     chrome: {
@@ -67,7 +69,7 @@ function simulate({ scope, initialTabs, afterPermissionTabs, selectedIds = [] })
     },
   };
   const runCapture = runInNewContext(`${helperSource}\n${runCaptureSource}\nrunCapture`, dependencies);
-  return { runCapture, ui, captureButton, messages, permissionCalls };
+  return { runCapture, ui, captureButton, messages, permissionCalls, reports };
 }
 
 test('closed selected tab keeps its original ID for background error reporting', async () => {
@@ -115,4 +117,20 @@ test('surviving tab that changes origin stops before capture.run', async () => {
   assert.equal(harness.messages.some((m) => m.type === 'capture.run'), false);
   assert.equal(harness.ui.busy, false);
   assert.equal(harness.captureButton.disabled, false);
+});
+
+test('a current page whose address Chrome hides offers all sites instead of asking for one site', async () => {
+  const harness = simulate({
+    scope: 'current',
+    initialTabs: [tab(7, 7, '')],
+    afterPermissionTabs: [tab(7, 7, '')],
+    targetTabId: 7,
+    pagePlan: { ask: false, reason: 'hidden' },
+  });
+  await harness.runCapture();
+  assert.deepEqual(harness.permissionCalls, [], 'nothing is requested before the person chooses');
+  assert.deepEqual(Array.from(harness.messages.find((m) => m.type === 'capture.run').tabIds), []);
+  const { options } = harness.reports[0];
+  assert.deepEqual([...options.offerAllSites], [7]);
+  assert.match(options.reasons.get(7), /Allow Link Meteor on all sites/);
 });

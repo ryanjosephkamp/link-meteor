@@ -1,0 +1,50 @@
+{
+  "started": "2026-09-27T14:15:36.696Z",
+  "profile": "r030-rc1-all2",
+  "browser": "Chrome for Testing via Playwright, real unpacked extension, grants prepared through the product by the owner",
+  "checks": [
+    {
+      "name": "All-sites scope: one registered script covers http and https; the switch shows it on",
+      "registered": 1
+    },
+    {
+      "name": "Hold-drag works on a second origin with no per-site grant and no prompt",
+      "origin": "http://localhost:52478"
+    },
+    {
+      "name": "Modifier trigger on a real page: Meta-drag selects; a plain Meta-click opens the link as usual"
+    },
+    {
+      "name": "Never on these sites: off at once in the open tab, off after a reload, and back on without a reload"
+    },
+    {
+      "name": "This site, in all-sites scope, is the Never on this site toggle"
+    },
+    {
+      "name": "Capture this page on a never-visited origin needs no prompt with all-sites access",
+      "origin": "http://127.0.0.1:52488"
+    }
+  ],
+  "grants": {
+    "origins": [
+      "http://*/*",
+      "http://127.0.0.1:52478/*",
+      "https://*/*"
+    ],
+    "permissions": [
+      "activeTab",
+      "bookmarks",
+      "clipboardWrite",
+      "contextMenus",
+      "storage",
+      "tabs",
+      "unlimitedStorage",
+      "tabGroups",
+      "scripting",
+      "sidePanel"
+    ]
+  },
+  "result": "FAIL",
+  "error": "Error: named group (timed out)\n    at until (file:///<repository>/tests/helpers/browser.mjs:53:9)\n    at async file:///<repository>/tests/access-granted.mjs:138:3",
+  "finished": "2026-09-27T14:15:48.961Z"
+}

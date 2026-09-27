@@ -1,0 +1,16 @@
+PASS 5,037 real page occurrences captured; only 100 top-level rows and no closed details rendered {"elapsedMs":662}
+PASS Selection persists across pages and unselected export includes all 5,037 rows {}
+PASS Filtering resets page and finds final loaded source {}
+PASS Actual bookmark folder contains correct anchor title and URL {}
+AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:
+
+  assert.ok(listed.folders.some(f=>f.id===folder.id&&f.path==='Other bookmarks › Link Meteor automated fixture'&&f.depth===1))
+
+    at file:///<repository>/tests/extended-browser.mjs:33:63 {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: false,
+  expected: true,
+  operator: '==',
+  diff: 'simple'
+}

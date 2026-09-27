@@ -1,0 +1,15 @@
+PASS Actual host permission revocation prunes saved hold origin and dynamic content registration
+PASS Already loaded page no longer starts the revoked hold-key gesture
+PASS Capture after grant revocation is a denied result, not successful zero
+AssertionError [ERR_ASSERTION]: hold-drag runs on localhost with all-sites access
+
+0 !== 1
+
+    at file:///<repository>/tests/permission-browser.mjs:49:10 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: 0,
+  expected: 1,
+  operator: 'strictEqual',
+  diff: 'simple'
+}

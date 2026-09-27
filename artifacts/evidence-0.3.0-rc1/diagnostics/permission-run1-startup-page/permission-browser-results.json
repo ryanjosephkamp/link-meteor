@@ -1,0 +1,30 @@
+{
+  "started": "2026-09-27T14:19:14.499Z",
+  "checks": [
+    "Actual host permission revocation prunes saved hold origin and dynamic content registration",
+    "Already loaded page no longer starts the revoked hold-key gesture",
+    "Capture after grant revocation is a denied result, not successful zero"
+  ],
+  "allSitesGrantsBefore": {
+    "origins": [
+      "http://*/*",
+      "http://127.0.0.1:52478/*",
+      "https://*/*"
+    ],
+    "permissions": [
+      "activeTab",
+      "bookmarks",
+      "clipboardWrite",
+      "contextMenus",
+      "storage",
+      "tabs",
+      "unlimitedStorage",
+      "tabGroups",
+      "scripting",
+      "sidePanel"
+    ]
+  },
+  "result": "FAIL",
+  "error": "AssertionError [ERR_ASSERTION]: hold-drag runs on localhost with all-sites access\n\n0 !== 1\n\n    at file:///<repository>/tests/permission-browser.mjs:49:10",
+  "finished": "2026-09-27T14:19:18.384Z"
+}

@@ -1,0 +1,43 @@
+{
+  "started": "2026-09-27T14:24:34.711Z",
+  "checks": [
+    "Removing all-sites access returns the saved scope to 'sites'"
+  ],
+  "allSitesGrantsBefore": {
+    "origins": [
+      "http://*/*",
+      "http://127.0.0.1:52478/*",
+      "https://*/*"
+    ],
+    "permissions": [
+      "activeTab",
+      "bookmarks",
+      "clipboardWrite",
+      "contextMenus",
+      "storage",
+      "tabs",
+      "unlimitedStorage",
+      "tabGroups",
+      "scripting",
+      "sidePanel"
+    ]
+  },
+  "allSitesGrantsAfter": {
+    "origins": [],
+    "permissions": [
+      "activeTab",
+      "bookmarks",
+      "clipboardWrite",
+      "contextMenus",
+      "storage",
+      "tabs",
+      "unlimitedStorage",
+      "tabGroups",
+      "scripting",
+      "sidePanel"
+    ]
+  },
+  "result": "FAIL",
+  "error": "AssertionError [ERR_ASSERTION]: Chrome keeps the per-site grant after all-sites access is removed\n    at file:///<repository>/tests/permission-browser.mjs:55:10",
+  "finished": "2026-09-27T14:24:37.392Z"
+}

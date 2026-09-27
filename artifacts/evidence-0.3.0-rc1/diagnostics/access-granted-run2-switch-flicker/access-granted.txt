@@ -1,0 +1,38 @@
+PASS All-sites scope: one registered script covers http and https; the switch shows it on {"registered":1}
+PASS Hold-drag works on a second origin with no per-site grant and no prompt {"origin":"http://localhost:52478"}
+PASS Modifier trigger on a real page: Meta-drag selects; a plain Meta-click opens the link as usual 
+PASS Never on these sites: off at once in the open tab, off after a reload, and back on without a reload 
+PASS This site, in all-sites scope, is the Never on this site toggle 
+PASS Capture this page on a never-visited origin needs no prompt with all-sites access {"origin":"http://127.0.0.1:52488"}
+PASS Open as a tab group names the group after the collection when tab groups are allowed 
+PASS Card: Open as a tab group is named after the destination; Bookmark this selection saves a folder 
+locator.check: Clicking the checkbox did not change its state
+Call log:
+  - waiting for locator('#all-sites')
+    - locator resolved to <input role="switch" id="all-sites" class="switch" type="checkbox" aria-describedby="all-sites-help"/>
+  - attempting click action
+    - waiting for element to be visible, enabled and stable
+    - element is visible, enabled and stable
+    - scrolling into view if needed
+    - done scrolling
+    - performing click action
+    - click action done
+    - waiting for scheduled navigations to finish
+    - navigations have finished
+
+    at <repository>/tests/access-granted.mjs:172:34 {
+  log: [
+    "  - waiting for locator('#all-sites')",
+    '    - locator resolved to <input role="switch" id="all-sites" class="switch" type="checkbox" aria-describedby="all-sites-help"/>',
+    '  - attempting click action',
+    '    - waiting for element to be visible, enabled and stable',
+    '    - element is visible, enabled and stable',
+    '    - scrolling into view if needed',
+    '    - done scrolling',
+    '    - performing click action',
+    '    - click action done',
+    '    - waiting for scheduled navigations to finish',
+    '    - navigations have finished'
+  ],
+  name: 'Error'
+}

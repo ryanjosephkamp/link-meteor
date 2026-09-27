@@ -5,8 +5,9 @@ import assert from 'node:assert/strict';
 import {readFile,writeFile} from 'node:fs/promises';
 import {resolve} from 'node:path';
 import {launch,rpc,until,evidence} from './helpers/browser.mjs';
+import {THEME_IDS,THEMES} from '../src/core/themes.js';
 const result={started:new Date().toISOString(),checks:[],screenshots:[],limits:['Keyboard/label/contrast spot checks in automated Chrome for Testing, not a complete screen-reader or WCAG audit.','Compact widths render the workbench page at side-panel widths in a tab; the native side-panel frame itself is not captured.']};
-const {context,id}=await launch(process.env.LINK_METEOR_VISUAL_PROFILE || 'visual-final',{headless:true});
+const {context,id,worker}=await launch(process.env.LINK_METEOR_VISUAL_PROFILE || 'visual-final',{headless:true});
 const shot=async(page,name,options={})=>{await page.screenshot({path:resolve(evidence,name),animations:'disabled',...options});result.screenshots.push(name);};
 // Measure the settled layout: after a resize, wait two animation frames so media queries and layout have caught up.
 const overflow=page=>page.evaluate(async()=>{await new Promise(done=>requestAnimationFrame(()=>requestAnimationFrame(done)));return document.documentElement.scrollWidth>innerWidth;});
@@ -16,6 +17,11 @@ const contrast=(page,pairs)=>page.evaluate(pairs=>{const canvas=document.createE
   const lum=c=>c.map(n=>{n/=255;return n<=.04045?n/12.92:((n+.055)/1.055)**2.4;}).reduce((s,n,i)=>s+n*[.2126,.7152,.0722][i],0);
   const bg=el=>{for(let n=el;n;n=n.parentElement){const c=getComputedStyle(n).backgroundColor;if(c&&!/rgba\(0, 0, 0, 0\)|transparent/.test(c)&&!/\/ 0\)$/.test(c))return c;}return getComputedStyle(document.body).backgroundColor;};
   return pairs.map(([name,selector])=>{const el=document.querySelector(selector);if(!el)return {name,missing:true};const a=lum(rgb(getComputedStyle(el).color)),b=lum(rgb(bg(el)));return {name,ratio:Math.round(((Math.max(a,b)+.05)/(Math.min(a,b)+.05))*100)/100};});},pairs);
+// 0.4.0 toolbar icon: record what the service worker passes to chrome.action.setIcon (and still set it).
+await worker.evaluate(()=>{globalThis.__iconCalls=[];const set=chrome.action.setIcon.bind(chrome.action);chrome.action.setIcon=details=>{globalThis.__iconCalls.push(details.imageData?{imageData:Object.fromEntries(Object.entries(details.imageData).map(([size,image])=>[size,{width:image.width,height:image.height,data:[...image.data]}]))}:{path:details.path});return set(details);};});
+const iconCalls=()=>worker.evaluate(()=>globalThis.__iconCalls);
+// Rasterizes CSS colors in the page, as sRGB bytes.
+const rasterize=(page,colors)=>page.evaluate(colors=>{const canvas=document.createElement('canvas');canvas.width=canvas.height=1;const ctx=canvas.getContext('2d',{willReadFrequently:true});return colors.map(color=>{ctx.clearRect(0,0,1,1);ctx.fillStyle=color;ctx.fillRect(0,0,1,1);return [...ctx.getImageData(0,0,1,1).data].slice(0,3);});},colors);
 try{
  const ui=await context.newPage();await ui.goto(`chrome-extension://${id}/ui/workbench.html`);
  await ui.locator('#collection-heading').waitFor();
@@ -50,6 +56,79 @@ try{
  await ui.locator('#edit-collection').click();const dark=(await contrast(ui,pairs)).map(entry=>({...entry,name:'dark '+entry.name}));await ui.locator('#cancel-edit').click();
  for(const entry of [...light,...dark]){assert.ok(!entry.missing,`${entry.name} missing`);assert.ok(entry.ratio>=4.5,`${entry.name} contrast ${entry.ratio}`);}
  result.checks.push({measuredTextContrast:[...light,...dark]});
+
+ // 0.4.0 themes: every theme in light and dark, switched through settings.update: contrast of the existing pairs and the new
+ // controls, no horizontal overflow at 320 px (links and settings), a side-panel screenshot, and the toolbar icon each theme sets.
+ const themePairs=[...pairs,['theme name','.theme-choice:not(:has(input:checked)) .theme-name'],['chosen theme name','.theme-choice:has(input:checked) .theme-name'],['theme description','#theme-blurb'],['scheme choice','.scheme-mode .seg:not(:has(input:checked))'],['chosen scheme','.scheme-mode .seg:has(input:checked)'],['appearance help','#appearance-help'],['after-drag choice','.choice-list .choice span'],['after-drag help','#after-drag-help'],['copy format','#after-drag-format'],['capture default','.rail-check span'],['capture default help','#content-only-help']];
+ await rpc(ui,{type:'state.mutate',action:{type:'settings.update',patch:{afterDrag:'copy'}}});await until(async()=>await ui.locator('#after-drag-format').isVisible(),'Copy format shown');
+ const applied=(page,theme,scheme)=>page.evaluate(([theme,scheme])=>document.documentElement.dataset.theme===theme&&document.documentElement.dataset.scheme===scheme&&document.querySelector('input[name="theme"]:checked')?.value===theme,[theme,scheme]);
+ const themeResults=[],icons={};
+ for(const theme of THEME_IDS)for(const scheme of ['light','dark']){
+  const callsBefore=(await iconCalls()).length,changed=(await rpc(ui,{type:'state.get'})).settings.theme!==theme;
+  await ui.setViewportSize({width:1440,height:1000});await rpc(ui,{type:'state.mutate',action:{type:'settings.update',patch:{theme,appearance:scheme}}});
+  await until(()=>applied(ui,theme,scheme),`${theme} ${scheme} applied`);
+  await ui.locator('#edit-collection').click();const measured=await contrast(ui,themePairs);await ui.locator('#cancel-edit').click();
+  for(const entry of measured){assert.ok(!entry.missing,`${theme} ${scheme} ${entry.name} missing`);assert.ok(entry.ratio>=4.5,`${theme} ${scheme} ${entry.name} contrast ${entry.ratio}`);}
+  await ui.setViewportSize({width:320,height:900});const links=await overflow(ui);await ui.locator('#collection-switch').click();const settings=await overflow(ui);await ui.locator('#rail-done').click();
+  assert.equal(links,false,`${theme} ${scheme}: overflow at 320`);assert.equal(settings,false,`${theme} ${scheme}: settings overflow at 320`);
+  await ui.setViewportSize({width:390,height:844});await ui.evaluate(()=>{scrollTo(0,0);document.getElementById('notice').hidden=true;});const screenshot=`panel-theme-${theme}-${scheme}.png`;await shot(ui,screenshot);
+  if(changed){await until(async()=>(await iconCalls()).length>callsBefore,`${theme} toolbar icon`);icons[theme]=(await iconCalls()).at(-1);}
+  themeResults.push({theme,scheme,horizontalOverflowAt320:{links,settings},screenshot,contrast:measured});
+ }
+ // Back to Meteor: the manifest's own icons. Every other theme: the mark drawn at 16 and 32 px, tile and head in the theme's colors.
+ const callsBeforeMeteor=(await iconCalls()).length;await rpc(ui,{type:'state.mutate',action:{type:'settings.update',patch:{theme:'meteor',appearance:'system',afterDrag:'card'}}});
+ await until(async()=>(await iconCalls()).length>callsBeforeMeteor,'Meteor toolbar icon');icons.meteor=(await iconCalls()).at(-1);
+ const manifestIcons=await ui.evaluate(()=>chrome.runtime.getManifest().action.default_icon);assert.deepEqual(icons.meteor,{path:manifestIcons},'Meteor sets the packaged icons');
+ const pixel=(image,x,y)=>image.data.slice((y*image.width+x)*4,(y*image.width+x)*4+4);
+ const near=(a,b)=>a.every((v,i)=>Math.abs(v-b[i])<=3);
+ const iconChecks=[];
+ for(const theme of THEME_IDS.filter(theme=>theme!=='meteor')){
+  const call=icons[theme];assert.ok(call?.imageData,`${theme} sets drawn icons`);assert.deepEqual(Object.keys(call.imageData).sort(),['16','32']);
+  const [head,tile]=await rasterize(ui,[THEMES[theme].highlight,THEMES[theme].light['mark-tile']]);
+  for(const [size,headAt,tileAt] of [['16',[10,5],[13,14]],['32',[20,11],[26,26]]]){
+   const image=call.imageData[size];assert.equal(image.width,Number(size));
+   const [h,t]=[pixel(image,...headAt),pixel(image,...tileAt)];
+   assert.ok(near(h.slice(0,3),head)&&h[3]===255,`${theme} ${size} px head ${h} is ${head}`);assert.ok(near(t.slice(0,3),tile)&&t[3]===255,`${theme} ${size} px tile ${t} is ${tile}`);
+  }
+  iconChecks.push({theme,sizes:[16,32],head:THEMES[theme].highlight,tile:THEMES[theme].light['mark-tile']});
+ }
+ // A strip of every toolbar icon, drawn from the image data the service worker set, next to the packaged Meteor icon.
+ const iconUrls=await ui.evaluate(icons=>Promise.all(Object.entries(icons).map(async([theme,call])=>[theme,await Promise.all(['32','16'].map(async size=>{
+  if(call.path)return new Promise(async done=>{const reader=new FileReader();reader.onload=()=>done(reader.result);reader.readAsDataURL(await (await fetch(chrome.runtime.getURL(call.path[size]))).blob());});
+  const image=call.imageData[size],canvas=document.createElement('canvas');canvas.width=image.width;canvas.height=image.height;canvas.getContext('2d').putImageData(new ImageData(new Uint8ClampedArray(image.data),image.width,image.height),0,0);return canvas.toDataURL();}))])).then(Object.fromEntries),icons);
+ const strip=await context.newPage();await strip.setViewportSize({width:760,height:160});
+ await strip.setContent(`<body style="margin:0;padding:12px;background:#dfe3ea;display:flex;gap:14px;align-items:flex-end;font:12px system-ui">${THEME_IDS.map(theme=>`<figure style="margin:0;display:grid;gap:4px;justify-items:center"><img src="${iconUrls[theme][0]}" alt="" style="width:64px;height:64px;image-rendering:pixelated"><img src="${iconUrls[theme][1]}" alt="" style="width:32px;height:32px;image-rendering:pixelated"><figcaption>${THEMES[theme].name}</figcaption></figure>`).join('')}</body>`);
+ await strip.evaluate(()=>Promise.all([...document.images].map(image=>image.decode())));await shot(strip,'toolbar-icons.png');await strip.close();
+
+ // The theme picker and System, Light or Dark work from the keyboard, with a visible focus ring.
+ await ui.setViewportSize({width:1440,height:1000});await ui.locator('input[name="theme"][value="meteor"]').focus();await ui.keyboard.press('ArrowRight');
+ await until(async()=>(await rpc(ui,{type:'state.get'})).settings.theme==='comet','Arrow key saves the next theme');
+ const pickerFocus=await ui.evaluate(()=>({value:document.activeElement.value,ring:getComputedStyle(document.activeElement.closest('.theme-choice')).outlineStyle,theme:document.documentElement.dataset.theme}));
+ assert.deepEqual(pickerFocus,{value:'comet',ring:'solid',theme:'comet'});
+ await ui.locator('input[name="appearance"][value="system"]').focus();await ui.keyboard.press('ArrowRight');
+ await until(async()=>(await rpc(ui,{type:'state.get'})).settings.appearance==='light','Arrow key saves Light');
+ assert.equal(await ui.evaluate(()=>document.documentElement.dataset.scheme),'light');
+ // After a drag: each choice saves at once; the copy format shows only for Copy right away.
+ await ui.locator('.choice:has(input[value="add"])').click();await until(async()=>(await rpc(ui,{type:'state.get'})).settings.afterDrag==='add','Add right away saved');
+ assert.equal(await ui.locator('#after-drag-format').isVisible(),false);
+ await ui.locator('.choice:has(input[value="copy"])').click();await until(async()=>await ui.locator('#after-drag-format').isVisible(),'Copy format shown');
+ await ui.locator('#after-drag-format').selectOption('rich');await ui.locator('#content-only').check();await ui.locator('#skip-saved').check();
+ await until(async()=>{const s=(await rpc(ui,{type:'state.get'})).settings;return s.afterDrag==='copy'&&s.afterDragFormat==='rich'&&s.contentOnly&&s.skipSaved;},'Capture defaults saved');
+ await ui.locator('.after-drag').evaluate(section=>{section.closest('.rail').scrollTop=section.offsetTop-12;});await shot(ui,'workbench-settings.png',{clip:{x:0,y:0,width:260,height:1000}});await ui.locator('#rail').evaluate(rail=>{rail.scrollTop=0;});
+ // The first frame already has the cached theme and scheme: a fresh page records them in its first animation frame, which runs
+ // before that frame is painted.
+ await rpc(ui,{type:'state.mutate',action:{type:'settings.update',patch:{theme:'ember',appearance:'dark'}}});await until(()=>applied(ui,'ember','dark'),'Ember dark applied');
+ const boot=await context.newPage();
+ await boot.addInitScript(()=>{requestAnimationFrame(()=>{const root=document.documentElement;globalThis.__firstFrame={theme:root?.dataset.theme||null,scheme:root?.dataset.scheme||null,themeStyle:!!document.getElementById('theme'),bodyBackground:document.body?getComputedStyle(document.body).backgroundColor:null};});});
+ await boot.goto(`chrome-extension://${id}/ui/workbench.html`);await boot.locator('#collection-heading').waitFor();
+ const firstFrame=await boot.evaluate(()=>({...globalThis.__firstFrame,renderBlocking:document.querySelector('script[type="module"]').blocking.contains('render')}));
+ const [emberDark]=await rasterize(boot,[THEMES.ember.dark.bg]);
+ assert.deepEqual([firstFrame.theme,firstFrame.scheme,firstFrame.themeStyle,firstFrame.renderBlocking],['ember','dark',true,true],JSON.stringify(firstFrame));
+ assert.deepEqual((await rasterize(boot,[firstFrame.bodyBackground]))[0],emberDark,'first frame background');
+ await boot.close();
+ await rpc(ui,{type:'state.mutate',action:{type:'settings.update',patch:{theme:'meteor',appearance:'system',afterDrag:'card',afterDragFormat:'tsv',contentOnly:false,skipSaved:false}}});
+ await until(async()=>await ui.evaluate(()=>document.documentElement.dataset.theme==='meteor'&&!document.getElementById('after-drag-format').checkVisibility()),'Back to Meteor and Show the card');
+ result.checks.push({themes:{switchedThrough:'settings.update',results:themeResults},toolbarIcon:{meteor:icons.meteor,drawn:iconChecks,screenshot:'toolbar-icons.png'},appearanceKeyboard:{arrowKeySavesTheme:true,focusRing:pickerFocus.ring,arrowKeySavesAppearance:true},afterDrag:{choicesSaved:true,copyFormatOnlyForCopy:true},firstFrame});
  // 0.3.0 states that are hard to hold still: the stronger confirmation comes from a real 150-link target (nothing opens); the
  // all-sites note and the opening progress line are shown with sample text in their real elements, with their real styles.
  await rpc(ui,{type:'state.mutate',action:{type:'collection.create',name:'Opening check'}});

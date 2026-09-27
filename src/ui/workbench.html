@@ -7,7 +7,7 @@
   <title>Link Meteor</title>
   <link rel="icon" href="../icons/32.png">
   <link rel="stylesheet" href="workbench.css">
-  <script type="module" src="workbench.js"></script>
+  <script type="module" src="workbench.js" blocking="render"></script>
 </head>
 <body>
   <svg class="sprite" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">
@@ -117,6 +117,36 @@
           <span id="shortcut-keys" class="shortcut-keys"><kbd>Alt</kbd><kbd>Shift</kbd><kbd>L</kbd></span>
           <button id="shortcut-settings" class="link-btn" type="button">Change<span class="sr-only"> region shortcut in Chrome settings</span></button>
         </div>
+      </section>
+
+      <section class="rail-section after-drag" aria-labelledby="after-drag-title">
+        <h2 id="after-drag-title" class="rail-title">After a drag</h2>
+        <div class="choice-list" role="radiogroup" aria-labelledby="after-drag-title" aria-describedby="after-drag-help">
+          <label class="choice"><input type="radio" name="after-drag" value="card"><span>Show the card</span></label>
+          <label class="choice"><input type="radio" name="after-drag" value="copy"><span>Copy right away</span></label>
+          <label class="choice"><input type="radio" name="after-drag" value="add"><span>Add right away</span></label>
+        </div>
+        <p id="after-drag-help" class="help"></p>
+        <div id="after-drag-format-row" class="after-drag-format" hidden>
+          <label for="after-drag-format">Copy as</label>
+          <select id="after-drag-format"><option value="tsv">Text + URL table</option><option value="text">URLs</option><option value="markdown">Markdown</option><option value="rich">Rich links</option></select>
+        </div>
+        <label class="rail-check"><input id="content-only" type="checkbox" aria-describedby="content-only-help"><span>Leave out navigation links</span></label>
+        <p id="content-only-help" class="help">Links in menus, headers, footers and sidebars are left unticked, and the card says how many.</p>
+        <label class="rail-check"><input id="skip-saved" type="checkbox" aria-describedby="skip-saved-help"><span>Skip links already saved</span></label>
+        <p id="skip-saved-help" class="help">Adding leaves out links whose address the collection already has.</p>
+      </section>
+
+      <section class="rail-section appearance" aria-labelledby="appearance-title">
+        <h2 id="appearance-title" class="rail-title">Appearance</h2>
+        <div id="theme-picker" class="theme-picker" role="radiogroup" aria-label="Theme" aria-describedby="theme-blurb"></div>
+        <p id="theme-blurb" class="help theme-blurb"></p>
+        <div class="scheme-mode" role="radiogroup" aria-label="Light or dark" aria-describedby="appearance-help">
+          <label class="seg"><input type="radio" name="appearance" value="system"><span>System</span></label>
+          <label class="seg"><input type="radio" name="appearance" value="light"><span>Light</span></label>
+          <label class="seg"><input type="radio" name="appearance" value="dark"><span>Dark</span></label>
+        </div>
+        <p id="appearance-help" class="help">The theme also colors the capture card on webpages and the toolbar icon. System follows your computer’s light or dark setting.</p>
       </section>
 
       <section id="backup-panel" class="rail-section backup" aria-labelledby="backup-title">

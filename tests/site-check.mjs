@@ -1,6 +1,7 @@
 // Automated site QA, served under /link-meteor/ like a GitHub Pages project site.
 // Checks every page at several widths in light and dark, structure and names, internal links
-// and anchors, measured text contrast, keyboard menu, demo and export preview. Writes
+// and anchors, measured text contrast, keyboard menus, the home page in every theme, demo and
+// export preview. Writes
 // artifacts/evidence/site-results.json and a few screenshots. Not a screen-reader audit.
 import assert from 'node:assert/strict';
 import { writeFile } from 'node:fs/promises';
@@ -8,6 +9,7 @@ import { resolve } from 'node:path';
 import { createRequire } from 'node:module';
 import { homedir } from 'node:os';
 import { serve } from './site-preview.mjs';
+import { THEME_IDS, THEMES } from '../src/core/themes.js';
 const require = createRequire(import.meta.url);
 let playwright;
 try { playwright = require('playwright'); }
@@ -91,6 +93,52 @@ try {
     result.pages[name] = report;
     console.log('checked', name);
   }
+  // 0.4.0 themes: the home page in every theme (?theme=) and both schemes, at the narrowest and a wide width.
+  result.themes = [];
+  for (const theme of THEME_IDS) for (const scheme of ['light', 'dark']) for (const width of [320, 1440]) {
+    const page = await browser.newPage({ viewport: { width, height: 900 }, colorScheme: scheme, reducedMotion: 'reduce' });
+    const label = `home ${theme} ${scheme} ${width}`;
+    watch(page, label);
+    await page.goto(`${base}?theme=${theme}`, { waitUntil: 'networkidle' }); await page.evaluate(() => document.fonts.ready); await page.waitForTimeout(150);
+    const shown = await page.evaluate(() => ({ theme: document.documentElement.dataset.theme, checked: document.querySelector('#theme-list [aria-checked="true"]')?.dataset.themeId, overflow: document.documentElement.scrollWidth > innerWidth, headerRows: new Set([...document.querySelectorAll('.site-header .wrap > *')].filter((e) => e.getClientRects().length).map((e) => { const r = e.getBoundingClientRect(); return Math.round(r.top + r.height / 2); })).size, wrapped: [...document.querySelectorAll('.site-header .logo, .nav a, .menu-toggle, .theme-toggle')].some((e) => e.getClientRects().length && e.getBoundingClientRect().height > 44) }));
+    if (shown.theme !== theme || shown.checked !== theme) problems.push(`${label}: shows ${shown.theme}, menu checks ${shown.checked}`);
+    if (shown.overflow) problems.push(`${label}: horizontal overflow`);
+    if (shown.headerRows !== 1 || shown.wrapped) problems.push(`${label}: the header wraps`);
+    const c = await contrast(page);
+    for (const f of c.failures) problems.push(`${label}: contrast ${f.ratio} < ${f.need} for “${f.text}”`);
+    result.themes.push({ theme, scheme, width, overflow: shown.overflow, minContrast: c.min });
+    if (width === 1440) await page.screenshot({ path: resolve(evidence, `site-theme-${theme}-${scheme}.png`) });
+    await page.close();
+  }
+  result.checks.push(`Home page in all ${THEME_IDS.length} themes, light and dark, at 320 and 1440 px: theme shown, no overflow, one-row header, text contrast`);
+  // Theme menu: keyboard only, kept in this browser, ?theme= wins and is kept, an unknown id is ignored.
+  { const context = await browser.newContext({ viewport: { width: 1440, height: 900 } }); const page = await context.newPage(); watch(page, 'theme menu'); await page.goto(base, { waitUntil: 'networkidle' });
+    const state = () => page.evaluate(() => { const toggle = document.getElementById('theme-toggle'), focused = document.activeElement; return { theme: document.documentElement.dataset.theme, kept: localStorage.getItem('linkMeteorSiteTheme'), open: toggle.getAttribute('aria-expanded') === 'true' && !document.getElementById('theme-list').hidden, focused: focused.id || focused.dataset.themeId || focused.tagName, checked: document.querySelector('#theme-list [aria-checked="true"]').dataset.themeId, name: toggle.textContent.trim() }; });
+    for (let i = 0; i < 20 && (await page.evaluate(() => document.activeElement.id)) !== 'theme-toggle'; i++) await page.keyboard.press('Tab');
+    assert.deepEqual(await state(), { theme: 'meteor', kept: null, open: false, focused: 'theme-toggle', checked: 'meteor', name: 'Theme: Meteor' }, 'the theme menu is in the tab order');
+    assert.equal(await page.evaluate(() => getComputedStyle(document.activeElement).outlineStyle), 'solid', 'visible focus on the theme menu');
+    await page.keyboard.press('Enter'); assert.deepEqual(await state(), { theme: 'meteor', kept: null, open: true, focused: 'meteor', checked: 'meteor', name: 'Theme: Meteor' }, 'Enter opens on the chosen theme');
+    for (const key of ['ArrowDown', 'ArrowDown', 'ArrowDown']) await page.keyboard.press(key);
+    assert.equal((await state()).focused, 'ember');
+    await page.keyboard.press('Enter');
+    assert.deepEqual(await state(), { theme: 'ember', kept: 'ember', open: false, focused: 'theme-toggle', checked: 'ember', name: 'Theme: Ember' }, 'Enter chooses, closes and returns focus');
+    await page.keyboard.press('ArrowUp'); assert.equal((await state()).focused, 'contrast', 'ArrowUp opens on the last theme');
+    await page.keyboard.press('Home'); assert.equal((await state()).focused, 'meteor'); await page.keyboard.press('ArrowUp'); assert.equal((await state()).focused, 'contrast', 'arrows wrap');
+    await page.keyboard.press('Escape'); assert.deepEqual(await state(), { theme: 'ember', kept: 'ember', open: false, focused: 'theme-toggle', checked: 'ember', name: 'Theme: Ember' }, 'Escape closes without a change');
+    await page.keyboard.press('Space'); await page.keyboard.press('End'); await page.keyboard.press('Tab'); assert.equal((await state()).open, false, 'Tab closes the menu');
+    await page.reload({ waitUntil: 'networkidle' }); assert.equal((await state()).theme, 'ember', 'the choice is kept');
+    await page.goto(`${base}guide.html?theme=comet`, { waitUntil: 'networkidle' }); assert.deepEqual([(await state()).theme, (await state()).kept], ['comet', 'comet'], '?theme= wins and is kept');
+    await page.goto(`${base}privacy.html`, { waitUntil: 'networkidle' }); assert.equal((await state()).theme, 'comet');
+    await page.goto(`${base}about.html?theme=sunset`, { waitUntil: 'networkidle' }); assert.equal((await state()).theme, 'comet', 'an unknown ?theme= is ignored');
+    await page.goto(`${base}install.html?theme=nebula`, { waitUntil: 'networkidle' }); await page.locator('#theme-toggle').focus(); await page.keyboard.press('Enter');
+    await page.keyboard.press('ArrowDown'); await page.keyboard.press('Space');
+    assert.deepEqual([(await state()).theme, (await state()).kept, await page.evaluate(() => location.search)], ['graphite', 'graphite', ''], 'Space chooses, and the address drops ?theme=');
+    await page.setViewportSize({ width: 390, height: 844 }); await page.locator('#theme-toggle').click(); await page.locator('[data-theme-id="aurora"]').click();
+    assert.equal((await state()).theme, 'aurora', 'the compact menu works with a pointer');
+    await page.locator('#theme-toggle').click(); await page.locator('main').click({ position: { x: 10, y: 400 } }); assert.equal((await state()).open, false, 'a click elsewhere closes the menu');
+    const names = await page.locator('#theme-list [role="menuitemradio"]').allTextContents(); assert.deepEqual(names.map((n) => n.trim()), THEME_IDS.map((id) => THEMES[id].name));
+    result.checks.push('Theme menu: Tab reaches it with a visible ring; Enter or ArrowDown opens on the chosen theme, arrows, Home and End move and wrap, Enter or Space chooses and returns focus, Escape and Tab close; kept in localStorage; ?theme= wins, is kept and is dropped from the address after a choice; unknown ids are ignored; works with a pointer at 390 px');
+    await context.close(); }
   // 404 page served for a missing path at depth.
   { const page = await browser.newPage(); watch(page, '404'); const response = await page.goto(base + 'nested/definitely-missing'); assert.equal(response.status(), 404); await page.waitForLoadState('networkidle'); assert.match(await page.locator('h1').innerText(), /isn't here/); result.checks.push('404 page renders with its styles for a missing nested path'); await page.close(); }
   // Keyboard: mobile menu.

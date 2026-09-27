@@ -9,6 +9,7 @@ import { bindExport, renderColumns } from './workbench/export.js';
 import { bindBookmarks } from './workbench/bookmarks.js';
 import { bindOpen } from './workbench/open.js';
 import { bindSettings, loadShortcut, renderShortcut } from './workbench/settings.js';
+import { bootTheme } from './workbench/appearance.js';
 
 function bindEvents() {
   bindViews();
@@ -36,5 +37,7 @@ async function init() {
   watchTabs();
 }
 
+// Before first paint (the script blocks rendering): the last theme and scheme, from the cache.
+bootTheme();
 renderShortcut();
 action(init);

@@ -31,7 +31,7 @@ const restoreUndo = {createdAt: '2024-03-01T00:00:00.000Z', summary: {mode: 'rep
   before: {...secretState(), collections: [{id: 'collection-old', name: 'Old divorce paperwork', notes: '', tags: [], createdAt: '2023-01-01T00:00:00.000Z', updatedAt: '2023-01-01T00:00:00.000Z', links: [link(7, {url: 'https://restore-before.example.com/lawyer'})]}], activeCollectionId: 'collection-old'},
   written: {fingerprint: 'abc123fingerprint', holdOrigins: ['https://hold-site.example.org'], holdScope: 'sites'}};
 const captureReport = {report: {batchId: 'batch-secret-91c2', capturedCount: 2, results: [{tabId: 9, title: 'Session tab: bank statement', url: 'https://bank-session.example.com/statement', status: 'success', count: 2, warning: '', error: ''}]}, createdAt: '2024-04-01T00:00:00.000Z'};
-const grants = {permissions: ['activeTab', 'scripting', 'storage', 'unlimitedStorage', 'tabs', 'tabGroups'], origins: ['https://granted-one.example.com/*', 'http://*/*', 'https://*/*']};
+const grants = {permissions: ['activeTab', 'scripting', 'storage', 'unlimitedStorage', 'tabs', 'tabGroups', 'downloads'], origins: ['https://granted-one.example.com/*', 'http://*/*', 'https://*/*']};
 const registered = [{id: 'meteor-hold-all', matches: ['http://*/*', 'https://*/*'], excludeMatches: ['https://never-here.example.io/*'], js: ['content/capture.js'], runAt: 'document_idle', persistAcrossSessions: true}];
 
 const local = {linkMeteorState: secretState(), linkMeteorRestoreUndo: structuredClone(restoreUndo)};
@@ -115,7 +115,7 @@ test('diagnostics.get never includes addresses, origins, titles, notes, tags or 
     assert.deepEqual(report.browser, {userAgent: navigator.userAgent, brands: [{brand: 'Chromium', version: '151'}, {brand: 'Google Chrome', version: '151'}], mobile: false, platform: 'macOS', os: 'mac', arch: 'arm64', language: 'en-US', uiLanguage: 'en-GB'});
     assert.deepEqual(report.settings, {holdKey: 'z', holdOrigins: 2, holdTrigger: 'modifier', holdScope: 'sites', holdExceptions: 1, welcomeSeen: true, exportPrefix: 'Zephyr-internal-memo'.length,
       exportTimestamp: true, exportTimestampFormat: 'datetime', theme: 'aurora', appearance: 'dark', afterDrag: 'copy', afterDragFormat: 'rich', contentOnly: true, skipSaved: true, otherFields: 0});
-    assert.deepEqual(report.permissions, {tabs: true, bookmarks: false, tabGroups: true, allSites: true, siteOriginCount: 1});
+    assert.deepEqual(report.permissions, {tabs: true, bookmarks: false, tabGroups: true, downloads: true, allSites: true, siteOriginCount: 1});
     // Saved scope is 'sites' while the registration is for all sites, so they don't match.
     assert.deepEqual(report.scripts, {count: 1, scope: 'all', matchCount: 2, excludeCount: 1, matchesSettings: false});
     const bytes = await chrome.storage.local.getBytesInUse(null);
@@ -189,7 +189,7 @@ test('Chrome API failures leave nulls instead of failing', async () => {
   const reply = await call({type: 'diagnostics.get'});
   Object.assign(chrome.permissions, {getAll: saved.getAll}); chrome.scripting.getRegisteredContentScripts = saved.scripts; chrome.storage.local.getBytesInUse = saved.bytes; chrome.runtime.getPlatformInfo = saved.platform;
   assert.equal(reply.ok, true, reply.error);
-  assert.deepEqual(reply.data.permissions, {tabs: false, bookmarks: false, tabGroups: false, allSites: true, siteOriginCount: 0});
+  assert.deepEqual(reply.data.permissions, {tabs: false, bookmarks: false, tabGroups: false, downloads: false, allSites: true, siteOriginCount: 0});
   assert.deepEqual(reply.data.scripts, {count: null, scope: 'unknown', matchCount: null, excludeCount: null, matchesSettings: null});
   assert.deepEqual(reply.data.storage, {bytesInUse: null, stateBytes: null, restoreUndoBytes: null});
   assert.deepEqual([reply.data.browser.os, reply.data.browser.arch], ['', '']);

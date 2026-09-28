@@ -366,7 +366,7 @@ Callers write a `ClipboardItem` with `text/html` and `text/plain`, and fall back
 - **`diagnostics.get`** (workbench only) returns a JSON-safe object:
   - version, the user agent and brands, platform and language;
   - settings, with `holdOrigins` and `holdExceptions` reported as counts;
-  - permission booleans for `tabs`, `bookmarks`, `tabGroups` and all sites, plus the count of per-site origins;
+  - permission booleans for `tabs`, `bookmarks`, `tabGroups`, `downloads` (0.4.0) and all sites, plus the count of per-site origins;
   - script registrations (count and scope);
   - storage bytes in use, collection count, total link count, and the time.
 
@@ -383,7 +383,7 @@ Callers write a `ClipboardItem` with `text/html` and `text/plain`, and fall back
  settings: {holdKey, holdOrigins, holdTrigger, holdScope, holdExceptions, welcomeSeen, exportPrefix,
    exportTimestamp, exportTimestampFormat, theme, appearance, afterDrag, afterDragFormat,
    contentOnly, skipSaved, otherFields} | null,
- permissions: {tabs, bookmarks, tabGroups, allSites, siteOriginCount},
+ permissions: {tabs, bookmarks, tabGroups, downloads, allSites, siteOriginCount},
  scripts: {count, scope: 'none'|'sites'|'all'|'other'|'mixed'|'unknown', matchCount, excludeCount, matchesSettings},
  storage: {bytesInUse, stateBytes, restoreUndoBytes},
  data: {readable, collections, links, undoLinks}}

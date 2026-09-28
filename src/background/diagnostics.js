@@ -49,6 +49,7 @@ async function permissionsReport(allSites) {
   const origins = Array.isArray(grants?.origins) ? grants.origins : [];
   return {
     tabs: permissions.includes('tabs'), bookmarks: permissions.includes('bookmarks'), tabGroups: permissions.includes('tabGroups'),
+    downloads: permissions.includes('downloads'),
     allSites, siteOriginCount: origins.filter(origin => !ALL_SITES.includes(origin)).length,
   };
 }

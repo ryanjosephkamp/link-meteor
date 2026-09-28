@@ -398,7 +398,7 @@ try {
   assert.doesNotMatch(diagnosticsText, /:\/\/|https?:|mailto:|tel:/i);
   assert.equal(diagnostics.version, VERSION);
   assert.deepEqual(diagnostics.data, {readable: true, collections: everything.collections.length, links: everything.collections.reduce((n, item) => n + item.links.length, 0), undoLinks: 0});
-  assert.deepEqual(diagnostics.permissions, {tabs: false, bookmarks: false, tabGroups: false, allSites: false, siteOriginCount: 0});
+  assert.deepEqual(diagnostics.permissions, {tabs: false, bookmarks: false, tabGroups: false, downloads: false, allSites: false, siteOriginCount: 0});
   assert.deepEqual([diagnostics.settings.theme, diagnostics.settings.holdOrigins, diagnostics.settings.exportPrefix, diagnostics.scripts.scope], ['meteor', 0, 0, 'none']);
   assert.ok(diagnostics.storage.bytesInUse > 0 && diagnostics.browser.userAgent && diagnostics.browser.brands.length);
   await writeFile(resolve(evidence, 'lane-diagnostics.json'), diagnosticsText);

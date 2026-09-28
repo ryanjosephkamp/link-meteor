@@ -338,7 +338,7 @@ export function captureReport(report, { source = 'workbench', key = '', createdA
 /* Saving the tabs themselves (0.4.0) ---------------------------------------------------- */
 function tabsHeadline(report) {
   const saved = report.saved ?? report.capturedCount ?? 0;
-  return saved === 1 ? 'Saved 1 tab as a link' : `Saved ${plural(saved, 'tab')} as links`;
+  return !saved ? 'No tabs were saved' : saved === 1 ? 'Saved 1 tab as a link' : `Saved ${plural(saved, 'tab')} as links`;
 }
 // Why tabs were skipped: "2 skipped: not web pages". The background's notices say it the same way.
 function tabsSkipped(report) {

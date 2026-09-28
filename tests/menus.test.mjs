@@ -306,6 +306,9 @@ test('capture.tabs: scopes, a chosen collection, Skip saved, hidden and closed t
   assert.deepEqual(mixed.report.results.map((r) => [r.tabId, r.status]), [[6, 'success'], [7, 'denied'], [404, 'error']]);
   assert.equal(mixed.report.results[1].error, 'Chrome hides this tab’s address from Link Meteor.');
   tabs.pop();
+  const {tabsSummary} = await import('../src/background/tabs.js');
+  assert.equal(tabsSummary(mixed.report, {name: 'X'}), 'Saved 1 tab as a link in “X”; 1 skipped: address hidden by Chrome; 1 skipped: closed before saving.');
+  assert.equal(tabsSummary({saved: 0, skipped: 3, repeated: 1, unsupported: 2, results: []}), 'No tabs were saved; 2 skipped: not web pages; 2 skipped: already saved; 1 skipped: a repeated address.');
   await refused({type: 'capture.tabs', scope: 'selected'}, /Select at least one tab/);
   await refused({type: 'capture.tabs', scope: 'somewhere'}, /'current', 'selected', 'window' or 'all'/);
   await refused({type: 'capture.tabs', scope: 'selected', tabIds: ['2']}, /at most 20,000 tabs/);

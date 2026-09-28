@@ -81,7 +81,8 @@ export function tabsSummary(report, {name = '', single = false} = {}) {
     return 'This tab was closed before it could be saved.';
   }
   const saved = report.saved || 0;
-  return `${[saved === 1 ? `Saved 1 tab as a link${where}` : `Saved ${n(saved)} tabs as links${where}`, ...skippedParts(report)].join('; ')}.`;
+  const head = !saved ? 'No tabs were saved' : saved === 1 ? `Saved 1 tab as a link${where}` : `Saved ${n(saved)} tabs as links${where}`;
+  return `${[head, ...skippedParts(report)].join('; ')}.`;
 }
 
 // capture.tabs {scope, tabIds?, collectionId?} from the workbench, which lists the tabs of Pick

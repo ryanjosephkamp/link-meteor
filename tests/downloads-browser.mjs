@@ -73,7 +73,8 @@ try {
   await ui.evaluate(() => { window.__answer = true; });
   await ui.locator('#downloads-start').click();
   await until(async () => /^Download access is needed/.test(await ui.locator('#error').innerText().catch(() => '')), 'the background’s refusal');
-  assert.deepEqual(await sentTypes(), ['downloads.start']);
+  // Only the download request: the workbench may also refresh its view of your tabs after an access change.
+  assert.deepEqual((await sentTypes()).filter((type) => type.startsWith('downloads.')), ['downloads.start']);
   assert.deepEqual(await requests(), [{request: {permissions: ['downloads']}, activeGesture: true}]);
   assert.equal(await ui.locator('#downloads-access').isVisible(), true, 'the reason stays while Chrome reports no access');
   assert.equal(await ui.locator('#downloads-progress').isHidden(), true); assert.equal(await ui.locator('#downloads-start').isEnabled(), true);

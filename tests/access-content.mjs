@@ -3,7 +3,9 @@
 // extension. Pointer, keyboard and click events are real browser input; every Link Meteor message
 // is answered by the stub, so this checks the page script's own behavior, not the background.
 // 0.4.0: After a drag (card, copy in every format, add with Undo), the notice, content links only
-// with Include them, the filters, already saved, Skip saved and rich copy on the clipboard.
+// with Include them, the filters, already saved, Skip saved and rich copy on the clipboard. Release
+// candidate 2: the menus' page messages (the right-clicked link, the selection's links and the
+// notice after a menu save or copy).
 // Writes access-content-results.json to LINK_METEOR_EVIDENCE_DIR (default .scratch/evidence-access-capture).
 import assert from 'node:assert/strict';
 import {mkdir, readFile, writeFile} from 'node:fs/promises';
@@ -43,8 +45,9 @@ function stub({platform, trigger = 'modifier', key = 'z'}) {
         }
         case 'capture.undoAdd': {
           if (window.__stub.refuseUndo) throw new Error('These links changed since they were added, so Undo is no longer possible. Remove them in the full view instead.');
-          if (message.batchId !== lastAdd.batchId || message.collectionId !== lastAdd.collectionId) throw new Error('Unknown add');
-          return {count: lastAdd.count};
+          const add = window.__stub.lastAdd || lastAdd;
+          if (message.batchId !== add.batchId || message.collectionId !== add.collectionId) throw new Error('Unknown add');
+          return {count: add.count};
         }
         case 'capture.preference': return {contentOnly: message.contentOnly ?? true, skipSaved: message.skipSaved ?? false};
         case 'capture.copy': return message.format === 'rich'
@@ -65,7 +68,9 @@ function stub({platform, trigger = 'modifier', key = 'z'}) {
       storage: {onChanged: {addListener() {}, removeListener() {}}},
     };
     window.chrome = chrome; // writable, not configurable
-    window.__stub = {sent, clicks, downs, held, deliver: (message) => listener?.(message)};
+    // deliver: a message the background sends without waiting; ask: one it waits for (the menus' requests).
+    window.__stub = {sent, clicks, downs, held, deliver: (message) => listener?.(message),
+      ask: (message) => new Promise((resolve) => { listener?.(message, {id: 'stub'}, resolve); setTimeout(() => resolve('no answer'), 100); })};
     // Page listeners in the bubble phase: they see what the page would see.
     document.addEventListener('click', (event) => { clicks.push({target: event.target.id || event.target.tagName, meta: event.metaKey, ctrl: event.ctrlKey, prevented: event.defaultPrevented}); if (event.target.closest?.('a')) event.preventDefault(); });
     document.addEventListener('pointerdown', (event) => { downs.push({target: event.target.id || event.target.tagName, prevented: event.defaultPrevented}); });
@@ -653,6 +658,102 @@ try {
   await windows.keyboard.down('Control'); await windows.mouse.move(wbib.x + 4, wbib.y + 4); await windows.mouse.down(); await windows.mouse.move(wbib.x + wbib.width - 4, wbib.y + wbib.height - 4, {steps: 12}); await windows.mouse.up(); await windows.keyboard.up('Control');
   await windows.waitForFunction(() => document.getElementById('link-meteor-overlay')?.shadowRoot.querySelector('.count')?.textContent === '5 links selected');
   pass('On Windows and Linux the modifier is Ctrl, not Command');
+
+  /* Release candidate 2: the menus' page messages. */
+  const menuPage = await context.newPage();
+  await load(menuPage, '/index.html', {platform: 'MacIntel', trigger: 'letter', key: 'q'});
+  await menuPage.bringToFront();
+  const ask = (message) => menuPage.evaluate((message) => window.__stub.ask(message), message);
+  const inMenu = (fn, arg) => menuPage.evaluate(([source, arg]) => new Function('root', 'arg', `return (${source})(root, arg)`)(document.getElementById('link-meteor-overlay')?.shadowRoot, arg), [fn.toString(), arg]);
+  const menuShadow = menuPage.locator('#link-meteor-overlay');
+  await menuPage.evaluate(() => {
+    document.body.innerHTML = `<main id="menu-fixture" style="font:16px/24px sans-serif;padding:20px;width:640px">
+      <p id="para-one">Read <a id="dup-one" href="/same">First text</a> and <a href="/other">Other link</a> here.</p>
+      <p id="para-two">Then <a id="dup-two" href="/same">Second
+        text</a>, <span id="menu-host"></span>, and <a href="mailto:lab@example.org">Email the lab</a>.</p>
+      <p><a id="outside" href="/outside">Outside the selection</a></p>
+      <iframe id="menu-frame" src="/frame.html" style="width:400px;height:80px;border:0"></iframe></main>`;
+    document.getElementById('menu-host').attachShadow({mode: 'open'}).innerHTML = '<a id="shadow-menu" href="/shadow-menu">Shadow <b>menu</b> link</a>';
+  });
+  await menuPage.waitForFunction(() => document.getElementById('menu-frame').contentDocument?.getElementById('frame-link'));
+  const rightClick = async (selector) => { const box = await menuPage.locator(selector).boundingBox(); await menuPage.mouse.click(box.x + 4, box.y + box.height / 2, {button: 'right'}); };
+
+  // The right-clicked link: recorded by a contextmenu listener, answered when its address matches.
+  await rightClick('#dup-two');
+  let answer = await ask({type: 'content.contextLink', url: fixture.base + '/same'});
+  assert.equal(answer.ok, true);
+  assert.deepEqual(answer.data.link, {anchorText: 'Second text', accessibleLabel: '', url: fixture.base + '/same', originalHref: '/same', sourceUrl: fixture.base + '/index.html', sourceTitle: 'Meteor Research Lab — deterministic fixture', frameUrl: fixture.base + '/index.html'}, 'the right-clicked one of two links with that address, with its text collapsed');
+  answer = await ask({type: 'content.contextLink', url: fixture.base + '/other'});
+  assert.equal(answer.data.link.anchorText, 'Other link', 'another address: the first link with it');
+  await rightClick('#outside');
+  assert.equal((await ask({type: 'content.contextLink', url: fixture.base + '/same'})).data.link.anchorText, 'First text', 'a recorded link with another address is not used');
+  await menuPage.locator('#menu-host').evaluate((host) => host.shadowRoot.getElementById('shadow-menu').dispatchEvent(new MouseEvent('contextmenu', {bubbles: true, composed: true, button: 2})));
+  assert.equal((await ask({type: 'content.contextLink', url: fixture.base + '/shadow-menu'})).data.link.anchorText, 'Shadow menu link', 'through an open shadow root');
+  answer = await ask({type: 'content.contextLink', url: fixture.base + '/frame-source'});
+  assert.deepEqual([answer.data.link.anchorText, answer.data.link.frameUrl], ['Source inside a frame', fixture.base + '/frame.html'], 'in a same-origin frame, by address');
+  assert.deepEqual(await ask({type: 'content.contextLink', url: 'https://nowhere.example/'}), {ok: true, data: {link: null}}, 'no such link: nothing is invented');
+  assert.equal(await card(menuPage).count(), 0, 'answering shows nothing');
+  pass('content.contextLink answers the right-clicked link’s fields, or the first link with that address (page, shadow root, frame), or null');
+
+  // The selection's links: every link that intersects it, through open shadow roots and same-origin frames.
+  const selectionTexts = async () => { const reply = await ask({type: 'content.selectionLinks'}); assert.equal(reply.ok, true); return reply.data.links.map((link) => link.anchorText); };
+  await menuPage.evaluate(() => {
+    const two = document.getElementById('para-two'), range = document.createRange();
+    range.setStart(document.getElementById('para-one').firstChild, 2);
+    range.setEnd([...two.childNodes].find((node) => node.nodeType === 3 && node.textContent.includes(', and')), 2);
+    getSelection().removeAllRanges(); getSelection().addRange(range);
+  });
+  assert.deepEqual(await selectionTexts(), ['First text', 'Other link', 'Second text', 'Shadow menu link'], 'links partly or wholly selected, and a selected shadow host’s links');
+  await menuPage.evaluate(() => { const text = document.getElementById('dup-one').firstChild; getSelection().setBaseAndExtent(text, 1, text, 4); });
+  assert.deepEqual(await selectionTexts(), ['First text'], 'a few letters of one link');
+  await menuPage.locator('#menu-host').evaluate((host) => { const bold = host.shadowRoot.querySelector('b').firstChild; getSelection().setBaseAndExtent(bold, 0, bold, 4); });
+  assert.deepEqual(await selectionTexts(), ['Shadow menu link'], 'a selection inside a shadow root');
+  await menuPage.evaluate(() => { getSelection().removeAllRanges(); const doc = document.getElementById('menu-frame').contentDocument, link = doc.getElementById('frame-link'); doc.getSelection().selectAllChildren(link); });
+  assert.deepEqual(await selectionTexts(), ['Source inside a frame'], 'a selection in a same-origin frame');
+  await menuPage.evaluate(() => { document.getElementById('menu-frame').contentDocument.getSelection().removeAllRanges(); getSelection().removeAllRanges(); });
+  assert.deepEqual(await selectionTexts(), [], 'no selection, no links');
+  pass('content.selectionLinks answers every link that intersects the selection: in the page, a shadow root and a same-origin frame');
+
+  // The notice after a menu save: no selection or card, the page stays usable, Undo and Show links.
+  answer = await ask({type: 'content.notice', text: 'Added 1 link to “Thesis sources”.', added: {collectionId: 'c1', batchId: 'menu-batch', name: 'Thesis sources'}});
+  assert.deepEqual(answer, {ok: true, data: {}});
+  await menuPage.waitForFunction(() => document.getElementById('link-meteor-overlay')?.shadowRoot.querySelector('.notice-text')?.textContent === 'Added 1 link to “Thesis sources”.');
+  assert.deepEqual(await inMenu((root) => [...root.querySelectorAll('.notice button')].filter((b) => !b.hidden).map((b) => b.getAttribute('aria-label') || b.textContent)), ['Undo', 'Show links', 'Close notice']);
+  assert.deepEqual(await inMenu((root) => ['.shield', '.hint', '.bar', '.rect', '.badge'].map((selector) => getComputedStyle(root.querySelector(selector)).display)), ['none', 'none', 'none', 'none', 'none'], 'no selection layer and no card');
+  await menuPage.evaluate(() => window.__stub.clicks.splice(0));
+  await menuPage.locator('#outside').click();
+  assert.deepEqual((await menuPage.evaluate(() => window.__stub.clicks.splice(0))).map((c) => c.target), ['outside'], 'the page takes clicks while the notice shows');
+  await menuPage.evaluate(() => { window.__stub.lastAdd = {collectionId: 'c1', batchId: 'menu-batch', count: 1}; });
+  await menuShadow.getByRole('button', {name: 'Undo', exact: true}).click();
+  await menuPage.waitForFunction(() => /^Removed/.test(document.getElementById('link-meteor-overlay')?.shadowRoot.querySelector('.notice-text')?.textContent || ''));
+  assert.equal(await inMenu((root) => root.querySelector('.notice-text').textContent), 'Removed 1 link from “Thesis sources”.');
+  assert.deepEqual((await sent(menuPage, 'capture.undoAdd')).at(-1), {type: 'capture.undoAdd', collectionId: 'c1', batchId: 'menu-batch'});
+  await ask({type: 'content.notice', text: 'Saved 3 tabs as links in “Thesis sources”; 1 skipped: not a web page.', added: {collectionId: 'c1', batchId: 'tabs-batch', name: 'Thesis sources'}});
+  assert.equal(await menuPage.evaluate(() => document.querySelectorAll('#link-meteor-overlay').length), 1, 'a new notice replaces the last one');
+  await menuShadow.getByRole('button', {name: 'Show links', exact: true}).click();
+  await menuPage.waitForFunction(() => window.__stub.sent.some((m) => m.type === 'ui.open' && m.batchId === 'tabs-batch'));
+  assert.deepEqual((await sent(menuPage, 'ui.open')).at(-1), {type: 'ui.open', view: 'links', batchId: 'tabs-batch'}, 'Show links opens the full view at those links');
+  await menuPage.keyboard.press('Escape');
+  assert.equal(await card(menuPage).count(), 0, 'Escape closes the notice');
+  pass('content.notice after a menu save: the notice alone, the page still takes clicks, Undo sends capture.undoAdd, Show links opens the full view at that save');
+
+  // The notice after Copy link text + URL: the text goes on the clipboard, with no Undo or Show links.
+  await menuPage.evaluate(() => navigator.clipboard.writeText('reset'));
+  const tsv = `Anchor text\tURL\r\nSecond text\t${fixture.base}/same\r\n`;
+  await ask({type: 'content.notice', text: 'Copied anchor text and URL as two spreadsheet columns.', copy: tsv});
+  await menuPage.waitForFunction(() => document.getElementById('link-meteor-overlay')?.shadowRoot.querySelector('.notice-text')?.textContent.startsWith('Copied'));
+  assert.equal((await menuPage.evaluate(() => navigator.clipboard.readText())).replace(/\r\n/g, '\n'), tsv.replace(/\r\n/g, '\n'));
+  assert.deepEqual(await inMenu((root) => [...root.querySelectorAll('.notice button')].filter((b) => !b.hidden).map((b) => b.getAttribute('aria-label') || b.textContent)), ['Close notice']);
+  // Without the async clipboard (a plain-HTTP page), the copy goes through the hidden text area.
+  await menuPage.evaluate(() => { window.__writeText = navigator.clipboard.writeText; navigator.clipboard.writeText = () => Promise.reject(new Error('unavailable')); });
+  await ask({type: 'content.notice', text: 'Copied anchor text and URL as two spreadsheet columns.', copy: 'Anchor text\tURL\r\nFallback\thttps://example.org/\r\n'});
+  await menuPage.waitForFunction(() => document.getElementById('link-meteor-overlay')?.shadowRoot.querySelector('.notice-text')?.textContent.startsWith('Copied'));
+  await menuPage.evaluate(() => { navigator.clipboard.writeText = window.__writeText; });
+  assert.match(await menuPage.evaluate(() => navigator.clipboard.readText()), /^Anchor text\tURL\r?\nFallback\thttps:\/\/example\.org\//);
+  await menuShadow.getByRole('button', {name: 'Close notice', exact: true}).click();
+  assert.equal(await card(menuPage).count(), 0);
+  pass('content.notice after Copy link text + URL puts the two columns on the clipboard (also through the text-area fallback) and offers only Close');
+  await menuPage.close();
 
   result.result = 'PASS';
 } catch (error) {

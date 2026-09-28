@@ -1,6 +1,6 @@
 // Access and capture (0.3.0), and the capture card's 0.4.0 messages end to end (already saved, Skip
 // saved, Undo after adding right away, the rich copy payload, content links only on Capture this
-// page), on the loaded extension, with no optional grants: Chrome for Testing,
+// page), and saving tabs as links (0.4.0 release candidate 2), on the loaded extension, with no optional grants: Chrome for Testing,
 // headless, in a fresh temporary profile under .scratch/ (deleted afterwards), the real unpacked
 // build, and Chrome's own toolbar action through tests/helpers/action.mjs for temporary page
 // access. The workbench in its own window stands in for the side panel. Native permission prompts
@@ -383,6 +383,87 @@ try {
   assert.match(await rpcError({type: 'capture.includeLeftOut', batchId: captured.batchId}), /no longer kept/, 'only once');
   await setCapture({contentOnly: false});
   pass('Capture this page with content links only leaves out 5 links in header (shadow root), nav, aside (frame) and footer, reports them, and Include them adds them once', {captured: 37, leftOut: 5});
+
+  /* 4c. Save tabs as links (release candidate 2): three fixture tabs, each made readable by a toolbar
+     press on it (this profile has no tabs permission), saved with their own titles and addresses. */
+  const tabsBefore = await pages();
+  const tabPaths = ['/empty.html', '/frame.html', '/index.html?tab=3'];
+  const tabTitles = {'/empty.html': 'Empty fixture', '/frame.html': 'Embedded fixture', '/index.html?tab=3': 'Meteor Research Lab — deterministic fixture'};
+  for (const path of tabPaths) {
+    const {targetId} = await browser.newTab(fixture.base + path);
+    await sleep(700);
+    await browser.send('Target.activateTarget', {targetId});
+    assert.equal(await browser.clickAction(fixture.base + path), 'clicked');
+  }
+  await sleep(800);
+  const listed = (await rpc({type: 'tabs.list'})).tabs;
+  const fixtureTabs = tabPaths.map((path) => listed.find((tab) => tab.url === fixture.base + path));
+  assert.ok(fixtureTabs.every(Boolean), `each pressed tab shows its address: ${JSON.stringify(listed.map((tab) => tab.url))}`);
+  const hiddenTab = listed.find((tab) => !tab.url);
+  const labTabs = (await rpc({type: 'state.mutate', action: {type: 'collection.create', name: 'Lab tabs'}})).activeCollectionId;
+  const {report: tabsReport} = await rpc({type: 'capture.tabs', scope: 'selected', tabIds: [...fixtureTabs.map((tab) => tab.id), ...(hiddenTab ? [hiddenTab.id] : [])]});
+  assert.deepEqual([tabsReport.kind, tabsReport.saved, tabsReport.skipped, tabsReport.unsupported], ['tabs', 3, 0, 0]);
+  const savedTabs = (await state()).collections.find((c) => c.id === labTabs).links;
+  const fields = ({anchorText, accessibleLabel, url, originalHref, sourceUrl, sourceTitle, frameUrl}) => ({anchorText, accessibleLabel, url, originalHref, sourceUrl, sourceTitle, frameUrl});
+  assert.deepEqual(savedTabs.map(fields), tabPaths.map((path) => ({anchorText: tabTitles[path], accessibleLabel: '', url: fixture.base + path, originalHref: fixture.base + path, sourceUrl: fixture.base + path, sourceTitle: tabTitles[path], frameUrl: ''})));
+  assert.deepEqual([...new Set(savedTabs.map((link) => link.batchId))], [tabsReport.batchId], 'one batch for the save');
+  if (hiddenTab) assert.deepEqual([tabsReport.results.at(-1).status, tabsReport.results.at(-1).error], ['denied', 'Chrome hides this tab’s address from Link Meteor.']);
+  pass('Save tabs as links (capture.tabs): three fixture tabs become three links with their titles and addresses, in one batch; a tab Chrome hides is reported, not saved', {saved: savedTabs.length, hidden: !!hiddenTab});
+
+  // The workbench: The tabs themselves, with This page.
+  await js(ui, `document.querySelector('input[name="capture-what"][value="tabs"]').click(); true`);
+  await until(async () => (await text('capture-label')) === 'Save this tab as a link', 'the button for This page');
+  assert.match(await text('scope-preview'), /Saves the tab’s title and address as one link\.$/);
+  const inventoryNow = await rpc({type: 'tabs.list'});
+  const targetUrl = inventoryNow.tabs.find((tab) => tab.id === inventoryNow.targetTabId)?.url;
+  await click('capture');
+  await until(async () => /^Saved 1 tab as a link/.test(await text('capture-report')), 'this tab saved');
+  assert.match(await text('notice'), /^Saved 1 tab as a link\./);
+  const thisTab = (await state()).collections.find((c) => c.id === labTabs).links.at(-1);
+  assert.equal(thisTab.anchorText, tabTitles[new URL(thisTab.url).pathname + new URL(thisTab.url).search]);
+  if (targetUrl) assert.equal(thisTab.url, targetUrl);
+  await width(ui, 320);
+  assert.equal(await js(ui, 'document.documentElement.scrollWidth > innerWidth'), false);
+  assert.equal(await js(ui, `(() => { const label = document.getElementById('capture-label'); return label.scrollWidth <= label.clientWidth; })()`), true, 'the button’s words are not cut short at 320 px');
+  await shot(ui, 'access-tabs-this-page-320.png');
+  await width(ui, 1280);
+  pass('The tabs themselves with This page: the button says Save this tab as a link, saves the current tab, and fits at 320 px');
+
+  // Pick tabs, with Chrome's tab-access answer stubbed to allow (simulated accept): the three
+  // tabs' addresses come from the real toolbar presses above.
+  await js(ui, `(() => { window.__requests = []; chrome.permissions.request = async (request) => { window.__requests.push(request); return true; }; return true; })()`);
+  await js(ui, `document.querySelector('input[name="scope"][value="selected"]').click(); true`);
+  await until(() => visible('tab-picker'), 'tab picker');
+  await click('tabs-none');
+  for (const tab of fixtureTabs) await js(ui, `document.querySelector('#tab-options input[data-tab-id="${tab.id}"]').click(); true`);
+  await until(async () => (await text('capture-label')) === 'Save 3 tabs as links', 'the button counts the picked tabs');
+  await shot(ui, 'access-tabs-pick-three.png');
+  await click('capture');
+  await until(async () => /^Saved 3 tabs as links/.test(await text('capture-report')), 'three tabs saved from the workbench');
+  assert.match(await text('notice'), /^Saved 3 tabs as links\./);
+  assert.ok((await js(ui, 'window.__requests')).every((request) => JSON.stringify(request) === '{"permissions":["tabs"]}'), 'only tab access is asked for, never a site');
+  assert.deepEqual((await state()).collections.find((c) => c.id === labTabs).links.slice(-3).map((link) => link.anchorText), tabPaths.map((path) => tabTitles[path]));
+  pass('Pick tabs: three tabs chosen, the button says Save 3 tabs as links, and the report says Saved 3 tabs as links (tab access: simulated accept)');
+
+  // Save all tabs in this window from the toolbar menu, without tab access: the menu leaves this open
+  // intent and opens the full view, which has the choice ready, says why, and asks in the save click.
+  await js(ui, `chrome.storage.session.set({linkMeteorOpenIntent: {view: 'links', batchId: '', what: 'tabs', scope: 'window', createdAt: new Date().toISOString()}}).then(() => true)`);
+  await js(ui, 'location.reload(); true');
+  await sleep(1500);
+  await until(() => js(ui, `!!document.getElementById('collection-heading') && !!document.querySelector('input[name="capture-what"][value="tabs"]')?.checked`).catch(() => false), 'The tabs themselves chosen from the intent');
+  await declinePrompts();
+  assert.equal(await js(ui, `document.querySelector('input[name="scope"]:checked').value`), 'window');
+  await until(async () => /needs Chrome to show Link Meteor your open tabs’ titles and addresses/.test(await text('notice')), 'the reason');
+  assert.match(await text('capture-label'), /^Save \d+ tabs? as links?$/);
+  assert.equal(await js(ui, 'document.activeElement?.id'), 'capture', 'focus is on the save button');
+  await shot(ui, 'access-tabs-from-menu.png');
+  await click('capture');
+  await until(async () => /Tab access was declined/.test(await text('error')), 'declined');
+  assert.deepEqual(await js(ui, 'window.__requests'), [{permissions: ['tabs']}], 'the save click asks for tab access');
+  assert.deepEqual(await js(ui, `chrome.storage.session.get('linkMeteorOpenIntent')`), {}, 'the intent is applied once');
+  pass('Save all tabs in this window without tab access: the full view opens with The tabs themselves and This window, says why, and asks in the save click (simulated decline)');
+  await js(ui, `document.querySelector('input[name="capture-what"][value="links"]').click(); document.querySelector('input[name="scope"][value="current"]').click(); true`);
+  await closeOpened(tabsBefore);
 
   /* 5. The workbench opener's tiers, with local fixture URLs. */
   const seed = async (name, n) => {

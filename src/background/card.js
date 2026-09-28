@@ -85,7 +85,8 @@ export function appendLinks(links, {collectionId, skipSaved, missing = MISSING_D
 }
 
 // Remembers an add from a page, so that page's Undo can remove exactly that batch (capture.undoAdd).
-function rememberAdd(record) {
+// Saves from Link Meteor's menus use it too, with the tab whose notice offers Undo.
+export function rememberAdd(record) {
   return serial(async () => {
     const adds = (await chrome.storage.session.get(RECENT_ADDS_KEY))[RECENT_ADDS_KEY] || [];
     await chrome.storage.session.set({[RECENT_ADDS_KEY]: [...adds, record].slice(-RECENT_ADDS)});

@@ -39,12 +39,13 @@ Deleting a collection removes it from the saved state. Link removal keeps one un
 | Optional `tabs` | Preview and choose open tabs for multi-tab/window capture. |
 | Optional HTTP(S) site access | For selected tabs, Capture this page after its temporary access has ended, or hold-key drag, Chrome asks for access one site at a time. You can instead make one explicit choice, **Allow on all sites**: on the welcome card, the Site access switch, or a capture Chrome hid from Link Meteor. Hold-key drag and capture then work on every site except the ones you exclude. |
 | Optional `tabGroups` | Name a tab group after your collection when you choose to open links as a group. Without it, the tabs still open in an unnamed group. |
+| Optional `downloads` | Save the files behind links you choose (a PDF, an image, a document) into your Downloads folder, as if you had clicked each link. Asked the first time you download. Chrome describes it as "Manage your downloads"; Link Meteor never reads, opens, changes or removes your other downloads. |
 | Optional `bookmarks` | Create the bookmark folder you request, or add links to a folder you choose. To show the folder picker, Link Meteor reads your bookmark folder names, and it reads the chosen folder's links to skip ones already there. It never changes or removes other bookmarks. |
 | `unlimitedStorage` | Lets large collections, and the Undo kept after a restore, grow past Chrome's default 10 MB extension storage. No prompt; the data stays in this browser. |
 
 Multi-tab site access and hold-mode site access are requested when needed. All-sites access is asked for only through the explained choice above, never at install; declining keeps the one-site-at-a-time route. Chrome controls the grant UI and can remove access, including through its own site-access menu. Removing all-sites access (with Link Meteor's Remove Chrome's access button or Chrome's own controls) can also remove Chrome's access to sites you allowed one at a time; Link Meteor then turns hold-key drag off wherever it no longer has access, and asks again when you next capture or turn a site on. Turning off hold mode stops its automatic content-script registration; it does not revoke the broader site permission that may also support multi-tab capture. You can manage/revoke site access through Chrome's extension controls. Revoked origins are removed from hold-mode settings when the permission event is processed.
 
-The extension does not request history, cookies, passwords, clipboard reading, network interception, native messaging or incognito access.
+Downloading a file visits its address with your browser's usual cookies, exactly like clicking the link, and only when you ask. The extension does not request history, cookies, passwords, clipboard reading, network interception, native messaging or incognito access.
 
 ## Actions that move data
 

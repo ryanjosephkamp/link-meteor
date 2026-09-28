@@ -16,7 +16,12 @@ export const FORMAT_EXTENSIONS = Object.freeze({ csv: 'csv', tsv: 'tsv', text: '
 // Columns whose web and mail addresses are clickable in a formatted workbook.
 const URL_COLUMNS = new Set(['url', 'originalHref', 'sourceUrl', 'frameUrl']);
 
+// Custom columns (0.4.0) are export keys `field:<id>`, headed by the column's name.
+const FIELD_KEY = 'field:';
+// The column headings for the export in progress: set by makeExport, which runs synchronously.
+let labels = LABELS;
 function cell(row, key) {
+  if (key.startsWith(FIELD_KEY)) return String(row.fields?.[key.slice(FIELD_KEY.length)] ?? '');
   const value = row[key];
   return key === 'tags' ? (Array.isArray(value) ? value.join(', ') : '') : String(value ?? '');
 }
@@ -126,7 +131,7 @@ function aboutBlock(about, rows, columns) {
   if (!Array.isArray(filters) || filters.some(item => typeof item !== 'string')) throw new Error('Export about.filters must be a list of strings');
   if (typeof version !== 'string') throw new Error('Export about.version must be a string');
   const aboutColumns = about.columns ?? columns;
-  if (!Array.isArray(aboutColumns) || aboutColumns.some(key => !LABELS.has(key))) throw new Error('Export about.columns must list export columns');
+  if (!Array.isArray(aboutColumns) || aboutColumns.some(key => !labels.has(key))) throw new Error('Export about.columns must list export columns');
   return { exportedAt, collection, count, view, filters: [...filters], columns: [...aboutColumns], version };
 }
 
@@ -149,7 +154,7 @@ function aboutRows(about, note) {
     ['Links', String(about.count)],
     ['View', about.view],
     ...(about.filters.length ? about.filters.map(filter => ['Filter', filter]) : [['Filters', 'None']]),
-    ['Columns', about.columns.map(key => LABELS.get(key)).join(', ')],
+    ['Columns', about.columns.map(key => labels.get(key)).join(', ')],
     ['Cells', 'Every cell is text. Nothing is a formula, number or date.'],
     ['Link Meteor version', about.version],
   ];
@@ -169,13 +174,16 @@ function formattedXlsx(rows, columns, headers, about) {
 // Without about, every format is exactly what 0.2.2 produced. With about ({exportedAt: Date,
 // collection, count, view, filters, columns, version}), XLSX is formatted and gains an About
 // sheet, and JSON becomes {about, rows}; the other formats are unchanged.
-export function makeExport(rows, { format, columns = ['anchorText', 'url'], about } = {}) {
+// `fields` lists the collection's custom columns [{id, name}], so `field:<id>` columns can be exported.
+export function makeExport(rows, { format, columns = ['anchorText', 'url'], about, fields = [] } = {}) {
   if (!Array.isArray(rows)) throw new Error('rows must be an array');
   if (!FORMATS.has(format)) throw new Error(`Unsupported export format: ${format}`);
   if (!Array.isArray(columns) || columns.length === 0) throw new Error('Export columns must be a nonempty array');
-  for (const key of columns) if (!LABELS.has(key)) throw new Error(`Unsupported export column: ${key}`);
+  if (!Array.isArray(fields)) throw new Error('Export fields must be an array');
+  labels = new Map([...LABELS, ...fields.map(field => [FIELD_KEY + field.id, String(field.name)])]);
+  for (const key of columns) if (!labels.has(key)) throw new Error(`Unsupported export column: ${key}`);
   if (new Set(columns).size !== columns.length) throw new Error('Export columns must be unique');
-  const headers = columns.map(key => LABELS.get(key));
+  const headers = columns.map(key => labels.get(key));
   if (about !== undefined) {
     const block = aboutBlock(about, rows, columns);
     if (format === 'json') return { data: JSON.stringify({ about: aboutJson(block), rows }, null, 2), mime: 'application/json;charset=utf-8', extension: 'json' };

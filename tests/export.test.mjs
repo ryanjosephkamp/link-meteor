@@ -348,3 +348,13 @@ test('rich links: clickable HTML with escaped text, the URL for empty anchors, a
   assert.equal(rich.text, 'Heat <maps> & "shade" (https://example.org/a?b=1&c=2)\nhttps://example.org/empty\nWrite to us (mailto:team@example.org)');
   assert.throws(() => richLinks([{ anchorText: 'x', url: 'javascript:alert(1)' }]), /Unsupported link URL/);
 });
+
+test('custom columns export as field:<id>, headed by their names, in every format', () => {
+  const fields = [{ id: 'f-pi', name: 'Principal investigator' }, { id: 'f-due', name: 'Deadline' }];
+  const rows = [{ anchorText: 'Heat lab', url: 'https://heat.example/', fields: { 'f-pi': 'Dr. Rivera', 'f-due': '=1+1' } }, { anchorText: 'Shade lab', url: 'https://shade.example/' }];
+  const columns = ['anchorText', 'url', 'field:f-pi', 'field:f-due'];
+  assert.equal(makeExport(rows, { format: 'csv', columns, fields }).data, "Anchor text,URL,Principal investigator,Deadline\r\nHeat lab,https://heat.example/,Dr. Rivera,'=1+1\r\nShade lab,https://shade.example/,,\r\n");
+  assert.match(makeExport(rows, { format: 'html', columns, fields }).data, /<th scope="col">Principal investigator<\/th>/);
+  assert.throws(() => makeExport(rows, { format: 'csv', columns: ['field:f-missing'], fields }), /Unsupported export column/);
+  assert.throws(() => makeExport(rows, { format: 'csv', columns: ['field:f-pi'] }), /Unsupported export column/, 'a custom column needs its definition');
+});

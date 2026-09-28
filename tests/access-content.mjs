@@ -603,6 +603,32 @@ try {
   await configure(CAPTURE);
   pass('Undo also works from the card after Show links; a refused Undo says why in the notice');
 
+  /* After release, highlights stay on their links while the page scrolls; unticked links are outlined. */
+  const scrolling = await context.newPage();
+  await load(scrolling, '/index.html', {platform: 'MacIntel', trigger: 'letter', key: 'q'});
+  const sbib = await scrolling.locator('#bibliography').boundingBox();
+  await scrolling.keyboard.down('q'); await scrolling.mouse.move(sbib.x + 4, sbib.y + 4); await scrolling.mouse.down(); await scrolling.mouse.move(sbib.x + sbib.width - 4, sbib.y + sbib.height - 4, {steps: 8}); await scrolling.mouse.up(); await scrolling.keyboard.up('q');
+  await scrolling.waitForFunction(() => document.getElementById('link-meteor-overlay')?.shadowRoot.querySelector('.count')?.textContent === '5 links selected');
+  // Each highlight's top edge against its link's, for the first link in the selection.
+  const place = () => scrolling.evaluate(() => {
+    const root = document.getElementById('link-meteor-overlay').shadowRoot, first = root.querySelector('.hit');
+    const link = [...document.querySelectorAll('#bibliography a[href]')][0].getClientRects()[0];
+    return {hit: Math.round(first.getBoundingClientRect().top), link: Math.round(link.top), count: root.querySelectorAll('.hit').length, off: root.querySelectorAll('.hit.off').length};
+  });
+  const placed = await place();
+  assert.equal(placed.hit, placed.link, 'the highlight starts on its link');
+  await scrolling.evaluate(() => scrollBy(0, 120));
+  await scrolling.evaluate(() => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done))));
+  const scrolled = await place();
+  assert.equal(scrolled.link, placed.link - 120, 'the page scrolled');
+  assert.equal(scrolled.hit, scrolled.link, 'the highlight moved with its link');
+  assert.equal(placed.off, 0);
+  await card(scrolling).locator('.preview input').first().uncheck();
+  await scrolling.evaluate(() => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done))));
+  assert.ok((await place()).off >= 1, 'an unticked link is outlined, not filled');
+  await scrolling.close();
+  pass('After release, highlights stay on their links while the page scrolls, and an unticked link is only outlined', {placed, scrolled});
+
   /* Page chrome is judged like HTML's landmarks: a header or footer counts only at page level. */
   const articlePage = await context.newPage();
   await load(articlePage, '/index.html', {platform: 'MacIntel', trigger: 'modifier'});

@@ -109,6 +109,20 @@
     }
     return [...anchor.getClientRects()].map(rect => intersect(project(rect),visibleClip)).filter(positive);
   }
+  // A link's rectangles now, in the page's viewport: the same frame math as collect(), walked up
+  // from the link's own frame, so highlights can stay on their links while the page scrolls.
+  function rectsNow(anchor) {
+    const frames=[];
+    try{for(let win=anchor.ownerDocument.defaultView;win&&win!==window&&win.frameElement;win=win.parent)frames.unshift(win.frameElement);}catch{return[];}
+    let transform={x:0,y:0,sx:1,sy:1},clip={left:0,top:0,right:innerWidth,bottom:innerHeight};
+    for(const element of frames){
+      const frame=element.getBoundingClientRect();
+      const sx=transform.sx*(element.offsetWidth?frame.width/element.offsetWidth:1),sy=transform.sy*(element.offsetHeight?frame.height/element.offsetHeight:1);
+      transform={x:transform.x+(frame.left+element.clientLeft)*transform.sx,y:transform.y+(frame.top+element.clientTop)*transform.sy,sx,sy};
+      clip=intersect(clip,{left:transform.x,top:transform.y,right:transform.x+element.clientWidth*sx,bottom:transform.y+element.clientHeight*sy});
+    }
+    return anchor.isConnected?geometry(anchor,transform,clip):[];
+  }
 
   function collect(regional=false) {
     const records = [], warnings = [];
@@ -213,6 +227,7 @@
       .shield{position:fixed;inset:0;pointer-events:auto;cursor:crosshair;touch-action:none}
       .rect{position:fixed;border:1.5px solid var(--k-hl);background:color-mix(in srgb,var(--k-hl) 8%,transparent);box-shadow:0 0 0 1px rgba(22,29,45,.55),inset 0 0 0 1px rgba(22,29,45,.3);border-radius:3px;pointer-events:none}
       .hit{position:fixed;background:color-mix(in srgb,var(--k-hl) 38%,transparent);outline:1px solid var(--k-edge);box-shadow:0 0 0 1px rgba(22,29,45,.22);border-radius:3px;pointer-events:none}
+      .hit.off{background:none;outline:1.5px dashed var(--k-edge);box-shadow:none}
       .badge{position:fixed;display:flex;align-items:center;gap:6px;pointer-events:none;background:var(--k-ground);color:var(--k-strong);border-radius:999px;padding:4px 10px 4px 8px;font:700 12px/1.2 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;box-shadow:0 4px 14px rgba(0,0,0,.25);white-space:nowrap}
       .badge::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--k-accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--k-accent) 22%,transparent)}
       .panel{position:fixed;pointer-events:auto;background:var(--k-ground);color:var(--k-ink);border:1px solid color-mix(in srgb,var(--k-strong) 10%,transparent);box-shadow:0 18px 50px var(--k-shadow-45),0 2px 6px var(--k-shadow-25);font:400 13px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;border-radius:14px;max-width:calc(100vw - 24px);-webkit-font-smoothing:antialiased}
@@ -300,8 +315,17 @@
     const state={close,progress,idle:()=>!$('.notice').hidden&&bar.style.display!=='block'};active=state;
     for(const button of shadow.querySelectorAll('button[data-key]'))button.setAttribute('aria-keyshortcuts',button.dataset.key.toUpperCase());
 
+    // After release, highlights stay on their links as the page or a scrolling box scrolls, one
+    // repaint per frame: every selected link (up to 250), and unticked ones only outlined.
+    let followFrame=null,following=false;
+    function paintHits(){
+      followFrame=null;hits.replaceChildren();
+      selected.slice(0,250).forEach((entry,index)=>{for(const r of rectsNow(entry.element)){const hit=document.createElement('div');hit.className=ticks[index]===false?'hit off':'hit';hit.style.cssText=`left:${r.left}px;top:${r.top}px;width:${r.right-r.left}px;height:${r.bottom-r.top}px`;hits.append(hit);}});
+    }
+    function followScroll(){if(following&&!followFrame)followFrame=requestAnimationFrame(paintHits);}
+    function follow(){following=true;paintHits();listen(window,'scroll',followScroll,true);listen(window,'resize',followScroll);}
     function close() {
-      if(frame)cancelAnimationFrame(frame);clearTimeout(noticeTimer);unlisten(document,'keydown',escape,true);try{chrome.storage.onChanged.removeListener(followState);}catch{/* extension reloaded */}host.remove();if(overlayHost===host)overlayHost=null;if(active===state)active=null;held=false;
+      if(frame)cancelAnimationFrame(frame);if(followFrame)cancelAnimationFrame(followFrame);unlisten(window,'scroll',followScroll,true);unlisten(window,'resize',followScroll);clearTimeout(noticeTimer);unlisten(document,'keydown',escape,true);try{chrome.storage.onChanged.removeListener(followState);}catch{/* extension reloaded */}host.remove();if(overlayHost===host)overlayHost=null;if(active===state)active=null;held=false;
     }
     // Only an open card follows saved changes (its destination); a page without one never
     // receives the whole saved state on every change, even with all-sites access.
@@ -364,7 +388,7 @@
       // With content links only, links in page chrome start unticked.
       ticks=selected.map(entry=>!(captureSettings.contentOnly&&entry.chrome));
       chromeOff=new Set(ticks.flatMap((ticked,index)=>ticked?[]:[index]));leftState=chromeOff.size?'left':'';skip=!!captureSettings.skipSaved;
-      renderPreview();updateCounts();
+      renderPreview();updateCounts();follow();
       $('.warning').textContent=warnings.join(' ');
       // After a drag: the card, or copy or add right away with a notice.
       const after=captureSettings.afterDrag;
@@ -397,6 +421,7 @@
     function syncTicks(){rows.forEach(({item,check},index)=>{check.checked=ticks[index];item.classList.toggle('off',!ticks[index]);});}
     function markSaved(){rows.forEach(({tag},index)=>{tag.hidden=!savedUrls.has(selected[index].link.url);});}
     function updateCounts() {
+      followScroll();
       const ticked=tickedLinks(),n=ticked.length,web=webUrls(ticked).length;
       $('.count').textContent=n===selected.length?`${selected.length} link${selected.length===1?'':'s'} selected`:`${n} of ${plural(selected.length,'link')} selected`;
       $('.open-label').textContent=web?`Open ${web} in tabs`:'Open in tabs';

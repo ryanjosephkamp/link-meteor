@@ -135,12 +135,14 @@ function aboutBlock(about, rows, columns) {
   return { exportedAt, collection, count, view, filters: [...filters], columns: [...aboutColumns], version };
 }
 
-// JSON metadata block. Columns are left out: JSON keeps every field of every row.
-function aboutJson(about) {
+// JSON metadata block. Columns are left out: JSON keeps every field of every row. A collection's
+// custom columns are listed as fields [{id, name}], naming the keys of each row's fields.
+function aboutJson(about, fields = []) {
   return {
     exportedAt: about.exportedAt.toISOString(),
     exportedAtLocal: `${localDateTime(about.exportedAt)}.${String(about.exportedAt.getMilliseconds()).padStart(3, '0')}${offset(about.exportedAt)}`,
     collection: about.collection, count: about.count, view: about.view, filters: about.filters, version: about.version,
+    ...(fields.length ? { fields: fields.map(field => ({ id: String(field.id), name: String(field.name) })) } : {}),
   };
 }
 
@@ -186,7 +188,7 @@ export function makeExport(rows, { format, columns = ['anchorText', 'url'], abou
   const headers = columns.map(key => labels.get(key));
   if (about !== undefined) {
     const block = aboutBlock(about, rows, columns);
-    if (format === 'json') return { data: JSON.stringify({ about: aboutJson(block), rows }, null, 2), mime: 'application/json;charset=utf-8', extension: 'json' };
+    if (format === 'json') return { data: JSON.stringify({ about: aboutJson(block, fields), rows }, null, 2), mime: 'application/json;charset=utf-8', extension: 'json' };
     if (format === 'xlsx') return { data: formattedXlsx(rows, columns, headers, block), mime: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', extension: 'xlsx' };
   }
   switch (format) {

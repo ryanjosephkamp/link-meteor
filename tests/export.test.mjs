@@ -357,4 +357,10 @@ test('custom columns export as field:<id>, headed by their names, in every forma
   assert.match(makeExport(rows, { format: 'html', columns, fields }).data, /<th scope="col">Principal investigator<\/th>/);
   assert.throws(() => makeExport(rows, { format: 'csv', columns: ['field:f-missing'], fields }), /Unsupported export column/);
   assert.throws(() => makeExport(rows, { format: 'csv', columns: ['field:f-pi'] }), /Unsupported export column/, 'a custom column needs its definition');
+  // JSON keeps each row's fields, and its about block names the columns; without columns it is unchanged.
+  const about = { exportedAt: new Date('2026-09-28T12:00:00Z'), collection: 'Labs' };
+  const json = JSON.parse(makeExport(rows, { format: 'json', columns, fields, about }).data);
+  assert.deepEqual(json.about.fields, fields);
+  assert.deepEqual(json.rows, rows);
+  assert.equal('fields' in JSON.parse(makeExport(rows, { format: 'json', about }).data).about, false);
 });

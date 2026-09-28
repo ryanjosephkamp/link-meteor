@@ -484,6 +484,24 @@ Five additions from the owner's review of release candidate 1. As before, [ACCEP
   - `makeExport(rows, {…, fields})` exports custom columns as keys `field:<id>`, headed by their names, with spreadsheet formula protection as for every column.
   - Backup format 2 keeps columns and values. Merge joins a backup's columns to local ones by name, ignoring case; the rest are added while there is room, and each link's values follow. The summary counts `fieldsAdded` and `fieldsDropped`. Replace takes the backup's columns as they are.
 
+### Custom columns in the workbench, as built
+
+- **The collection editor** (`#fields-editor`, after the details form in `#collection-editor`) lists the columns in order. Each `.field-item` shows the name, how many links hold a value, *Rename* and *Remove*. `#fields-count` reads "3 of 20".
+  - Adding: `#field-add`, with `#field-new` (at most 60 characters) and `#field-add-button`. `#field-add-help` says why a name can't be used (empty, already used ignoring case, or 60 characters reached). At 20 columns the field is disabled and says why.
+  - Rename turns the row into a small form (`input[data-field-action="name"]`, help `#field-rename-help`). Enter saves; Escape cancels.
+  - Remove asks first (`#field-remove-confirm`, `#field-remove-confirm-text`, `#field-remove-confirm-yes`, `#field-remove-confirm-no`) and says how many links hold a value. Afterwards `#fields-status` (`#fields-status-text`, `#field-undo`) and the notice offer Undo, which sends `fields.restore` with the column, its place and its values. The page keeps only the last removal, and only while it is open.
+- **Link details:** after Note and Tags, one text field per column, labeled with its name (`input[data-link-field="field:<id>"]`). Save sends them with the note and tags in one `link.update`, whose `patch.fields` carries every column. A value over 2,000 characters is explained under the fields (`.field-limit`) and not saved. A single link's row shows its filled values after its note (`.field-value`).
+- **Fill for selected links** (`#fill-fields`, in the list toolbar) shows while the view has selected links and the collection has a column. It opens `#fill-panel`: `#fill-field`, `#fill-value`, `#fill-help` (how many values it replaces), `#fill-apply` and `#fill-cancel`.
+  - It sends one `fields.fill` for the selected links in the view, as Remove uses them. An empty value clears the column.
+  - The notice's Undo puts each link's earlier value back, with one `fields.fill` per distinct earlier value.
+- **Export columns:**
+  - *Add a column…* lists the built-in columns, then a "Custom columns" group with the collection's columns not yet chosen, ending with *New custom column…* (value `new-custom-column`, disabled at 20).
+  - *New custom column…* opens `#new-column` (`#new-column-name`, `#new-column-add`, `#new-column-cancel`, `#new-column-help`). It adds the column with `fields.add` and appends it to the export.
+  - Export columns are keys `field:<id>`. When the collection changes or a column is removed, columns that no longer exist are dropped. Downloads and Copy table pass the collection's `fields` to `makeExport`.
+- **JSON exports:** each row keeps its `fields`. When the collection has columns, `about` gains `fields: [{id, name}]`; otherwise it is unchanged.
+- **Restore preview:** a merge lists "Adds 2 custom columns to joined collections" and "1 custom column can't fit, because a collection holds at most 20; its values are left out" (`.restore-fields-dropped`). The merge notice adds "; added 2 custom columns" and "; 1 custom column didn't fit".
+- **Code:** `ui/workbench/fields.js` holds the editor's column list, the details fields, Fill for selected links and the shared name and length rules. `collections.js`, `review.js` and `export.js` call it.
+
 ### Save tabs as links
 
 - The workbench's capture area gets a choice of what to capture:

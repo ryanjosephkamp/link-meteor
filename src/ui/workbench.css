@@ -611,3 +611,51 @@ label.backup-choose { display: inline-flex; cursor: pointer; }
 .scheme-mode .seg { flex-direction: row; min-height: 30px; font-size: var(--text-xs); }
 @media (forced-colors: active) { .theme-choice { border: 1px solid CanvasText; } .theme-choice:has(input:checked) { outline: 2px solid Highlight; } }
 /* End of area: appearance and after a drag */
+
+/* Area: custom columns (0.4.0). The collection editor's columns, link details, Fill for selected links and export columns. */
+.fields-editor { container: fields / inline-size; display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line); }
+.fields-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 8px; }
+.fields-head h3 { font-size: var(--text-sm); font-weight: 650; color: var(--ink); }
+.fields-count { color: var(--muted); font-size: var(--text-xs); font-variant-numeric: tabular-nums; }
+.fields-editor > .help { margin-top: -4px; }
+.fields-list { display: grid; gap: 4px; }
+.fields-list:empty { display: none; }
+.field-item { display: grid; grid-template-columns: minmax(0, 1fr) auto auto auto; align-items: center; gap: 2px 6px; min-height: 36px; padding: 3px 3px 3px 10px; border: 1px solid var(--line); border-radius: var(--r); background: var(--bg); font-size: var(--text-sm); }
+.field-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; color: var(--ink); }
+.field-filled { color: var(--muted); font-size: var(--text-xs); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.field-rename { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 4px 6px; padding: 3px 0; }
+.field-rename input { min-height: 30px; font-size: var(--text-sm); }
+.field-rename .help { grid-column: 1 / -1; }
+@container fields (max-width: 340px) {
+  .field-item { grid-template-columns: minmax(0, 1fr) auto auto; }
+  .field-filled { grid-row: 2; grid-column: 1; }
+  .field-rename { grid-template-columns: minmax(0, 1fr) auto; }
+  .field-rename input { grid-column: 1 / -1; }
+}
+.fields-status { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; padding: 8px 10px; border-radius: var(--r); background: var(--sunken); font-size: var(--text-sm); color: var(--ink); }
+.fields-status p { flex: 1 1 12em; min-width: 0; overflow-wrap: anywhere; }
+.field-add { display: grid; grid-template-columns: minmax(0, 1fr); gap: 4px; }
+.field-add-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px; align-items: center; }
+.new-column .field-add-row { grid-template-columns: minmax(0, 1fr) auto auto; }
+.help.is-problem, .field-limit { color: var(--danger); font-weight: 600; }
+.new-column { display: grid; grid-template-columns: minmax(0, 1fr); gap: 4px; width: 100%; padding: 10px; border: 1px solid var(--line); border-radius: var(--r); background: var(--bg); }
+.new-column input { min-height: 30px; font-size: var(--text-sm); }
+@media (max-width: 360px) { .new-column .field-add-row { grid-template-columns: minmax(0, 1fr) auto; } .new-column .field-add-row input { grid-column: 1 / -1; } }
+/* Link details: a field per custom column after Note and Tags; Save gets its own row. */
+.occurrence-form.has-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.occurrence-form.has-fields > button[type=submit] { grid-column: 1 / -1; justify-self: start; }
+.occurrence-form .field-input { min-width: 0; overflow-wrap: anywhere; }
+.occurrence-form .field-limit { grid-column: 1 / -1; }
+@container review (max-width: 420px) { .occurrence-form.has-fields { grid-template-columns: minmax(0, 1fr); } }
+.row-notes .field-value { min-width: 0; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.row-notes .field-value-name { color: var(--muted); }
+/* Fill for selected links: a panel across the list toolbar, like its confirmations. */
+.list-toolbar .fill-panel { flex: 1 0 100%; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 2px 0 8px; padding: 12px; border: 1px solid var(--line-strong); border-radius: var(--r); background: var(--surface); }
+.fill-title { grid-column: 1 / -1; font-weight: 650; color: var(--ink); }
+.fill-panel .help, .fill-panel .confirm-actions { grid-column: 1 / -1; }
+.fill-panel select, .fill-panel input { min-height: 30px; font-size: var(--text-sm); }
+@container review (max-width: 420px) { .list-toolbar .fill-panel { grid-template-columns: minmax(0, 1fr); } }
+.restore-mode li.restore-fields-dropped { color: var(--warn); font-weight: 600; }
+.restore-mode li.restore-fields-dropped::before { background: var(--warn); }
+@media (forced-colors: active) { .field-item, .fill-panel, .new-column { border: 1px solid CanvasText; } }
+/* End of area: custom columns */

@@ -261,6 +261,21 @@
             <div class="confirm-actions"><button id="empty-confirm-yes" class="btn danger-solid" type="button">Remove all links</button><button id="empty-confirm-no" class="btn quiet" type="button">Keep links</button></div>
           </div>
         </form>
+        <section id="fields-editor" class="fields-editor" aria-labelledby="fields-title">
+          <div class="fields-head"><h3 id="fields-title">Custom columns</h3><span id="fields-count" class="fields-count"></span></div>
+          <p id="fields-help" class="help">Your own columns for this collection, such as a deadline or a contact. Fill them in each link’s details. Search, exports and backups include them.</p>
+          <ul id="fields-list" class="fields-list" aria-labelledby="fields-title"></ul>
+          <div id="field-remove-confirm" class="confirm danger-confirm" role="group" aria-labelledby="field-remove-confirm-text" hidden>
+            <p id="field-remove-confirm-text"></p>
+            <div class="confirm-actions"><button id="field-remove-confirm-yes" class="btn danger-solid" type="button">Remove column</button><button id="field-remove-confirm-no" class="btn quiet" type="button">Keep column</button></div>
+          </div>
+          <div id="fields-status" class="fields-status" hidden><p id="fields-status-text"></p><button id="field-undo" class="btn small" type="button"><svg class="icon" aria-hidden="true"><use href="#i-undo"/></svg>Undo</button></div>
+          <form id="field-add" class="field-add">
+            <label for="field-new">New column</label>
+            <div class="field-add-row"><input id="field-new" maxlength="60" placeholder="For example, Deadline" autocomplete="off" aria-describedby="field-add-help"><button id="field-add-button" class="btn" type="submit">Add column</button></div>
+            <p id="field-add-help" class="help" aria-live="polite">Up to 60 characters.</p>
+          </form>
+        </section>
       </section>
 
       <section class="capture" aria-labelledby="capture-title">
@@ -316,7 +331,15 @@
             <button id="remove" class="btn quiet small danger" type="button" disabled><svg class="icon" aria-hidden="true"><use href="#i-trash"/></svg>Remove</button>
             <button id="remove-view" class="btn quiet small danger" type="button" disabled>Remove all in this view</button>
             <button id="undo" class="btn quiet small" type="button" disabled><svg class="icon" aria-hidden="true"><use href="#i-undo"/></svg>Undo</button>
+            <button id="fill-fields" class="btn quiet small" type="button" aria-expanded="false" aria-controls="fill-panel" hidden>Fill for selected links</button>
           </div>
+          <form id="fill-panel" class="fill-panel" aria-labelledby="fill-title" hidden>
+            <p id="fill-title" class="fill-title"></p>
+            <label>Column <select id="fill-field"></select></label>
+            <label>Value <input id="fill-value" autocomplete="off" aria-describedby="fill-help"></label>
+            <p id="fill-help" class="help" aria-live="polite"></p>
+            <div class="confirm-actions"><button id="fill-apply" class="btn primary small" type="submit">Fill</button><button id="fill-cancel" class="btn quiet small" type="button">Cancel</button></div>
+          </form>
           <div id="remove-view-confirm" class="confirm danger-confirm toolbar-confirm" role="group" aria-labelledby="remove-view-confirm-text" hidden>
             <p id="remove-view-confirm-text"></p>
             <div class="confirm-actions"><button id="remove-view-confirm-yes" class="btn danger-solid small" type="button">Remove all</button><button id="remove-view-confirm-no" class="btn quiet small" type="button">Keep them</button></div>
@@ -376,6 +399,11 @@
             <label class="sr-only" for="add-column">Add export column</label>
             <select id="add-column"></select>
             <button id="reset-columns" class="link-btn" type="button">Reset to anchor text + URL</button>
+            <form id="new-column" class="new-column" hidden>
+              <label for="new-column-name">Name of the new column</label>
+              <div class="field-add-row"><input id="new-column-name" maxlength="60" autocomplete="off" aria-describedby="new-column-help"><button id="new-column-add" class="btn primary small" type="submit">Add column</button><button id="new-column-cancel" class="btn quiet small" type="button">Cancel</button></div>
+              <p id="new-column-help" class="help" aria-live="polite"></p>
+            </form>
           </div>
           <p id="columns-help" class="help">Used by the Table copy and by CSV, TSV, Excel and HTML files.</p>
         </fieldset>

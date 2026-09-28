@@ -611,3 +611,12 @@ label.backup-choose { display: inline-flex; cursor: pointer; }
 .scheme-mode .seg { flex-direction: row; min-height: 30px; font-size: var(--text-xs); }
 @media (forced-colors: active) { .theme-choice { border: 1px solid CanvasText; } .theme-choice:has(input:checked) { outline: 2px solid Highlight; } }
 /* End of area: appearance and after a drag */
+
+/* Area: save tabs as links and the menus (0.4.0) */
+/* What to capture: the links in the pages, or the tabs themselves. A smaller segmented choice under the scope. */
+.capture-what { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2px; padding: 3px; border-radius: 10px; background: var(--sunken); }
+.capture-what .seg { flex-direction: row; min-height: 30px; font-size: var(--text-xs); white-space: normal; }
+@media (min-width: 900px) { .capture-what { max-width: 620px; } }
+/* "Save 45 tabs as links" is longer than "Capture 45 tabs": at compact widths the actions stack, so it isn't cut short. */
+@media (max-width: 899px) { .capture[data-what="tabs"] .capture-actions { grid-template-columns: minmax(0, 1fr); } }
+/* End of area: save tabs as links and the menus */

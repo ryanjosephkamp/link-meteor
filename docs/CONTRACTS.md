@@ -497,6 +497,24 @@ Five additions from the owner's review of release candidate 1. As before, [ACCEP
 - Tabs that aren't HTTP(S) pages are skipped and counted, and so is a repeated address within one save. `skipSaved` applies.
 - **Message:** `capture.tabs {scope, tabIds?, collectionId?}` returns a report like `capture.run`'s, with `saved`, `skipped` and `unsupported` counts. The tabs permission is needed only where capture already needs it (picking tabs, a window, all windows).
 
+**As built** (`background/tabs.js`, and the capture area in `ui/workbench/capture.js`):
+
+- `capture.tabs` is a workbench message and returns `{state, report}`.
+  - `scope` is `'current'`, `'selected'`, `'window'` or `'all'`. `tabIds` (integers, at most 20,000, each taken once) are the tabs to save.
+  - Without `tabIds`: `'current'` is the target tab, found as for `capture.run`; `'window'` is the focused normal window's tabs; `'all'` is every normal window's tabs; `'selected'` is refused.
+  - A chosen collection that no longer exists is an error, and nothing is saved.
+- The report is `{kind: 'tabs', batchId, results, capturedCount, saved, skipped, repeated, unsupported}`, kept at `linkMeteorCaptureReport` like a capture's. `capturedCount` equals `saved`. Each result has `capture.run`'s shape:
+  - a saved tab is `success` with `count: 1`;
+  - a tab skipped as a repeated address or as already saved is `success` with `count: 0`, `skipped: 1` and the reason in `warning`;
+  - a tab that isn't an HTTP(S) page is `unsupported`, one whose address Chrome hides is `denied`, and a closed tab is `error`.
+
+  `skipped` counts repeated and already saved tabs; `repeated` counts the repeated ones.
+- **The workbench.** `#capture-what` is a radio group of `input[name=capture-what]` (`links`, the default, and `tabs`) under the scope. Like the scope, the choice lasts while the view is open.
+  - With `tabs`, the capture button reads "Save this tab as a link", "Save 45 tabs as links" or "Save selected tabs as links". The count leaves out tabs known not to be web pages; the preview says how many.
+  - The report's title reads "Saved 45 tabs as links", followed by "2 skipped: not web pages" (and "already saved", "a repeated address", "hidden by Chrome", "closed before saving"). It lists only the tabs that weren't saved, each with its reason, and offers *Show only these links*.
+  - Choosing Pick tabs or a window scope asks for tab access, as before. A save that still lacks it asks in the save click.
+- **The open intent** (`linkMeteorOpenIntent`) may also hold `what: 'tabs'` and `scope`. The view then chooses The tabs themselves and that scope, says why tab access is needed (with a notice whose button saves), and focuses the capture button. The menus write it (below).
+
 ### Menus
 
 Chrome shows several items from one extension under a "Link Meteor" submenu, so titles don't repeat the name.
@@ -511,6 +529,27 @@ Chrome shows several items from one extension under a "Link Meteor" submenu, so 
 - **The link's own text.** Chrome gives a menu click the link's address, not its text. The page script records the link under the last right-click (a `contextmenu` listener). After a menu click, which grants temporary access to the tab, the background loads the page script if needed and asks `content.contextLink {url}`. The answer is that link's captured fields, or the first link in the page with that address. The saved anchor text stays exact.
 - **The selection.** `content.selectionLinks` returns the captured fields of every link that intersects the page's selection, across open shadow roots and same-origin frames as capture does.
 - **Feedback.** Saving from a menu uses the page's notice: "Added 1 link to “Thesis sources”", with *Undo* (`capture.undoAdd`) and *Show links*. *Copy link text + URL* copies two tab-separated columns with a header, like the card.
+
+**As built** (`background/menus.js`, and the page script's menu section):
+
+- **Items.** The IDs are `meteor-add-link`, `meteor-copy-link`, `meteor-selection`, `meteor-region` and `meteor-page` (both kept from 0.3.0), `meteor-save-tab` (contexts `page` and `action`), `meteor-save-window` and `meteor-full-view`.
+  - `createMenus({extra})` creates them in the table's order on install and update. An `extra` item `{after, ...item}` goes after the item `after` names, so *Download linked file* can follow `meteor-copy-link`.
+  - `menuClicked` answers only these IDs and leaves other items' clicks to their own modules.
+- **The title** "Add link to “name”" is updated after every saved write that changes which collection is active or its name, and at startup. A "%s" in a name gets a zero-width space, because Chrome puts the selected text in place of %s.
+- **Page messages.** The background sends them to the tab's top frame and loads the page script first when none answers. The page answers `{ok: true, data}` or `{ok: false, error}`.
+  - `content.contextLink {url}` answers `{link}`: the captured fields of the link under the last right-click when its URL equals `url`; otherwise those of the first link in the page with that URL, found as capture finds links; otherwise `null`.
+  - `content.selectionLinks` answers `{links, warnings}`. A link is selected when it intersects the selection of the innermost tree (a shadow root or a document) that holds selected ranges. So a selected shadow host counts the links inside it, and a same-origin frame's own selection counts.
+  - `content.notice {text, added?, copy?}` answers `{}` and shows the notice alone, with no selection layer and no card; the page keeps taking clicks.
+    - `added` is `{collectionId, batchId, name}`. It adds *Undo* (`capture.undoAdd`) and *Show links*, which sends `ui.open {view: 'links', batchId}`. Without it, the notice has only its close button.
+    - `copy` is text the page writes to the clipboard first, as the card copies, including the hidden text-area fallback.
+- **What each item does.** Saves go to the active collection, whatever the card last chose, and `skipSaved` applies. A save that adds links is remembered for `capture.undoAdd` with the tab that shows its notice (`rememberAdd` in `background/card.js`).
+  - *Add link*: a link the page can't find (inside another site's frame, say) is saved with its URL, an empty anchor text and original href, and the frame's URL. The notice says it was saved with its address only. Links other than HTTP(S), `mailto:` and `tel:` are refused. When nothing is added, the notice reads "Nothing was added: 1 link was already in “X”."
+  - *Copy link text + URL*: `makeExport([link], {format: 'tsv', columns: ['anchorText', 'url']})`, as the card copies. Nothing is saved.
+  - *Capture links in the selection*: one add in one batch. An empty selection saves nothing and says so.
+  - *Save this tab as a link* and *Save all tabs in this window as links* save through `capture.tabs`'s rules. The notice reads "Saved this tab as a link in “X”." or "Saved 12 tabs as links in “X”; 2 skipped: not web pages."
+  - *Save all tabs in this window* without the tabs permission saves nothing. It keeps the open intent `{view: 'links', batchId: '', what: 'tabs', scope: 'window'}` and opens the full view in that window.
+  - Where the page can't show the notice (a browser page, say): after a save, the full view opens at that batch. Otherwise the reason is shown there, as an activation error.
+  - *Select a region* and *Capture this page* do what they did in 0.3.0. *Open the full view* opens it in a new tab.
 
 ### Downloads
 

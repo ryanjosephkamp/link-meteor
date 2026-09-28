@@ -44,7 +44,9 @@ async function open(profile, {extension} = {}) {
     ui.on('pageerror', (error) => errors.push(`${profile}: ${error.message}`));
     ui.on('console', (message) => { if (message.type() === 'error') errors.push(`${profile} console: ${message.text()}`); });
     await ui.goto(`chrome-extension://${run.id}/ui/workbench.html`);
-    await ui.locator('#collection-heading').waitFor();
+    // The heading is in the page from the start; the title changes once the collections have loaded.
+    // Choosing a file before then only says to choose it again (slow CI machines, several profiles open).
+    await until(() => ui.evaluate(() => document.title.endsWith(' · Link Meteor')), `${profile}: collections loaded`, 30000);
     await ui.waitForTimeout(200);
     return {ui, context: run.context, id: run.id};
   } finally { if (extension) delete process.env.LINK_METEOR_EXTENSION_PATH; }
@@ -61,7 +63,10 @@ async function choose(ui, path) {
 }
 async function preview(ui, path, timeout = 15000) {
   await choose(ui, path);
-  await until(() => ui.locator('#restore-preview').isVisible(), 'Restore preview', timeout);
+  try { await until(() => ui.locator('#restore-preview').isVisible(), 'Restore preview', timeout); } catch (error) {
+    if (await ui.locator('#error').isVisible()) error.message += `; the workbench said: ${await text(ui, '#error')}`;
+    throw error;
+  }
   return text(ui, '#restore-preview');
 }
 // False, or the elements that stick out past the viewport, for the failure message.

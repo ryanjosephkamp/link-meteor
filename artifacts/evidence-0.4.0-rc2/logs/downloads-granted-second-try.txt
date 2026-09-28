@@ -1,0 +1,4 @@
+PASS Chrome’s settings report the profile’s own download folder under .scratch/, and Playwright’s download handling is off 
+Error: six file links (timed out)
+    at until (file:///<repo>/tests/helpers/browser.mjs:109:9)
+    at async file:///<repo>/tests/downloads-granted.mjs:67:3

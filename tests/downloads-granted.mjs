@@ -47,10 +47,13 @@ try {
   const ui = await context.newPage();
   await ui.goto(`chrome-extension://${run.id}/ui/workbench.html`); await ui.locator('#collection-heading').waitFor();
   assert.equal(await ui.evaluate(() => chrome.permissions.contains({permissions: ['downloads']})), true, 'Prepare grants first: node tests/prepare-grants.mjs asks for downloads after bookmarks.');
-  // Chrome's prompt must never appear here: any request would mean access is missing.
-  await ui.evaluate(() => { window.__requests = []; const original = chrome.permissions.request.bind(chrome.permissions); chrome.permissions.request = (request) => { window.__requests.push(request); return original(request); }; });
+  // Chrome's prompt must never appear here. The workbench calls Chrome's request in every download
+  // click, before any await, so the click still counts as the person's gesture (downloads.js, run);
+  // with access already held, Chrome answers at once and shows nothing. So each request is recorded
+  // with whether access was already held when it was made.
+  await ui.evaluate(() => { window.__requests = []; const original = chrome.permissions.request.bind(chrome.permissions); chrome.permissions.request = (request) => { const entry = {request}; entry.checked = chrome.permissions.contains(request).then((held) => { entry.held = held; }); window.__requests.push(entry); return original(request); }; });
   const text = (id) => ui.locator(`#${id}`).innerText();
-  const L = (path, anchorText, i, batch) => ({id: `granted-${batch}-${i}`, anchorText, accessibleLabel: '', url: fixture.base + path, originalHref: path, sourceUrl: `${fixture.base}/files.html`, sourceTitle: 'Meteor Research Lab — downloads fixture', frameUrl: '', capturedAt: new Date().toISOString(), batchId: `granted-${batch}`, notes: '', tags: []});
+  const L = (path, anchorText, i, batch) => ({id: `granted-${stamp}-${batch}-${i}`, anchorText, accessibleLabel: '', url: fixture.base + path, originalHref: path, sourceUrl: `${fixture.base}/files.html`, sourceTitle: 'Meteor Research Lab — downloads fixture', frameUrl: '', capturedAt: new Date().toISOString(), batchId: `granted-${batch}`, notes: '', tags: []});
   const FIXTURE = [['/files/paper.pdf', 'Attention in small systems'], ['/files/figure.png', 'Figure 1: heat map'], ['/files/paywalled.pdf', 'Paywalled article'], ['/files/paper', '[PDF] fixture.test'], ['/files/missing.pdf', 'Missing paper'], ['/files/paper.pdf?copy=2', 'Attention in small systems'], ['/index.html', 'The lab’s home page']];
   const collection = async (name, links, batch) => {
     const state = await rpc(ui, {type: 'state.mutate', action: {type: 'collection.create', name}});
@@ -138,8 +141,10 @@ try {
   for (const path of Object.values(owner)) assert.equal(existsSync(path), false, 'nothing in the Downloads folder of the person running the suite');
   const reported = await run.worker.evaluate((names) => chrome.downloads.search({}).then((items) => items.filter((item) => names.some((name) => item.filename.includes(name))).map((item) => item.filename)), Object.values(names).map((name) => downloadFolder(name).split('/')[1]));
   assert.ok(reported.length >= expected.length && reported.every((path) => resolve(path).startsWith(folder + (process.platform === 'win32' ? '\\' : '/'))), 'Chrome reports every file inside the profile’s folder');
-  assert.deepEqual(await ui.evaluate(() => window.__requests), [], 'no permission was requested: access already existed');
-  pass('Every new file is in the profile’s own download folder, and nowhere else', {added: added.length, where: relative(root, folder).split('\\').join('/')});
+  const requests = await ui.evaluate(async () => { await Promise.all(window.__requests.map((entry) => entry.checked)); return window.__requests.map(({request, held}) => ({request, held})); });
+  assert.ok(requests.length > 0 && requests.every((entry) => entry.held === true && JSON.stringify(entry.request) === JSON.stringify({permissions: ['downloads']})),
+    `every request asked only for downloads, which Chrome already granted, so no prompt could appear: ${JSON.stringify(requests)}`);
+  pass('Every new file is in the profile’s own download folder, and nowhere else', {added: added.length, requestsWithAccessHeld: requests.length, where: relative(root, folder).split('\\').join('/')});
   result.result = 'PASS';
 } catch (error) {
   result.result = 'FAIL'; result.error = error.stack; console.error(error); process.exitCode = 1;

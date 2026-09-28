@@ -6,6 +6,7 @@ import { targetRows, requiredRows } from './review.js';
 import { renderBookmarkTarget } from './bookmarks.js';
 import { renderOpenTarget } from './open.js';
 import { bindNames, renderNames, renderSavesAs, exportName, followFormatChange } from './names.js';
+import { bindDownloads, renderDownloadTarget } from './downloads.js';
 
 const FORMAT_HELP = {
   xlsx: 'Every cell is stored as text, so nothing is reinterpreted as a formula, number or date. Web and email addresses are clickable, and a second sheet, About, records when and how the file was exported.',
@@ -89,6 +90,7 @@ export function renderExportTarget() {
   for (const id of ['copy-table', 'copy-urls', 'copy-markdown', 'copy-rich', 'download', 'dock-copy']) $(id).disabled = !rows.length;
   renderBookmarkTarget(rows);
   renderOpenTarget(rows);
+  renderDownloadTarget(rows);
 }
 
 // How the rows were chosen, for the About sheet and JSON about block. Read from the review
@@ -168,4 +170,5 @@ export function bindExport() {
   $('copy-urls').addEventListener('click', () => action(() => copy('text', ui.columns)));
   $('copy-markdown').addEventListener('click', () => action(() => copy('markdown', ui.columns)));
   $('copy-rich').addEventListener('click', () => action(copyRich));
+  bindDownloads();
 }

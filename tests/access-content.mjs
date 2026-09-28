@@ -4,11 +4,13 @@
 // is answered by the stub, so this checks the page script's own behavior, not the background.
 // 0.4.0: After a drag (card, copy in every format, add with Undo), the notice, content links only
 // with Include them, the filters, already saved, Skip saved and rich copy on the clipboard.
+// 0.4.0 release candidate 2: Download N files in the More menu (only file links, a confirmation above
+// 10, progress, Cancel, missing access), and the small notice after the right-click menu's download.
 // Writes access-content-results.json to LINK_METEOR_EVIDENCE_DIR (default .scratch/evidence-access-capture).
 import assert from 'node:assert/strict';
-import {mkdir, readFile, writeFile} from 'node:fs/promises';
+import {mkdir, mkdtemp, readFile, rm, writeFile} from 'node:fs/promises';
 import {resolve} from 'node:path';
-import {chromePath, fixtureServer, headlessArgs, playwright, root} from './helpers/browser.mjs';
+import {chromePath, fixtureServer, headlessArgs, playwright, root, scratch} from './helpers/browser.mjs';
 import {cardTheme} from '../src/core/themes.js';
 
 const evidence = resolve(root, process.env.LINK_METEOR_EVIDENCE_DIR || '.scratch/evidence-access-capture');
@@ -53,7 +55,12 @@ function stub({platform, trigger = 'modifier', key = 'z'}) {
         case 'capture.open': return {opened: new Set(message.links.map(l => l.url)).size, failed: 0, cancelled: false, ...(message.mode === 'group' ? {groupId: 7, groupTitled: false} : {})};
         case 'capture.export': return {fileName: 'My-research_2026-09-26_1432.csv', mime: 'text/csv;charset=utf-8', encoding: 'utf8', data: 'Anchor text,URL\r\n'};
         case 'capture.bookmark': throw new Error('Bookmark access is needed. Open the full view and use Save as bookmarks there; Chrome asks for access once.');
-        case 'ui.open': case 'links.cancel': return {};
+        case 'capture.download': {
+          if (window.__stub.noDownloadAccess) throw new Error('Download access is needed. Open the full view and choose Download there; Chrome asks for access once.');
+          const n = message.links.length;
+          return {requestId: message.requestId, total: n, done: n, saved: n, webPages: 0, failed: 0, cancelled: 0, held: 0, folder: 'Link Meteor/My-research', results: [], summary: `Saved ${n} files to Link Meteor › My-research in your downloads folder.`};
+        }
+        case 'ui.open': case 'links.cancel': case 'downloads.cancel': return {};
         default: throw new Error('Unexpected message ' + message.type);
       }
     };
@@ -74,7 +81,10 @@ function stub({platform, trigger = 'modifier', key = 'z'}) {
 }
 
 const fixture = await fixtureServer();
-const browser = await playwright.chromium.launch({executablePath: chromePath(), headless: true, args: headlessArgs()});
+// Page downloads (the card's workbook) land in a task-owned folder under .scratch/, removed afterwards.
+await mkdir(scratch, {recursive: true});
+const downloadsPath = await mkdtemp(resolve(scratch, 'access-content-downloads-'));
+const browser = await playwright.chromium.launch({executablePath: chromePath(), headless: true, args: headlessArgs(), downloadsPath});
 const sleep = (ms) => new Promise((done) => setTimeout(done, ms));
 const card = (page) => page.locator('#link-meteor-overlay');
 async function load(page, path, options) {
@@ -227,8 +237,8 @@ try {
   assert.equal(await shadow.locator('.menu').isVisible(), false);
   assert.equal(await shadow.locator('.bar').isVisible(), true);
   const items = await shadow.locator('.menu [role=menuitem]').evaluateAll((list) => list.map((b) => b.firstChild.textContent));
-  assert.deepEqual(items, ['Open in a new window', 'Open as a tab group', 'Copy URLs', 'Copy as Markdown', 'Copy as rich links', 'Download this selection', 'Bookmark this selection']);
-  pass('The More menu lists seven actions, moves with the arrow keys and closes on Escape', {items});
+  assert.deepEqual(items, ['Open in a new window', 'Open as a tab group', 'Copy URLs', 'Copy as Markdown', 'Copy as rich links', 'Download this selection', 'Download 1 file', 'Bookmark this selection']);
+  pass('The More menu lists eight actions (Download 1 file counts the one ticked file address), moves with the arrow keys and closes on Escape', {items});
 
   // Destination picker on the "Adds to" line.
   assert.match(await shadow.locator('.dest').innerText(), /^Adds to My research/);
@@ -643,6 +653,118 @@ try {
   await articlePage.close();
   pass('Content links only keeps a post’s own header and footer links: only page-level headers and footers are page chrome', chromeFlags);
 
+  /* 0.4.0 release candidate 2: Download N files from the card, and the right-click menu's notice. */
+  const filesPage = await context.newPage();
+  await load(filesPage, '/files.html?many', {platform: 'MacIntel', trigger: 'letter', key: 'q'});
+  const fcard = card(filesPage);
+  const fsent = (type) => sent(filesPage, type);
+  const fstatus = (pattern) => filesPage.waitForFunction((source) => new RegExp(source).test(document.getElementById('link-meteor-overlay')?.shadowRoot.querySelector('.status')?.textContent || ''), pattern.source);
+  async function dragAcross(selector, count) {
+    await filesPage.locator(selector).scrollIntoViewIfNeeded();
+    const box = await filesPage.locator(selector).boundingBox();
+    await filesPage.keyboard.down('q'); await filesPage.mouse.move(box.x + 2, box.y + 2); await filesPage.mouse.down();
+    await filesPage.mouse.move(box.x + box.width - 2, box.y + box.height - 2, {steps: 8}); await filesPage.mouse.up(); await filesPage.keyboard.up('q');
+    await filesPage.waitForFunction((count) => document.getElementById('link-meteor-overlay')?.shadowRoot.querySelector('.count')?.textContent === `${count} links selected`, count);
+  }
+  await dragAcross('#files', 7);
+  const filesItem = fcard.locator('button.m-files');
+  await fcard.locator('button.menu-toggle').click();
+  assert.deepEqual(await filesItem.evaluate((b) => [b.firstChild.textContent, b.getAttribute('role'), b.getAttribute('aria-keyshortcuts'), b.title.endsWith('(F)'), b.querySelector('kbd').textContent, b.previousElementSibling.className]),
+    ['Download 6 files', 'menuitem', 'F', true, 'F', 'm-download']);
+  await fcard.locator('.preview input').first().uncheck();
+  assert.equal(await filesItem.locator('.m-files-label').innerText(), 'Download 5 files', 'the count follows the ticks');
+  await fcard.locator('.preview input').first().check();
+  await filesItem.click();
+  await filesPage.waitForFunction(() => window.__stub.sent.some((m) => m.type === 'capture.download'));
+  let fdown = (await fsent('capture.download')).at(-1);
+  assert.deepEqual(fdown.links.map((l) => new URL(l.url).pathname + new URL(l.url).search), ['/files/paper.pdf', '/files/figure.png', '/files/paywalled.pdf', '/files/paper', '/files/missing.pdf', '/files/paper.pdf?copy=2'], 'only the file links, not the page link');
+  assert.equal(fdown.links[3].anchorText, '[PDF] fixture.test');
+  assert.equal(fdown.confirmed, false); assert.ok(fdown.requestId);
+  await fstatus(/^Saved 6 files to Link Meteor › My-research in your downloads folder\.$/);
+  pass('Download 6 files in the More menu (F) sends only the file links among the ticked ones and shows what was saved', {sent: fdown.links.length});
+
+  // Progress in the card's status, and Cancel for this card's own request.
+  await filesPage.evaluate(() => {
+    const original = window.chrome.runtime.sendMessage;
+    window.chrome.runtime.sendMessage = (message) => message.type === 'capture.download' && !window.__stub.noDownloadAccess
+      ? new Promise((done) => { window.__finishDownload = (value) => done({ok: true, data: value}); window.__stub.sent.push(message); })
+      : original(message);
+  });
+  await fcard.locator('button.copy').focus(); await filesPage.keyboard.press('f');
+  await filesPage.waitForFunction(() => !!window.__finishDownload);
+  const frequest = (await fsent('capture.download')).at(-1).requestId;
+  assert.equal(await filesItem.isDisabled(), true, 'one download at a time from the card');
+  await filesPage.evaluate((requestId) => window.__stub.deliver({type: 'downloads.progress', requestId, total: 6, done: 2, saved: 2, webPages: 0, failed: 0, cancelled: 0, held: 0}), frequest);
+  assert.equal(await fcard.locator('.fstatus-text').innerText(), 'Downloading 6 files: 2 done…');
+  await filesPage.evaluate(() => window.__stub.deliver({type: 'downloads.progress', requestId: 'someone-else', total: 9, done: 8}));
+  assert.equal(await fcard.locator('.fstatus-text').innerText(), 'Downloading 6 files: 2 done…', 'other requests’ progress is ignored');
+  await fcard.getByRole('button', {name: 'Cancel', exact: true}).click();
+  await filesPage.waitForFunction(() => window.__stub.sent.some((m) => m.type === 'downloads.cancel'));
+  assert.deepEqual((await fsent('downloads.cancel')).at(-1), {type: 'downloads.cancel', requestId: frequest});
+  await filesPage.evaluate(() => window.__finishDownload({total: 6, done: 6, saved: 2, webPages: 0, failed: 0, cancelled: 4, held: 0, results: [], summary: 'Saved 2 files to Link Meteor › My-research in your downloads folder. Canceled 4 downloads that hadn’t finished.'}));
+  await fstatus(/Canceled 4 downloads that hadn’t finished/);
+  assert.equal(await filesItem.isDisabled(), false);
+  pass('The card shows download progress for its own request only, and Cancel sends downloads.cancel');
+  await filesPage.evaluate(() => { delete window.__finishDownload; });
+  await filesPage.keyboard.press('Escape');
+
+  // Above 10 files the card asks first; Escape closes only the question.
+  await dragAcross('#many', 12);
+  await fcard.locator('button.copy').focus();
+  const before12 = (await fsent('capture.download')).length;
+  await filesPage.keyboard.press('f');
+  assert.equal(await fcard.locator('.fconfirm').isVisible(), true);
+  assert.equal(await fcard.locator('.fconfirm-text').innerText(), 'Download 12 files into your downloads folder?');
+  assert.deepEqual(await fcard.locator('.fconfirm button').allInnerTexts(), ['Download 12', 'Cancel']);
+  assert.equal(await filesPage.evaluate(() => document.getElementById('link-meteor-overlay').shadowRoot.activeElement.className), 'fconfirm-yes primary');
+  await filesPage.keyboard.press('Escape');
+  assert.equal(await fcard.locator('.fconfirm').isVisible(), false); assert.equal(await fcard.locator('.bar').isVisible(), true);
+  assert.equal((await fsent('capture.download')).length, before12, 'nothing sent before the confirmation');
+  await filesPage.keyboard.press('f');
+  await fcard.locator('.fconfirm-yes').click();
+  await filesPage.waitForFunction((n) => window.__stub.sent.filter((m) => m.type === 'capture.download').length === n + 1, before12);
+  await filesPage.waitForFunction(() => !!window.__finishDownload);
+  fdown = (await fsent('capture.download')).at(-1);
+  assert.equal(fdown.links.length, 12); assert.equal(fdown.confirmed, true);
+  await filesPage.evaluate(() => window.__finishDownload({total: 12, done: 12, saved: 12, results: [], summary: 'Saved 12 files to Link Meteor › My-research in your downloads folder.'}));
+  await fstatus(/^Saved 12 files/);
+  pass('12 files: the card asks “Download 12 files into your downloads folder?” first; Escape closes only the question');
+
+  // Without download access, the card explains and offers the full view, where Chrome can ask.
+  await filesPage.evaluate(() => { window.__stub.noDownloadAccess = true; });
+  await fcard.locator('.preview input').evaluateAll((boxes) => boxes.slice(2).forEach((box) => box.click()));
+  await fcard.locator('button.copy').focus(); await filesPage.keyboard.press('f');
+  await fstatus(/^Download access is needed\. Open the full view and choose Download there; Chrome asks for access once\./);
+  const openFull = fcard.getByRole('button', {name: 'Open the full view', exact: true});
+  assert.equal(await openFull.evaluate((b) => b === b.getRootNode().activeElement), true, 'focus moves to the offer');
+  const opensBeforeFiles = (await fsent('ui.open')).length;
+  await openFull.click();
+  await filesPage.waitForFunction((n) => window.__stub.sent.filter((m) => m.type === 'ui.open').length === n + 1, opensBeforeFiles);
+  assert.deepEqual((await fsent('ui.open')).at(-1), {type: 'ui.open'});
+  pass('Without download access the card says so and opens the full view, where the files wait with Chrome’s question');
+  await filesPage.keyboard.press('Escape'); await sleep(50);
+  assert.equal(await fcard.count(), 0);
+
+  // After Download linked file from the right-click menu, with no card open: a small notice says what arrived.
+  const menuText = 'The link gave a web page instead of a file, often a sign-in page. It was saved as “Paywalled-article.html”.';
+  await filesPage.evaluate((text) => window.__stub.deliver({type: 'downloads.progress', requestId: 'menu-1', total: 1, done: 1, saved: 0, webPages: 1, failed: 0, cancelled: 0, held: 0, final: true, text}), menuText);
+  const menuNotice = filesPage.locator('#link-meteor-download-notice');
+  assert.equal(await menuNotice.locator('.notice-text').innerText(), menuText);
+  const noticeFacts = await menuNotice.evaluate((host) => {
+    const root = host.shadowRoot, text = root.querySelector('.notice-text'), panel = root.querySelector('.panel');
+    const rgb = (value) => value.match(/[\d.]+/g).slice(0, 3).map(Number);
+    const lum = ([r, g, b]) => { const f = (c) => { c /= 255; return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4; }; return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b); };
+    const [a, b] = [lum(rgb(getComputedStyle(text).color)), lum(rgb(getComputedStyle(panel).backgroundColor))];
+    return {marked: host.hasAttribute('data-link-meteor'), role: text.getAttribute('role'), close: root.querySelector('.notice-close').getAttribute('aria-label'), contrast: Math.round(((Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05)) * 100) / 100};
+  });
+  assert.equal(noticeFacts.marked, true, 'excluded from capture like the card'); assert.equal(noticeFacts.role, 'status'); assert.equal(noticeFacts.close, 'Close notice');
+  assert.ok(noticeFacts.contrast >= 4.5, `notice text contrast ${noticeFacts.contrast}`);
+  assert.equal(await filesPage.evaluate(() => globalThis.__linkMeteor.scan().links.length), 19, 'the notice adds no links to a capture');
+  await menuNotice.locator('.notice-close').click();
+  assert.equal(await menuNotice.count(), 0);
+  pass('After the right-click menu’s Download linked file, a notice in the card’s colors says what arrived, and closes', noticeFacts);
+  await filesPage.close();
+
   /* Ctrl elsewhere: a Windows platform uses Ctrl, and Command does nothing. */
   const windows = await context.newPage();
   await load(windows, '/index.html', {platform: 'Win32', trigger: 'modifier'});
@@ -658,7 +780,7 @@ try {
 } catch (error) {
   result.result = 'FAIL'; result.error = error.stack; console.error(error); process.exitCode = 1;
 } finally {
-  await browser.close(); await fixture.close();
+  await browser.close(); await fixture.close(); await rm(downloadsPath, {recursive: true, force: true});
   result.finished = new Date().toISOString();
   await writeFile(resolve(evidence, 'access-content-results.json'), JSON.stringify(result, null, 2) + '\n');
 }

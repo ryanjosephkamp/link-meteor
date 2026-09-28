@@ -395,6 +395,27 @@
         <p id="download-name" class="help download-name"></p>
       </section>
 
+      <section class="export-group" id="downloads-section" aria-labelledby="downloads-title">
+        <h3 id="downloads-title">Download files</h3>
+        <div id="downloads-pending" class="downloads-pending" role="group" aria-labelledby="downloads-pending-text" hidden>
+          <p id="downloads-pending-text"></p>
+          <div class="confirm-actions"><button id="downloads-pending-start" class="btn primary" type="button" aria-describedby="downloads-access">Download files</button><button id="downloads-pending-dismiss" class="btn quiet" type="button">Dismiss</button></div>
+        </div>
+        <button id="downloads-start" class="btn wide" type="button" aria-describedby="downloads-help downloads-access"><svg class="icon" aria-hidden="true"><use href="#i-download"/></svg><span id="downloads-label">Download files</span></button>
+        <div id="downloads-confirm" class="confirm" role="group" aria-labelledby="downloads-confirm-text" hidden>
+          <p id="downloads-confirm-text"></p>
+          <div class="confirm-actions"><button id="downloads-confirm-yes" class="btn primary" type="button" aria-describedby="downloads-access">Download files</button><button id="downloads-confirm-no" class="btn quiet" type="button">Cancel</button></div>
+        </div>
+        <div id="downloads-progress" class="open-progress" hidden>
+          <p id="downloads-progress-text" role="status"></p>
+          <progress id="downloads-progress-bar" max="1" value="0" aria-labelledby="downloads-progress-text"></progress>
+          <button id="downloads-cancel" class="btn small" type="button">Cancel</button>
+        </div>
+        <div id="downloads-result" class="downloads-result" role="status" hidden></div>
+        <p id="downloads-help" class="help"></p>
+        <p id="downloads-access" class="help downloads-access"></p>
+      </section>
+
       <section class="export-group" aria-labelledby="bookmark-title">
         <h3 id="bookmark-title">Save as bookmarks</h3>
         <div id="bookmark-mode" class="bookmark-mode" role="radiogroup" aria-label="Bookmark folder">

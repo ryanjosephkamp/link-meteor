@@ -611,3 +611,11 @@ label.backup-choose { display: inline-flex; cursor: pointer; }
 .scheme-mode .seg { flex-direction: row; min-height: 30px; font-size: var(--text-xs); }
 @media (forced-colors: active) { .theme-choice { border: 1px solid CanvasText; } .theme-choice:has(input:checked) { outline: 2px solid Highlight; } }
 /* End of area: appearance and after a drag */
+
+/* Area: downloading files (0.4.0): the Export panel's Download files and Download in a link's details. */
+.downloads-pending { display: grid; gap: 10px; padding: 12px; border: 1px solid var(--accent-edge); border-radius: var(--r); background: var(--accent-wash); color: var(--ink); font-size: var(--text-sm); }
+.downloads-result { display: grid; gap: 6px; padding: 10px 12px; border-radius: var(--r); background: var(--sunken); color: var(--ink); font-size: var(--text-sm); overflow-wrap: anywhere; }
+.downloads-result ul { display: grid; gap: 4px; margin: 0; padding-left: 18px; color: var(--ink-2); font-size: var(--text-xs); }
+.occurrence-download { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; padding-top: 10px; border-top: 1px solid var(--line); }
+.occurrence-download .help { flex: 1 1 200px; min-width: 0; overflow-wrap: anywhere; }
+/* End of area: downloading files */

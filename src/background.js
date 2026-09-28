@@ -7,12 +7,13 @@ import {workbenchMessages as holdMessages, grantedSettings, followHoldWrites, re
 import {openUrls, cancelOpen} from './background/open.js';
 import {WORKBENCH, occurrences, commitCapture, openWorkbench, pageMessages, appendLinks, keepLeftOut, includeLeftOut, LEFT_OUT_LIMIT} from './background/card.js';
 import {syncIcon, followThemeWrites} from './background/theme.js';
+import {workbenchMessages as downloadMessages, pageMessages as downloadPageMessages, cancelDownloads, createDownloadMenu, downloadFromMenu, DOWNLOAD_MENU_ID} from './background/downloads.js';
 
 const LAST_TARGET_KEY = 'linkMeteorTarget';
 
 // Workbench-only messages answered by area modules. A type may be claimed by one module only.
 const AREA_MESSAGES = new Map();
-for (const table of [bookmarkMessages, backupMessages, holdMessages, diagnosticsMessages]) {
+for (const table of [bookmarkMessages, backupMessages, holdMessages, diagnosticsMessages, downloadMessages]) {
   for (const [type, handler] of Object.entries(table)) {
     if (AREA_MESSAGES.has(type)) throw new Error(`Duplicate Link Meteor message handler: ${type}`);
     AREA_MESSAGES.set(type, handler);
@@ -122,9 +123,11 @@ async function handle(message, sender) {
   // Capture-card messages need a sender tab (the page script's); collections.list takes any sender.
   if (message.type === 'capture.commit') return commitCapture(message,sender,{remember:rememberTarget});
   if (Object.hasOwn(pageMessages,message.type)) return pageMessages[message.type](message,sender);
+  if (Object.hasOwn(downloadPageMessages,message.type)) return downloadPageMessages[message.type](message,sender);
   if (message.type === 'ui.open' && (ui || sender.tab?.id)) return openWorkbench(message);
   // A page may cancel only the opening it started from its own capture card.
   if (message.type === 'links.cancel' && !ui && sender.tab?.id) return cancelOpen(message,{senderTabId:sender.tab.id});
+  if (message.type === 'downloads.cancel' && (ui || sender.tab?.id)) return cancelDownloads(message,ui ? {} : {senderTabId:sender.tab.id});
   if (!ui) throw new Error('This action must be requested from the Link Meteor workbench.');
   if (AREA_MESSAGES.has(message.type)) return AREA_MESSAGES.get(message.type)(message,sender);
   switch (message.type) {
@@ -140,7 +143,7 @@ async function handle(message, sender) {
 }
 
 chrome.runtime.onMessage.addListener((message,sender,reply) => {
-  if (!message || typeof message.type !== 'string' || ['state.changed','content.configure','links.progress'].includes(message.type)) return false;
+  if (!message || typeof message.type !== 'string' || ['state.changed','content.configure','links.progress','downloads.progress'].includes(message.type)) return false;
   handle(message,sender).then(data => reply({ok:true,data}),error => reply({ok:false,error:String(error.message || error)}));
   return true;
 });
@@ -155,6 +158,7 @@ chrome.commands.onCommand.addListener((command, tab) => {
 chrome.contextMenus.onClicked.addListener((info,tab) => {
   if (info.menuItemId === 'meteor-region') arm(tab?.id).catch(error => reportActivationError(error));
   if (info.menuItemId === 'meteor-page') captureTabs([tab.id]).then(() => chrome.tabs.create({url:WORKBENCH})).catch(error => reportActivationError(error));
+  if (info.menuItemId === DOWNLOAD_MENU_ID) downloadFromMenu(info,tab).catch(error => reportActivationError(error));
 });
 async function reportActivationError(error) {
   await chrome.storage.session.set({linkMeteorActivationError:String(error.message || error)});
@@ -166,6 +170,7 @@ chrome.runtime.onInstalled.addListener(async () => {
   await chrome.contextMenus.removeAll();
   chrome.contextMenus.create({id:'meteor-region',title:'Link Meteor: select a region',contexts:['page','link','selection']});
   chrome.contextMenus.create({id:'meteor-page',title:'Link Meteor: collect this page',contexts:['page','link','selection']});
+  createDownloadMenu();
   await requestSync({inject: 'all'});
 });
 // Keeping access honest: hold-drag follows Chrome's grants and every saved change to its settings.

@@ -3,7 +3,9 @@
 // through backup files built in Node, downloads a real backup and reads it back with the model's
 // reader, restores it into other fresh profiles through the file chooser, and records one
 // synthetic 20,000-link timing. A diagnostic copy of the build without unlimitedStorage shows
-// what the permission is for and that a failed restore write changes nothing.
+// what the permission is for and that a failed restore write changes nothing. Custom columns (0.4.0):
+// a backup keeps them, and a merge joins a same-named column, adds the rest while there is room,
+// and the preview says how many are added or can't fit. Downloads land in a folder under .scratch/.
 //
 //   npm run build
 //   LINK_METEOR_EVIDENCE_DIR=.scratch/evidence-backup-restore LINK_METEOR_FIXTURE_PORT=52483 node tests/backup-browser.mjs
@@ -11,10 +13,14 @@ import assert from 'node:assert/strict';
 import {readFile, writeFile, mkdir, rm, cp} from 'node:fs/promises';
 import {resolve} from 'node:path';
 import {launch, fixtureServer, rpc, until, evidence, scratch, root} from './helpers/browser.mjs';
-import {createState, reduceState, createBackup, readBackup, BACKUP_LIMITS} from '../src/core/model.js';
+import {createState, reduceState, createBackup, readBackup, BACKUP_LIMITS, MAX_CUSTOM_FIELDS} from '../src/core/model.js';
 const VERSION = JSON.parse(await readFile(new URL('../src/manifest.json', import.meta.url), 'utf8')).version;
 
 const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+// Playwright keeps accepted downloads in a temporary folder of this process: put it under .scratch/.
+const downloadsTemp = resolve(scratch, `downloads-backup-${process.pid}`);
+await mkdir(downloadsTemp, {recursive: true});
+process.env.TMPDIR = process.env.TMP = process.env.TEMP = downloadsTemp;
 const result = {started: new Date().toISOString(), browser: 'Chrome for Testing through Playwright, headless, unpacked extension', profiles: [], checks: [], timings: {}, screenshots: [],
   limits: ['Headless Chrome for Testing on one Mac with synthetic data and no optional grants; not native Allow/Deny, everyday Chrome or other systems.',
     'Timings are one synthetic measurement on this machine, not a performance claim.',
@@ -440,6 +446,90 @@ try {
   assert.equal(await D.ui.locator('#restore-status').isVisible(), true);
   check('Diagnostic: without unlimitedStorage the 20,000-link restore exceeds Chrome\'s 10 MB storage and fails; the state and the earlier snapshot stay unchanged', {variant: variant.slice(root.length + 1)});
 
+  /* Profiles E and F: a backup with custom columns, merged into collections with a same-named column and a full one */
+  const E = await open('e-columns');
+  const mutateIn = (ui, action) => rpc(ui, {type: 'state.mutate', action});
+  await mutateIn(E.ui, {type: 'collection.create', name: 'Labs'});
+  await mutateIn(E.ui, {type: 'links.append', links: [link('e1', {anchorText: 'Heat lab'}), link('e2', {anchorText: 'Shade lab'}), link('e3', {anchorText: 'Wind lab'})]});
+  for (const name of ['Principal investigator', 'Deadline']) await mutateIn(E.ui, {type: 'fields.add', name});
+  const [ePi, eDue] = (await active(E.ui)).fields.map((field) => field.id);
+  await mutateIn(E.ui, {type: 'link.update', id: 'e1', patch: {fields: {[ePi]: 'Dr. Rivera', [eDue]: '=1+1'}}});
+  await mutateIn(E.ui, {type: 'fields.fill', fieldId: eDue, ids: ['e2', 'e3'], value: 'March 1'});
+  await mutateIn(E.ui, {type: 'collection.create', name: 'Full'});
+  await mutateIn(E.ui, {type: 'links.append', links: [link('e4', {anchorText: 'Overflow lab'})]});
+  await mutateIn(E.ui, {type: 'fields.add', name: 'Extra'});
+  await mutateIn(E.ui, {type: 'link.update', id: 'e4', patch: {fields: {[(await active(E.ui)).fields[0].id]: 'Only in the backup'}}});
+  await E.ui.waitForTimeout(300);
+  const savedE = await state(E.ui);
+  const [columnsDownload] = await Promise.all([E.ui.waitForEvent('download'), E.ui.locator('#backup-download').click()]);
+  const landed = await columnsDownload.path();
+  assert.ok(landed.startsWith(downloadsTemp), `the backup landed in ${landed}, outside .scratch/`);
+  const columnsPath = resolve(files, 'backup-columns.json');
+  await columnsDownload.saveAs(columnsPath);
+  const columnsBackup = readBackup(await readFile(columnsPath, 'utf8'));
+  assert.deepEqual(columnsBackup.state.collections, savedE.collections, 'every column and value is in the backup');
+  assert.deepEqual(columnsBackup.state.collections[1].links[0].fields, {[ePi]: 'Dr. Rivera', [eDue]: '=1+1'});
+  check('A backup keeps each collection\'s custom columns and every value, read back by readBackup in Node; the file landed under .scratch/', {columns: savedE.collections.map((c) => (c.fields || []).map((field) => field.name))});
+
+  const F = await open('f-columns');
+  await mutateIn(F.ui, {type: 'collection.create', name: 'Labs'});
+  await mutateIn(F.ui, {type: 'links.append', links: [link('f1', {anchorText: 'Local lab'})]});
+  await mutateIn(F.ui, {type: 'fields.add', name: 'principal INVESTIGATOR'});
+  const labsF = await active(F.ui), fPi = labsF.fields[0].id;
+  await mutateIn(F.ui, {type: 'link.update', id: 'f1', patch: {fields: {[fPi]: 'Dr. Local'}}});
+  await mutateIn(F.ui, {type: 'collection.create', name: 'Full'});
+  for (let i = 1; i <= MAX_CUSTOM_FIELDS; i++) await mutateIn(F.ui, {type: 'fields.add', name: `Column ${i}`});
+  await mutateIn(F.ui, {type: 'collection.activate', id: labsF.id});
+  await F.ui.waitForTimeout(300);
+  const F0 = await state(F.ui);
+  shown = await preview(F.ui, columnsPath);
+  for (const phrase of ['Adds 4 links', '3 joined with collections here', 'Adds 1 custom column to joined collections', "1 custom column can't fit, because a collection holds at most 20; its values are left out"]) {
+    assert.ok(shown.includes(phrase), `preview shows “${phrase}”:\n${shown}`);
+  }
+  assert.equal(await text(F.ui, '#restore-modes .restore-fields-dropped'), "1 custom column can't fit, because a collection holds at most 20; its values are left out");
+  // The new preview lines: contrast in light and dark, and no overflow at 320 px.
+  const columnPairs = [['added columns line', '#restore-modes .restore-mode li'], ['columns that do not fit', '#restore-modes .restore-fields-dropped']];
+  const columnContrast = [];
+  for (const scheme of ['light', 'dark']) {
+    await F.ui.emulateMedia({colorScheme: scheme, reducedMotion: 'reduce'}); await F.ui.waitForTimeout(200);
+    for (const entry of await contrast(F.ui, columnPairs)) { assert.ok(!entry.missing, `${entry.name} missing`); assert.ok(entry.ratio >= 4.5, `${scheme} ${entry.name} contrast ${entry.ratio}`); columnContrast.push({scheme, ...entry}); }
+    await resize(F.ui, 320, 900);
+    await F.ui.locator('#collection-switch').click();
+    assert.equal(await overflow(F.ui), false);
+    await F.ui.locator('#restore-modes .restore-fields-dropped').scrollIntoViewIfNeeded();
+    await shot(F.ui, `backup-columns-preview-320-${scheme}.png`);
+    await F.ui.locator('#rail-done').click();
+    await resize(F.ui, 1440, 1000);
+  }
+  await F.ui.emulateMedia({colorScheme: 'light', reducedMotion: 'reduce'});
+  check('The restore preview says how many custom columns a merge adds and how many can\'t fit; readable in light and dark, no overflow at 320 px', {contrast: columnContrast});
+
+  await F.ui.locator('#restore-merge').click();
+  await noticeIncludes(F.ui, "Merged the backup: added 4 links; added 1 custom column; 1 custom column didn't fit.");
+  const F1 = await state(F.ui);
+  const labs = F1.collections.find((c) => c.name === 'Labs'), full = F1.collections.find((c) => c.name === 'Full');
+  assert.deepEqual(labs.fields, [{id: fPi, name: 'principal INVESTIGATOR'}, {id: eDue, name: 'Deadline'}], 'joined by name, ignoring case; the other column is added');
+  assert.deepEqual(Object.fromEntries(labs.links.map((item) => [item.id, item.fields])),
+    {f1: {[fPi]: 'Dr. Local'}, e1: {[fPi]: 'Dr. Rivera', [eDue]: '=1+1'}, e2: {[eDue]: 'March 1'}, e3: {[eDue]: 'March 1'}}, 'values follow their column to its local id');
+  assert.equal(full.fields.length, MAX_CUSTOM_FIELDS);
+  assert.equal(full.links.find((item) => item.id === 'e4').fields, undefined, 'a column that does not fit leaves its values out');
+  await until(async () => (await F.ui.locator('.link-row').count()) === 4, 'Merged links listed');
+  await F.ui.locator('#edit-collection').click();
+  assert.deepEqual(await F.ui.locator('.field-item .field-name').allInnerTexts(), ['principal INVESTIGATOR', 'Deadline']);
+  assert.deepEqual(await F.ui.locator('.field-item .field-filled').allInnerTexts(), ['2 values', '3 values']);
+  await F.ui.locator('#cancel-edit').click();
+  await F.ui.waitForTimeout(250);
+  await F.ui.locator('.link-row').nth(1).locator('.row-details summary').click();
+  await until(async () => (await F.ui.locator(`.link-row input[data-link-field="field:${fPi}"]`).count()) === 1, 'Details of a merged link');
+  assert.deepEqual([await F.ui.locator(`.link-row input[data-link-field="field:${fPi}"]`).inputValue(), await F.ui.locator(`.link-row input[data-link-field="field:${eDue}"]`).inputValue()], ['Dr. Rivera', '=1+1']);
+  await F.ui.locator('#search').fill('rivera');
+  await until(async () => (await F.ui.locator('.link-row').count()) === 1, 'Search finds a merged value');
+  await F.ui.locator('#search').fill('');
+  await F.ui.locator('#restore-undo').click();
+  await noticeIncludes(F.ui, 'Restore undone.');
+  assert.deepEqual(await state(F.ui), F0, 'Undo takes the added column and values back out');
+  check('Merging a backup with custom columns joins a same-named column (ignoring case), adds the other while there is room, leaves out one that can\'t fit, shows the values in link details and search, and Undo reverses it', {labs: labs.fields.map((field) => field.name)});
+
   assert.deepEqual(errors, [], 'no page errors');
   check('No page errors or console errors in any profile');
   result.result = 'PASS';
@@ -449,6 +539,7 @@ try {
   for (const context of contexts) await context.close().catch(() => {});
   await fixture.close();
   await rm(resolve(files, 'oversized.json'), {force: true});
+  await rm(downloadsTemp, {recursive: true, force: true});
   result.finished = new Date().toISOString();
   await writeFile(resolve(evidence, 'backup-browser-results.json'), JSON.stringify(result, null, 2) + '\n');
   console.log(JSON.stringify({result: result.result, checks: result.checks.length, timings: result.timings}));

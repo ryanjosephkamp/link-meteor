@@ -10,7 +10,7 @@
 import assert from 'node:assert/strict';
 import {mkdir, mkdtemp, readFile, rm, writeFile} from 'node:fs/promises';
 import {resolve} from 'node:path';
-import {chromePath, fixtureServer, headlessArgs, playwright, root, scratch} from './helpers/browser.mjs';
+import {browserHome, chromePath, fixtureServer, headlessArgs, playwright, root, scratch} from './helpers/browser.mjs';
 import {cardTheme} from '../src/core/themes.js';
 
 const evidence = resolve(root, process.env.LINK_METEOR_EVIDENCE_DIR || '.scratch/evidence-access-capture');
@@ -84,7 +84,7 @@ const fixture = await fixtureServer();
 // Page downloads (the card's workbook) land in a task-owned folder under .scratch/, removed afterwards.
 await mkdir(scratch, {recursive: true});
 const downloadsPath = await mkdtemp(resolve(scratch, 'access-content-downloads-'));
-const browser = await playwright.chromium.launch({executablePath: chromePath(), headless: true, args: headlessArgs(), downloadsPath});
+const browser = await playwright.chromium.launch({executablePath: chromePath(), headless: true, args: headlessArgs(), downloadsPath, env: {...process.env, ...browserHome(resolve(downloadsPath, 'home'))}});
 const sleep = (ms) => new Promise((done) => setTimeout(done, ms));
 const card = (page) => page.locator('#link-meteor-overlay');
 async function load(page, path, options) {

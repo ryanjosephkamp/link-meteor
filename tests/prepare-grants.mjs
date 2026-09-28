@@ -5,14 +5,17 @@
 // Under automation requests may resolve without an observed click. Successful
 // grants are not evidence that native Allow/Deny sheets were exercised.
 //
-// LINK_METEOR_GRANTS=site (default): tabs, the fixture site and bookmarks, for the functional
-//   suites. Then Capture this page on a newly visited site (a second local origin, the fixture
-//   port + 10), which must ask for that site in the same click and then capture it: 4 prompts.
+// LINK_METEOR_GRANTS=site (default): tabs, the fixture site, bookmarks and downloads, for the
+//   functional suites and tests/downloads-granted.mjs. Then Capture this page on a newly visited
+//   site (a second local origin, the fixture port + 10), which must ask for that site in the same
+//   click and then capture it: 5 prompts. Downloads are asked for by the Export panel's Download
+//   files, which then saves one fixture PDF. Chrome saves it itself, into this profile's
+//   .scratch/<profile>-downloads folder (see launch's chromeDownloads), never the Downloads folder.
 // LINK_METEOR_GRANTS=all-sites, in a SEPARATE new profile: tabs and the fixture site first (so a
 //   per-site grant exists), then all sites from the welcome card, tab groups from Open as a tab
 //   group, and bookmarks: 5 prompts. For tests/access-granted.mjs and the all-sites part of
 //   tests/permission-browser.mjs.
-import {fixtureServer,launch,rpc,until} from './helpers/browser.mjs';
+import {fixtureServer,launch,rpc,until,downloadsFolder} from './helpers/browser.mjs';
 import {secondFixture} from './access-fixture.mjs';
 const profile=process.env.LINK_METEOR_TEST_PROFILE;
 if(!profile)throw new Error('Set LINK_METEOR_TEST_PROFILE to a new task-owned profile name.');
@@ -21,7 +24,7 @@ if(!['site','all-sites'].includes(mode))throw new Error("LINK_METEOR_GRANTS must
 const ALL_SITES=['http://*/*','https://*/*'];
 const fixture=await fixtureServer();
 const second=mode==='site'?await secondFixture():null;
-const {context,id}=await launch(profile,{headless:process.env.LINK_METEOR_GRANTS_HEADLESS==='1'});
+const {context,id}=await launch(profile,{headless:process.env.LINK_METEOR_GRANTS_HEADLESS==='1',chromeDownloads:true});
 const grantTimeout=Number(process.env.LINK_METEOR_GRANT_TIMEOUT || 180000);
 let ui,page;
 const log=(step,data={})=>console.log(JSON.stringify({time:new Date().toISOString(),step,mode,...data}));
@@ -71,6 +74,18 @@ async function grantAllSites(){
   await until(async()=>(await rpc(ui,{type:'state.get'})).settings.holdScope==='all','all-sites scope saved',20000);
   log('scope',{holdScope:'all',outcome:await ui.locator('#welcome-outcome-text').innerText()});
 }
+// Downloads, from the Export panel's Download files: one fixture PDF, in a collection of its own.
+async function grantDownloads(){
+  const collection=(await rpc(ui,{type:'state.mutate',action:{type:'collection.create',name:'Grant preparation downloads'}})).activeCollectionId;
+  const link={id:'grant-download-0',anchorText:'Attention in small systems',accessibleLabel:'',url:`${fixture.base}/files/paper.pdf`,originalHref:'/files/paper.pdf',sourceUrl:`${fixture.base}/files.html`,sourceTitle:'Grant preparation',frameUrl:'',capturedAt:new Date().toISOString(),batchId:'grant-download',notes:'',tags:[]};
+  await rpc(ui,{type:'state.mutate',action:{type:'links.append',collectionId:collection,links:[link]}});
+  await until(async()=>(await ui.locator('#collection-heading').innerText())==='Grant preparation downloads'&&(await ui.locator('#downloads-label').innerText())==='Download 1 file','one file to download');
+  if(!await has({permissions:['downloads']})){log('awaiting-native-allow',{permission:'downloads',via:'Export panel: Download files'});}
+  await ui.locator('#downloads-start').click();
+  await until(()=>has({permissions:['downloads']}),'downloads grant',grantTimeout);log('granted',{permission:'downloads'});
+  await until(async()=>/^Saved “Attention-in-small-systems\.pdf”/.test(await ui.locator('#downloads-result').innerText().catch(()=>'')),'the fixture PDF downloaded',30000);
+  log('downloaded',{result:await ui.locator('#downloads-result').innerText(),folder:downloadsFolder(profile)});
+}
 async function grantTabGroups(){
   const collection=(await rpc(ui,{type:'state.mutate',action:{type:'collection.create',name:'Grant preparation group'}})).activeCollectionId;
   const links=[0,1,2].map(i=>({id:`grant-group-${i}`,anchorText:`Group source ${i}`,accessibleLabel:'',url:`${fixture.base}/group/${i}`,originalHref:'',sourceUrl:`${fixture.base}/index.html`,sourceTitle:'Grant preparation',frameUrl:'',capturedAt:new Date().toISOString(),batchId:'grant-group',notes:'',tags:[]}));
@@ -100,6 +115,7 @@ try{
   if(mode==='site'){
     await grantBookmarks('Attention in small systems');
     await ui.locator('#search').fill('');
+    await grantDownloads();
     await capturePageOnNewSite();
   } else {
     await grantAllSites();

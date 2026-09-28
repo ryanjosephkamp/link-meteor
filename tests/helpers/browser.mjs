@@ -1,6 +1,7 @@
 import {createHash} from 'node:crypto';
 import {createServer} from 'node:http';
 import {readFile,mkdir,writeFile,readdir} from 'node:fs/promises';
+import {mkdirSync} from 'node:fs';
 import {resolve,extname,dirname} from 'node:path';
 import {createRequire} from 'node:module';
 import {homedir} from 'node:os';
@@ -50,6 +51,10 @@ export async function fixtureServer() {
 // .scratch/<profile>-downloads: Playwright saves downloads there (acceptDownloads), and Chrome's
 // download folder preference points there too, for anything Playwright doesn't handle.
 export const downloadsFolder=profile=>resolve(scratch,profile+'-downloads');
+// Chrome for Testing also creates and at once removes a temporary file in the system's Downloads
+// folder for each download, whatever folder it saves into. On macOS, a home folder for the browser
+// under .scratch/ (CFFIXED_USER_HOME) keeps even that there. Returns the environment to add.
+export function browserHome(home){mkdirSync(resolve(home,'Downloads'),{recursive:true});return process.platform==='darwin'?{CFFIXED_USER_HOME:home}:{};}
 async function pointDownloads(profileDir,folder){
   const path=resolve(profileDir,'Default','Preferences');let prefs={};
   try{prefs=JSON.parse(await readFile(path,'utf8'));}catch(error){if(error.code!=='ENOENT')throw error;}
@@ -59,9 +64,9 @@ async function pointDownloads(profileDir,folder){
 }
 // With chromeDownloads (tests/downloads-granted.mjs), Playwright's download handling is switched off,
 // so Chrome saves, names and files downloads itself, as for a person. Chrome for Testing then uses
-// the profile's download folder preference, and without it the system's Downloads folder, so on
-// macOS and Linux the browser also gets a home folder under .scratch/. Nothing may download until
-// Chrome's own settings page reports the profile's folder; otherwise the run stops here.
+// the profile's download folder preference, and without it the system's Downloads folder, so the
+// browser's home folder is under .scratch/ on Linux too (HOME), as on macOS. Nothing may download
+// until Chrome's own settings page reports the profile's folder; otherwise the run stops here.
 async function useChromeDownloads(context,folder){
   const page=await context.newPage();
   try{
@@ -83,11 +88,11 @@ export async function launch(profile='acceptance',{headless=true,scale=1,args=[]
   if(previous&&previous!==buildHash)throw new Error('Build changed since this profile was initialized. Use LINK_METEOR_TEST_PROFILE with a fresh task-owned profile, prepare optional grants, and repeat checks.');
   await writeFile(fingerprint,buildHash+'\n');
   const downloads=downloadsFolder(profile);await mkdir(downloads,{recursive:true});await pointDownloads(resolve(scratch,profile),downloads);
-  const home=chromeDownloads&&process.platform!=='win32'?resolve(scratch,profile+'-home'):null;if(home)await mkdir(home,{recursive:true});
+  const home=resolve(scratch,profile+'-home');
   const context=await playwright.chromium.launchPersistentContext(resolve(scratch,profile),{
     executablePath:chromePath(),headless,
     viewport:{width:1440,height:1000},deviceScaleFactor:scale,acceptDownloads:true,downloadsPath:downloads,
-    env:{...process.env,TMPDIR:scratch,...(home?{HOME:home,CFFIXED_USER_HOME:home}:{})},
+    env:{...process.env,TMPDIR:scratch,...browserHome(home),...(chromeDownloads&&process.platform!=='win32'?{HOME:home}:{})},
     args:[...headlessArgs(headless),`--disable-extensions-except=${extension}`,`--load-extension=${extension}`,'--disable-background-networking','--disable-component-update',`--disk-cache-dir=${resolve(scratch,profile+'-cache')}`,...args]
   });
   if(chromeDownloads){try{await useChromeDownloads(context,downloads);}catch(error){await context.close();throw error;}}

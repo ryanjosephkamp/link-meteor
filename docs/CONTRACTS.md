@@ -533,6 +533,49 @@ Chrome shows several items from one extension under a "Link Meteor" submenu, so 
   Link Meteor never searches, opens, changes or removes other downloads.
 - **Messages:** `downloads.start {links, collectionName, requestId}` (workbench), `capture.download` (page), `downloads.cancel {requestId}`, and `downloads.progress` notifications to the sender.
 
+#### Downloads, as built
+
+**Which links are files** (`src/core/files.js`, pure; the page script keeps a copy of `fileLink` that `tests/files.test.mjs` checks against it):
+- `FILE_TYPES`, by kind: documents (`pdf ps eps`), office (`doc docx docm dot dotx xls xlsx xlsm xlt xltx ppt pptx pptm pps ppsx pot potx rtf`), OpenDocument (`odt ods odp odg odf ott ots otp`), text and data (`txt md markdown csv tsv json jsonl xml yaml yml bib ris enw nbib tex ipynb`), e-books (`epub mobi azw azw3 djvu fb2`), archives (`zip gz tgz tar bz2 xz 7z rar zst`), images (`png jpg jpeg gif webp svg tif tiff bmp avif heic heif ico`), audio (`mp3 wav m4a aac ogg oga flac opus`), video (`mp4 m4v mov webm mkv avi ogv`). Web pages and programs are never file types. The extension is the last path segment's, in any case; the query and fragment don't count.
+- Anchor text that starts with `[PDF]`, in any case.
+- Known PDF addresses: arXiv `/pdf/…` (any `arxiv.org` host), OpenReview `/pdf?id=…`, the ACM Digital Library `dl.acm.org/doi/pdf/…`, and PubMed Central `…/pmc/articles/PMC…/pdf` and `pmc.ncbi.nlm.nih.gov/articles/PMC…/pdf`.
+- `isFileLink(link)`, `fileLinks(links)` (one per address, in order), `urlFileType`, `knownPdf`.
+
+**Names and folders:**
+- The folder is `Link Meteor/<fileNamePart(collection name, 80)>`, or `Link Meteor/links` without a name.
+- The file is `fileNamePart(anchor text, 100)`, without a leading `[PDF]`, `[HTML]`, `[DOC]`, `[DOCX]`, `[PS]`, `[BOOK]` or `[CITATION]` label; else the accessible label; else the address's own file name; else `file`. An anchor that already ends in the extension isn't doubled. Windows device names get `_` (`CON_.pdf`).
+- The extension (`downloadExtension`): **a web page is saved as `.html`**, so a sign-in page never becomes a fake PDF; otherwise the address's file type, then the type Chrome reports, then the extension of the name Chrome suggests, then `pdf` for a known PDF address.
+- Chrome names the file through `onDeterminingFilename`, once it knows the type, with `conflictAction: 'uniquify'` (Chrome adds " (1)"). `download()` also gets `saveAs: false` and a fallback name from the address alone.
+
+**The background** (`src/background/downloads.js`):
+- `downloads.start {links:[{url, anchorText?, accessibleLabel?}], collectionName?, requestId?, confirmed?}`. Workbench. Web (HTTP(S)) links only, one per address; 1 to 100; more than 10 need `confirmed: true`. Any link may be downloaded; a file link that brings back a web page counts as a web page.
+- `capture.download {links, collectionId?, requestId?, confirmed?}`. Page. Only the file links among the links are downloaded, into the folder of the destination collection (default: the active one). With no file links it is refused.
+- The result of both: `{requestId, folder, total, done, saved, webPages, failed, cancelled, held, results, summary}`. Each result is `{url, anchorText, file, mime, status}`, with `status` one of `saved`, `web-page`, `failed` (with `error`, Chrome's interruption code, and `reason`, in plain words with the code), `cancelled` or `held` (Chrome holds a file it considers dangerous for the person to review; Link Meteor doesn't wait for it). `file` is the base name only, and empty when nothing was saved. `summary` is one sentence, for example "Saved 4 files to Link Meteor › Thesis-sources in your downloads folder. 1 link gave a web page instead of a file, often a sign-in page. 1 download failed."
+- `downloads.progress {requestId, total, done, saved, webPages, failed, cancelled, held}`: once at the start and after each file, to the workbench (`runtime.sendMessage`) or to the card's tab. The menu's download ends with one more to its tab, with `final: true` and `text` (the summary).
+- `downloads.cancel {requestId}` => `{cancelled}`. Workbench, or the page that started the request. Nothing more starts, and downloads in progress are canceled; Chrome removes their partial files. Files already saved stay.
+- At most 3 downloads run at a time across every request, first come first served. Each is followed with `onChanged` and looked up by its own id once a second (which also keeps the service worker awake) until it completes, is interrupted, is held, or disappears from Chrome's list (`failed`, "it was removed from Chrome’s downloads list").
+- The `onDeterminingFilename` and `onChanged` listeners exist only while something downloads. Chrome asks every such listener about every download; Link Meteor answers `suggest()` with no name for any download it didn't start (checked by id, or by address and `byExtensionId` when Chrome asks before `download()` answers), so those keep Chrome's own names.
+- Without access (`permissions.contains({permissions:['downloads']})` and `chrome.downloads`), `downloads.start` and `capture.download` are refused with an error that begins "Download access is needed". `capture.download` first keeps its file links at session key `linkMeteorPendingDownloads`: `{links, collectionName, source: 'card'|'menu', createdAt}`.
+
+**The menu item:** `{id: 'meteor-download', title: 'Download linked file', contexts: ['link'], targetUrlPatterns: menuPatterns()}`, created on install. The patterns are `*://*/*.<ext>` and `*://*/*.<ext>?*` for every file type, in lowercase and uppercase, plus the known PDF addresses; `[PDF]` labels can't be matched by address. A click loads the page script (the click grants temporary access), asks `content.contextLink {url}` for the link's own fields and falls back to the address alone, then downloads into the active collection's folder and sends the tab the final `downloads.progress`. Without access, the link waits at `linkMeteorPendingDownloads` (`source: 'menu'`) and the full view opens (`ui.open`).
+
+**The workbench** (`src/ui/workbench/downloads.js`):
+- The Export panel's *Download files* section downloads the file links in the export target (`targetRows()`): "Download 6 files", with "…" above 10, disabled with no file links or more than 100. The help says where files go and how many other links aren't file links. While Chrome reports no access, `#downloads-access` gives the reason next to the button.
+- The click that starts downloading calls `chrome.permissions.request({permissions: ['downloads']})` before anything is awaited: the button up to 10 files, the confirmation's button above 10, a link's *Download*, or the waiting files' button. A decline downloads nothing and says so.
+- Above 10, an inline confirmation names the count and the folder; Escape closes it. Progress ("Downloading 12 files: 5 done…") with Cancel, then the result: the summary and a list of the links that brought a web page, failed or were held.
+- Each link's details offer *Download* (`.occurrence-download`), for any link, into the collection's folder.
+- Files waiting at `linkMeteorPendingDownloads` are shown once by the next full view that opens, if they are at most 10 minutes old: at compact widths it switches to the export view, and it focuses their button. The key is removed when read.
+
+**The capture card:** *Download N files* (`.m-files`, shortcut F) in the More menu, after *Download this selection*, counts the file links among the ticked ones, one per address. Above 10 it asks first (`.fconfirm`: "Download 12 files into your downloads folder?", Download 12, Cancel; Escape closes it). While downloading, the status shows progress (`.fstatus-text`) and Cancel (`.fcancel`), then the summary. Without access it shows the error and *Open the full view* (`ui.open`), where the files wait. After the menu's download, the final `downloads.progress` text goes in an open card's status, or in a small notice (`#link-meteor-download-notice`, marked like the card, in the card's colors, `.notice-text` with `role="status"`, `.notice-close`), which closes itself 8 seconds after it last had the pointer or focus.
+
+**Stable element IDs:** `#downloads-section`, `#downloads-title`, `#downloads-start`, `#downloads-label`, `#downloads-help`, `#downloads-access`, `#downloads-confirm`, `#downloads-confirm-text`, `#downloads-confirm-yes`, `#downloads-confirm-no`, `#downloads-progress`, `#downloads-progress-text`, `#downloads-progress-bar`, `#downloads-cancel`, `#downloads-result`, `#downloads-pending`, `#downloads-pending-text`, `#downloads-pending-start`, `#downloads-pending-dismiss`.
+
+**Chrome's behavior, as observed in Chrome for Testing:**
+- Without DevTools download settings, `chrome.downloads` saves into the profile's `download.default_directory` preference and, without it, into the system's Downloads folder (on macOS, in the home folder the browser process sees).
+- DevTools `Browser.setDownloadBehavior` (Playwright's `acceptDownloads` uses it) takes over `chrome.downloads` too: files go to its folder, `onDeterminingFilename` never fires, and the `filename` option and folders are ignored.
+- When any extension listens to `onDeterminingFilename`, a download's creator `filename` is used only if a listener suggests one; `suggest()` with no name gives Chrome's own name.
+- A 404 ends as `interrupted` with `SERVER_BAD_CONTENT`. A canceled download leaves no partial file.
+
 ### Highlights after release
 
 - **What's highlighted:** after a region selection is released, every selected link (up to 250), not only those under the last rectangle. Each box is redrawn from its link's current rectangles, including through same-origin frames, once per animation frame whenever the page or a scrolling box scrolls or the window resizes. So the highlights stay on their links.

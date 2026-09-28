@@ -179,6 +179,17 @@
     return result.data;
   }
 
+  // Writes text, and HTML for rich links, to the clipboard: 'rich', 'plain' or '' (blocked). Without
+  // the async clipboard (for example on a plain-HTTP page), it copies through a hidden text area in `root`.
+  async function clip(text,html,root){
+    if(html){try{await navigator.clipboard.write([new ClipboardItem({'text/html':new Blob([html],{type:'text/html'}),'text/plain':new Blob([text],{type:'text/plain'})})]);return 'rich';}catch{/* the text area below */}}
+    else{try{await navigator.clipboard.writeText(text);return 'plain';}catch{/* the text area below */}}
+    const area=document.createElement('textarea'),back=root.activeElement || document.activeElement;area.value=text;area.style.cssText='position:fixed;left:0;top:0;opacity:0';root.append(area);
+    if(html)area.addEventListener('copy',event=>{event.preventDefault();event.clipboardData.setData('text/html',html);event.clipboardData.setData('text/plain',text);});
+    area.focus();area.select();const copied=document.execCommand('copy');area.remove();back?.focus?.({preventScroll:true});
+    return copied?(html?'rich':'plain'):'';
+  }
+
   function editable(event) {
     return event.composedPath().some(node => node?.nodeType===1 && (node.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(node.tagName) || node.getAttribute('role')==='textbox'));
   }
@@ -213,7 +224,7 @@
     listen(window,'pointercancel',release,true);
   }
 
-  function arm(startEvent, current) {
+  function arm(startEvent, current, notice) {
     active?.close();
     held=false;
     const host=document.createElement('div');
@@ -554,13 +565,7 @@
     /* Copying. Rich links go on the clipboard as HTML and plain text; returns 'rich', 'plain' or '' (blocked). */
     async function copyLinks(format){
       const {text,html}=await request({type:'capture.copy',links:tickedLinks(),format});
-      if(html){try{await navigator.clipboard.write([new ClipboardItem({'text/html':new Blob([html],{type:'text/html'}),'text/plain':new Blob([text],{type:'text/plain'})})]);return 'rich';}catch{/* the text area below */}}
-      else{try{await navigator.clipboard.writeText(text);return 'plain';}catch{/* the text area below */}}
-      // Without the async clipboard (for example on a plain-HTTP page), copy through a hidden text area.
-      const area=document.createElement('textarea'),back=shadow.activeElement || document.activeElement;area.value=text;area.style.cssText='position:fixed;left:0;top:0;opacity:0';shadow.append(area);
-      if(html)area.addEventListener('copy',event=>{event.preventDefault();event.clipboardData.setData('text/html',html);event.clipboardData.setData('text/plain',text);});
-      area.focus();area.select();const copied=document.execCommand('copy');area.remove();back?.focus?.({preventScroll:true});
-      return copied?(html?'rich':'plain'):'';
+      return clip(text,html,shadow);
     }
     async function copy(format){
       const how=await copyLinks(format),n=tickedLinks().length;
@@ -719,7 +724,17 @@
       if(!button.disabled)button.click();
     });
 
+    // A save or copy from Link Meteor's menus (content.notice): the notice alone, with no selection
+    // or card. After a save it offers Undo, and Show links opens the full view at those links.
+    async function menuNotice({text,added,copy}){
+      shield.hidden=true;$('.hint').hidden=true;$('.notice-show').hidden=!added;
+      if(added){committed=true;destination=added.name;savedCollectionId=added.collectionId;savedBatchId=added.batchId;$('.notice-show').onclick=()=>openReview().catch(error=>showNotice(String(error.message || error)));}
+      if(typeof copy==='string'&&!await clip(copy,'',shadow))text='Clipboard access was blocked, so nothing was copied. Try again, or use the capture card.';
+      if(active===state)showNotice(String(text),!!added);
+    }
+
     if(startEvent)begin(startEvent,current);
+    else if(notice)menuNotice(notice);
     return {armed:true};
   }
 
@@ -763,9 +778,40 @@
   // Chrome starts dragging a link or image after a few pixels, before the selection threshold.
   // While a modifier press may still become a selection, that native drag would end it.
   listen(document,'dragstart',event=>{if(pressStart){event.preventDefault();}},true);
-  const onMessage=message=>{
+
+  /* Link Meteor's menus ------------------------------------------------------------------------- */
+  // Chrome gives a menu click the link's address, not its text, so the page records the link under
+  // the last right-click, and the background asks for it (content.contextLink).
+  let contextAnchor=null;
+  listen(document,'contextmenu',event=>{contextAnchor=event.composedPath().find(node=>node?.nodeType===1&&node.matches('a[href],a[xlink\\:href]'))||null;},true);
+  // The recorded link when its address matches, otherwise the first link in the page with that address.
+  function contextLink(url){
+    const recorded=contextAnchor?.isConnected?candidate(contextAnchor,()=>{}):null;
+    return recorded?.url===url?recorded:collect().records.find(record=>record.link.url===url)?.link || null;
+  }
+  // Whether a link intersects the selection, judged in the innermost tree (a shadow root or a
+  // document) that holds selected ranges: a link inside a selected shadow host counts through its host.
+  function selected(element){
+    for(let node=element;node;node=node.getRootNode().host){
+      const root=node.getRootNode(),selection=root.getSelection?.();
+      const ranges=!selection||selection.isCollapsed?[]:Array.from({length:selection.rangeCount},(_,i)=>selection.getRangeAt(i)).filter(range=>!range.collapsed&&range.commonAncestorContainer.getRootNode()===root);
+      if(ranges.length)return ranges.some(range=>range.intersectsNode(node));
+    }
+    return false;
+  }
+  // Every link that intersects the selection, in the page, its open shadow roots and same-origin frames.
+  function selectionLinks(){const {records,warnings}=collect();return {links:records.filter(record=>selected(record.element)).map(record=>record.link),warnings};}
+  // Answers the menus' requests; replies {ok, data} or {ok:false, error}.
+  function menuMessage(message,reply){
+    const answers={'content.contextLink':()=>({link:contextLink(String(message.url || ''))}),'content.selectionLinks':selectionLinks,'content.notice':()=>{arm(null,null,message);return {};}};
+    if(!Object.hasOwn(answers,message?.type))return;
+    try{reply?.({ok:true,data:answers[message.type]()});}catch(error){reply?.({ok:false,error:String(error.message || error)});}
+  }
+
+  const onMessage=(message,sender,reply)=>{
     if(message?.type==='content.configure'){holdEnabled=!!message.enabled;holdKey=message.holdKey;holdTrigger=message.holdTrigger==='modifier'?'modifier':'letter';held=false;pressStart=null;followSettings({card:message.card,...message.capture});}
     if(message?.type==='links.progress')active?.progress(message);
+    menuMessage(message,reply);
   };
   chrome.runtime.onMessage.addListener(onMessage);
   // With the System appearance, an open card follows the computer switching between light and dark.

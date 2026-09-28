@@ -7,6 +7,8 @@ import {workbenchMessages as holdMessages, grantedSettings, followHoldWrites, re
 import {openUrls, cancelOpen} from './background/open.js';
 import {WORKBENCH, occurrences, commitCapture, openWorkbench, pageMessages, appendLinks, keepLeftOut, includeLeftOut, LEFT_OUT_LIMIT} from './background/card.js';
 import {syncIcon, followThemeWrites} from './background/theme.js';
+import {createMenus, menuClicked, followMenuWrites, syncMenuTitle} from './background/menus.js';
+import {tabsMessage} from './background/tabs.js';
 
 const LAST_TARGET_KEY = 'linkMeteorTarget';
 
@@ -131,6 +133,7 @@ async function handle(message, sender) {
     case 'state.mutate': return mutate(message.action);
     case 'tabs.list': return inventory(sender.tab?.id);
     case 'capture.run': return captureTabs(message.tabIds,sender.tab?.id);
+    case 'capture.tabs': return tabsMessage(message,{target:() => resolveTarget(undefined,sender.tab?.id)});
     case 'capture.includeLeftOut': return includeLeftOut(message);
     case 'capture.arm': return arm(message.tabId,sender.tab?.id);
     case 'links.open': return openUrls(message,{notify:update => chrome.runtime.sendMessage(update).catch(() => {})});
@@ -152,10 +155,8 @@ chrome.action.onClicked.addListener(tab => {
 chrome.commands.onCommand.addListener((command, tab) => {
   if (command === 'select-region') arm(tab?.id).catch(error => reportActivationError(error));
 });
-chrome.contextMenus.onClicked.addListener((info,tab) => {
-  if (info.menuItemId === 'meteor-region') arm(tab?.id).catch(error => reportActivationError(error));
-  if (info.menuItemId === 'meteor-page') captureTabs([tab.id]).then(() => chrome.tabs.create({url:WORKBENCH})).catch(error => reportActivationError(error));
-});
+// The right-click and toolbar menus (background/menus.js).
+chrome.contextMenus.onClicked.addListener((info,tab) => menuClicked(info,tab,{arm,captureTabs,inject,reportError:reportActivationError}));
 async function reportActivationError(error) {
   await chrome.storage.session.set({linkMeteorActivationError:String(error.message || error)});
   await chrome.tabs.create({url:WORKBENCH});
@@ -163,9 +164,7 @@ async function reportActivationError(error) {
 chrome.runtime.onInstalled.addListener(async () => {
   // Nothing is requested and no tab opens at install; the welcome card asks in the workbench.
   await serial(readState);
-  await chrome.contextMenus.removeAll();
-  chrome.contextMenus.create({id:'meteor-region',title:'Link Meteor: select a region',contexts:['page','link','selection']});
-  chrome.contextMenus.create({id:'meteor-page',title:'Link Meteor: collect this page',contexts:['page','link','selection']});
+  await createMenus();
   await requestSync({inject: 'all'});
 });
 // Keeping access honest: hold-drag follows Chrome's grants and every saved change to its settings.
@@ -177,3 +176,6 @@ onStateWritten(followHoldWrites);
 chrome.runtime.onStartup.addListener(() => syncIcon());
 chrome.runtime.onInstalled.addListener(() => syncIcon());
 onStateWritten(followThemeWrites);
+// Add link to “name” follows the active collection's name.
+chrome.runtime.onStartup.addListener(() => syncMenuTitle());
+onStateWritten(followMenuWrites);

@@ -34,7 +34,7 @@ Deleting a collection removes it from the saved state. Link removal keeps one un
 | `scripting` | Run the local capture/selection code on an eligible permitted page. |
 | `storage` | Keep collections and settings locally and capture context for the session. |
 | `sidePanel` | Show review tools alongside the webpage. |
-| `contextMenus` | Offer regional and page capture from Chrome's context menu. |
+| `contextMenus` | Offer Link Meteor's actions in Chrome's right-click menu and the toolbar icon's menu: select a region, capture this page, save a tab as a link, add or copy a right-clicked link, capture the links in a selection, download a linked file. Chrome tells Link Meteor a right-clicked link's address; to save its exact text, the page script remembers which link was right-clicked, only until a menu item is chosen. |
 | `clipboardWrite` | Copy your selected export to the clipboard after an explicit action: a table, URLs, Markdown, rich links (HTML with plain text), or Copy diagnostics. |
 | Optional `tabs` | Preview and choose open tabs for multi-tab/window capture. |
 | Optional HTTP(S) site access | For selected tabs, Capture this page after its temporary access has ended, or hold-key drag, Chrome asks for access one site at a time. You can instead make one explicit choice, **Allow on all sites**: on the welcome card, the Site access switch, or a capture Chrome hid from Link Meteor. Hold-key drag and capture then work on every site except the ones you exclude. |

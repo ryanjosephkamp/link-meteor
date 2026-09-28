@@ -1,7 +1,7 @@
 // Backup and restore: one file with everything, a restore preview, merge or replace, and Undo.
 // Backing up and previewing need no message: the page builds the file and both plans itself,
 // and only a chosen restore, its Undo and the Undo status go to the background.
-import { createBackup, readBackup, planRestore, BACKUP_LIMITS } from '../../core/model.js';
+import { createBackup, readBackup, planRestore, BACKUP_LIMITS, MAX_CUSTOM_FIELDS } from '../../core/model.js';
 import { exportFileName } from '../../core/export.js';
 import { THEMES } from '../../core/themes.js';
 import { $, node, count, plural, formatTime, hostOf } from './helpers.js';
@@ -139,7 +139,7 @@ function modeBlock(title, note, lines, plan, access, before) {
   const heading = node('p', 'restore-mode-title', title);
   heading.append(node('span', 'restore-mode-note', note));
   const list = node('ul');
-  for (const line of lines) list.append(node('li', '', line));
+  for (const line of lines) list.append(typeof line === 'string' ? node('li', '', line) : node('li', line.className, line.text));
   const settings = node('li');
   const changed = plan.summary.settingsChanged;
   if (!changed.length) settings.textContent = 'Settings stay as they are';
@@ -179,6 +179,9 @@ async function renderPreview() {
     `${plural(m.collectionsAdded, 'new collection')}, ${count(m.collectionsMatched)} joined with ${m.collectionsMatched === 1 ? 'a collection' : 'collections'} here`,
   ];
   if (m.linksSkipped) mergeLines.push(`Skips ${plural(m.linksSkipped, 'link')} already here`);
+  // Custom columns join by name; the rest are added while a collection has room.
+  if (m.fieldsAdded) mergeLines.push(`Adds ${plural(m.fieldsAdded, 'custom column')} to ${m.collectionsMatched === 1 ? 'the joined collection' : 'joined collections'}`);
+  if (m.fieldsDropped) mergeLines.push({ text: `${plural(m.fieldsDropped, 'custom column')} can't fit, because a collection holds at most ${MAX_CUSTOM_FIELDS}; ${m.fieldsDropped === 1 ? 'its values are' : 'their values are'} left out`, className: 'restore-fields-dropped' });
   const replaceLines = [
     `Removes ${collectionsAndLinks(r.collectionsRemoved, r.linksRemoved)} here`,
     `Restores ${plural(r.collectionsAdded, 'collection')} and ${plural(r.linksAdded, 'link')} from the backup`,
@@ -207,7 +210,8 @@ function restoredMessage(summary) {
     return `Replaced everything with the backup: ${plural(summary.collectionsAdded, 'collection')} and ${plural(summary.linksAdded, 'link')}. Removed ${collectionsAndLinks(summary.collectionsRemoved, summary.linksRemoved)} that ${summary.collectionsRemoved === 1 && !summary.linksRemoved ? 'was' : 'were'} here.${settingsNote(summary)}`;
   }
   const added = summary.linksAdded ? `added ${plural(summary.linksAdded, 'link')}${summary.collectionsAdded ? ` and ${plural(summary.collectionsAdded, 'new collection')}` : ''}` : 'added nothing new';
-  return `Merged the backup: ${added}${summary.linksSkipped ? `; skipped ${plural(summary.linksSkipped, 'link')} already here` : ''}.${settingsNote(summary)}`;
+  const columns = `${summary.fieldsAdded ? `; added ${plural(summary.fieldsAdded, 'custom column')}` : ''}${summary.fieldsDropped ? `; ${plural(summary.fieldsDropped, 'custom column')} didn't fit` : ''}`;
+  return `Merged the backup: ${added}${summary.linksSkipped ? `; skipped ${plural(summary.linksSkipped, 'link')} already here` : ''}${columns}.${settingsNote(summary)}`;
 }
 
 function setBusy(value, control = null) {

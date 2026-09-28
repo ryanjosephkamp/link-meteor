@@ -1,9 +1,10 @@
-// Collections: the header, the rail list, create, switch, edit, empty and delete.
+// Collections: the header, the rail list, create, switch, edit (with custom columns, in fields.js), empty and delete.
 import { $, node, count, plural, tags } from './helpers.js';
 import { ui, action, mutate, show, currentCollection } from './state.js';
 import { render, setView, onEscape } from './rendering.js';
 import { renderLinks, undo, focusUndo } from './review.js';
 import { bindBackup } from './backup.js';
+import { renderFieldEditor, resetFieldEditor, bindFieldEditor } from './fields.js';
 
 // "Empty this collection" awaiting confirmation: the collection and the links it will remove.
 let pendingEmpty = null;
@@ -26,6 +27,7 @@ export function renderCollectionHeader(collection) {
   $('collection-notes').value = draft?.notes ?? collection.notes;
   $('collection-tags').value = draft?.tags ?? collection.tags.join(', ');
   $('empty-collection').disabled = !collection.links.length;
+  renderFieldEditor(collection);
   if (pendingEmpty && (pendingEmpty.collectionId !== collection.id || pendingEmpty.key !== collection.links.map((link) => link.id).join('\n'))) closeEmpty();
 }
 
@@ -65,6 +67,7 @@ export function closeEditor() {
   $('collection-editor').hidden = true;
   $('delete-confirm').hidden = true;
   closeEmpty();
+  resetFieldEditor();
   $('edit-collection').setAttribute('aria-expanded', 'false');
   if (ui.state) render();
 }
@@ -131,5 +134,6 @@ export function bindCollections() {
     closeEmpty(); $('empty-collection').focus();
     return true;
   });
+  bindFieldEditor();
   bindBackup();
 }

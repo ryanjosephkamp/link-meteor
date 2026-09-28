@@ -88,7 +88,7 @@ test('install creates every item in each context’s order, without “Link Mete
   await chrome.runtime.onInstalled.listeners[0]({reason: 'install'});
   assert.ok(menus.removals >= 1, 'old items are removed first');
   const byContext = (context) => menus.items.filter((item) => item.contexts.includes(context)).map((item) => item.title);
-  assert.deepEqual(byContext('link'), ['Add link to “My research”', 'Copy link text + URL', 'Select a region']);
+  assert.deepEqual(byContext('link'), ['Add link to “My research”', 'Copy link text + URL', 'Download linked file', 'Select a region'], 'the downloads area’s item sits after Copy link text + URL');
   assert.deepEqual(byContext('selection'), ['Capture links in the selection', 'Select a region']);
   assert.deepEqual(byContext('page'), ['Select a region', 'Capture this page', 'Save this tab as a link']);
   assert.deepEqual(byContext('action'), ['Save this tab as a link', 'Save all tabs in this window as links', 'Open the full view']);

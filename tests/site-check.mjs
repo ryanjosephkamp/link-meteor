@@ -10,6 +10,7 @@ import { createRequire } from 'node:module';
 import { homedir } from 'node:os';
 import { serve } from './site-preview.mjs';
 import { THEME_IDS, THEMES } from '../src/core/themes.js';
+import { browserHome } from './helpers/browser.mjs';
 const require = createRequire(import.meta.url);
 let playwright;
 try { playwright = require('playwright'); }
@@ -20,7 +21,9 @@ const widths = [320, 390, 768, 1024, 1440];
 const result = { started: new Date().toISOString(), base: '/link-meteor/', pages: {}, checks: [], limits: ['Automated Chromium checks; not a screen-reader, real-device or cross-browser audit.', 'Contrast is measured against the nearest solid background and skips text over images.'] };
 const { server, base: origin } = await serve();
 const base = `${origin}/link-meteor/`;
-const browser = await playwright.chromium.launch();
+// Page downloads (the export preview's workbook) go to a task-owned folder under .scratch/.
+const scratchDownloads = resolve(import.meta.dirname, '..', '.scratch', 'site-check-downloads');
+const browser = await playwright.chromium.launch({ downloadsPath: scratchDownloads, env: { ...process.env, ...browserHome(resolve(scratchDownloads, 'home')) } });
 const problems = [];
 function watch(page, label) {
   page.on('console', (m) => { if (m.type() === 'error' && !/status of 404/.test(m.text())) problems.push(`${label}: console ${m.text()}`); });

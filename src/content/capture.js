@@ -18,7 +18,7 @@
     active?.close();
     for (const {target, type, listener, options} of listeners.splice(0)) target.removeEventListener(type, listener, options);
     try { chrome.runtime.onMessage.removeListener(onMessage); } catch { /* extension reloaded */ }
-    held=false;holdEnabled=false;pressStart=null;
+    held=false;holdEnabled=false;pressStart=null;fileNoticeHost?.remove();
   }
   const MAX_LINKS = 20000;
   // The card lists at most this many links for unticking; the rest stay included.
@@ -205,6 +205,9 @@
   // Card filters: each keeps only matching links ticked. A site is the host name without a leading "www.".
   const siteOf = link => { try { const url = new URL(link.url); return /^https?:$/.test(url.protocol) ? url.hostname.replace(/^www\./,'') : null; } catch { return null; } };
   const FILTERS = {all:()=>true, other:link=>{const site=siteOf(link);return site!==null&&site!==location.hostname.replace(/^www\./,'');}, pdf:link=>{try{return /\.pdf$/i.test(new URL(link.url).pathname);}catch{return false;}}, same:link=>siteOf(link)===location.hostname.replace(/^www\./,'')};
+  // File links, decided exactly as core/files.js decides them (tests/files.test.mjs checks this copy), and the download limits.
+  const FILE_TYPES=new Set('pdf ps eps doc docx docm dot dotx xls xlsx xlsm xlt xltx ppt pptx pptm pps ppsx pot potx rtf odt ods odp odg odf ott ots otp txt md markdown csv tsv json jsonl xml yaml yml bib ris enw nbib tex ipynb epub mobi azw azw3 djvu fb2 zip gz tgz tar bz2 xz 7z rar zst png jpg jpeg gif webp svg tif tiff bmp avif heic heif ico mp3 wav m4a aac ogg oga flac opus mp4 m4v mov webm mkv avi ogv'.split(' ')),KNOWN_PDFS=[[/(^|\.)arxiv\.org$/,/^\/pdf\/./],[/(^|\.)openreview\.net$/,/^\/pdf$/,/(^|&)id=./],[/^dl\.acm\.org$/,/^\/doi\/pdf\/./],[/(^|\.)ncbi\.nlm\.nih\.gov$/,/^\/pmc\/articles\/PMC\d+\/pdf(\/|$)/i],[/^pmc\.ncbi\.nlm\.nih\.gov$/,/^\/articles\/PMC\d+\/pdf(\/|$)/i]],fileLink=link=>{let url;try{url=new URL(link.url);}catch{return false;}if(url.protocol!=='http:'&&url.protocol!=='https:')return false;const ext=(url.pathname.slice(url.pathname.lastIndexOf('/')+1).match(/\.([a-z0-9]{1,8})$/i)?.[1]||'').toLowerCase();return FILE_TYPES.has(ext)||/^\s*\[PDF\]/i.test(String(link.anchorText??''))||KNOWN_PDFS.some(([host,path,query])=>host.test(url.hostname)&&path.test(url.pathname)&&(!query||query.test(url.search.slice(1))));};
+  const FILE_LIMIT = 100, FILE_CONFIRM_ABOVE = 10;
   // The copy format for After a drag, as the notice names it.
   const COPIED_AS = {tsv:'as a table', text:'as URLs', markdown:'as Markdown', rich:'as rich links'};
   // Unique HTTP(S) destinations, in order: what opening and bookmarking can use.
@@ -348,6 +351,7 @@
       event.preventDefault();event.stopPropagation();
       if(!$('.menu').hidden){closeMenu(true);return;}
       if(!$('.confirm').hidden){hideConfirm(true);return;}
+      if(!$('.fconfirm').hidden){hideFileConfirm(true);return;}
       if(!$('.pick').hidden){togglePicker(false);return;}
       close();
     }
@@ -440,6 +444,7 @@
       $('button.add').disabled=!n||committed;
       for(const cls of ['open','m-window','m-group','m-bookmark'])$('button.'+cls).disabled=!web||!!opening;
       if(pendingOpen&&pendingOpen.count!==web)hideConfirm();
+      renderFiles();
       renderChoices();
     }
     // The filter chips, the left-out note, Skip saved and the preview note follow the ticks.
@@ -690,6 +695,53 @@
       }
     }
 
+    /* Download N files (0.4.0): the file links among the ticked ones, saved by Chrome's own downloads. */
+    let downloading=null,fileAsk=0;
+    function tickedFiles(){const seen=new Set();return tickedLinks().filter(link=>{if(!fileLink(link))return false;const url=new URL(link.url).href;if(seen.has(url))return false;seen.add(url);return true;});}
+    function setupFiles(){
+      const item=document.createElement('button');item.type='button';item.setAttribute('role','menuitem');item.className='m-files';item.dataset.key='f';item.setAttribute('aria-keyshortcuts','F');item.title='Download the files behind the ticked file links, such as PDFs (F)';
+      item.innerHTML='<span class="m-files-label">Download files</span><kbd aria-hidden="true">F</kbd>';$('.m-download').after(item);
+      const ask=document.createElement('div');ask.className='fconfirm';ask.setAttribute('role','group');ask.setAttribute('aria-label','Confirm downloading files');ask.hidden=true;
+      ask.innerHTML='<p class="fconfirm-text"></p><div class="confirm-actions"><button class="fconfirm-yes primary"></button><button class="fconfirm-no">Cancel</button></div>';$('.confirm').after(ask);
+      const style=document.createElement('style');style.textContent='.fconfirm{margin-top:12px;padding:10px;border-radius:9px;background:color-mix(in srgb,var(--k-strong) 6%,transparent);border:1px solid color-mix(in srgb,var(--k-strong) 16%,transparent)}.fconfirm p{margin:0 0 8px;font-size:12.5px;color:var(--k-strong);overflow-wrap:anywhere}@media(forced-colors:active){.fconfirm{border:1px solid CanvasText}}';shadow.append(style);
+      action('m-files',()=>downloadFiles());
+      $('.fconfirm-yes').onclick=()=>run(()=>downloadFiles(true));$('.fconfirm-no').onclick=()=>hideFileConfirm(true);
+      // Progress for this card's own download, and the menu's result while the card is open.
+      state.fileProgress=update=>{if(!downloading||update.requestId!==downloading.requestId)return false;if(!downloading.stopping&&$('.fstatus-text'))$('.fstatus-text').textContent=`Downloading ${plural(update.total,'file')}: ${update.done.toLocaleString()} done…`;return true;};
+      state.fileNote=text=>{$('.status').textContent=text;};
+    }
+    function renderFiles(){
+      const item=$('button.m-files');if(!item)return;
+      const n=tickedFiles().length;
+      $('.m-files-label').textContent=n?`Download ${plural(n,'file')}`:'Download files';
+      item.disabled=!n||!!downloading;
+      if(fileAsk&&fileAsk!==n)hideFileConfirm();
+    }
+    function hideFileConfirm(focus=false){fileAsk=0;$('.fconfirm').hidden=true;if(focus)$('.menu-toggle').focus();}
+    // Up to 100 files, confirmed above 10. Without Chrome's download access, the full view asks for it.
+    async function downloadFiles(confirmed=false){
+      const files=tickedFiles(),n=files.length,status=$('.status');
+      if(!n){status.textContent='None of the ticked links are file links, so there is nothing to download.';return;}
+      if(n>FILE_LIMIT){status.textContent=`Link Meteor downloads at most ${FILE_LIMIT} files at a time, and ${n.toLocaleString()} file links are ticked. Untick some. Nothing was downloaded.`;return;}
+      if(n>FILE_CONFIRM_ABOVE&&!confirmed){fileAsk=n;$('.fconfirm-text').textContent=`Download ${plural(n,'file')} into your downloads folder?`;$('.fconfirm-yes').textContent=`Download ${n.toLocaleString()}`;$('.fconfirm').hidden=false;$('.fconfirm-yes').focus();return;}
+      hideFileConfirm();
+      const requestId=randomId(),text=document.createElement('span'),stop=document.createElement('button');
+      downloading={requestId};renderFiles();
+      text.className='fstatus-text';text.textContent=`Downloading ${plural(n,'file')}…`;stop.type='button';stop.className='fcancel';stop.textContent='Cancel';
+      stop.onclick=()=>run(async()=>{if(!downloading)return;downloading.stopping=true;stop.disabled=true;text.textContent='Canceling the downloads that haven’t finished…';await request({type:'downloads.cancel',requestId});});
+      status.replaceChildren(text,document.createElement('br'),stop);
+      try{
+        const result=await request({type:'capture.download',links:files,requestId,confirmed:n>FILE_CONFIRM_ABOVE,...(destinationId?{collectionId:destinationId}:{})});
+        status.textContent=result.summary;
+      }catch(error){
+        if(!/^Download access is needed/.test(error.message))throw error;
+        status.textContent=error.message;
+        const go=document.createElement('button');go.type='button';go.textContent='Open the full view';
+        go.onclick=()=>run(()=>request({type:'ui.open'}));
+        status.append(document.createElement('br'),go);go.focus();
+      }finally{downloading=null;if(host.isConnected)renderFiles();}
+    }
+
     /* More menu. */
     function openMenu(){$('.menu').hidden=false;$('.menu-toggle').setAttribute('aria-expanded','true');$('.menu button:not(:disabled)')?.focus();}
     function closeMenu(focus=false){$('.menu').hidden=true;$('.menu-toggle').setAttribute('aria-expanded','false');if(focus)$('.menu-toggle').focus();}
@@ -712,6 +764,7 @@
     action('copy',()=>copy('tsv'));action('m-urls',()=>copy('text'));action('m-markdown',()=>copy('markdown'));action('m-rich',()=>copy('rich'));
     action('open',()=>startOpen('tabs'));action('m-window',()=>startOpen('window'));action('m-group',()=>startOpen('group'));
     action('m-download',download);action('m-bookmark',bookmark);
+    setupFiles();
 
     // One-letter shortcuts, only while focus is inside the card and never while typing or choosing.
     bar.addEventListener('keydown',event=>{
@@ -736,6 +789,35 @@
     if(startEvent)begin(startEvent,current);
     else if(notice)menuNotice(notice);
     return {armed:true};
+  }
+
+  /* Downloads from the right-click menu (0.4.0) ------------------------------------------------ */
+  // The card shows its own download's progress. The menu's result goes in an open card's status,
+  // or in a small notice in the card's colors that closes itself after NOTICE_MS.
+  let fileNoticeHost=null;
+  function fileProgress(message){
+    if(active?.fileProgress?.(message)||!message.final||!message.text)return;
+    if(active&&!active.idle())active.fileNote?.(message.text);else fileNotice(message.text);
+  }
+  function fileNotice(text){
+    fileNoticeHost?.remove();
+    const host=document.createElement('div');host.setAttribute(marker,'notice');host.id='link-meteor-download-notice';
+    host.style.cssText='all:initial!important;position:fixed!important;right:16px!important;bottom:16px!important;z-index:2147483647!important;';
+    fileNoticeHost=host;themeHost(host);
+    const shadow=host.attachShadow({mode:'open'});
+    shadow.innerHTML=`<style>:host{--k-ground:#161d2d;--k-strong:#fff;--k-ink:#eef0f4;--k-muted:#a2a8b5;--k-focus:#c3f344;--k-shadow-45:rgba(8,11,20,.45)}
+      .panel{display:flex;align-items:flex-start;gap:10px;box-sizing:border-box;width:390px;max-width:calc(100vw - 32px);padding:10px 10px 10px 12px;background:var(--k-ground);color:var(--k-ink);border:1px solid color-mix(in srgb,var(--k-strong) 10%,transparent);border-radius:14px;box-shadow:0 18px 50px var(--k-shadow-45);font:600 13px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+      p{flex:1;min-width:0;margin:4px 0;color:var(--k-strong);overflow-wrap:anywhere}
+      button{flex:none;display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;padding:0;border:0;border-radius:8px;background:transparent;color:var(--k-muted);cursor:pointer}
+      button:hover{background:color-mix(in srgb,var(--k-strong) 10%,transparent);color:var(--k-strong)}
+      button:focus-visible{outline:2px solid var(--k-focus);outline-offset:2px}
+      svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round}
+      @media(forced-colors:active){.panel{border:1px solid CanvasText}}</style><div class="panel"><p class="notice-text" role="status"></p><button type="button" class="notice-close" aria-label="Close notice" title="Close">${ICON_X}</button></div>`;
+    shadow.querySelector('.notice-text').textContent=text;
+    const panel=shadow.querySelector('.panel'),close=()=>{clearTimeout(timer);host.remove();if(fileNoticeHost===host)fileNoticeHost=null;};
+    let timer=0;const hold=()=>{clearTimeout(timer);timer=setTimeout(()=>{if(!panel.matches(':hover,:focus-within'))close();},NOTICE_MS);};
+    shadow.querySelector('.notice-close').onclick=close;panel.addEventListener('mouseleave',hold);panel.addEventListener('focusout',hold);
+    document.documentElement.append(host);hold();
   }
 
   /* Hold-key drag ------------------------------------------------------------------------------ */
@@ -811,6 +893,7 @@
   const onMessage=(message,sender,reply)=>{
     if(message?.type==='content.configure'){holdEnabled=!!message.enabled;holdKey=message.holdKey;holdTrigger=message.holdTrigger==='modifier'?'modifier':'letter';held=false;pressStart=null;followSettings({card:message.card,...message.capture});}
     if(message?.type==='links.progress')active?.progress(message);
+    if(message?.type==='downloads.progress')fileProgress(message);
     menuMessage(message,reply);
   };
   chrome.runtime.onMessage.addListener(onMessage);

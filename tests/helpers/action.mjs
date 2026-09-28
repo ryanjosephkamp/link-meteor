@@ -14,7 +14,7 @@ import {spawn} from 'node:child_process';
 import {createHash} from 'node:crypto';
 import {mkdir, mkdtemp, realpath, rm} from 'node:fs/promises';
 import {resolve} from 'node:path';
-import {chromePath, root, scratch} from './browser.mjs';
+import {browserHome, chromePath, root, scratch} from './browser.mjs';
 
 const sleep = (ms) => new Promise((done) => setTimeout(done, ms));
 
@@ -37,7 +37,7 @@ export async function launchWithAction({extension = resolve(root, process.env.LI
     ...(process.platform === 'linux' ? ['--no-sandbox'] : []),
     `--user-data-dir=${profile}`, `--disable-extensions-except=${extension}`, `--load-extension=${extension}`,
     '--no-first-run', '--disable-background-networking', '--disable-component-update', ...args, 'about:blank',
-  ], {stdio: ['ignore', 'ignore', 'pipe', 'pipe', 'pipe']});
+  ], {stdio: ['ignore', 'ignore', 'pipe', 'pipe', 'pipe'], env: {...process.env, ...browserHome(resolve(profile, 'home'))}});
   // Keep Chrome's last output, to explain a Chrome that exits at startup.
   let stderr = '';
   chrome.stderr.on('data', (data) => { stderr = (stderr + data).slice(-4000); });

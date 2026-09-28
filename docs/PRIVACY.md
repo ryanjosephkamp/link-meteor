@@ -6,7 +6,7 @@ Link Meteor processes captured links locally in Chrome. It has no account, remot
 
 Named collections contain visible anchor text, separately labeled accessible text, destination URLs, original hrefs, source page URLs/titles, frame URLs, capture times/batch IDs and your notes/tags. These are stored in `chrome.storage.local` in the current browser profile. Collection data is not placed in Chrome Sync by this extension. Chrome's profile backup or operating-system backup behavior is separate.
 
-The current invoking tab and latest capture report are kept in session storage so separate views can show the same result. The session report can be dismissed. With "Leave out navigation links", the latest *Capture this page*'s left-out links (at most 5,000) wait there too, so *Include them* can add them; and the page card's 20 most recent adds are listed there, so Undo can take one back. Session storage is cleared when Chrome closes. Settings persist locally:
+The current invoking tab and latest capture report are kept in session storage so separate views can show the same result. The session report can be dismissed. With "Leave out navigation links", the latest *Capture this page*'s left-out links (at most 5,000) wait there too, so *Include them* can add them; and the page card's 20 most recent adds are listed there, so Undo can take one back. Files the card or the right-click menu could not download yet, because Chrome had not given download access, wait there for up to 10 minutes, until the full view shows them once with Chrome's question. Session storage is cleared when Chrome closes. Settings persist locally:
 
 - the hold key (a letter, or Command/Ctrl);
 - the sites where hold-key drag runs or never runs;
@@ -45,7 +45,7 @@ Deleting a collection removes it from the saved state. Link removal keeps one un
 
 Multi-tab site access and hold-mode site access are requested when needed. All-sites access is asked for only through the explained choice above, never at install; declining keeps the one-site-at-a-time route. Chrome controls the grant UI and can remove access, including through its own site-access menu. Removing all-sites access (with Link Meteor's Remove Chrome's access button or Chrome's own controls) can also remove Chrome's access to sites you allowed one at a time; Link Meteor then turns hold-key drag off wherever it no longer has access, and asks again when you next capture or turn a site on. Turning off hold mode stops its automatic content-script registration; it does not revoke the broader site permission that may also support multi-tab capture. You can manage/revoke site access through Chrome's extension controls. Revoked origins are removed from hold-mode settings when the permission event is processed.
 
-Downloading a file visits its address with your browser's usual cookies, exactly like clicking the link, and only when you ask. The extension does not request history, cookies, passwords, clipboard reading, network interception, native messaging or incognito access.
+Downloading a file visits its address with your browser's usual cookies, exactly like clicking the link, and only when you ask. While Link Meteor saves the files you chose, Chrome also asks it to name any other download that starts at the same moment; Link Meteor answers at once, leaves Chrome's own name, and keeps nothing about it. The extension does not request history, cookies, passwords, clipboard reading, network interception, native messaging or incognito access.
 
 ## Actions that move data
 

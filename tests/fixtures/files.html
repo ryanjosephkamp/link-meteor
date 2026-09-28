@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Meteor Research Lab — downloads fixture</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f3f0e8;color:#26342e;font:16px/1.6 system-ui}main{max-width:900px;margin:auto;padding:40px 32px}h1{font-size:34px;line-height:1.15}section{padding:20px 24px;background:white;border:1px solid #d9ddd3;margin:20px 0;border-radius:12px}a{display:block;width:fit-content;margin:10px 0;color:#1f6655}
+</style><main>
+<h1>Files behind links</h1><p>Synthetic files for checking downloads: a PDF, an image, a sign-in page where a PDF was expected, a PDF labeled like a search result, and a missing file.</p>
+<section id="files"><h2>Reading list</h2>
+<a id="file-pdf" href="/files/paper.pdf">Attention in small systems</a>
+<a id="file-png" href="/files/figure.png">Figure 1: heat map</a>
+<a id="file-paywall" href="/files/paywalled.pdf">Paywalled article</a>
+<a id="file-label" href="/files/paper">[PDF] fixture.test</a>
+<a id="file-missing" href="/files/missing.pdf">Missing paper</a>
+<a id="file-same-name" href="/files/paper.pdf?copy=2">Attention in small systems</a>
+<a id="page-link" href="/index.html">The lab’s home page</a>
+</section>
+<section id="many" hidden><h2>Many files</h2></section>
+</main><script>
+if(new URLSearchParams(location.search).has('many')){const section=document.querySelector('#many');section.hidden=false;section.innerHTML+=Array.from({length:12},(_,i)=>'<a href="/files/paper.pdf?n='+i+'">Paper '+(i+1)+'</a>').join('');}
+</script></html>

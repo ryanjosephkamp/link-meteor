@@ -7,6 +7,7 @@ import { onEscape } from './rendering.js';
 import { renderExportTarget } from './export.js';
 import { syncReportAction } from './capture.js';
 import { fieldInputs, hasFieldValues, appendFieldValues, renderFill, bindFill } from './fields.js';
+import { linkDownload } from './downloads.js';
 
 const PAGE_SIZE = 100;
 const DETAIL_PAGE_SIZE = 100;
@@ -307,7 +308,7 @@ export function renderOccurrence(link, grouped) {
   time.title = link.capturedAt;
   fact(facts, 'Capture batch', link.batchId, { exact: true, empty: 'Unknown' });
   fact(facts, 'Occurrence ID', link.id, { exact: true });
-  item.append(facts);
+  item.append(facts, linkDownload(link));
 
   const form = document.createElement('form'); form.className = 'occurrence-form';
   const draft = ui.linkDrafts.get(link.id);

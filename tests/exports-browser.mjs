@@ -97,7 +97,8 @@ try {
     const file = await pending;
     const after = new Date();
     const landed = await file.path();
-    assert.ok(landed.startsWith(downloadsTemp), `the download landed in ${landed}, outside .scratch/`);
+    // Every test download stays under .scratch/ (launch() gives each profile its own downloads folder there).
+    assert.ok(landed.startsWith(scratch + '/') || landed.startsWith(scratch + '\\'), `the download landed in ${landed}, outside .scratch/`);
     const name = file.suggestedFilename();
     const path = resolve(exportsDir, save || name);
     await file.saveAs(path);

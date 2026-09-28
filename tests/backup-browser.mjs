@@ -463,7 +463,8 @@ try {
   const savedE = await state(E.ui);
   const [columnsDownload] = await Promise.all([E.ui.waitForEvent('download'), E.ui.locator('#backup-download').click()]);
   const landed = await columnsDownload.path();
-  assert.ok(landed.startsWith(downloadsTemp), `the backup landed in ${landed}, outside .scratch/`);
+  // Every test download stays under .scratch/ (launch() gives each profile its own downloads folder there).
+  assert.ok(landed.startsWith(scratch + '/') || landed.startsWith(scratch + '\\'), `the backup landed in ${landed}, outside .scratch/`);
   const columnsPath = resolve(files, 'backup-columns.json');
   await columnsDownload.saveAs(columnsPath);
   const columnsBackup = readBackup(await readFile(columnsPath, 'utf8'));

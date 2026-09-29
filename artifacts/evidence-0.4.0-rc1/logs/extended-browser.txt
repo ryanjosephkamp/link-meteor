@@ -1,0 +1,9 @@
+PASS 5,037 real page occurrences captured; only 100 top-level rows and no closed details rendered {"elapsedMs":671}
+PASS Selection persists across pages and unselected export includes all 5,037 rows {}
+PASS Filtering resets page and finds final loaded source {}
+PASS Actual bookmark folder contains correct anchor title and URL {}
+PASS Existing bookmark folder: real folders listed by path and searchable, skip-existing counts, repeats saved only with Skip off, other bookmarks unchanged {"folders":4,"matches":1}
+PASS Opener shows the count and opens up to 20 links at once, at the exact local destination {}
+PASS An open action above 500 links (5,037) is rejected before opening any tabs {}
+PASS Large duplicate group details load on demand in 100-occurrence increments {}
+PASS Per-link draft survives background update and saves separately from anchor text {}

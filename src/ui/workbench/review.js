@@ -1,10 +1,13 @@
 // Review and selection: filters, the link list, occurrence details, selection, removal and Undo.
+// Custom column fields and Fill for selected links come from fields.js.
 import { queryLinks } from '../../core/model.js';
 import { $, node, icon, button, count, plural, quoted, labelFor, tags, DOCUMENT_TYPES, fileType, appendTextLink, renderUrl, hostOf, formatTime, shortcutKeys, kbdGroup } from './helpers.js';
 import { ui, action, mutate, show, currentCollection } from './state.js';
 import { onEscape } from './rendering.js';
 import { renderExportTarget } from './export.js';
 import { syncReportAction } from './capture.js';
+import { fieldInputs, hasFieldValues, appendFieldValues, renderFill, bindFill } from './fields.js';
+import { linkDownload } from './downloads.js';
 
 const PAGE_SIZE = 100;
 const DETAIL_PAGE_SIZE = 100;
@@ -54,6 +57,7 @@ export function renderLinks() {
   $('remove').disabled = !selectedInView;
   $('remove-view').disabled = !viewIds;
   syncViewRemoval(collection);
+  renderFill(collection);
   $('select-all').checked = !!pageIds.length && pageIds.every((id) => ui.selectedIds.has(id));
   $('select-all').indeterminate = pageIds.some((id) => ui.selectedIds.has(id)) && !$('select-all').checked;
   $('select-all').disabled = !pageIds.length;
@@ -217,10 +221,11 @@ export function renderRow(row) {
   cells.append(anchorCell, urlCell, sourceCell);
   wrapper.append(checkbox, cells);
 
-  if (row.occurrences.length === 1 && (row.notes || row.tags.length)) {
+  if (row.occurrences.length === 1 && (row.notes || row.tags.length || hasFieldValues(row))) {
     const notes = node('div', 'row-notes');
     for (const tag of row.tags) notes.append(node('span', 'tag', tag));
     if (row.notes) notes.append(node('span', 'note', row.notes));
+    appendFieldValues(notes, row);
     wrapper.append(notes);
   }
 
@@ -303,17 +308,20 @@ export function renderOccurrence(link, grouped) {
   time.title = link.capturedAt;
   fact(facts, 'Capture batch', link.batchId, { exact: true, empty: 'Unknown' });
   fact(facts, 'Occurrence ID', link.id, { exact: true });
-  item.append(facts);
+  item.append(facts, linkDownload(link));
 
   const form = document.createElement('form'); form.className = 'occurrence-form';
   const draft = ui.linkDrafts.get(link.id);
   const noteLabel = node('label', '', 'Note'); const noteInput = document.createElement('input'); noteInput.value = draft?.notes ?? link.notes; noteInput.dataset.linkId = link.id; noteInput.dataset.linkField = 'notes'; noteInput.setAttribute('aria-label', `Note for ${labelFor(link)}`); noteInput.autocomplete = 'off'; noteLabel.append(noteInput);
   const tagLabel = node('label', '', 'Tags'); const tagInput = document.createElement('input'); tagInput.value = draft?.tags ?? link.tags.join(', '); tagInput.dataset.linkId = link.id; tagInput.dataset.linkField = 'tags'; tagInput.setAttribute('aria-label', `Tags for ${labelFor(link)}`); tagInput.placeholder = 'comma, separated'; tagInput.autocomplete = 'off'; tagLabel.append(tagInput);
-  const keepDraft = () => ui.linkDrafts.set(link.id, { notes: noteInput.value, tags: tagInput.value });
-  noteInput.addEventListener('input', keepDraft); tagInput.addEventListener('input', keepDraft);
+  const custom = fieldInputs(link, draft?.fields);
+  const keepDraft = () => ui.linkDrafts.set(link.id, { notes: noteInput.value, tags: tagInput.value, fields: custom.values() });
+  noteInput.addEventListener('input', keepDraft); tagInput.addEventListener('input', keepDraft); custom.onInput(keepDraft);
   const save = node('button', 'btn', 'Save'); save.type = 'submit';
-  form.append(noteLabel, tagLabel, save);
-  form.addEventListener('submit', (event) => { event.preventDefault(); action(async () => { await mutate({ type: 'link.update', id: link.id, patch: { notes: noteInput.value, tags: tags(tagInput.value) } }); ui.linkDrafts.delete(link.id); show(grouped ? 'Saved the note and tags for this occurrence.' : 'Saved the note and tags.'); }); });
+  form.append(noteLabel, tagLabel, ...custom.elements, save);
+  form.classList.toggle('has-fields', !!custom.elements.length);
+  const saved = custom.elements.length ? 'the note, tags and custom columns' : 'the note and tags';
+  form.addEventListener('submit', (event) => { event.preventDefault(); action(async () => { await mutate({ type: 'link.update', id: link.id, patch: { notes: noteInput.value, tags: tags(tagInput.value), ...custom.patch() } }); ui.linkDrafts.delete(link.id); show(grouped ? `Saved ${saved} for this occurrence.` : `Saved ${saved}.`); }); });
   item.append(form);
   return item;
 }
@@ -411,4 +419,5 @@ export function bindReview() {
     closeViewRemoval(); $('remove-view').focus();
     return true;
   });
+  bindFill();
 }

@@ -16,7 +16,12 @@ export const FORMAT_EXTENSIONS = Object.freeze({ csv: 'csv', tsv: 'tsv', text: '
 // Columns whose web and mail addresses are clickable in a formatted workbook.
 const URL_COLUMNS = new Set(['url', 'originalHref', 'sourceUrl', 'frameUrl']);
 
+// Custom columns (0.4.0) are export keys `field:<id>`, headed by the column's name.
+const FIELD_KEY = 'field:';
+// The column headings for the export in progress: set by makeExport, which runs synchronously.
+let labels = LABELS;
 function cell(row, key) {
+  if (key.startsWith(FIELD_KEY)) return String(row.fields?.[key.slice(FIELD_KEY.length)] ?? '');
   const value = row[key];
   return key === 'tags' ? (Array.isArray(value) ? value.join(', ') : '') : String(value ?? '');
 }
@@ -57,6 +62,20 @@ function markdownUrl(value) {
   // Encode Markdown delimiters only in Markdown; plain-text URLs remain byte-for-byte faithful.
   return safeLinkUrl(value).replace(/[<>()[\]\\]/g, char => `%${char.codePointAt(0).toString(16).toUpperCase()}`);
 }
+
+// Rich links (0.4.0) for the clipboard: HTML that Google Docs, Word and Notion paste as clickable
+// anchor text, and a plain-text version for everything else. A link with no anchor text shows its
+// URL. Page text is escaped; only web, mail and phone URLs become links.
+export function richLinks(rows) {
+  const items = rows.map(row => {
+    const url = safeLinkUrl(row.url), text = normalizeLabel(row.anchorText);
+    return { url, text };
+  });
+  const html = `<ul>${items.map(({ url, text }) => `<li><a href="${htmlEscape(url)}">${htmlEscape(text || url)}</a></li>`).join('')}</ul>`;
+  const text = items.map(({ url, text }) => text ? `${text} (${url})` : url).join('\n');
+  return { html, text };
+}
+function normalizeLabel(value) { return String(value || '').replace(/\s+/gu, ' ').trim(); }
 
 const WINDOWS_RESERVED = /^(con|prn|aux|nul|com[1-9]|lpt[1-9])$/i;
 
@@ -112,16 +131,18 @@ function aboutBlock(about, rows, columns) {
   if (!Array.isArray(filters) || filters.some(item => typeof item !== 'string')) throw new Error('Export about.filters must be a list of strings');
   if (typeof version !== 'string') throw new Error('Export about.version must be a string');
   const aboutColumns = about.columns ?? columns;
-  if (!Array.isArray(aboutColumns) || aboutColumns.some(key => !LABELS.has(key))) throw new Error('Export about.columns must list export columns');
+  if (!Array.isArray(aboutColumns) || aboutColumns.some(key => !labels.has(key))) throw new Error('Export about.columns must list export columns');
   return { exportedAt, collection, count, view, filters: [...filters], columns: [...aboutColumns], version };
 }
 
-// JSON metadata block. Columns are left out: JSON keeps every field of every row.
-function aboutJson(about) {
+// JSON metadata block. Columns are left out: JSON keeps every field of every row. A collection's
+// custom columns are listed as fields [{id, name}], naming the keys of each row's fields.
+function aboutJson(about, fields = []) {
   return {
     exportedAt: about.exportedAt.toISOString(),
     exportedAtLocal: `${localDateTime(about.exportedAt)}.${String(about.exportedAt.getMilliseconds()).padStart(3, '0')}${offset(about.exportedAt)}`,
     collection: about.collection, count: about.count, view: about.view, filters: about.filters, version: about.version,
+    ...(fields.length ? { fields: fields.map(field => ({ id: String(field.id), name: String(field.name) })) } : {}),
   };
 }
 
@@ -135,7 +156,7 @@ function aboutRows(about, note) {
     ['Links', String(about.count)],
     ['View', about.view],
     ...(about.filters.length ? about.filters.map(filter => ['Filter', filter]) : [['Filters', 'None']]),
-    ['Columns', about.columns.map(key => LABELS.get(key)).join(', ')],
+    ['Columns', about.columns.map(key => labels.get(key)).join(', ')],
     ['Cells', 'Every cell is text. Nothing is a formula, number or date.'],
     ['Link Meteor version', about.version],
   ];
@@ -155,16 +176,19 @@ function formattedXlsx(rows, columns, headers, about) {
 // Without about, every format is exactly what 0.2.2 produced. With about ({exportedAt: Date,
 // collection, count, view, filters, columns, version}), XLSX is formatted and gains an About
 // sheet, and JSON becomes {about, rows}; the other formats are unchanged.
-export function makeExport(rows, { format, columns = ['anchorText', 'url'], about } = {}) {
+// `fields` lists the collection's custom columns [{id, name}], so `field:<id>` columns can be exported.
+export function makeExport(rows, { format, columns = ['anchorText', 'url'], about, fields = [] } = {}) {
   if (!Array.isArray(rows)) throw new Error('rows must be an array');
   if (!FORMATS.has(format)) throw new Error(`Unsupported export format: ${format}`);
   if (!Array.isArray(columns) || columns.length === 0) throw new Error('Export columns must be a nonempty array');
-  for (const key of columns) if (!LABELS.has(key)) throw new Error(`Unsupported export column: ${key}`);
+  if (!Array.isArray(fields)) throw new Error('Export fields must be an array');
+  labels = new Map([...LABELS, ...fields.map(field => [FIELD_KEY + field.id, String(field.name)])]);
+  for (const key of columns) if (!labels.has(key)) throw new Error(`Unsupported export column: ${key}`);
   if (new Set(columns).size !== columns.length) throw new Error('Export columns must be unique');
-  const headers = columns.map(key => LABELS.get(key));
+  const headers = columns.map(key => labels.get(key));
   if (about !== undefined) {
     const block = aboutBlock(about, rows, columns);
-    if (format === 'json') return { data: JSON.stringify({ about: aboutJson(block), rows }, null, 2), mime: 'application/json;charset=utf-8', extension: 'json' };
+    if (format === 'json') return { data: JSON.stringify({ about: aboutJson(block, fields), rows }, null, 2), mime: 'application/json;charset=utf-8', extension: 'json' };
     if (format === 'xlsx') return { data: formattedXlsx(rows, columns, headers, block), mime: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', extension: 'xlsx' };
   }
   switch (format) {

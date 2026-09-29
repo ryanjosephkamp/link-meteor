@@ -3,7 +3,7 @@
 // Anything else in src/ (notes, fixtures, stray files) stops the build and the package.
 export const FIXED_FILES = [
   'manifest.json', 'background.js', 'content/capture.js',
-  'core/model.js', 'core/export.js', 'core/xlsx.js',
+  'core/model.js', 'core/export.js', 'core/xlsx.js', 'core/themes.js', 'core/files.js',
   'ui/workbench.html', 'ui/workbench.js', 'ui/workbench.css',
 ];
 export const MODULE_FOLDERS = ['background', 'ui/workbench'];

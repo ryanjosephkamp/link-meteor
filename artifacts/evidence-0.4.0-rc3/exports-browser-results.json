@@ -1,0 +1,555 @@
+{
+  "started": "2026-09-29T14:39:37.414Z",
+  "browser": "Chrome for Testing via Playwright, headless; real unpacked extension; no optional grants",
+  "checks": [
+    {
+      "name": "Fresh profile, no optional grants; seeded a collection with a colon, quotes and a slash in its name",
+      "status": "pass",
+      "links": 53,
+      "seed": "artifacts/evidence-0.2.2/exports/browser.json"
+    },
+    {
+      "name": "Every format downloads under the default name the Saves as line shows, with no colon",
+      "status": "pass",
+      "names": {
+        "xlsx": "Urban-heat-sources-2026_2026-09-29_1039.xlsx",
+        "csv": "Urban-heat-sources-2026_2026-09-29_1039.csv",
+        "tsv": "Urban-heat-sources-2026_2026-09-29_1039.tsv",
+        "markdown": "Urban-heat-sources-2026_2026-09-29_1039.md",
+        "html": "Urban-heat-sources-2026_2026-09-29_1039.html",
+        "json": "Urban-heat-sources-2026_2026-09-29_1039.json",
+        "text": "Urban-heat-sources-2026_2026-09-29_1039.txt"
+      }
+    },
+    {
+      "name": "CSV, TSV, Markdown, HTML and URL list downloads equal the packaged 0.2.2 export code for the same rows",
+      "status": "pass",
+      "rows": 53
+    },
+    {
+      "name": "JSON download is {about, rows}; rows equal the 0.2.2 array and about names the time, collection, count, view and version",
+      "status": "pass",
+      "about": {
+        "exportedAt": "2026-09-29T14:39:38.491Z",
+        "exportedAtLocal": "2026-09-29T10:39:38.491-04:00",
+        "collection": "Urban heat: “sources” / 2026",
+        "count": 53,
+        "view": "Every occurrence; sorted by capture order, ascending",
+        "filters": [],
+        "version": "0.4.0"
+      }
+    },
+    {
+      "name": "Downloaded workbook: bold frozen header, filters, fitted widths, exact hyperlinks, text-only cells and an About sheet (openpyxl)",
+      "status": "pass",
+      "openpyxl": "opened; exact cell values matched",
+      "hyperlinks": 52,
+      "widths": [
+        58,
+        54
+      ]
+    },
+    {
+      "name": "A typed File name overrides the pattern for a download, is not doubled, follows the format, and clearing it returns to the pattern",
+      "status": "pass"
+    },
+    {
+      "name": "Lab-notes-2026_Urban-heat-sources-2026_2026-09-29.xlsx",
+      "status": "pass"
+    },
+    {
+      "name": "The about block records the grouping, sort, search and selection behind an export",
+      "status": "pass",
+      "about": {
+        "exportedAt": "2026-09-29T14:39:39.341Z",
+        "exportedAtLocal": "2026-09-29T10:39:39.341-04:00",
+        "collection": "Urban heat: “sources” / 2026",
+        "count": 1,
+        "view": "Unique URLs; sorted by capture order, ascending",
+        "filters": [
+          "Search: “pdf”",
+          "Selected links only"
+        ],
+        "version": "0.4.0"
+      }
+    },
+    {
+      "name": "A typed name is dropped when the collection changes",
+      "status": "pass"
+    },
+    {
+      "name": "Bookmark access is requested only on choosing Existing folder or pressing Bookmark; declining is explained; the background refuses without access",
+      "status": "pass",
+      "requests": [
+        {
+          "permissions": [
+            "bookmarks"
+          ]
+        },
+        {
+          "permissions": [
+            "bookmarks"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Folder picker (stand-in background answers): paths listed with repeats told apart, search by words, choose, skip on by default, and saved/skipped/failed counts",
+      "status": "pass",
+      "mock": true
+    },
+    {
+      "name": "No horizontal overflow at 320 and 390 px; new controls labeled; measured text contrast at least 4.5:1 in light and dark",
+      "status": "pass",
+      "contrast": [
+        {
+          "scheme": "light",
+          "name": "file name field",
+          "ratio": 16.48
+        },
+        {
+          "scheme": "light",
+          "name": "file name help",
+          "ratio": 5.77
+        },
+        {
+          "scheme": "light",
+          "name": "pattern summary",
+          "ratio": 9.97
+        },
+        {
+          "scheme": "light",
+          "name": "pattern line",
+          "ratio": 5.77
+        },
+        {
+          "scheme": "light",
+          "name": "date checkbox label",
+          "ratio": 15.79
+        },
+        {
+          "scheme": "light",
+          "name": "saves as line",
+          "ratio": 5.77
+        },
+        {
+          "scheme": "light",
+          "name": "bookmark mode (checked)",
+          "ratio": 16.48
+        },
+        {
+          "scheme": "light",
+          "name": "bookmark mode (unchecked)",
+          "ratio": 5.42
+        },
+        {
+          "scheme": "light",
+          "name": "folder list",
+          "ratio": 16.48
+        },
+        {
+          "scheme": "light",
+          "name": "folder status",
+          "ratio": 5.77
+        },
+        {
+          "scheme": "light",
+          "name": "skip label",
+          "ratio": 15.79
+        },
+        {
+          "scheme": "light",
+          "name": "bookmark help",
+          "ratio": 5.77
+        },
+        {
+          "scheme": "light",
+          "name": "rich links note",
+          "ratio": 6.02
+        },
+        {
+          "scheme": "dark",
+          "name": "file name field",
+          "ratio": 15.41
+        },
+        {
+          "scheme": "dark",
+          "name": "file name help",
+          "ratio": 7.78
+        },
+        {
+          "scheme": "dark",
+          "name": "pattern summary",
+          "ratio": 12.16
+        },
+        {
+          "scheme": "dark",
+          "name": "pattern line",
+          "ratio": 7.78
+        },
+        {
+          "scheme": "dark",
+          "name": "date checkbox label",
+          "ratio": 16.31
+        },
+        {
+          "scheme": "dark",
+          "name": "saves as line",
+          "ratio": 7.78
+        },
+        {
+          "scheme": "dark",
+          "name": "bookmark mode (checked)",
+          "ratio": 15.41
+        },
+        {
+          "scheme": "dark",
+          "name": "bookmark mode (unchecked)",
+          "ratio": 8.07
+        },
+        {
+          "scheme": "dark",
+          "name": "folder list",
+          "ratio": 15.41
+        },
+        {
+          "scheme": "dark",
+          "name": "folder status",
+          "ratio": 7.78
+        },
+        {
+          "scheme": "dark",
+          "name": "skip label",
+          "ratio": 16.31
+        },
+        {
+          "scheme": "dark",
+          "name": "bookmark help",
+          "ratio": 7.78
+        },
+        {
+          "scheme": "dark",
+          "name": "rich links note",
+          "ratio": 7.36
+        }
+      ]
+    },
+    {
+      "name": "Copy as rich links puts the exact HTML and plain text on the clipboard for the rows in view or the selection, and falls back to plain text with a clear status",
+      "status": "pass",
+      "links": 53,
+      "htmlBytes": 4012
+    },
+    {
+      "name": "Copy diagnostics puts indented JSON on the clipboard with version, counts and permissions, and no address, host, title, note, tag or collection name; its line says so; contrast at least 4.5:1",
+      "status": "pass",
+      "collections": 3,
+      "links": 53,
+      "contrast": [
+        {
+          "scheme": "light",
+          "name": "diagnostics button",
+          "ratio": 14.98
+        },
+        {
+          "scheme": "light",
+          "name": "diagnostics help",
+          "ratio": 6.02
+        },
+        {
+          "scheme": "dark",
+          "name": "diagnostics button",
+          "ratio": 14.98
+        },
+        {
+          "scheme": "dark",
+          "name": "diagnostics help",
+          "ratio": 6.02
+        }
+      ]
+    },
+    {
+      "name": "About and help links to the website add ?theme= after a theme change and after reopening; Meteor and the other links stay plain",
+      "status": "pass",
+      "aurora": [
+        "https://ryanjosephkamp.github.io/link-meteor/guide.html?theme=aurora",
+        "https://ryanjosephkamp.github.io/link-meteor/?theme=aurora"
+      ],
+      "meteor": [
+        "https://ryanjosephkamp.github.io/",
+        "https://ryanjosephkamp.github.io/link-meteor/guide.html",
+        "https://github.com/ryanjosephkamp/link-meteor/issues",
+        "https://ryanjosephkamp.github.io/link-meteor/",
+        "https://github.com/ryanjosephkamp/link-meteor",
+        "https://github.com/sponsors/ryanjosephkamp"
+      ]
+    },
+    {
+      "name": "Custom columns are added in the collection editor; a repeated, empty or 61-character name is refused with a plain reason, and at 20 columns adding stops and says why",
+      "status": "pass",
+      "columnNames": [
+        "Principal investigator",
+        "Deadline",
+        "=Rank <b>&</b> \"one\""
+      ]
+    },
+    {
+      "name": "Each link's details show a text field per custom column, labeled with its name, saved with the note; a value over 2,000 characters is explained and not saved",
+      "status": "pass"
+    },
+    {
+      "name": "Fill for selected links sets one column on the selected links (saying how many values it replaces), refuses a value over 2,000 characters, undoes to each link's earlier value, and clears with an empty value",
+      "status": "pass"
+    },
+    {
+      "name": "Search finds links by their custom values",
+      "status": "pass"
+    },
+    {
+      "name": "Add a column lists the collection's custom columns and ends with New custom column…, which names a column, adds it to the collection and to the export, and refuses a repeated name",
+      "status": "pass",
+      "header": [
+        "Anchor text",
+        "URL",
+        "Principal investigator",
+        "Deadline",
+        "=Rank <b>&</b> \"one\"",
+        "Reviewer"
+      ]
+    },
+    {
+      "name": "CSV, TSV, HTML and Markdown downloads equal the export code for the custom columns; formula-looking values and names start with an apostrophe in CSV and TSV; HTML escapes names; JSON keeps each row's fields and names the columns in about.fields; the workbook (openpyxl) has the names as headers, text-only cells, no formulas and no links in custom columns; Copy table carries them too",
+      "status": "pass",
+      "openpyxl": "opened; exact cell values matched",
+      "files": {
+        "csv": "Urban-heat-sources-2026_2026-09-29_1039.csv",
+        "tsv": "Urban-heat-sources-2026_2026-09-29_1039.tsv",
+        "html": "Urban-heat-sources-2026_2026-09-29_1039.html",
+        "markdown": "Urban-heat-sources-2026_2026-09-29_1039.md",
+        "json": "Urban-heat-sources-2026_2026-09-29_1039.json",
+        "xlsx": "Urban-heat-sources-2026_2026-09-29_1039.xlsx"
+      }
+    },
+    {
+      "name": "A column is renamed from the keyboard (a repeated name is refused; Escape cancels) and the export follows; Remove asks first, removes the values, and Undo puts the column back in place with every value",
+      "status": "pass"
+    },
+    {
+      "name": "Custom column controls: no horizontal overflow at 320 px in the links and export views, every control labeled, measured text contrast at least 4.5:1 in light and dark",
+      "status": "pass",
+      "contrast": [
+        {
+          "scheme": "light",
+          "name": "columns heading",
+          "ratio": 16.48
+        },
+        {
+          "scheme": "light",
+          "name": "columns count",
+          "ratio": 6.02
+        },
+        {
+          "scheme": "light",
+          "name": "columns help",
+          "ratio": 6.02
+        },
+        {
+          "scheme": "light",
+          "name": "column name",
+          "ratio": 15.79
+        },
+        {
+          "scheme": "light",
+          "name": "values count",
+          "ratio": 5.77
+        },
+        {
+          "scheme": "light",
+          "name": "rename",
+          "ratio": 9.97
+        },
+        {
+          "scheme": "light",
+          "name": "remove",
+          "ratio": 5.34
+        },
+        {
+          "scheme": "light",
+          "name": "name problem",
+          "ratio": 5.57
+        },
+        {
+          "scheme": "light",
+          "name": "removal status",
+          "ratio": 14.83
+        },
+        {
+          "scheme": "light",
+          "name": "column undo",
+          "ratio": 16.48
+        },
+        {
+          "scheme": "light",
+          "name": "value label",
+          "ratio": 10.41
+        },
+        {
+          "scheme": "light",
+          "name": "value too long",
+          "ratio": 5.57
+        },
+        {
+          "scheme": "light",
+          "name": "row value",
+          "ratio": 9.97
+        },
+        {
+          "scheme": "light",
+          "name": "row value name",
+          "ratio": 5.77
+        },
+        {
+          "scheme": "light",
+          "name": "fill button",
+          "ratio": 14.98
+        },
+        {
+          "scheme": "light",
+          "name": "fill title",
+          "ratio": 16.48
+        },
+        {
+          "scheme": "light",
+          "name": "fill label",
+          "ratio": 10.41
+        },
+        {
+          "scheme": "light",
+          "name": "fill help",
+          "ratio": 6.02
+        },
+        {
+          "scheme": "light",
+          "name": "new column label",
+          "ratio": 9.97
+        },
+        {
+          "scheme": "light",
+          "name": "new column help",
+          "ratio": 5.77
+        },
+        {
+          "scheme": "dark",
+          "name": "columns heading",
+          "ratio": 15.41
+        },
+        {
+          "scheme": "dark",
+          "name": "columns count",
+          "ratio": 7.36
+        },
+        {
+          "scheme": "dark",
+          "name": "columns help",
+          "ratio": 7.36
+        },
+        {
+          "scheme": "dark",
+          "name": "column name",
+          "ratio": 16.31
+        },
+        {
+          "scheme": "dark",
+          "name": "values count",
+          "ratio": 7.78
+        },
+        {
+          "scheme": "dark",
+          "name": "rename",
+          "ratio": 12.16
+        },
+        {
+          "scheme": "dark",
+          "name": "remove",
+          "ratio": 8.86
+        },
+        {
+          "scheme": "dark",
+          "name": "name problem",
+          "ratio": 8.37
+        },
+        {
+          "scheme": "dark",
+          "name": "removal status",
+          "ratio": 16.92
+        },
+        {
+          "scheme": "dark",
+          "name": "column undo",
+          "ratio": 15.41
+        },
+        {
+          "scheme": "dark",
+          "name": "value label",
+          "ratio": 11.49
+        },
+        {
+          "scheme": "dark",
+          "name": "value too long",
+          "ratio": 8.37
+        },
+        {
+          "scheme": "dark",
+          "name": "row value",
+          "ratio": 12.16
+        },
+        {
+          "scheme": "dark",
+          "name": "row value name",
+          "ratio": 7.78
+        },
+        {
+          "scheme": "dark",
+          "name": "fill button",
+          "ratio": 12.61
+        },
+        {
+          "scheme": "dark",
+          "name": "fill title",
+          "ratio": 15.41
+        },
+        {
+          "scheme": "dark",
+          "name": "fill label",
+          "ratio": 11.49
+        },
+        {
+          "scheme": "dark",
+          "name": "fill help",
+          "ratio": 7.36
+        },
+        {
+          "scheme": "dark",
+          "name": "new column label",
+          "ratio": 12.16
+        },
+        {
+          "scheme": "dark",
+          "name": "new column help",
+          "ratio": 7.78
+        }
+      ]
+    },
+    {
+      "name": "No page errors or console errors",
+      "status": "pass"
+    }
+  ],
+  "limits": [
+    "No optional grants: bookmark prompts are answered by a page-level stand-in, never by Chrome.",
+    "Folder-picker checks use stand-in background answers (API mock); the real bookmark API is covered by tests/extended-browser.mjs with bookmark access.",
+    "openpyxl is a library reader, not Microsoft Excel."
+  ],
+  "result": "PASS",
+  "finished": "2026-09-29T14:39:49.227Z"
+}

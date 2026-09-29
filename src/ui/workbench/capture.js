@@ -1,5 +1,6 @@
-// Capture: scope and tab inventory, running a capture, and the capture report.
-import { $, node, icon, button, count, plural, capturableUrl, originOf, hostOf } from './helpers.js';
+// Capture: scope and tab inventory, running a capture, and the capture report. Also what to capture
+// (0.4.0): the links in the pages, or the tabs themselves as links (capture.tabs).
+import { $, node, icon, button, count, plural, safeUrl, capturableUrl, originOf, hostOf } from './helpers.js';
 import { ui, request, action, mutate, show, fail, currentCollection } from './state.js';
 import { render, setView } from './rendering.js';
 import { renderLinks } from './review.js';
@@ -12,6 +13,10 @@ let inventoryTimer, inventoryRequestSequence = 0;
 // whether Chrome must be asked for the site.
 let pageAccess = null;
 const OPEN_INTENT_KEY = 'linkMeteorOpenIntent';
+const SCOPES = ['current', 'selected', 'window', 'all'];
+// What to capture: 'links' (the links in the pages) or 'tabs' (the tabs themselves). Like the scope,
+// the choice lasts while this view is open.
+let captureWhat = 'links';
 
 /* Capture scope ---------------------------------------------------------------- */
 export function scopeTabs() {
@@ -20,11 +25,17 @@ export function scopeTabs() {
 }
 
 export function renderCaptureButton() {
-  const label = $('capture-label');
-  if (ui.busy) { label.textContent = 'Capturing…'; $('capture').setAttribute('aria-busy', 'true'); return; }
+  const label = $('capture-label'), tabs = captureWhat === 'tabs';
+  if (ui.busy) { label.textContent = tabs ? 'Saving…' : 'Capturing…'; $('capture').setAttribute('aria-busy', 'true'); return; }
   $('capture').removeAttribute('aria-busy');
-  if (ui.scope === 'current') { label.textContent = 'Capture this page'; return; }
-  if (!ui.inventory) { label.textContent = 'Capture tabs'; return; }
+  if (ui.scope === 'current') { label.textContent = tabs ? 'Save this tab as a link' : 'Capture this page'; return; }
+  if (!ui.inventory) { label.textContent = tabs ? 'Save tabs as links' : 'Capture tabs'; return; }
+  if (tabs) {
+    // Tabs known not to be web pages are left out of the count; the preview says how many.
+    const n = scopeTabs().filter((tab) => !tab.url || safeUrl(tab.url)).length;
+    label.textContent = ui.scope === 'selected' && !n ? 'Save selected tabs as links' : n === 1 ? 'Save 1 tab as a link' : `Save ${plural(n, 'tab')} as links`;
+    return;
+  }
   const n = scopeTabs().length;
   label.textContent = ui.scope === 'selected' && !n ? 'Capture selected tabs' : `Capture ${plural(n, 'tab')}`;
 }
@@ -59,7 +70,8 @@ export function renderInventory() {
   const unknown = chosen.filter((tab) => !tab.url).length;
   const unsupported = chosen.length - supported - unknown;
   const target = tabs.find((tab) => tab.id === ui.inventory.targetTabId);
-  if (ui.scope === 'current') {
+  if (captureWhat === 'tabs') previewTabs(chosen, target);
+  else if (ui.scope === 'current') {
     if (!target) preview(['Open a webpage, then open Link Meteor from it to capture that page.'], true, 'i-alert');
     else if (!target.url) preview(['The current tab was found, but Chrome hides its address and contents from Link Meteor. Click the Link Meteor toolbar icon while on that page, or allow all sites under Site access.']);
     else if (!capturableUrl(target.url)) preview([`This is a browser page (${target.url}). Chrome does not allow capturing it; choose an ordinary webpage.`], true, 'i-ban');
@@ -99,7 +111,7 @@ export function renderInventory() {
         const text = node('span');
         text.append(node('span', 'title', tab.title || `Tab ${tab.id}`));
         const meta = node('span', 'meta');
-        if (tab.url && !capturableUrl(tab.url)) meta.append(node('span', 'flag', 'Can’t capture · '));
+        if (captureWhat === 'tabs' ? tab.url && !safeUrl(tab.url) : tab.url && !capturableUrl(tab.url)) meta.append(node('span', 'flag', captureWhat === 'tabs' ? 'Can’t save · ' : 'Can’t capture · '));
         meta.append(document.createTextNode(tab.url ? (hostOf(tab.url) || tab.url) : 'Address unavailable'));
         if (tab.id === ui.inventory.targetTabId) meta.append(document.createTextNode(' · current page'));
         text.append(meta);
@@ -110,6 +122,33 @@ export function renderInventory() {
     $('tab-picked').textContent = `${count(ui.selectedTabs.size ? tabs.filter((tab) => ui.selectedTabs.has(tab.id)).length : 0)} of ${plural(tabs.length, 'tab')} selected`;
     if (focusedTabId) [...area.querySelectorAll('input[data-tab-id]')].find((box) => box.dataset.tabId === focusedTabId)?.focus({ preventScroll: true });
   }
+}
+
+// The tabs themselves: what each tab becomes, and which tabs can't be saved. Saving needs no site
+// access, only the tabs' titles and addresses.
+function previewTabs(chosen, target) {
+  if (ui.scope === 'current') {
+    if (!target) preview(['Open a webpage, then open Link Meteor from it to save that tab.'], true, 'i-alert');
+    else if (!target.url) preview(['The current tab was found, but Chrome hides its address from Link Meteor. Click the Link Meteor toolbar icon while on that page, then save it.'], true, 'i-alert');
+    else if (!safeUrl(target.url)) preview([`This is a browser page (${target.url}). Only web pages can be saved as links.`], true, 'i-ban');
+    else preview([node('strong', '', target.title || target.url), ` · ${hostOf(target.url)}. Saves the tab’s title and address as one link.`], false, 'i-page');
+    return;
+  }
+  if (!chosen.length) { preview([ui.scope === 'selected' ? 'Choose the tabs to save below.' : 'No tabs are open in this scope.'], ui.scope !== 'selected'); return; }
+  const web = chosen.filter((tab) => safeUrl(tab.url)).length, unknown = chosen.filter((tab) => !tab.url).length, other = chosen.length - web - unknown;
+  const parts = [node('strong', '', plural(chosen.length, 'tab')), ` in ${plural(new Set(chosen.map((tab) => tab.windowId)).size, 'window')} · ${plural(web, 'webpage')}`];
+  if (other) parts.push(` · ${count(other)} can’t be saved (not web pages)`);
+  if (unknown) parts.push(` · ${count(unknown)} unknown`);
+  parts.push('. Each tab becomes one link: its title and address, as the tab shows them.');
+  preview(parts, false, 'i-tabs');
+}
+
+function chooseWhat(value) {
+  captureWhat = value === 'tabs' ? 'tabs' : 'links';
+  const radio = document.querySelector(`input[name="capture-what"][value="${captureWhat}"]`);
+  if (radio) radio.checked = true;
+  $('capture').closest('.capture').dataset.what = captureWhat;
+  renderInventory();
 }
 
 export async function loadInventory() {
@@ -171,11 +210,11 @@ export const REPORT_STATUS = {
 
 export function syncReportAction() {
   const box = $('capture-report');
-  const previous = box.querySelector('.report-actions');
+  const previous = box.querySelector('.report-actions:not(.report-left-out)');
   const hadFocus = previous?.contains(document.activeElement);
   previous?.remove();
   const report = ui.displayedReport;
-  if (!report?.capturedCount || !currentCollection()?.links.some((link) => link.batchId === report.batchId)) return;
+  if (!(report?.capturedCount || report?.leftOutIncluded) || !currentCollection()?.links.some((link) => link.batchId === report.batchId)) return;
   const actions = node('div', 'report-actions');
   const only = node('button', 'link-btn', ui.batchFilter === report.batchId ? 'Show all links' : 'Show only these links'); only.type = 'button';
   only.addEventListener('click', () => {
@@ -205,15 +244,58 @@ async function allowAllSites() {
   await runCapture();
 }
 
+// Content links only (0.4.0): how many navigation links the capture left out, with Include them,
+// which adds them to the collection the capture went to (capture.includeLeftOut). Also how many links
+// Skip saved left out.
+function reportLeftOut(box, report) {
+  const results = report.results || [];
+  const total = (key) => results.reduce((sum, result) => sum + (Number(result[key]) || 0), 0);
+  const leftOut = total('leftOut'), skipped = total('skipped');
+  if (!leftOut && !skipped) return;
+  const line = node('p', 'report-actions report-left-out');
+  const text = node('span', '');
+  const say = (parts) => { text.textContent = parts.filter(Boolean).join(' '); };
+  const skippedText = skipped ? `Skipped ${plural(skipped, 'link')} already saved.` : '';
+  line.append(text);
+  if (!leftOut) say([skippedText]);
+  else if (report.leftOutIncluded !== undefined) say([`Included ${plural(report.leftOutIncluded, 'navigation link')}.`, skippedText]);
+  else {
+    say([`Left out ${plural(leftOut, 'navigation link')}.`, skippedText]);
+    const include = button('Include them', 'link-btn');
+    include.addEventListener('click', () => action(async () => {
+      include.disabled = true;
+      try {
+        const result = await request({ type: 'capture.includeLeftOut', batchId: report.batchId });
+        report.leftOutIncluded = result.count;
+        ui.flashBatch = report.batchId; ui.flashStart = Date.now();
+        ui.state = result.state; render();
+        include.remove();
+        say([`Included ${plural(result.count, 'navigation link')}.`, skippedText]);
+        const parts = [`Added ${plural(result.count, 'navigation link')} to “${result.name}”.`];
+        if (result.skipped) parts.push(`${plural(result.skipped, 'link')} already saved ${result.skipped === 1 ? 'was' : 'were'} skipped.`);
+        if (result.total > result.count + result.skipped) parts.push(`Link Meteor keeps at most ${count(result.count + result.skipped)} left-out links per capture; capture again with navigation links included for the rest.`);
+        show(parts.join(' '));
+        syncReportAction();
+        // The Include button is gone; focus moves to the report's own action.
+        box.querySelector('.report-actions:not(.report-left-out) button')?.focus({ preventScroll: true });
+      } catch (error) { include.disabled = false; throw error; }
+    }));
+    line.append(' ', include);
+  }
+  box.append(line);
+}
+
 export function captureReport(report, { source = 'workbench', key = '', createdAt = '', reasons = new Map(), offerAllSites = new Set() } = {}) {
   const box = $('capture-report'); box.replaceChildren(); box.hidden = false;
   ui.displayedReportKey = key;
   ui.displayedReport = report;
   const results = report.results || [];
+  const tabs = report.kind === 'tabs';
   const succeeded = results.filter((result) => result.status === 'success').length;
   const head = node('div', 'report-head');
-  const title = node('h3', '', `${source === 'context' ? 'Previous capture · ' : ''}${plural(report.capturedCount, 'link')} captured`);
-  const sub = results.length === 1 ? `from ${results[0].title || results[0].url || `tab ${results[0].tabId}`}` : `${count(succeeded)} of ${plural(results.length, 'page')} captured`;
+  const title = node('h3', '', `${source === 'context' ? 'Previous capture · ' : ''}${tabs ? tabsHeadline(report) : `${plural(report.capturedCount, 'link')} captured`}`);
+  const from = results.length === 1 ? `from ${results[0].title || results[0].url || `tab ${results[0].tabId}`}` : '';
+  const sub = tabs ? tabsSkipped(report).join('; ') || from || `from ${plural(results.length, 'tab')}` : from || `${count(succeeded)} of ${plural(results.length, 'page')} captured`;
   const time = createdAt ? new Date(createdAt) : null;
   title.append(node('span', 'sub', time && !Number.isNaN(time.valueOf()) ? `${sub} · ${time.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}` : sub));
   const dismiss = node('button', 'btn quiet icon-btn small'); dismiss.type = 'button'; dismiss.setAttribute('aria-label', 'Dismiss capture report'); dismiss.title = 'Dismiss'; dismiss.append(icon('i-x'));
@@ -225,6 +307,7 @@ export function captureReport(report, { source = 'workbench', key = '', createdA
     }
   }));
   head.append(title, dismiss); box.append(head);
+  if (tabs) { reportTabs(box, results); syncReportAction(); return; }
   const list = node('ul', 'report-list');
   const quiet = results.length === 1 && results[0].status === 'success' && results[0].count && !results[0].warning;
   for (const result of quiet ? [] : results) {
@@ -234,6 +317,9 @@ export function captureReport(report, { source = 'workbench', key = '', createdA
     item.append(icon(empty ? 'i-minus' : kind.icon), node('span', 'page', result.title || result.url || `Tab ${result.tabId}`), node('span', 'status', kind.label(result)));
     if (empty && !result.warning) item.append(node('span', 'detail', 'The page loaded, but it has no links Link Meteor can read.'));
     if (result.status === 'denied') item.append(node('span', 'detail', reasons.get(result.tabId) || 'Link Meteor does not have access to this site. Capture it again to be asked, or click the Link Meteor toolbar icon while on the page. If Chrome’s site access for Link Meteor (in the Extensions menu, the puzzle-piece icon) is set to “On click” or blocks this site, change it there.'));
+    // Per page only when there are several; the report's own line gives the totals.
+    if (result.leftOut && results.length > 1) item.append(node('span', 'detail', `Left out ${plural(result.leftOut, 'navigation link')}.`));
+    if (result.skipped && results.length > 1) item.append(node('span', 'detail', `Skipped ${plural(result.skipped, 'link')} already saved.`));
     if (result.warning) item.append(node('span', `detail${result.status === 'success' ? ' warn' : ''}`, result.warning));
     if (result.error) item.append(node('span', 'detail', result.status === 'denied' ? `Chrome: ${result.error}` : result.error));
     if (result.status === 'denied' && offerAllSites.has(result.tabId)) {
@@ -245,7 +331,69 @@ export function captureReport(report, { source = 'workbench', key = '', createdA
   }
   if (!results.length) list.append(node('li', 'report-item error', 'No tab results were returned.'));
   if (list.childNodes.length) box.append(list);
+  reportLeftOut(box, report);
   syncReportAction();
+}
+
+/* Saving the tabs themselves (0.4.0) ---------------------------------------------------- */
+function tabsHeadline(report) {
+  const saved = report.saved ?? report.capturedCount ?? 0;
+  return !saved ? 'No tabs were saved' : saved === 1 ? 'Saved 1 tab as a link' : `Saved ${plural(saved, 'tab')} as links`;
+}
+// Why tabs were skipped: "2 skipped: not web pages". The background's notices say it the same way.
+function tabsSkipped(report) {
+  const results = report.results || [], repeated = report.repeated || 0, already = (report.skipped || 0) - repeated;
+  const hidden = results.filter((result) => result.status === 'denied').length, closed = results.filter((result) => result.status === 'error').length;
+  return [
+    report.unsupported && `${count(report.unsupported)} skipped: ${report.unsupported === 1 ? 'not a web page' : 'not web pages'}`,
+    already && `${count(already)} skipped: already saved`,
+    repeated && `${count(repeated)} skipped: ${repeated === 1 ? 'a repeated address' : 'repeated addresses'}`,
+    hidden && `${count(hidden)} skipped: ${hidden === 1 ? 'address' : 'addresses'} hidden by Chrome`,
+    closed && `${count(closed)} skipped: closed before saving`,
+  ].filter(Boolean);
+}
+// "Saved 45 tabs as links; 2 skipped: not web pages."
+export function tabsSummary(report) { return `${[tabsHeadline(report), ...tabsSkipped(report)].join('; ')}.`; }
+
+// The report lists only the tabs that weren't saved, each with its reason.
+const TAB_STATUS = { unsupported: ['i-ban', 'Not a web page'], denied: ['i-ban', 'Address hidden'], error: ['i-alert', 'Not saved'], success: ['i-minus', 'Skipped'] };
+function reportTabs(box, results) {
+  const list = node('ul', 'report-list');
+  for (const result of results.filter((item) => !item.count)) {
+    const [iconName, label] = TAB_STATUS[result.status] || TAB_STATUS.error;
+    const item = node('li', `report-item ${result.status === 'success' ? 'empty' : result.status}`);
+    item.append(icon(iconName), node('span', 'page', result.title || result.url || `Tab ${result.tabId}`), node('span', 'status', label));
+    const detail = result.warning || result.error;
+    if (detail) item.append(node('span', 'detail', detail));
+    list.append(item);
+  }
+  if (list.childNodes.length) box.append(list);
+}
+
+// The tabs themselves: one link per tab, from its title and address (capture.tabs). Pick tabs and the
+// window scopes need Chrome's tab list; without it, this click asks first, as choosing the scope does.
+export async function saveTabsAsLinks() {
+  if (ui.busy) return;
+  const asking = ui.scope !== 'current' && !grants.tabs ? chrome.permissions.request({ permissions: ['tabs'] }) : null;
+  ui.busy = true; $('capture').disabled = true; renderCaptureButton();
+  try {
+    if (asking) {
+      let allowed = false;
+      try { allowed = await asking; } catch { /* treated as declined */ }
+      if (!allowed) throw new Error('Tab access was declined, so Link Meteor can’t see your open tabs’ titles and addresses, and nothing was saved. Save again to be asked again, or choose This page.');
+      await loadInventory();
+    }
+    let tabIds = [];
+    if (ui.scope !== 'current') {
+      if (!ui.inventory) throw new Error('Tab preview is unavailable. Choose the scope again to refresh it.');
+      tabIds = scopeTabs().map((tab) => tab.id);
+      if (!tabIds.length) throw new Error('Select at least one tab before saving.');
+    }
+    const { state, report } = await request({ type: 'capture.tabs', scope: ui.scope, tabIds });
+    ui.flashBatch = report.batchId; ui.flashStart = Date.now();
+    ui.state = state; render(); captureReport(report);
+    show(tabsSummary(report));
+  } finally { ui.busy = false; $('capture').disabled = false; renderCaptureButton(); }
 }
 
 export function showContextReport(value) {
@@ -311,9 +459,10 @@ export async function runCapture() {
 
 export function bindCapture() {
   for (const radio of document.querySelectorAll('input[name="scope"]')) radio.addEventListener('change', () => action(() => chooseScope(radio.value)));
+  for (const radio of document.querySelectorAll('input[name="capture-what"]')) radio.addEventListener('change', () => { if (radio.checked) chooseWhat(radio.value); });
   $('tabs-all').addEventListener('click', () => { for (const tab of ui.inventory?.tabs || []) ui.selectedTabs.add(tab.id); renderInventory(); });
   $('tabs-none').addEventListener('click', () => { ui.selectedTabs.clear(); renderInventory(); });
-  $('capture').addEventListener('click', () => action(runCapture));
+  $('capture').addEventListener('click', () => action(captureWhat === 'tabs' ? saveTabsAsLinks : runCapture));
   $('arm').addEventListener('click', () => action(async () => { const result = await request({ type: 'capture.arm' }); const tab = ui.inventory?.tabs.find((item) => item.id === result.tabId); show(`Region selection is ready${tab?.title ? ` on “${tab.title}”` : ''}. Drag across links on the page; press Esc to cancel.`); }));
 }
 
@@ -348,6 +497,8 @@ export async function restoreSessionReport() {
 
 // ui.open with a view or batch (from the capture card): applied once by the view that opens, then
 // removed. It shows only that capture, in its collection, and the export view at compact widths.
+// From the toolbar menu's Save all tabs in this window without tab access, it holds {what: 'tabs',
+// scope}: that choice is made ready, with the reason and the button to save.
 async function applyOpenIntent() {
   let intent;
   try {
@@ -363,7 +514,18 @@ async function applyOpenIntent() {
       if (home) { ui.batchFilter = intent.batchId; ui.page = 0; renderLinks(); }
     }
     if (intent.view === 'export' && !matchMedia('(min-width: 900px)').matches) setView('export');
+    if (intent.what === 'tabs') await readyTabs(SCOPES.includes(intent.scope) ? intent.scope : 'window');
   } catch (error) { fail(error); }
+}
+
+async function readyTabs(scope) {
+  ui.scope = scope;
+  const radio = document.querySelector(`input[name="scope"][value="${scope}"]`);
+  if (radio) radio.checked = true;
+  chooseWhat('tabs');
+  await loadInventory();
+  show('Saving all the tabs in a window needs Chrome to show Link Meteor your open tabs’ titles and addresses. Chrome asks once, when you save.', 'notice', { actionLabel: $('capture-label').textContent, onAction: saveTabsAsLinks });
+  $('capture').focus();
 }
 
 export function watchTabs() {

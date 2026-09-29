@@ -218,6 +218,7 @@ kbd, .shortcut-keys kbd, .btn-keys kbd { display: inline-grid; place-items: cent
 .about-links a:hover { background: var(--hover); text-decoration: underline; }
 .about-links .icon { color: var(--muted); }
 .about-links .icon.heart { color: var(--danger); }
+.about-diagnostics { display: grid; justify-items: start; gap: 6px; }
 .rail-foot { display: flex; gap: 7px; padding-top: 4px; color: var(--muted); font-size: var(--text-xs); line-height: 1.4; }
 .rail-foot .icon { width: 14px; height: 14px; margin-top: 1px; }
 
@@ -433,7 +434,7 @@ kbd, .shortcut-keys kbd, .btn-keys kbd { display: inline-grid; place-items: cent
 .app.is-blank .dock { display: none; }
 .export-group { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; padding: 16px 0; border-top: 1px solid var(--line); }
 .export-group h3 { font-size: var(--text-sm); font-weight: 650; color: var(--ink); }
-.copy-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.copy-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
 .copy-btn { display: grid; grid-template-columns: 1fr; justify-items: start; gap: 2px; min-height: 64px; padding: 9px 10px; text-align: left; white-space: normal; }
 .copy-btn .icon { margin-bottom: 3px; color: var(--muted); }
 .copy-main { font-size: var(--text-sm); }
@@ -583,3 +584,93 @@ label.backup-choose { display: inline-flex; cursor: pointer; }
 .restore-status-text { font-weight: 600; line-height: 1.4; }
 .restore-status .help { color: var(--ink-2); }
 /* End of area: backup and restore, selecting and removing all */
+
+/* Area: appearance and after a drag (0.4.0). Theme tokens come from core/themes.js in <style id="theme">. */
+.after-drag, .appearance { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; }
+.appearance { container: appearance / inline-size; }
+.after-drag .rail-title, .appearance .rail-title { margin-bottom: 0; }
+.choice-list { display: grid; gap: 2px; }
+.choice, .rail-check { display: flex; align-items: center; gap: 9px; min-height: 28px; color: var(--ink); font-size: var(--text-sm); font-weight: 500; cursor: pointer; }
+.rail-check { margin-top: 4px; }
+.choice-list + .help, .rail-check + .help { margin-top: -4px; }
+.after-drag-format { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 8px; }
+.after-drag-format label { font-weight: 500; }
+.theme-picker { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+@container appearance (min-width: 330px) { .theme-picker { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.theme-choice { position: relative; display: flex; align-items: center; gap: 7px; min-height: 40px; padding: 5px 6px; border: 1px solid var(--line); border-radius: var(--r); background: var(--surface); color: var(--ink-2); font-size: var(--text-xs); font-weight: 600; line-height: 1.2; cursor: pointer; transition: border-color 0.15s var(--ease), color 0.15s var(--ease); }
+.theme-choice input { position: absolute; inset: 0; width: 100% !important; height: 100% !important; margin: 0; opacity: 0; cursor: pointer; }
+.theme-choice:hover { border-color: var(--muted); color: var(--ink); }
+.theme-choice:has(input:checked) { border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); color: var(--ink); }
+.theme-choice:has(input:focus-visible) { outline: 2px solid var(--focus); outline-offset: 2px; }
+.theme-mark { position: relative; flex: none; width: 20px; height: 20px; }
+.theme-swatch { display: block; width: 20px; height: 20px; }
+.theme-check { position: absolute; right: -5px; bottom: -5px; width: 14px; height: 14px; padding: 2px; border-radius: 50%; background: var(--ink); color: var(--surface); stroke-width: 2.6; visibility: hidden; }
+.theme-choice:has(input:checked) .theme-check { visibility: visible; }
+.theme-name { min-width: 0; }
+.scheme-mode { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2px; padding: 3px; border: 1px solid var(--line); border-radius: 10px; background: var(--sunken); }
+.scheme-mode .seg { flex-direction: row; min-height: 30px; font-size: var(--text-xs); }
+@media (forced-colors: active) { .theme-choice { border: 1px solid CanvasText; } .theme-choice:has(input:checked) { outline: 2px solid Highlight; } }
+/* End of area: appearance and after a drag */
+
+/* Area: custom columns (0.4.0). The collection editor's columns, link details, Fill for selected links and export columns. */
+.fields-editor { container: fields / inline-size; display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line); }
+.fields-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 8px; }
+.fields-head h3 { font-size: var(--text-sm); font-weight: 650; color: var(--ink); }
+.fields-count { color: var(--muted); font-size: var(--text-xs); font-variant-numeric: tabular-nums; }
+.fields-editor > .help { margin-top: -4px; }
+.fields-list { display: grid; gap: 4px; }
+.fields-list:empty { display: none; }
+.field-item { display: grid; grid-template-columns: minmax(0, 1fr) auto auto auto; align-items: center; gap: 2px 6px; min-height: 36px; padding: 3px 3px 3px 10px; border: 1px solid var(--line); border-radius: var(--r); background: var(--bg); font-size: var(--text-sm); }
+.field-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; color: var(--ink); }
+.field-filled { color: var(--muted); font-size: var(--text-xs); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.field-rename { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 4px 6px; padding: 3px 0; }
+.field-rename input { min-height: 30px; font-size: var(--text-sm); }
+.field-rename .help { grid-column: 1 / -1; }
+@container fields (max-width: 340px) {
+  .field-item { grid-template-columns: minmax(0, 1fr) auto auto; }
+  .field-filled { grid-row: 2; grid-column: 1; }
+  .field-rename { grid-template-columns: minmax(0, 1fr) auto; }
+  .field-rename input { grid-column: 1 / -1; }
+}
+.fields-status { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; padding: 8px 10px; border-radius: var(--r); background: var(--sunken); font-size: var(--text-sm); color: var(--ink); }
+.fields-status p { flex: 1 1 12em; min-width: 0; overflow-wrap: anywhere; }
+.field-add { display: grid; grid-template-columns: minmax(0, 1fr); gap: 4px; }
+.field-add-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px; align-items: center; }
+.new-column .field-add-row { grid-template-columns: minmax(0, 1fr) auto auto; }
+.help.is-problem, .field-limit { color: var(--danger); font-weight: 600; }
+.new-column { display: grid; grid-template-columns: minmax(0, 1fr); gap: 4px; width: 100%; padding: 10px; border: 1px solid var(--line); border-radius: var(--r); background: var(--bg); }
+.new-column input { min-height: 30px; font-size: var(--text-sm); }
+@media (max-width: 360px) { .new-column .field-add-row { grid-template-columns: minmax(0, 1fr) auto; } .new-column .field-add-row input { grid-column: 1 / -1; } }
+/* Link details: a field per custom column after Note and Tags; Save gets its own row. */
+.occurrence-form.has-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.occurrence-form.has-fields > button[type=submit] { grid-column: 1 / -1; justify-self: start; }
+.occurrence-form .field-input { min-width: 0; overflow-wrap: anywhere; }
+.occurrence-form .field-limit { grid-column: 1 / -1; }
+@container review (max-width: 420px) { .occurrence-form.has-fields { grid-template-columns: minmax(0, 1fr); } }
+.row-notes .field-value { min-width: 0; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.row-notes .field-value-name { color: var(--muted); }
+/* Fill for selected links: a panel across the list toolbar, like its confirmations. */
+.list-toolbar .fill-panel { flex: 1 0 100%; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 2px 0 8px; padding: 12px; border: 1px solid var(--line-strong); border-radius: var(--r); background: var(--surface); }
+.fill-title { grid-column: 1 / -1; font-weight: 650; color: var(--ink); }
+.fill-panel .help, .fill-panel .confirm-actions { grid-column: 1 / -1; }
+.fill-panel select, .fill-panel input { min-height: 30px; font-size: var(--text-sm); }
+@container review (max-width: 420px) { .list-toolbar .fill-panel { grid-template-columns: minmax(0, 1fr); } }
+.restore-mode li.restore-fields-dropped { color: var(--warn); font-weight: 600; }
+.restore-mode li.restore-fields-dropped::before { background: var(--warn); }
+@media (forced-colors: active) { .field-item, .fill-panel, .new-column { border: 1px solid CanvasText; } }
+/* End of area: custom columns */
+/* Area: save tabs as links and the menus (0.4.0) */
+/* What to capture: the links in the pages, or the tabs themselves. A smaller segmented choice under the scope. */
+.capture-what { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2px; padding: 3px; border-radius: 10px; background: var(--sunken); }
+.capture-what .seg { flex-direction: row; min-height: 30px; font-size: var(--text-xs); white-space: normal; }
+@media (min-width: 900px) { .capture-what { max-width: 620px; } }
+/* "Save 45 tabs as links" is longer than "Capture 45 tabs": at compact widths the actions stack, so it isn't cut short. */
+@media (max-width: 899px) { .capture[data-what="tabs"] .capture-actions { grid-template-columns: minmax(0, 1fr); } }
+/* End of area: save tabs as links and the menus */
+/* Area: downloading files (0.4.0): the Export panel's Download files and Download in a link's details. */
+.downloads-pending { display: grid; gap: 10px; padding: 12px; border: 1px solid var(--accent-edge); border-radius: var(--r); background: var(--accent-wash); color: var(--ink); font-size: var(--text-sm); }
+.downloads-result { display: grid; gap: 6px; padding: 10px 12px; border-radius: var(--r); background: var(--sunken); color: var(--ink); font-size: var(--text-sm); overflow-wrap: anywhere; }
+.downloads-result ul { display: grid; gap: 4px; margin: 0; padding-left: 18px; color: var(--ink-2); font-size: var(--text-xs); }
+.occurrence-download { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; padding-top: 10px; border-top: 1px solid var(--line); }
+.occurrence-download .help { flex: 1 1 200px; min-width: 0; overflow-wrap: anywhere; }
+/* End of area: downloading files */

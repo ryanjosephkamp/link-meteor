@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { makeExport, COLUMNS, exportFileName, fileNamePart } from '../src/core/export.js';
+import { makeExport, COLUMNS, exportFileName, fileNamePart, richLinks } from '../src/core/export.js';
 import { writeXlsx } from '../src/core/xlsx.js';
 import { queryLinks } from '../src/core/model.js';
 
@@ -336,4 +336,31 @@ test('exportFileName: overrides, the pattern settings and the extension map', as
   assert.equal(exportFileName({ collection: 'Heat', extension: 'csv', date, override: '12:30 notes' }), '12-30-notes.csv', 'never a colon');
   assert.equal(exportFileName({ collection: 'Heat', extension: 'csv', date, settings: { exportPrefix: 'lab', exportTimestamp: false } }), 'lab_Heat.csv');
   assert.equal(exportFileName({ collection: 'Heat', extension: 'csv', date, settings: { exportPrefix: 'lab', exportTimestampFormat: 'date' } }), 'lab_Heat_2026-09-26.csv');
+});
+
+test('rich links: clickable HTML with escaped text, the URL for empty anchors, and a plain-text version', () => {
+  const rich = richLinks([
+    { anchorText: 'Heat <maps> & "shade"', url: 'https://example.org/a?b=1&c=2' },
+    { anchorText: '  ', url: 'https://example.org/empty' },
+    { anchorText: 'Write to us', url: 'mailto:team@example.org' },
+  ]);
+  assert.equal(rich.html, '<ul><li><a href="https://example.org/a?b=1&amp;c=2">Heat &lt;maps&gt; &amp; &quot;shade&quot;</a></li><li><a href="https://example.org/empty">https://example.org/empty</a></li><li><a href="mailto:team@example.org">Write to us</a></li></ul>');
+  assert.equal(rich.text, 'Heat <maps> & "shade" (https://example.org/a?b=1&c=2)\nhttps://example.org/empty\nWrite to us (mailto:team@example.org)');
+  assert.throws(() => richLinks([{ anchorText: 'x', url: 'javascript:alert(1)' }]), /Unsupported link URL/);
+});
+
+test('custom columns export as field:<id>, headed by their names, in every format', () => {
+  const fields = [{ id: 'f-pi', name: 'Principal investigator' }, { id: 'f-due', name: 'Deadline' }];
+  const rows = [{ anchorText: 'Heat lab', url: 'https://heat.example/', fields: { 'f-pi': 'Dr. Rivera', 'f-due': '=1+1' } }, { anchorText: 'Shade lab', url: 'https://shade.example/' }];
+  const columns = ['anchorText', 'url', 'field:f-pi', 'field:f-due'];
+  assert.equal(makeExport(rows, { format: 'csv', columns, fields }).data, "Anchor text,URL,Principal investigator,Deadline\r\nHeat lab,https://heat.example/,Dr. Rivera,'=1+1\r\nShade lab,https://shade.example/,,\r\n");
+  assert.match(makeExport(rows, { format: 'html', columns, fields }).data, /<th scope="col">Principal investigator<\/th>/);
+  assert.throws(() => makeExport(rows, { format: 'csv', columns: ['field:f-missing'], fields }), /Unsupported export column/);
+  assert.throws(() => makeExport(rows, { format: 'csv', columns: ['field:f-pi'] }), /Unsupported export column/, 'a custom column needs its definition');
+  // JSON keeps each row's fields, and its about block names the columns; without columns it is unchanged.
+  const about = { exportedAt: new Date('2026-09-28T12:00:00Z'), collection: 'Labs' };
+  const json = JSON.parse(makeExport(rows, { format: 'json', columns, fields, about }).data);
+  assert.deepEqual(json.about.fields, fields);
+  assert.deepEqual(json.rows, rows);
+  assert.equal('fields' in JSON.parse(makeExport(rows, { format: 'json', about }).data).about, false);
 });

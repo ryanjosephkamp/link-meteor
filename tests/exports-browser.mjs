@@ -4,6 +4,16 @@
 // code, the formatted workbook read by tests/verify-workbook.py (openpyxl), and when bookmark
 // access is requested. Runs headless in a fresh task-owned profile.
 //
+// 0.4.0 workbench extras: Copy as rich links (the exact HTML and text read back from the clipboard,
+// and the plain-text fallback), Copy diagnostics (valid indented JSON with no addresses or names),
+// and About and help's website links carrying ?theme=. Clipboard reads use permissions granted to
+// the test context; headless Chrome keeps its own clipboard, so the system clipboard is untouched.
+//
+// 0.4.0 custom columns: added, renamed and removed (with Undo) in the collection editor, filled one
+// by one in link details and for selected links, searched, and exported as CSV, TSV, a workbook
+// read by openpyxl, HTML, Markdown and JSON; names shown as text everywhere; 320 px layout and
+// contrast in light and dark. Downloads land in a folder under .scratch/, checked for each file.
+//
 // Bookmark prompts are never shown: a page-level stand-in for chrome.permissions.request records
 // each request and answers it. Where the folder picker is exercised, the page's own messages to
 // the background are also stood in for (an API mock, labeled as such in the results); the real
@@ -14,12 +24,17 @@ import {mkdir, mkdtemp, readFile, rm, writeFile} from 'node:fs/promises';
 import {join, resolve} from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {promisify} from 'node:util';
+const VERSION = JSON.parse(await readFile(new URL('../src/manifest.json', import.meta.url), 'utf8')).version;
 
 process.env.LINK_METEOR_EVIDENCE_DIR ||= '.scratch/evidence-exports-bookmarks';
 process.env.LINK_METEOR_FIXTURE_PORT ||= '52482';
+// Playwright keeps accepted downloads in a temporary folder of this process: put it under .scratch/.
+const downloadsTemp = resolve(import.meta.dirname, '..', '.scratch', `downloads-exports-${process.pid}`);
+await mkdir(downloadsTemp, {recursive: true});
+process.env.TMPDIR = process.env.TMP = process.env.TEMP = downloadsTemp;
 const {launch, rpc, until, evidence, root, scratch} = await import('./helpers/browser.mjs');
-const {exportFileName, fileNamePart, FORMAT_EXTENSIONS} = await import('../src/core/export.js');
-const {queryLinks} = await import('../src/core/model.js');
+const {exportFileName, fileNamePart, FORMAT_EXTENSIONS, richLinks, makeExport} = await import('../src/core/export.js');
+const {queryLinks, MAX_CUSTOM_FIELDS} = await import('../src/core/model.js');
 const {readPackagedMembers} = await import('../scripts/verify-package.mjs');
 
 const run = promisify(execFile);
@@ -81,6 +96,9 @@ try {
     await ui.locator('#download').click();
     const file = await pending;
     const after = new Date();
+    const landed = await file.path();
+    // Every test download stays under .scratch/ (launch() gives each profile its own downloads folder there).
+    assert.ok(landed.startsWith(scratch + '/') || landed.startsWith(scratch + '\\'), `the download landed in ${landed}, outside .scratch/`);
     const name = file.suggestedFilename();
     const path = resolve(exportsDir, save || name);
     await file.saveAs(path);
@@ -119,13 +137,13 @@ try {
   const exportedAt = new Date(json.about.exportedAt);
   assert.ok(exportedAt >= new Date(names.json.before.valueOf() - 1000) && exportedAt <= names.json.after, 'export time is the download time');
   assert.equal(new Date(json.about.exportedAtLocal).valueOf(), exportedAt.valueOf(), 'local time with offset names the same instant');
-  assert.deepEqual({...json.about, exportedAt: 0, exportedAtLocal: 0}, {exportedAt: 0, exportedAtLocal: 0, collection: COLLECTION, count: rows.length, view: 'Every occurrence; sorted by capture order, ascending', filters: [], version: '0.3.0'});
+  assert.deepEqual({...json.about, exportedAt: 0, exportedAtLocal: 0}, {exportedAt: 0, exportedAtLocal: 0, collection: COLLECTION, count: rows.length, view: 'Every occurrence; sorted by capture order, ascending', filters: [], version: VERSION});
   check('JSON download is {about, rows}; rows equal the 0.2.2 array and about names the time, collection, count, view and version', {about: json.about});
 
   // 4. The formatted workbook, read independently.
   const workbookExpected = {formatted: true, columns: ['anchorText', 'url'], rows: [['Anchor text', 'URL'], ...rows.map((row) => [row.anchorText, row.url])],
     urlColumns: ['URL', 'Original href', 'Source page URL', 'Frame URL'],
-    about: {exportedAtUtcSeconds: null, collection: COLLECTION, count: rows.length, view: 'Every occurrence; sorted by capture order, ascending', filters: [], columns: 'Anchor text, URL', version: '0.3.0'}};
+    about: {exportedAtUtcSeconds: null, collection: COLLECTION, count: rows.length, view: 'Every occurrence; sorted by capture order, ascending', filters: [], columns: 'Anchor text, URL', version: VERSION}};
   const expectedPath = resolve(exportsDir, 'lane.xlsx.expected.json');
   await writeFile(expectedPath, JSON.stringify(workbookExpected, null, 2) + '\n');
   // Windows installs Python as python; LINK_METEOR_PYTHON picks another interpreter.
@@ -306,7 +324,7 @@ try {
     const bg = (el) => { for (let n = el; n; n = n.parentElement) { const c = getComputedStyle(n).backgroundColor; if (c && !/rgba\(0, 0, 0, 0\)|transparent/.test(c) && !/\/ 0\)$/.test(c)) return c; } return getComputedStyle(document.body).backgroundColor; };
     return pairs.map(([name, selector]) => { const el = document.querySelector(selector); if (!el) return {name, missing: true}; const a = lum(rgb(getComputedStyle(el).color)), b = lum(rgb(bg(el))); return {name, ratio: Math.round(((Math.max(a, b) + .05) / (Math.min(a, b) + .05)) * 100) / 100}; });
   }, pairs);
-  const pairs = [['file name field', '#export-name'], ['file name help', '#export-name-help'], ['pattern summary', '#name-settings > summary'], ['pattern line', '#name-pattern'], ['date checkbox label', '.name-check span'], ['saves as line', '#download-name'], ['bookmark mode (checked)', '.bookmark-choice:has(input:checked) span'], ['bookmark mode (unchecked)', '.bookmark-choice:has(input:not(:checked)) span'], ['folder list', '#bookmark-folder'], ['folder status', '#bookmark-folder-status'], ['skip label', 'label:has(#bookmark-skip-existing) span'], ['bookmark help', '#bookmark-help']];
+  const pairs = [['file name field', '#export-name'], ['file name help', '#export-name-help'], ['pattern summary', '#name-settings > summary'], ['pattern line', '#name-pattern'], ['date checkbox label', '.name-check span'], ['saves as line', '#download-name'], ['bookmark mode (checked)', '.bookmark-choice:has(input:checked) span'], ['bookmark mode (unchecked)', '.bookmark-choice:has(input:not(:checked)) span'], ['folder list', '#bookmark-folder'], ['folder status', '#bookmark-folder-status'], ['skip label', 'label:has(#bookmark-skip-existing) span'], ['bookmark help', '#bookmark-help'], ['rich links note', '#copy-rich .copy-note']];
   const measured = [];
   for (const scheme of ['light', 'dark']) {
     await ui.emulateMedia({colorScheme: scheme, reducedMotion: 'reduce'});
@@ -329,14 +347,398 @@ try {
   check('No horizontal overflow at 320 and 390 px; new controls labeled; measured text contrast at least 4.5:1 in light and dark', {contrast: measured});
 
   await ui.evaluate(() => { chrome.runtime.sendMessage = window.__originalSend; });
+
+  // 12. Copy as rich links: the same rows as the other copies, as exact HTML and plain text.
+  await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+  // On another Chrome (LINK_METEOR_CHROME_PATH), such as 116, whose headless clipboard can't be read with
+  // navigator.clipboard.read() even after plain text, the text is read directly and the HTML counts as unread
+  // (types: null); clipboardIs then compares the text only. Never on the default Chrome for Testing.
+  let htmlUnread = 0;
+  const clipboard = async () => {
+    try { return await readClipboard(); } catch (error) {
+      if (!process.env.LINK_METEOR_CHROME_PATH || !/No valid data on clipboard/.test(error.message)) throw error;
+      htmlUnread++;
+      return {types: null, html: null, text: (await ui.evaluate(() => navigator.clipboard.readText())).replace(/\r\n/g, '\n')};
+    }
+  };
+  const clipboardIs = async (want) => { const copied = await clipboard(); if (copied.types) assert.deepEqual(copied, want); else assert.equal(copied.text, want.text); return copied; };
+  const readClipboard = () => ui.evaluate(async () => {
+    const [item] = await navigator.clipboard.read();
+    // Windows stores clipboard text with CRLF line endings; compare the content, not the platform's newlines.
+    const read = async (type) => item.types.includes(type) ? (await (await item.getType(type)).text()).replace(/\r\n/g, '\n') : null;
+    return {types: [...item.types].sort(), html: await read('text/html'), text: await read('text/plain')};
+  });
+  const notice = async (start) => until(async () => { const text = await ui.locator('#notice').innerText(); return await ui.locator('#notice').isVisible() && text.startsWith(start) && text; }, `Notice: ${start}`);
+  const clearNotice = () => ui.evaluate(() => { for (const id of ['notice', 'error']) { const box = document.getElementById(id); box.hidden = true; box.replaceChildren(); } });
+  await clearNotice();
+  assert.equal(await ui.locator('#copy-rich').isEnabled(), true);
+  await ui.locator('#copy-rich').click();
+  assert.equal(await notice('Copied'), `Copied ${rows.length} links as rich links. Paste into Google Docs, Word or Notion to keep them clickable.`);
+  const expected = richLinks(rows);
+  await clipboardIs({types: ['text/html', 'text/plain'], html: expected.html, text: expected.text});
+  assert.ok(expected.html.startsWith('<ul><li><a href="') && expected.text.split('\n').length === rows.length);
+  // A selection narrows it, exactly as for the other copies.
+  await clearNotice();
+  await ui.locator('.row-select').nth(0).check(); await ui.locator('.row-select').nth(1).check();
+  await ui.locator('#copy-rich').click();
+  assert.equal(await notice('Copied'), 'Copied 2 links as rich links. Paste into Google Docs, Word or Notion to keep them clickable.');
+  await clipboardIs({types: ['text/html', 'text/plain'], ...richLinks(rows.slice(0, 2))});
+  await ui.locator('#clear-selection').click();
+  // Chrome refusing the HTML falls back to the plain text, and says so.
+  await clearNotice();
+  await ui.evaluate(() => { navigator.clipboard.write = () => Promise.reject(new DOMException('Refused for this check', 'NotAllowedError')); });
+  await ui.locator('#copy-rich').click();
+  assert.equal(await notice('Copied'), `Copied ${rows.length} links as plain text, each with its URL, because Chrome didn't accept rich links here. They won't paste as clickable links.`);
+  await clipboardIs({types: ['text/plain'], html: null, text: expected.text});
+  await ui.evaluate(() => { delete navigator.clipboard.write; });
+  check('Copy as rich links puts the exact HTML and plain text on the clipboard for the rows in view or the selection, and falls back to plain text with a clear status', {links: rows.length, htmlBytes: expected.html.length});
+
+  // 13. Copy diagnostics: indented JSON with counts and choices, and no addresses or names.
+  await clearNotice();
+  await ui.locator('#help-toggle').click();
+  assert.equal(await ui.locator('#about-panel').evaluate((details) => details.open), true);
+  await ui.locator('#copy-diagnostics').click();
+  assert.equal(await notice('Copied diagnostics'), 'Copied diagnostics as indented JSON: versions, settings, permissions and counts. Paste them into your bug report.');
+  const diagnosticsText = (await clipboard()).text;
+  const diagnostics = JSON.parse(diagnosticsText);
+  assert.equal(diagnosticsText, `${JSON.stringify(diagnostics, null, 2)}\n`, 'indented JSON');
+  const everything = await state();
+  const hosts = links.flatMap((item) => [item.url, item.sourceUrl, item.frameUrl]).map((value) => { try { return new URL(value).hostname; } catch { return ''; } });
+  const forbidden = [...new Set([...links.flatMap((item) => [item.url, item.originalHref, item.sourceUrl, item.sourceTitle, item.frameUrl, item.notes, ...item.tags]), ...hosts, ...everything.collections.map((item) => item.name)])].filter((value) => value && value.length > 3);
+  assert.deepEqual(forbidden.filter((value) => diagnosticsText.includes(value)), []);
+  assert.doesNotMatch(diagnosticsText, /:\/\/|https?:|mailto:|tel:/i);
+  assert.equal(diagnostics.version, VERSION);
+  assert.deepEqual(diagnostics.data, {readable: true, collections: everything.collections.length, links: everything.collections.reduce((n, item) => n + item.links.length, 0), undoLinks: 0});
+  assert.deepEqual(diagnostics.permissions, {tabs: false, bookmarks: false, tabGroups: false, downloads: false, allSites: false, siteOriginCount: 0});
+  assert.deepEqual([diagnostics.settings.theme, diagnostics.settings.holdOrigins, diagnostics.settings.exportPrefix, diagnostics.scripts.scope], ['meteor', 0, 0, 'none']);
+  assert.ok(diagnostics.storage.bytesInUse > 0 && diagnostics.browser.userAgent && diagnostics.browser.brands.length);
+  await writeFile(resolve(evidence, 'lane-diagnostics.json'), diagnosticsText);
+  assert.equal(await ui.locator('#copy-diagnostics').getAttribute('aria-describedby'), 'diagnostics-help');
+  assert.match(await ui.locator('#diagnostics-help').innerText(), /never addresses, site names, page titles, notes, tags or collection names/);
+  const aboutMeasured = [];
+  for (const scheme of ['light', 'dark']) {
+    await ui.emulateMedia({colorScheme: scheme, reducedMotion: 'reduce'});
+    for (const entry of await contrast([['diagnostics button', '#copy-diagnostics'], ['diagnostics help', '#diagnostics-help']])) { assert.ok(!entry.missing, `${entry.name} missing`); assert.ok(entry.ratio >= 4.5, `${scheme} ${entry.name} contrast ${entry.ratio}`); aboutMeasured.push({scheme, ...entry}); }
+  }
+  await ui.emulateMedia({colorScheme: 'light', reducedMotion: 'reduce'});
+  await ui.locator('#about-panel').screenshot({path: resolve(evidence, 'lane-about-desktop.png'), animations: 'disabled'});
+  await ui.setViewportSize({width: 320, height: 900});
+  if (await ui.locator('#export-done').isVisible()) await ui.locator('#export-done').click();
+  await ui.locator('#about-panel').evaluate((details) => { details.open = false; });
+  await ui.locator('#help-toggle').click();
+  assert.deepEqual(await ui.evaluate(() => [document.getElementById('app').dataset.view, document.getElementById('about-panel').open]), ['collections', true]);
+  await clearNotice();
+  assert.equal(await overflow(), false, 'About and help at 320 px');
+  await ui.screenshot({path: resolve(evidence, 'lane-about-320.png'), fullPage: true, animations: 'disabled'});
+  await ui.keyboard.press('Escape');
+  await ui.setViewportSize({width: 1440, height: 1000});
+  check('Copy diagnostics puts indented JSON on the clipboard with version, counts and permissions, and no address, host, title, note, tag or collection name; its line says so; contrast at least 4.5:1', {collections: diagnostics.data.collections, links: diagnostics.data.links, contrast: aboutMeasured});
+
+  // 14. About and help's website links carry the theme; Meteor, the default, adds nothing.
+  const aboutLinks = () => ui.evaluate(() => [...document.querySelectorAll('#about-panel a')].map((a) => a.href));
+  const plain = ['https://ryanjosephkamp.github.io/', 'https://ryanjosephkamp.github.io/link-meteor/guide.html', 'https://github.com/ryanjosephkamp/link-meteor/issues', 'https://ryanjosephkamp.github.io/link-meteor/', 'https://github.com/ryanjosephkamp/link-meteor', 'https://github.com/sponsors/ryanjosephkamp'];
+  const themed = (id) => plain.map((href, i) => [1, 3].includes(i) ? `${href}?theme=${id}` : href);
+  assert.deepEqual(await aboutLinks(), plain);
+  await rpc(ui, {type: 'state.mutate', action: {type: 'settings.update', patch: {theme: 'aurora'}}});
+  await until(async () => (await aboutLinks()).join() === themed('aurora').join(), 'Theme reached the About links');
+  await rpc(ui, {type: 'state.mutate', action: {type: 'settings.update', patch: {theme: 'contrast'}}});
+  await ui.reload(); await ui.locator('#collection-heading').waitFor();
+  await until(async () => (await aboutLinks()).join() === themed('contrast').join(), 'Themed links after reopening');
+  await rpc(ui, {type: 'state.mutate', action: {type: 'settings.update', patch: {theme: 'meteor'}}});
+  await until(async () => (await aboutLinks()).join() === plain.join(), 'Back to Meteor');
+  check('About and help links to the website add ?theme= after a theme change and after reopening; Meteor and the other links stay plain', {aurora: themed('aurora').filter((href) => href.includes('?theme=')), meteor: plain});
+
+  // 15. Custom columns (0.4.0): added in the collection editor, with names checked and limits shown.
+  await clearNotice();
+  const HOSTILE = '=Rank <b>&</b> "one"'; // formula-looking, with markup and quotes: shown and exported as text
+  const fieldList = async () => (await active()).fields || [];
+  const addColumn = async (name) => { await ui.locator('#field-new').fill(name); await ui.locator('#field-new').press('Enter'); };
+  const linkById = async (linkId) => (await active()).links.find((item) => item.id === linkId);
+  const errorText = (start) => until(async () => { const text = await ui.locator('#error').innerText(); return await ui.locator('#error').isVisible() && text.startsWith(start) && text; }, `Error: ${start}`);
+  await ui.locator('#edit-collection').click();
+  assert.equal(await ui.locator('#fields-count').innerText(), `0 of ${MAX_CUSTOM_FIELDS}`);
+  await addColumn('  Principal   investigator ');
+  await until(async () => (await fieldList()).length === 1, 'First column');
+  await ui.locator('#field-new').fill('Deadline'); await ui.locator('#field-add-button').click();
+  await until(async () => (await fieldList()).length === 2, 'Second column');
+  await addColumn(HOSTILE);
+  await until(async () => (await fieldList()).length === 3, 'Third column');
+  let fields = await fieldList();
+  const [pi, due, rank] = fields.map((field) => field.id);
+  const columnNames = ['Principal investigator', 'Deadline', HOSTILE];
+  assert.deepEqual(fields.map((field) => field.name), columnNames, 'names are trimmed with spaces collapsed');
+  assert.deepEqual(await ui.locator('.field-item .field-name').allInnerTexts(), columnNames);
+  assert.equal(await ui.locator('#fields-count').innerText(), '3 of 20');
+  assert.equal(await ui.evaluate(() => document.activeElement?.id), 'field-new', 'focus stays in the name field for the next column');
+  await addColumn('DEADLINE');
+  assert.equal(await ui.locator('#field-add-help').innerText(), 'This collection already has a column named “Deadline”. Choose another name.');
+  assert.equal(await ui.locator('#field-new').getAttribute('aria-invalid'), 'true');
+  await addColumn('   ');
+  assert.equal(await ui.locator('#field-add-help').innerText(), 'Type a name for the column.');
+  await ui.locator('#field-new').fill('x'.repeat(75));
+  assert.equal((await ui.locator('#field-new').inputValue()).length, 60, 'a name stops at 60 characters');
+  assert.equal(await ui.locator('#field-add-help').innerText(), "That's 60 characters, the most a column name can have.");
+  await ui.locator('#field-new').fill('');
+  assert.equal((await fieldList()).length, 3, 'refused names add nothing');
+  for (let i = 4; i <= MAX_CUSTOM_FIELDS; i++) await rpc(ui, {type: 'state.mutate', action: {type: 'fields.add', name: `Extra ${i}`}});
+  await until(async () => (await ui.locator('#fields-count').innerText()) === '20 of 20', 'Twenty columns');
+  assert.equal(await ui.locator('#field-new').isDisabled(), true);
+  assert.equal(await ui.locator('#field-add-help').innerText(), 'This collection has 20 custom columns, the most it can have. Remove one to add another.');
+  assert.deepEqual(await ui.locator('#add-column option').last().evaluate((option) => [option.textContent, option.disabled]), ['New custom column… (20 is the most per collection)', true]);
+  await assert.rejects(rpc(ui, {type: 'state.mutate', action: {type: 'fields.add', name: 'One more'}}), /at most 20 custom columns/);
+  for (const field of (await fieldList()).slice(3)) await rpc(ui, {type: 'state.mutate', action: {type: 'fields.remove', fieldId: field.id}});
+  await until(async () => (await ui.locator('#fields-count').innerText()) === '3 of 20', 'Back to three columns');
+  assert.equal(await ui.locator('#field-new').isDisabled(), false);
+  assert.equal(await ui.locator('#field-add-help').innerText(), 'Up to 60 characters.');
+  check('Custom columns are added in the collection editor; a repeated, empty or 61-character name is refused with a plain reason, and at 20 columns adding stops and says why', {columnNames});
+
+  // Values one by one, in each link's details next to Note, with the 2,000-character limit shown.
+  const form = (index) => ui.locator('.link-row').nth(index).locator('.occurrence-form').first();
+  const valueInput = (index, fieldId) => form(index).locator(`input[data-link-field="field:${fieldId}"]`);
+  // A saved change renders the list again once storage reports it; open details after that settles.
+  const toggleDetails = async (index) => {
+    await ui.waitForTimeout(250);
+    const open = await ui.locator('.link-row').nth(index).locator('.row-details').evaluate((details) => details.open);
+    await ui.locator('.link-row').nth(index).locator('.row-details summary').click();
+    await until(async () => (await ui.locator('.link-row').nth(index).locator('.row-details').evaluate((details) => details.open)) !== open, `Details ${index} toggled`);
+  };
+  // The notice's own text, without its Undo button.
+  const noticeText = async (start) => { await notice(start); return ui.locator('#notice .msg').innerText(); };
+  await toggleDetails(0);
+  await valueInput(0, pi).waitFor();
+  assert.deepEqual(await form(0).locator('.field-input').evaluateAll((labels) => labels.map((label) => label.firstChild.textContent)), columnNames);
+  assert.match(await valueInput(0, pi).getAttribute('aria-label'), /^Principal investigator for /);
+  const values0 = {[pi]: 'https://lab.example/people/rivera', [due]: '=HYPERLINK("https://evil.example","x")', [rank]: '+1 555 0100'};
+  for (const [fieldId, text] of Object.entries(values0)) await valueInput(0, fieldId).fill(text);
+  await form(0).locator('button[type=submit]').click();
+  assert.equal(await notice('Saved'), 'Saved the note, tags and custom columns.');
+  assert.deepEqual((await linkById(rows[0].id)).fields, values0);
+  assert.deepEqual(await ui.locator('.link-row').nth(0).locator('.row-notes .field-value').allInnerTexts(), columnNames.map((name, i) => `${name}: ${Object.values(values0)[i]}`));
+  await clearNotice();
+  await toggleDetails(1);
+  await valueInput(1, pi).fill('Dr. Okafor');
+  await valueInput(1, due).fill('d'.repeat(2001));
+  assert.equal(await form(1).locator('.field-limit').innerText(), '“Deadline” can hold up to 2,000 characters. This text has 2,001; shorten it by 1 to save it.');
+  assert.equal(await valueInput(1, due).getAttribute('aria-invalid'), 'true');
+  await form(1).locator('button[type=submit]').click();
+  await errorText('“Deadline” can hold up to 2,000 characters.');
+  assert.equal((await linkById(rows[1].id)).fields, undefined, 'a value over the limit saves nothing');
+  await ui.locator('#error button').click();
+  await valueInput(1, due).fill('d'.repeat(2000));
+  assert.equal(await form(1).locator('.field-limit').isVisible(), false);
+  await form(1).locator('button[type=submit]').click();
+  await notice('Saved the note');
+  assert.deepEqual((await linkById(rows[1].id)).fields, {[pi]: 'Dr. Okafor', [due]: 'd'.repeat(2000)});
+  for (const index of [1, 0]) await toggleDetails(index);
+  check('Each link\'s details show a text field per custom column, labeled with its name, saved with the note; a value over 2,000 characters is explained and not saved');
+
+  // Fill for selected links: one value on many, the limit, Undo, and clearing.
+  await clearNotice();
+  assert.equal(await ui.locator('#fill-fields').isVisible(), false, 'Fill appears only with a selection');
+  for (const index of [1, 2, 3]) await ui.locator('.row-select').nth(index).check();
+  await ui.locator('#fill-fields').click();
+  assert.equal(await ui.evaluate(() => document.activeElement?.id), 'fill-field');
+  assert.deepEqual(await ui.locator('#fill-field option').allInnerTexts(), columnNames);
+  await ui.locator('#fill-field').selectOption(due);
+  await ui.locator('#fill-value').fill('m'.repeat(2001));
+  assert.equal(await ui.locator('#fill-help').innerText(), '“Deadline” can hold up to 2,000 characters. This text has 2,001; shorten it by 1 to save it.');
+  await ui.locator('#fill-apply').click();
+  await errorText('“Deadline” can hold up to 2,000 characters.');
+  await ui.locator('#error button').click();
+  assert.equal((await linkById(rows[2].id)).fields, undefined);
+  await ui.locator('#fill-value').fill('March 1');
+  assert.equal(await ui.locator('#fill-title').innerText(), 'Fill a column for 3 selected links');
+  assert.equal(await ui.locator('#fill-help').innerText(), 'Sets “Deadline” to this text on 3 links, replacing 1 different value. You can undo this.');
+  assert.equal(await ui.locator('#fill-apply').innerText(), 'Fill 3 links');
+  await ui.locator('#fill-value').press('Enter');
+  assert.equal(await noticeText('Filled'), 'Filled “Deadline” for 3 links.');
+  for (const index of [1, 2, 3]) assert.equal((await linkById(rows[index].id)).fields[due], 'March 1');
+  assert.equal((await linkById(rows[1].id)).fields[pi], 'Dr. Okafor', 'other columns are untouched');
+  assert.deepEqual([await ui.locator('#fill-panel').isVisible(), await ui.evaluate(() => document.activeElement?.id)], [false, 'fill-fields']);
+  await ui.locator('#notice button', {hasText: 'Undo'}).click();
+  assert.equal(await notice('Put back'), 'Put back the earlier values of “Deadline”.');
+  assert.equal((await linkById(rows[1].id)).fields[due], 'd'.repeat(2000));
+  assert.equal((await linkById(rows[2].id)).fields, undefined);
+  await clearNotice();
+  await ui.locator('#fill-fields').click(); await ui.locator('#fill-field').selectOption(due); await ui.locator('#fill-value').fill('March 1'); await ui.locator('#fill-apply').click();
+  await notice('Filled “Deadline” for 3 links.');
+  for (const index of [1, 2]) await ui.locator('.row-select').nth(index).uncheck();
+  await ui.locator('#fill-fields').click();
+  await ui.locator('#fill-field').selectOption(due);
+  assert.equal(await ui.locator('#fill-help').innerText(), 'Clears “Deadline” on 1 link, removing 1 value. You can undo this.');
+  assert.equal(await ui.locator('#fill-apply').innerText(), 'Clear the column for 1 link');
+  await ui.locator('#fill-apply').click();
+  assert.equal(await noticeText('Cleared'), 'Cleared “Deadline” for 1 link.');
+  assert.equal((await linkById(rows[3].id)).fields, undefined, 'a link with no values has no fields');
+  await ui.locator('#fill-fields').click();
+  await ui.keyboard.press('Escape');
+  assert.deepEqual([await ui.locator('#fill-panel').isVisible(), await ui.evaluate(() => document.activeElement?.id)], [false, 'fill-fields'], 'Escape closes the fill panel');
+  await ui.locator('#clear-selection').click();
+  assert.equal(await ui.locator('#fill-fields').isVisible(), false);
+  check('Fill for selected links sets one column on the selected links (saying how many values it replaces), refuses a value over 2,000 characters, undoes to each link\'s earlier value, and clears with an empty value');
+
+  // Search covers custom values.
+  await ui.locator('#search').fill('okafor');
+  await until(async () => (await ui.locator('.link-row').count()) === 1, 'Search finds a custom value');
+  assert.equal(await ui.locator('.link-row .row-select').getAttribute('aria-label'), `Select ${rows[1].anchorText || rows[1].accessibleLabel || '(textless link)'}`);
+  await ui.locator('#search').fill('');
+  await until(async () => (await ui.locator('.link-row').count()) === Math.min(rows.length, 100), 'Search cleared');
+  check('Search finds links by their custom values');
+
+  // The export: Add a column lists the custom columns and ends with New custom column….
+  await clearNotice();
+  assert.equal(await ui.locator('#add-column optgroup').getAttribute('label'), 'Custom columns');
+  assert.deepEqual(await ui.locator('#add-column optgroup option').allInnerTexts(), [...columnNames, 'New custom column…']);
+  for (const fieldId of [pi, due, rank]) await ui.locator('#add-column').selectOption(`field:${fieldId}`);
+  assert.deepEqual(await ui.locator('#add-column optgroup option').allInnerTexts(), ['New custom column…']);
+  await ui.locator('#add-column').selectOption('new-custom-column');
+  assert.equal(await ui.locator('#new-column').isVisible(), true);
+  assert.equal(await ui.evaluate(() => document.activeElement?.id), 'new-column-name');
+  assert.equal(await ui.locator('#new-column-help').innerText(), `Adds a column to “${COLLECTION}” and to this export. Fill it in each link’s details. Up to 60 characters.`);
+  await ui.locator('#new-column-name').fill('deadline'); await ui.locator('#new-column-name').press('Enter');
+  assert.equal(await ui.locator('#new-column-help').innerText(), 'This collection already has a column named “Deadline”. Choose another name.');
+  await ui.keyboard.press('Escape');
+  assert.deepEqual([await ui.locator('#new-column').isVisible(), await ui.evaluate(() => document.activeElement?.id)], [false, 'add-column'], 'Escape closes the new-column form');
+  await ui.locator('#add-column').selectOption('new-custom-column');
+  await ui.locator('#new-column-name').fill('Reviewer'); await ui.locator('#new-column-add').click();
+  assert.equal(await notice('Added'), `Added the column “Reviewer” to “${COLLECTION}” and to this export. Fill it in each link’s details, or select links and use Fill for selected links.`);
+  fields = await fieldList();
+  const reviewer = fields[3].id;
+  assert.equal(fields[3].name, 'Reviewer');
+  const header = [...['Anchor text', 'URL'], ...columnNames, 'Reviewer'];
+  const columns15 = ['anchorText', 'url', ...[pi, due, rank, reviewer].map((fieldId) => `field:${fieldId}`)];
+  assert.deepEqual(await ui.locator('#columns .name').allInnerTexts(), header);
+  assert.equal(await ui.locator('#copy-table-note').innerText(), header.join(' · '));
+  assert.equal(await ui.evaluate(() => document.activeElement?.id), 'add-column');
+  // Names are text wherever they appear.
+  assert.equal(await ui.evaluate(() => document.querySelectorAll('#collection-editor b, #export-panel b, #link-list b, #fill-panel b').length), 0);
+  check('Add a column lists the collection\'s custom columns and ends with New custom column…, which names a column, adds it to the collection and to the export, and refuses a repeated name', {header});
+
+  // Every format carries the custom columns; spreadsheet formats keep formula-looking text inert.
+  const fieldRows = queryLinks((await active()).links).rows;
+  const expectedFile = (format) => makeExport(fieldRows, {format, columns: columns15, fields}).data;
+  const files15 = {};
+  for (const format of ['csv', 'tsv', 'html', 'markdown', 'json', 'xlsx']) {
+    await ui.locator('#format').selectOption(format);
+    if (format === 'json') assert.match(await ui.locator('#format-help').innerText(), /Custom columns are in each link’s fields, and the about block names them\.$/);
+    files15[format] = await download(`columns.${FORMAT_EXTENSIONS[format]}`);
+  }
+  for (const format of ['csv', 'tsv', 'html', 'markdown']) assert.equal(files15[format].bytes.toString('utf8'), expectedFile(format), `${format} with custom columns`);
+  const csvLines = files15.csv.bytes.toString('utf8').split('\r\n');
+  assert.equal(csvLines[0], 'Anchor text,URL,Principal investigator,Deadline,"\'=Rank <b>&</b> ""one""",Reviewer');
+  assert.ok(csvLines[1].endsWith(',https://lab.example/people/rivera,"\'=HYPERLINK(""https://evil.example"",""x"")",\'+1 555 0100,'), csvLines[1]);
+  assert.ok(files15.tsv.bytes.toString('utf8').split('\r\n')[1].includes('\t"\'=HYPERLINK(""https://evil.example"",""x"")"\t\'+1 555 0100\t'));
+  assert.ok(files15.html.bytes.toString('utf8').includes('<th scope="col">=Rank &lt;b&gt;&amp;&lt;/b&gt; &quot;one&quot;</th><th scope="col">Reviewer</th>'));
+  assert.equal(files15.markdown.bytes.toString('utf8'), old.makeExport(fieldRows, {format: 'markdown'}).data, 'Markdown ignores columns, as before');
+  const json15 = JSON.parse(files15.json.bytes.toString('utf8'));
+  assert.deepEqual(json15.about.fields, fields.map(({id, name}) => ({id, name})));
+  assert.deepEqual(json15.rows, JSON.parse(makeExport(fieldRows, {format: 'json'}).data));
+  assert.deepEqual(json15.rows[0].fields, values0);
+  const cells15 = (row) => [row.anchorText, row.url, ...[pi, due, rank, reviewer].map((fieldId) => row.fields?.[fieldId] ?? '')];
+  const expected15 = {formatted: true, columns: columns15, rows: [header, ...fieldRows.map(cells15)], urlColumns: ['URL', 'Original href', 'Source page URL', 'Frame URL'],
+    about: {exportedAtUtcSeconds: null, collection: COLLECTION, count: fieldRows.length, view: 'Every occurrence; sorted by capture order, ascending', filters: [], columns: header.join(', '), version: VERSION}};
+  const expected15Path = resolve(exportsDir, 'columns.xlsx.expected.json');
+  await writeFile(expected15Path, JSON.stringify(expected15, null, 2) + '\n');
+  const reader15 = JSON.parse((await run(python, [resolve(root, 'tests/verify-workbook.py'), files15.xlsx.path, expected15Path])).stdout);
+  assert.equal(reader15.formatted, 'pass');
+  assert.deepEqual(reader15.formatted_checks.links_outside_url_columns, [], 'a web address in a custom column stays text');
+  await writeFile(resolve(evidence, 'lane-columns-workbook-results.json'), JSON.stringify(reader15, null, 2) + '\n');
+  await clearNotice();
+  await ui.locator('#copy-table').click();
+  assert.equal(await notice('Copied'), `Copied ${fieldRows.length} rows as a table (${header.join(', ')}). Paste into any spreadsheet.`);
+  assert.equal((await clipboard()).text, expectedFile('tsv').replace(/\r\n/g, '\n'));
+  check('CSV, TSV, HTML and Markdown downloads equal the export code for the custom columns; formula-looking values and names start with an apostrophe in CSV and TSV; HTML escapes names; JSON keeps each row\'s fields and names the columns in about.fields; the workbook (openpyxl) has the names as headers, text-only cells, no formulas and no links in custom columns; Copy table carries them too', {openpyxl: reader15.openpyxl, files: Object.fromEntries(Object.entries(files15).map(([format, got]) => [format, got.name]))});
+
+  // Rename (from the keyboard) and remove with Undo, in the collection editor.
+  await clearNotice();
+  await ui.locator('button[aria-label="Rename Deadline"]').focus(); await ui.keyboard.press('Enter');
+  const renameInput = ui.locator('#fields-list input[data-field-action="name"]');
+  assert.deepEqual([await renameInput.inputValue(), await ui.evaluate(() => document.activeElement?.dataset.fieldAction)], ['Deadline', 'name']);
+  await renameInput.fill('PRINCIPAL investigator'); await ui.keyboard.press('Enter');
+  assert.equal(await ui.locator('#field-rename-help').innerText(), 'This collection already has a column named “Principal investigator”. Choose another name.');
+  await renameInput.fill('Application   deadline'); await ui.keyboard.press('Enter');
+  assert.equal(await notice('Renamed'), 'Renamed the column “Deadline” to “Application deadline”.');
+  assert.equal((await fieldList())[1].name, 'Application deadline');
+  assert.equal(await ui.evaluate(() => document.activeElement?.getAttribute('aria-label')), 'Rename Application deadline');
+  assert.equal((await ui.locator('#columns .name').allInnerTexts())[3], 'Application deadline', 'the export shows the new name');
+  await ui.locator('button[aria-label="Rename Reviewer"]').click();
+  await renameInput.fill('Changed my mind'); await ui.keyboard.press('Escape');
+  assert.deepEqual([await renameInput.count(), (await fieldList())[3].name, await ui.evaluate(() => document.activeElement?.getAttribute('aria-label'))], [0, 'Reviewer', 'Rename Reviewer'], 'Escape cancels a rename');
+  await ui.locator('#format').selectOption('csv');
+  assert.match((await download('columns-renamed.csv')).bytes.toString('utf8'), /^Anchor text,URL,Principal investigator,Application deadline,/);
+  await clearNotice();
+  const beforeRemove = await active();
+  await ui.locator('button[aria-label="Remove Principal investigator"]').click();
+  assert.equal(await ui.locator('#field-remove-confirm-text').innerText(), 'Remove the column “Principal investigator” and its values in 2 links? You can undo this.');
+  assert.equal(await ui.evaluate(() => document.activeElement?.id), 'field-remove-confirm-no');
+  await ui.keyboard.press('Escape');
+  assert.deepEqual([await ui.locator('#field-remove-confirm').isVisible(), await ui.evaluate(() => document.activeElement?.getAttribute('aria-label'))], [false, 'Remove Principal investigator']);
+  await ui.locator('button[aria-label="Remove Principal investigator"]').click();
+  await ui.locator('#field-remove-confirm-yes').click();
+  assert.equal(await noticeText('Removed'), 'Removed the column “Principal investigator” and its values in 2 links.');
+  assert.deepEqual((await fieldList()).map((field) => field.name), ['Application deadline', HOSTILE, 'Reviewer']);
+  assert.ok((await active()).links.every((item) => !item.fields || !(pi in item.fields)), 'its values are removed');
+  assert.equal(await ui.locator('#fields-status-text').innerText(), 'Removed the column “Principal investigator” and its values in 2 links.');
+  assert.equal(await ui.evaluate(() => document.activeElement?.id), 'field-undo');
+  assert.ok(!(await ui.locator('#columns .name').allInnerTexts()).includes('Principal investigator'), 'the export drops the removed column');
+  await ui.locator('#field-undo').click();
+  assert.equal(await notice('Put back'), 'Put back the column “Principal investigator” and its values in 2 links.');
+  const afterUndo = await active();
+  assert.deepEqual(afterUndo.fields, beforeRemove.fields, 'the column is back in its place');
+  assert.deepEqual(afterUndo.links, beforeRemove.links, 'with every value');
+  assert.equal(await ui.locator('#fields-status').isVisible(), false);
+  check('A column is renamed from the keyboard (a repeated name is refused; Escape cancels) and the export follows; Remove asks first, removes the values, and Undo puts the column back in place with every value');
+
+  // Layout, labels and contrast of every new part at 320 px, in light and dark.
+  // Every part at once: a removal's Undo line, a refused name, a value over the limit, the fill panel and the new-column form.
+  await clearNotice();
+  await ui.locator('button[aria-label="Remove Reviewer"]').click(); await ui.locator('#field-remove-confirm-yes').click();
+  assert.equal(await noticeText('Removed'), 'Removed the column “Reviewer”.');
+  await addColumn('application DEADLINE');
+  await toggleDetails(0);
+  await valueInput(0, rank).fill('r'.repeat(2001));
+  for (const index of [1, 2]) await ui.locator('.row-select').nth(index).check();
+  await ui.locator('#fill-fields').click();
+  await ui.locator('#add-column').selectOption('new-custom-column');
+  const pairs15 = [['columns heading', '#fields-title'], ['columns count', '#fields-count'], ['columns help', '#fields-help'], ['column name', '.field-item .field-name'], ['values count', '.field-item .field-filled'],
+    ['rename', '.field-item button[data-field-action="rename"]'], ['remove', '.field-item button[data-field-action="remove"]'], ['name problem', '#field-add-help'], ['removal status', '#fields-status-text'], ['column undo', '#field-undo'],
+    ['value label', '.occurrence-form .field-input'], ['value too long', '.field-limit'], ['row value', '.row-notes .field-value'], ['row value name', '.row-notes .field-value-name'],
+    ['fill button', '#fill-fields'], ['fill title', '#fill-title'], ['fill label', '#fill-panel label'], ['fill help', '#fill-help'], ['new column label', 'label[for="new-column-name"]'], ['new column help', '#new-column-help']];
+  const measured15 = [];
+  for (const scheme of ['light', 'dark']) {
+    await ui.emulateMedia({colorScheme: scheme, reducedMotion: 'reduce'});
+    await ui.setViewportSize({width: 1440, height: 1000});
+    await ui.waitForTimeout(200);
+    for (const entry of await contrast(pairs15)) { assert.ok(!entry.missing, `${entry.name} missing`); assert.ok(entry.ratio >= 4.5, `${scheme} ${entry.name} contrast ${entry.ratio}`); measured15.push({scheme, ...entry}); }
+    await ui.setViewportSize({width: 320, height: 900});
+    await ui.evaluate(() => { for (const id of ['notice', 'error']) document.getElementById(id).hidden = true; });
+    await ui.waitForTimeout(200);
+    assert.equal(await overflow(), false, `links view overflow at 320 ${scheme}`);
+    await ui.screenshot({path: resolve(evidence, `lane-columns-320-${scheme}.png`), fullPage: true, animations: 'disabled'});
+    await ui.locator('#dock-export').click();
+    await ui.waitForTimeout(200);
+    assert.equal(await overflow(), false, `export view overflow at 320 ${scheme}`);
+    await ui.locator('#columns-fieldset').scrollIntoViewIfNeeded();
+    await ui.screenshot({path: resolve(evidence, `lane-columns-export-320-${scheme}.png`), animations: 'disabled'});
+    await ui.locator('#export-done').click();
+  }
+  await ui.emulateMedia({colorScheme: 'light', reducedMotion: 'reduce'});
+  await ui.setViewportSize({width: 1440, height: 1000});
+  const unlabeled15 = await ui.evaluate(() => [...document.querySelectorAll('input, select, textarea, button')].filter((e) => e.getClientRects().length && !e.getAttribute('aria-label') && !e.getAttribute('aria-labelledby') && !e.labels?.length && !(e.tagName === 'BUTTON' && e.textContent.trim())).map((e) => e.id || e.outerHTML.slice(0, 80)));
+  assert.deepEqual(unlabeled15, []);
+  await ui.screenshot({path: resolve(evidence, 'lane-columns-desktop.png'), fullPage: true, animations: 'disabled'});
+  check('Custom column controls: no horizontal overflow at 320 px in the links and export views, every control labeled, measured text contrast at least 4.5:1 in light and dark', {contrast: measured15});
+
   assert.deepEqual(errors, [], 'no page errors');
   check('No page errors or console errors');
+  if (htmlUnread) result.limits.push(`This Chrome's headless clipboard can't be read with navigator.clipboard.read(): ${htmlUnread} clipboard reads checked the plain text only, not the HTML or the types.`);
   result.result = 'PASS';
 } catch (error) {
   result.result = 'FAIL'; result.error = error.stack; result.pageErrors = errors; console.error(error); process.exitCode = 1;
 } finally {
   await context.close();
   await rm(oldDir, {recursive: true, force: true});
+  await rm(downloadsTemp, {recursive: true, force: true});
   result.finished = new Date().toISOString();
   await writeFile(resolve(evidence, 'exports-browser-results.json'), JSON.stringify(result, null, 2) + '\n');
 }

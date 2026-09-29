@@ -1,11 +1,13 @@
 // Site access: all-sites access, hold-key drag on this site, the "Never on these sites" list, the
-// hold trigger and the region shortcut. Binds the welcome card too.
+// hold trigger and the region shortcut. Hosts Appearance and After a drag (0.4.0), and binds the
+// welcome card too.
 import { $, node, button, shortcutKeys, kbdGroup } from './helpers.js';
 import { ui, request, action, mutate, show } from './state.js';
 import { render, onRender } from './rendering.js';
 import { renderLinks } from './review.js';
 import { ALL_SITES, grants, effectiveScope, modifierName, holdGesture } from './access.js';
 import { bindWelcome, renderWelcome } from './welcome.js';
+import { bindAppearance, renderAppearance } from './appearance.js';
 
 let exceptionsKey = '';
 // Set after the all-sites switch is turned off while Chrome still grants every site.
@@ -162,9 +164,50 @@ function revertOnError(event, fn) {
   return action(async () => { try { await fn(event.target.checked); } catch (error) { renderSite(); throw error; } });
 }
 
+/* After a drag (0.4.0) --------------------------------------------------------- */
+const AFTER_DRAG_HELP = {
+  card: 'The capture card lists the links, so you choose what to add or copy.',
+  copy: 'The links go straight to the clipboard. A small notice says so, with Show links to see them.',
+  add: 'The links go straight into the card’s collection. A small notice says so, with Undo and Show links.',
+};
+// A choice being saved, shown in the meantime so a render from an earlier save doesn't flip it back.
+let captureDraft = null, captureSaving = 0;
+
+function renderAfterDrag() {
+  if (!ui.state) return;
+  const settings = { ...ui.state.settings, ...captureDraft };
+  for (const input of document.querySelectorAll('input[name="after-drag"]')) input.checked = input.value === settings.afterDrag;
+  $('after-drag-help').textContent = AFTER_DRAG_HELP[settings.afterDrag] || '';
+  $('after-drag-format-row').hidden = settings.afterDrag !== 'copy';
+  $('after-drag-format').value = settings.afterDragFormat;
+  $('content-only').checked = settings.contentOnly;
+  $('skip-saved').checked = settings.skipSaved;
+}
+
+async function saveCapture(patch) {
+  const mine = ++captureSaving;
+  captureDraft = { ...captureDraft, ...patch };
+  renderAfterDrag();
+  try { await mutate({ type: 'settings.update', patch }); }
+  finally { if (mine === captureSaving) captureDraft = null; renderAfterDrag(); }
+}
+
+function bindAfterDrag() {
+  for (const input of document.querySelectorAll('input[name="after-drag"]')) {
+    input.addEventListener('change', () => { if (input.checked) action(() => saveCapture({ afterDrag: input.value })); });
+  }
+  $('after-drag-format').addEventListener('change', (event) => action(() => saveCapture({ afterDragFormat: event.target.value })));
+  $('content-only').addEventListener('change', (event) => action(() => saveCapture({ contentOnly: event.target.checked })));
+  $('skip-saved').addEventListener('change', (event) => action(() => saveCapture({ skipSaved: event.target.checked })));
+}
+
 export function bindSettings() {
   bindWelcome();
   onRender(renderWelcome);
+  bindAppearance();
+  onRender(renderAppearance);
+  bindAfterDrag();
+  onRender(renderAfterDrag);
   refreshGrants();
   chrome.permissions?.onAdded?.addListener(refreshGrants);
   chrome.permissions?.onRemoved?.addListener(refreshGrants);

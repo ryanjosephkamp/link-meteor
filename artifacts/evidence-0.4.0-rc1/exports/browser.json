@@ -1,0 +1,1762 @@
+{
+  "about": {
+    "exportedAt": "2026-09-28T15:20:47.034Z",
+    "exportedAtLocal": "2026-09-28T11:20:47.034-04:00",
+    "collection": "Browser acceptance",
+    "count": 53,
+    "view": "Every occurrence; sorted by capture order, ascending",
+    "filters": [],
+    "version": "0.4.0"
+  },
+  "rows": [
+    {
+      "accessibleLabel": "",
+      "anchorText": "Attention in small systems",
+      "batchId": "c2b91a35-6aed-4ec9-9bc9-02500b35ac80",
+      "capturedAt": "2026-09-28T15:20:45.225Z",
+      "frameUrl": "http://127.0.0.1:52478/index.html",
+      "id": "b1740059-bcce-48eb-a068-be18918588e4",
+      "notes": "",
+      "originalHref": "/papers/attention.pdf",
+      "sourceTitle": "Meteor Research Lab — deterministic fixture",
+      "sourceUrl": "http://127.0.0.1:52478/index.html",
+      "tags": [],
+      "url": "http://127.0.0.1:52478/papers/attention.pdf",
+      "occurrences": [
+        {
+          "accessibleLabel": "",
+          "anchorText": "Attention in small systems",
+          "batchId": "c2b91a35-6aed-4ec9-9bc9-02500b35ac80",
+          "capturedAt": "2026-09-28T15:20:45.225Z",
+          "frameUrl": "http://127.0.0.1:52478/index.html",
+          "id": "b1740059-bcce-48eb-a068-be18918588e4",
+          "notes": "",
+          "originalHref": "/papers/attention.pdf",
+          "sourceTitle": "Meteor Research Lab — deterministic fixture",
+          "sourceUrl": "http://127.0.0.1:52478/index.html",
+          "tags": [],
+          "url": "http://127.0.0.1:52478/papers/attention.pdf"
+        }
+      ],
+      "occurrenceIds": [
+        "b1740059-bcce-48eb-a068-be18918588e4"
+      ]
+    },
+    {
+      "accessibleLabel": "",
+      "anchorText": "Geometry, “frames” & 雪",
+      "batchId": "c2b91a35-6aed-4ec9-9bc9-02500b35ac80",
+      "capturedAt": "2026-09-28T15:20:45.225Z",
+      "frameUrl": "http://127.0.0.1:52478/index.html",
+      "id": "04c1622a-c3d0-4eed-a441-300addd74ad0",
+      "notes": "",
+      "originalHref": "/papers/geometry.pdf?edition=2",
+      "sourceTitle": "Meteor Research Lab — deterministic fixture",
+      "sourceUrl": "http://127.0.0.1:52478/index.html",
+      "tags": [],
+      "url": "http://127.0.0.1:52478/papers/geometry.pdf?edition=2",
+      "occurrences": [
+        {
+          "accessibleLabel": "",
+          "anchorText": "Geometry, “frames” & 雪",
+          "batchId": "c2b91a35-6aed-4ec9-9bc9-02500b35ac80",
+          "capturedAt": "2026-09-28T15:20:45.225Z",
+          "frameUrl": "http://127.0.0.1:52478/index.html",
+          "id": "04c1622a-c3d0-4eed-a441-300addd74ad0",
+          "notes": "",
+          "originalHref": "/papers/geometry.pdf?edition=2",
+          "sourceTitle": "Meteor Research Lab — deterministic fixture",
+          "sourceUrl": "http://127.0.0.1:52478/index.html",
+          "tags": [],
+          "url": "http://127.0.0.1:52478/papers/geometry.pdf?edition=2"
+        }
+      ],
+      "occurrenceIds": [
+        "04c1622a-c3d0-4eed-a441-300addd74ad0"
+      ]
+    },
+    {
+      "accessibleLabel": "",
+      "anchorText": "Download PDF",
+      "batchId": "c2b91a35-6aed-4ec9-9bc9-02500b35ac80",
+      "capturedAt": "2026-09-28T15:20:45.225Z",
+      "frameUrl": "http://127.0.0.1:52478/index.html",
+      "id": "266b243e-6f4e-4f87-a426-9c493e850325",
+      "notes": "",
+      "originalHref": "/papers/attention.pdf",
+      "sourceTitle": "Meteor Research Lab — deterministic fixture",
+      "sourceUrl": "http://127.0.0.1:52478/index.html",
+      "tags": [],
+      "url": "http://127.0.0.1:52478/papers/attention.pdf",
+      "occurrences": [
+        {
+          "accessibleLabel": "",
+          "anchorText": "Download PDF",
+          "batchId": "c2b91a35-6aed-4ec9-9bc9-02500b35ac80",
+          "capturedAt": "2026-09-28T15:20:45.225Z",
+          "frameUrl": "http://127.0.0.1:52478/index.html",
+          "id": "266b243e-6f4e-4f87-a426-9c493e850325",
+          "notes": "",
+          "originalHref": "/papers/attention.pdf",
+          "sourceTitle": "Meteor Research Lab — deterministic fixture",
+          "sourceUrl": "http://127.0.0.1:52478/index.html",
+          "tags": [],
+          "url": "http://127.0.0.1:52478/papers/attention.pdf"
+        }
+      ],
+      "occurrenceIds": [
+        "266b243e-6f4e-4f87-a426-9c493e850325"
+      ]
+    },
+    {
+      "accessibleLabel": "Open illustrated appendix",
+      "anchorText": "",
+      "batchId": "c2b91a35-6aed-4ec9-9bc9-02500b35ac80",
+      "capturedAt": "2026-09-28T15:20:45.225Z",
+      "frameUrl": "http://127.0.0.1:52478/index.html",
+      "id": "fe7f30c3-9c54-4327-aec6-8552495a001f",
+      "notes": "",
+      "originalHref": "/appendix",
+      "sourceTitle": "Meteor Research Lab — deterministic fixture",
+      "sourceUrl": "http://127.0.0.1:52478/index.html",
+      "tags": [],
+      "url": "http://127.0.0.1:52478/appendix",
+      "occurrences": [
+        {
+          "accessibleLabel": "Open illustrated appendix",
+          "anchorText": "",
+          "batchId": "c2b91a35-6aed-4ec9-9bc9-02500b35ac80",
+          "capturedAt": "2026-09-28T15:20:45.225Z",
+          "frameUrl": "http://127.0.0.1:52478/index.html",
+          "id": "fe7f30c3-9c54-4327-aec6-8552495a001f",
+          "notes": "",
+          "originalHref": "/appendix",
+          "sourceTitle": "Meteor Research Lab — deterministic fixture",
+          "sourceUrl": "http://127.0.0.1:52478/index.html",
+          "tags": [],
+          "url": "http://127.0.0.1:52478/appendix"
+        }
+      ],
+      "occurrenceIds": [
+        "fe7f30c3-9c54-4327-aec6-8552495a001f"
+      ]
+    },
+    {
+      "accessibleLabel": "",
+      "anchorText": "Visible label",
+      "batchId": "c2b91a35-6aed-4ec9-9bc9-02500b35ac80",
+      "capturedAt": "2026-09-28T15:20:45.225Z",
+      "frameUrl": "http://127.0.0.1:52478/index.html",
+      "id": "f9401ef0-653a-4d57-8357-c0be17bcaa14",
+      "notes": "",
+      "originalHref": "/visible",
+      "sourceTitle": "Meteor Research Lab — deterministic fixture",
+      "sourceUrl": "http://127.0.0.1:52478/index.html",
+      "tags": [],
+      "url": "http://127.0.0.1:52478/visible",
+      "occurrences": [
+        {
+          "accessibleLabel": "",
+          "anchorText": "Visible label",
+          "batchId": "c2b91a35-6aed-4ec9-9bc9-02500b35ac80",
+          "capturedAt": "2026-09-28T15:20:45.225Z",
+          "frameUrl": "http://127.0.0.1:52478/index.html",
+          "id": "f9401ef0-653a-4d57-8357-c0be17bcaa14",
+          "notes": "",
+          "originalHref": "/visible",
+          "sourceTitle": "Meteor Research Lab — deterministic fixture",
+          "sourceUrl": "http://127.0.0.1:52478/index.html",
+          "tags": [],
+          "url": "http://127.0.0.1:52478/visible"
+        }
+      ],
+      "occurrenceIds": [
+        "f9401ef0-653a-4d57-8357-c0be17bcaa14"
+      ]
+    },
+    {
+      "accessibleLabel": "",
+      "anchorText": "A long wrapped anchor with several lines of visible text",
+      "batchId": "fe36b64d-212b-4582-8abc-71472a8dd3f2",
+      "capturedAt": "2026-09-28T15:20:45.583Z",
+      "frameUrl": "http://127.0.0.1:52478/index.html",
+      "id": "49fdbe3c-29e5-49d5-a313-c141fe749bbe",
+      "notes": "",
+      "originalHref": "/wrapped",
+      "sourceTitle": "Meteor Research Lab — deterministic fixture",
+      "sourceUrl": "http://127.0.0.1:52478/index.html",
+      "tags": [],
+      "url": "http://127.0.0.1:52478/wrapped",
+      "occurrences": [
+        {
+          "accessibleLabel": "",
+          "anchorText": "A long wrapped anchor with several lines of visible text",
+          "batchId": "fe36b64d-212b-4582-8abc-71472a8dd3f2",
+          "capturedAt": "2026-09-28T15:20:45.583Z",
+          "frameUrl": "http://127.0.0.1:52478/index.html",
+          "id": "49fdbe3c-29e5-49d5-a313-c141fe749bbe",
+          "notes": "",
+          "originalHref": "/wrapped",
+          "sourceTitle": "Meteor Research Lab — deterministic fixture",
+          "sourceUrl": "http://127.0.0.1:52478/index.html",
+          "tags": [],
+          "url": "http://127.0.0.1:52478/wrapped"
+        }
+      ],
+      "occurrenceIds": [
+        "49fdbe3c-29e5-49d5-a313-c141fe749bbe"
+      ]
+    },
+    {
+      "accessibleLabel": "",
+      "anchorText": "Catalog source 0",
+      "batchId": "a7a9b273-dc6a-47f0-a499-c61bcca93502",
+      "capturedAt": "2026-09-28T15:20:46.035Z",
+      "frameUrl": "http://127.0.0.1:52478/index.html",
+      "id": "7ec90b92-277e-45d4-9a46-080f597f33c1",
+      "notes": "",
+      "originalHref": "/catalog/0",
+      "sourceTitle": "Meteor Research Lab — deterministic fixture",
+      "sourceUrl": "http://127.0.0.1:52478/index.html",
+      "tags": [],
+      "url": "http://127.0.0.1:52478/catalog/0",
+      "occurrences": [
+        {
+          "accessibleLabel": "",
+          "anchorText": "Catalog source 0",
+          "batchId": "a7a9b273-dc6a-47f0-a499-c61bcca93502",
+          "capturedAt": "2026-09-28T15:20:46.035Z",
+          "frameUrl": "http://127.0.0.1:52478/index.html",
+          "id": "7ec90b92-277e-45d4-9a46-080f597f33c1",
+          "notes": "",
+          "originalHref": "/catalog/0",
+          "sourceTitle": "Meteor Research Lab — deterministic fixture",
+          "sourceUrl": "http://127.0.0.1:52478/index.html",
+          "tags": [],
+          "url": "http://127.0.0.1:52478/catalog/0"
+        }
+      ],
+      "occurrenceIds": [
+        "7ec90b92-277e-45d4-9a46-080f597f33c1"
+      ]
+    },
+    {
+      "accessibleLabel": "",
+      "anchorText": "Catalog source 1",
+      "batchId": "a7a9b273-dc6a-47f0-a499-c61bcca93502",
+      "capturedAt": "2026-09-28T15:20:46.035Z",
+      "frameUrl": "http://127.0.0.1:52478/index.html",
+      "id": "0f5838f5-0ee2-4e53-bb6e-42821b1a398f",
+      "notes": "",
+      "originalHref": "/catalog/1",
+      "sourceTitle": "Meteor Research Lab — deterministic fixture",
+      "sourceUrl": "http://127.0.0.1:52478/index.html",
+      "tags": [],
+      "url": "http://127.0.0.1:52478/catalog/1",
+      "occurrences": [
+        {
+          "accessibleLabel": "",
+          "anchorText": "Catalog source 1",
+          "batchId": "a7a9b273-dc6a-47f0-a499-c61bcca93502",
+          "capturedAt": "2026-09-28T15:20:46.035Z",
+          "frameUrl": "http://127.0.0.1:52478/index.html",
+          "id": "0f5838f5-0ee2-4e53-bb6e-42821b1a398f",
+          "notes": "",
+          "originalHref": "/catalog/1",
+          "sourceTitle": "Meteor Research Lab — deterministic fixture",
+          "sourceUrl": "http://127.0.0.1:52478/index.html",
+          "tags": [],
+          "url": "http://127.0.0.1:52478/catalog/1"
+        }
+      ],
+      "occurrenceIds": [
+        "0f5838f5-0ee2-4e53-bb6e-42821b1a398f"
+      ]
+    },
+    {
+      "accessibleLabel": "",
+      "anchorText": "Catalog source 2",
+      "batchId": "a7a9b273-dc6a-47f0-a499-c61bcca93502",
+      "capturedAt": "2026-09-28T15:20:46.035Z",
+      "frameUrl": "http://127.0.0.1:52478/index.html",
+      "id": "971e5f34-0ce8-4e5f-95df-29b549493f22",
+      "notes": "",
+      "originalHref": "/catalog/2",
+      "sourceTitle": "Meteor Research Lab — deterministic fixture",
+      "sourceUrl": "http://127.0.0.1:52478/index.html",
+      "tags": [],
+      "url": "http://127.0.0.1:52478/catalog/2",
+      "occurrences": [
+        {
+          "accessibleLabel": "",
+          "anchorText": "Catalog source 2",
+          "batchId": "a7a9b273-dc6a-47f0-a499-c61bcca93502",
+          "capturedAt": "2026-09-28T15:20:46.035Z",
+          "frameUrl": "http://127.0.0.1:52478/index.html",
+          "id": "971e5f34-0ce8-4e5f-95df-29b549493f22",
+          "notes": "",
+          "originalHref": "/catalog/2",
+          "sourceTitle": "Meteor Research Lab — deterministic fixture",
+          "sourceUrl": "http://127.0.0.1:52478/index.html",
+          "tags": [],
+          "url": "http://127.0.0.1:52478/catalog/2"
+        }
+      ],
+      "occurrenceIds": [
+        "971e5f34-0ce8-4e5f-95df-29b549493f22"
+      ]
+    },
+    {
+      "accessibleLabel": "",
+      "anchorText": "Catalog source 15",
+      "batchId": "a7a9b273-dc6a-47f0-a499-c61bcca93502",
+      "capturedAt": "2026-09-28T15:20:46.035Z",
+      "frameUrl": "http://127.0.0.1:52478/index.html",
+      "id": "e70dbaf1-5009-4b8d-940c-0bd342131767",
+      "notes": "",
+      "originalHref": "/catalog/15",
+      "sourceTitle": "Meteor Research Lab — deterministic fixture",
+      "sourceUrl": "http://127.0.0.1:52478/index.html",
+      "tags": [],
+      "url": "http://127.0.0.1:52478/catalog/15",
+      "occurrences": [
+        {
+          "accessibleLabel": "",
+          "anchorText": "Catalog source 15",
+          "batchId": "a7a9b273-dc6a-47f0-a499-c61bcca93502",
+          "capturedAt": "2026-09-28T15:20:46.035Z",
+          "frameUrl": "http://127.0.0.1:52478/index.html",
+          "id": "e70dbaf1-5009-4b8d-940c-0bd342131767",
+          "notes": "",
+          "originalHref": "/catalog/15",
+          "sourceTitle": "Meteor Research Lab — deterministic fixture",
+          "sourceUrl": "http://127.0.0.1:52478/index.html",
+          "tags": [],
+          "url": "http://127.0.0.1:52478/catalog/15"
+        }
+      ],
+      "occurrenceIds": [
+        "e70dbaf1-5009-4b8d-940c-0bd342131767"
+      ]
+    },
+    {
+      "accessibleLabel": "",
+      "anchorText": "Catalog source 16",
+      "batchId": "a7a9b273-dc6a-47f0-a499-c61bcca93502",
+      "capturedAt": "2026-09-28T15:20:46.035Z",
+      "frameUrl": "http://127.0.0.1:52478/index.html",
+      "id": "39d4527b-b1d4-4ca1-87fd-11d60594af7e",
+      "notes": "",
+      "originalHref": "/catalog/16",
+      "sourceTitle": "Meteor Research Lab — deterministic fixture",
+      "sourceUrl": "http://127.0.0.1:52478/index.html",
+      "tags": [],
+      "url": "http://127.0.0.1:52478/catalog/16",
+      "occurrences": [
+        {
+          "accessibleLabel": "",
+          "anchorText": "Catalog source 16",
+          "batchId": "a7a9b273-dc6a-47f0-a499-c61bcca93502",
+          "capturedAt": "2026-09-28T15:20:46.035Z",
+          "frameUrl": "http://127.0.0.1:52478/index.html",
+          "id": "39d4527b-b1d4-4ca1-87fd-11d60594af7e",
+          "notes": "",
+          "originalHref": "/catalog/16",
+          "sourceTitle": "Meteor Research Lab — deterministic fixture",
+          "sourceUrl": "http://127.0.0.1:52478/index.html",
+          "tags": [],
+          "url": "http://127.0.0.1:52478/catalog/16"
+        }
+      ],
+      "occurrenceIds": [
+        "39d4527b-b1d4-4ca1-87fd-11d60594af7e"
+      ]
+    },
+    {
+      "accessibleLabel": "",
+      "anchorText": "Catalog source 17",
+      "batchId": "a7a9b273-dc6a-47f0-a499-c61bcca93502",
+      "capturedAt": "2026-09-28T15:20:46.035Z",
+      "frameUrl": "http://127.0.0.1:52478/index.html",
+      "id": "01c814e2-c5d7-475b-87e1-dc1d8b7cce6d",
+      "notes": "",
+      "originalHref": "/catalog/17",
+      "sourceTitle": "Meteor Research Lab — deterministic fixture",
+      "sourceUrl": "http://127.0.0.1:52478/index.html",
+      "tags": [],
+      "url": "http://127.0.0.1:52478/catalog/17",
+      "occurrences": [
+        {
+          "accessibleLabel": "",
+          "anchorText": "Catalog source 17",
+          "batchId": "a7a9b273-dc6a-47f0-a499-c61bcca93502",
+          "capturedAt": "2026-09-28T15:20:46.035Z",
+          "frameUrl": "http://127.0.0.1:52478/index.html",
+          "id": "01c814e2-c5d7-475b-87e1-dc1d8b7cce6d",
+          "notes": "",
+          "originalHref": "/catalog/17",
+          "sourceTitle": "Meteor Research Lab — deterministic fixture",
+          "sourceUrl": "http://127.0.0.1:52478/index.html",
+          "tags": [],
+          "url": "http://127.0.0.1:52478/catalog/17"
+        }
+      ],
+      "occurrenceIds": [
+        "01c814e2-c5d7-475b-87e1-dc1d8b7cce6d"
+      ]
+    },
+    {
+      "accessibleLabel": "",
+      "anchorText": "Attention in small systems",
+      "batchId": "d3d760e3-1952-4fc7-9cc7-a31b2c8d4fbe",
+      "capturedAt": "2026-09-28T15:20:46.336Z",
+      "frameUrl": "http://127.0.0.1:52478/index.html",
+      "id": "c14b18a8-918b-4ef6-9584-49c909087934",
+      "notes": "",
+      "originalHref": "/papers/attention.pdf",
+      "sourceTitle": "Meteor Research Lab — deterministic fixture",
+      "sourceUrl": "http://127.0.0.1:52478/index.html",
+      "tags": [],
+      "url": "http://127.0.0.1:52478/papers/attention.pdf",
+      "occurrences": [
+        {
+          "accessibleLabel": "",
+          "anchorText": "Attention in small systems",
+          "batchId": "d3d760e3-1952-4fc7-9cc7-a31b2c8d4fbe",
+          "capturedAt": "2026-09-28T15:20:46.336Z",
+          "frameUrl": "http://127.0.0.1:52478/index.html",
+          "id": "c14b18a8-918b-4ef6-9584-49c909087934",
+          "notes": "",
+          "originalHref": "/papers/attention.pdf",
+          "sourceTitle": "Meteor Research Lab — deterministic fixture",
+          "sourceUrl": "http://127.0.0.1:52478/index.html",
+          "tags": [],
+          "url": "http://127.0.0.1:52478/papers/attention.pdf"
+        }
+      ],
+      "occurrenceIds": [
+        "c14b18a8-918b-4ef6-9584-49c909087934"
+      ]
+    },
+    {
+      "accessibleLabel": "",
+      "anchorText": "Geometry, “frames” & 雪",
+      "batchId": "d3d760e3-1952-4fc7-9cc7-a31b2c8d4fbe",
+      "capturedAt": "2026-09-28T15:20:46.336Z",
+      "frameUrl": "http://127.0.0.1:52478/index.html",
+      "id": "880b4f56-9395-40a0-aff4-0b7d2a3bbeea",
+      "notes": "",
+      "originalHref": "/papers/geometry.pdf?edition=2",
+      "sourceTitle": "Meteor Research Lab — deterministic fixture",
+      "sourceUrl": "http://127.0.0.1:52478/index.html",
+      "tags": [],
+      "url": "http://127.0.0.1:52478/papers/geometry.pdf?edition=2",
+      "occurrences": [
+        {
+          "accessibleLabel": "",
+          "anchorText": "Geometry, “frames” & 雪",
+          "batchId": "d3d760e3-1952-4fc7-9cc7-a31b2c8d4fbe",
+          "capturedAt": "2026-09-28T15:20:46.336Z",
+          "frameUrl": "http://127.0.0.1:52478/index.html",
+          "id": "880b4f56-9395-40a0-aff4-0b7d2a3bbeea",
+          "notes": "",
+          "originalHref": "/papers/geometry.pdf?edition=2",
+          "sourceTitle": "Meteor Research Lab — deterministic fixture",
+          "sourceUrl": "http://127.0.0.1:52478/index.html",
+          "tags": [],
+          "url": "http://127.0.0.1:52478/papers/geometry.pdf?edition=2"
+        }
+      ],
+      "occurrenceIds": [
+        "880b4f56-9395-40a0-aff4-0b7d2a3bbeea"
+      ]
+    },
+    {
+      "accessibleLabel": "",
+      "anchorText": "Download PDF",
+      "batchId": "d3d760e3-1952-4fc7-9cc7-a31b2c8d4fbe",
+      "capturedAt": "2026-09-28T15:20:46.336Z",
+      "frameUrl": "http://127.0.0.1:52478/index.html",
+      "id": "faa04b51-d0a0-4e7d-8862-77fb4b4d268b",
+      "notes": "",
+      "originalHref": "/papers/attention.pdf",
+      "sourceTitle": "Meteor Research Lab — deterministic fixture",
+      "sourceUrl": "http://127.0.0.1:52478/index.html",
+      "tags": [],
+      "url": "http://127.0.0.1:52478/papers/attention.pdf",
+      "occurrences": [
+        {
+          "accessibleLabel": "",
+          "anchorText": "Download PDF",
+          "batchId": "d3d760e3-1952-4fc7-9cc7-a31b2c8d4fbe",
+          "capturedAt": "2026-09-28T15:20:46.336Z",
+          "frameUrl": "http://127.0.0.1:52478/index.html",
+          "id": "faa04b51-d0a0-4e7d-8862-77fb4b4d268b",
+          "notes": "",
+          "originalHref": "/papers/attention.pdf",
+          "sourceTitle": "Meteor Research Lab — deterministic fixture",
+          "sourceUrl": "http://127.0.0.1:52478/index.html",
+          "tags": [],
+          "url": "http://127.0.0.1:52478/papers/attention.pdf"
+        }
+      ],
+      "occurrenceIds": [
+        "faa04b51-d0a0-4e7d-8862-77fb4b4d268b"
+      ]
+    },
+    {
+      "accessibleLabel": "Open illustrated appendix",
+      "anchorText": "",
+      "batchId": "d3d760e3-1952-4fc7-9cc7-a31b2c8d4fbe",
+      "capturedAt": "2026-09-28T15:20:46.336Z",
+      "frameUrl": "http://127.0.0.1:52478/index.html",
+      "id": "ce8cdcd8-0762-4955-a31d-350d0505a6b0",
+      "notes": "",
+      "originalHref": "/appendix",
+      "sourceTitle": "Meteor Research Lab — deterministic fixture",
+      "sourceUrl": "http://127.0.0.1:52478/index.html",
+      "tags": [],
+      "url": "http://127.0.0.1:52478/appendix",
+      "occurrences": [
+        {
+          "accessibleLabel": "Open illustrated appendix",
+          "anchorText": "",
+          "batchId": "d3d760e3-1952-4fc7-9cc7-a31b2c8d4fbe",
+          "capturedAt": "2026-09-28T15:20:46.336Z",
+          "frameUrl": "http://127.0.0.1:52478/index.html",
+          "id": "ce8cdcd8-0762-4955-a31d-350d0505a6b0",
+          "notes": "",
+          "originalHref": "/appendix",
+          "sourceTitle": "Meteor Research Lab — deterministic fixture",
+          "sourceUrl": "http://127.0.0.1:52478/index.html",
+          "tags": [],
+          "url": "http://127.0.0.1:52478/appendix"
+        }
+      ],
+      "occurrenceIds": [
+        "ce8cdcd8-0762-4955-a31d-350d0505a6b0"
+      ]
+    },
+    {
+      "accessibleLabel": "",
+      "anchorText": "Visible label",
+      "batchId": "d3d760e3-1952-4fc7-9cc7-a31b2c8d4fbe",
+      "capturedAt": "2026-09-28T15:20:46.336Z",
+      "frameUrl": "http://127.0.0.1:52478/index.html",
+      "id": "d90769cf-dffa-49d6-a465-ebcbe90fc091",
+      "notes": "",
+      "originalHref": "/visible",
+      "sourceTitle": "Meteor Research Lab — deterministic fixture",
+      "sourceUrl": "http://127.0.0.1:52478/index.html",
+      "tags": [],
+      "url": "http://127.0.0.1:52478/visible",
+      "occurrences": [
+        {
+          "accessibleLabel": "",
+          "anchorText": "Visible label",
+          "batchId": "d3d760e3-1952-4fc7-9cc7-a31b2c8d4fbe",
+          "capturedAt": "2026-09-28T15:20:46.336Z",
+          "frameUrl": "http://127.0.0.1:52478/index.html",
+          "id": "d90769cf-dffa-49d6-a465-ebcbe90fc091",
+          "notes": "",
+          "originalHref": "/visible",
+          "sourceTitle": "Meteor Research Lab — deterministic fixture",
+          "sourceUrl": "http://127.0.0.1:52478/index.html",
+          "tags": [],
+          "url": "http://127.0.0.1:52478/visible"
+        }
+      ],
+      "occurrenceIds": [
+        "d90769cf-dffa-49d6-a465-ebcbe90fc091"
+      ]
+    },
+    {
+      "accessibleLabel": "",
+      "anchorText": "Atlas notebook — field edition",
+      "batchId": "d3d760e3-1952-4fc7-9cc7-a31b2c8d4fbe",
+      "capturedAt": "2026-09-28T15:20:46.336Z",
+      "frameUrl": "http://127.0.0.1:52478/index.html",
+      "id": "e698d005-02ba-4609-bfec-3bcb57e32665",
+      "notes": "",
+      "originalHref": "/products/atlas",
+      "sourceTitle": "Meteor Research Lab — deterministic fixture",
+      "sourceUrl": "http://127.0.0.1:52478/index.html",
+      "tags": [],
+      "url": "http://127.0.0.1:52478/products/atlas",
+      "occurrences": [
+        {
+          "accessibleLabel": "",
+          "anchorText": "Atlas notebook — field edition",
+          "batchId": "d3d760e3-1952-4fc7-9cc7-a31b2c8d4fbe",
+          "capturedAt": "2026-09-28T15:20:46.336Z",
+          "frameUrl": "http://127.0.0.1:52478/index.html",
+          "id": "e698d005-02ba-4609-bfec-3bcb57e32665",
+          "notes": "",
+          "originalHref": "/products/atlas",
+          "sourceTitle": "Meteor Research Lab — deterministic fixture",
+          "sourceUrl": "http://127.0.0.1:52478/index.html",
+          "tags": [],
+          "url": "http://127.0.0.1:52478/products/atlas"
+        }
+      ],
+      "occurrenceIds": [
+        "e698d005-02ba-4609-bfec-3bcb57e32665"
+      ]
+    },
+    {
+      "accessibleLabel": "",
+      "anchorText": "Open-sky telescope",
+      "batchId": "d3d760e3-1952-4fc7-9cc7-a31b2c8d4fbe",
+      "capturedAt": "2026-09-28T15:20:46.336Z",
+      "frameUrl": "http://127.0.0.1:52478/index.html",
+      "id": "b3ff625d-8c87-415c-b9d1-c852893d8eb3",
+      "notes": "",
+      "originalHref": "https://example.org/telescope",
+      "sourceTitle": "Meteor Research Lab — deterministic fixture",
+      "sourceUrl": "http://127.0.0.1:52478/index.html",
+      "tags": [],
+      "url": "https://example.org/telescope",
+      "occurrences": [
+        {
+          "accessibleLabel": "",
+          "anchorText": "Open-sky telescope",
+          "batchId": "d3d760e3-1952-4fc7-9cc7-a31b2c8d4fbe",
+          "capturedAt": "2026-09-28T15:20:46.336Z",
+          "frameUrl": "http://127.0.0.1:52478/index.html",
+          "id": "b3ff625d-8c87-415c-b9d1-c852893d8eb3",
+          "notes": "",
+          "originalHref": "https://example.org/telescope",
+          "sourceTitle": "Meteor Research Lab — deterministic fixture",
+          "sourceUrl": "http://127.0.0.1:52478/index.html",
+          "tags": [],
+          "url": "https://example.org/telescope"
+        }
+      ],
+      "occurrenceIds": [
+        "b3ff625d-8c87-415c-b9d1-c852893d8eb3"
+      ]
+    },
+    {
+      "accessibleLabel": "",
+      "anchorText": "OBS-42",
+      "batchId": "d3d760e3-1952-4fc7-9cc7-a31b2c8d4fbe",
+      "capturedAt": "2026-09-28T15:20:46.336Z",
+      "frameUrl": "http://127.0.0.1:52478/index.html",
+      "id": "c665447b-33e5-46b1-a46a-abb21edd3846",
+      "notes": "",
+      "originalHref": "/tickets/42",
+      "sourceTitle": "Meteor Research Lab — deterministic fixture",
+      "sourceUrl": "http://127.0.0.1:52478/index.html",
+      "tags": [],
+      "url": "http://127.0.0.1:52478/tickets/42",
+      "occurrences": [
+        {
+          "accessibleLabel": "",
+          "anchorText": "OBS-42",
+          "batchId": "d3d760e3-1952-4fc7-9cc7-a31b2c8d4fbe",
+          "capturedAt": "2026-09-28T15:20:46.336Z",
+          "frameUrl": "http://127.0.0.1:52478/index.html",
+          "id": "c665447b-33e5-46b1-a46a-abb21edd3846",
+          "notes": "",
+          "originalHref": "/tickets/42",
+          "sourceTitle": "Meteor Research Lab — deterministic fixture",
+          "sourceUrl": "http://127.0.0.1:52478/index.html",
+          "tags": [],
+          "url": "http://127.0.0.1:52478/tickets/42"
+        }
+      ],
+      "occurrenceIds": [
+        "c665447b-33e5-46b1-a46a-abb21edd3846"
+      ]
+    },
+    {
+      "accessibleLabel": "",
+      "anchorText": "OBS-43",
+      "batchId": "d3d760e3-1952-4fc7-9cc7-a31b2c8d4fbe",
+      "capturedAt": "2026-09-28T15:20:46.336Z",
+      "frameUrl": "http://127.0.0.1:52478/index.html",
+      "id": "4a682db5-3f27-40a6-a8e4-310e33937b71",
+      "notes": "",
+      "originalHref": "/tickets/43",
+      "sourceTitle": "Meteor Research Lab — deterministic fixture",
+      "sourceUrl": "http://127.0.0.1:52478/index.html",
+      "tags": [],
+      "url": "http://127.0.0.1:52478/tickets/43",
+      "occurrences": [
+        {
+          "accessibleLabel": "",
+          "anchorText": "OBS-43",
+          "batchId": "d3d760e3-1952-4fc7-9cc7-a31b2c8d4fbe",
+          "capturedAt": "2026-09-28T15:20:46.336Z",
+          "frameUrl": "http://127.0.0.1:52478/index.html",
+          "id": "4a682db5-3f27-40a6-a8e4-310e33937b71",
+          "notes": "",
+          "originalHref": "/tickets/43",
+          "sourceTitle": "Meteor Research Lab — deterministic fixture",
+          "sourceUrl": "http://127.0.0.1:52478/index.html",
+          "tags": [],
+          "url": "http://127.0.0.1:52478/tickets/43"
+        }
+      ],
+      "occurrenceIds": [
+        "4a682db5-3f27-40a6-a8e4-310e33937b71"
+      ]
+    },
+    {
+      "accessibleLabel": "",
+      "anchorText": "A long wrapped anchor with several lines of visible text",
+      "batchId": "d3d760e3-1952-4fc7-9cc7-a31b2c8d4fbe",
+      "capturedAt": "2026-09-28T15:20:46.336Z",
+      "frameUrl": "http://127.0.0.1:52478/index.html",
+      "id": "37f08418-429d-4973-aaf8-ed3c3f71e627",
+      "notes": "",
+      "originalHref": "/wrapped",
+      "sourceTitle": "Meteor Research Lab — deterministic fixture",
+      "sourceUrl": "http://127.0.0.1:52478/index.html",
+      "tags": [],
+      "url": "http://127.0.0.1:52478/wrapped",
+      "occurrences": [
+        {
+          "accessibleLabel": "",
+          "anchorText": "A long wrapped anchor with several lines of visible text",
+          "batchId": "d3d760e3-1952-4fc7-9cc7-a31b2c8d4fbe",
+          "capturedAt": "2026-09-28T15:20:46.336Z",
+          "frameUrl": "http://127.0.0.1:52478/index.html",
+          "id": "37f08418-429d-4973-aaf8-ed3c3f71e627",
+          "notes": "",
+          "originalHref": "/wrapped",
+          "sourceTitle": "Meteor Research Lab — deterministic fixture",
+          "sourceUrl": "http://127.0.0.1:52478/index.html",
+          "tags": [],
+          "url": "http://127.0.0.1:52478/wrapped"
+        }
+      ],
+      "occurrenceIds": [
+        "37f08418-429d-4973-aaf8-ed3c3f71e627"
+      ]
+    },
+    {
+      "accessibleLabel": "",
+      "anchorText": "=SUM(1,2)",
+      "batchId": "d3d760e3-1952-4fc7-9cc7-a31b2c8d4fbe",
+      "capturedAt": "2026-09-28T15:20:46.336Z",
+      "frameUrl": "http://127.0.0.1:52478/index.html",
+      "id": "43402171-0454-48a4-8f81-f9a5b528bc1e",
+      "notes": "",
+      "originalHref": "/formula?value=(literal)",
+      "sourceTitle": "Meteor Research Lab — deterministic fixture",
+      "sourceUrl": "http://127.0.0.1:52478/index.html",
+      "tags": [],
+      "url": "http://127.0.0.1:52478/formula?value=(literal)",
+      "occurrences": [
+        {
+          "accessibleLabel": "",
+          "anchorText": "=SUM(1,2)",
+          "batchId": "d3d760e3-1952-4fc7-9cc7-a31b2c8d4fbe",
+          "capturedAt": "2026-09-28T15:20:46.336Z",
+          "frameUrl": "http://127.0.0.1:52478/index.html",
+          "id": "43402171-0454-48a4-8f81-f9a5b528bc1e",
+          "notes": "",
+          "originalHref": "/formula?value=(literal)",
+          "sourceTitle": "Meteor Research Lab — deterministic fixture",
+          "sourceUrl": "http://127.0.0.1:52478/index.html",
+          "tags": [],
+          "url": "http://127.0.0.1:52478/formula?value=(literal)"
+        }
+      ],
+      "occurrenceIds": [
+        "43402171-0454-48a4-8f81-f9a5b528bc1e"
+      ]
+    },
+    {
+      "accessibleLabel": "",
+      "anchorText": "<img src=x onerror=alert(1)>",
+      "batchId": "d3d760e3-1952-4fc7-9cc7-a31b2c8d4fbe",
+      "capturedAt": "2026-09-28T15:20:46.336Z",
+      "frameUrl": "http://127.0.0.1:52478/index.html",
+      "id": "ec41d59c-9b8c-4a37-8fa0-9b7e1837c234",
+      "notes": "",
+      "originalHref": "/html",
+      "sourceTitle": "Meteor Research Lab — deterministic fixture",
+      "sourceUrl": "http://127.0.0.1:52478/index.html",
+      "tags": [],
+      "url": "http://127.0.0.1:52478/html",
+      "occurrences": [
+        {
+          "accessibleLabel": "",
+          "anchorText": "<img src=x onerror=alert(1)>",
+          "batchId": "d3d760e3-1952-4fc7-9cc7-a31b2c8d4fbe",
+          "capturedAt": "2026-09-28T15:20:46.336Z",
+          "frameUrl": "http://127.0.0.1:52478/index.html",
+          "id": "ec41d59c-9b8c-4a37-8fa0-9b7e1837c234",
+          "notes": "",
+          "originalHref": "/html",
+          "sourceTitle": "Meteor Research Lab — deterministic fixture",
+          "sourceUrl": "http://127.0.0.1:52478/index.html",
+          "tags": [],
+          "url": "http://127.0.0.1:52478/html"
+        }
+      ],
+      "occurrenceIds": [
+        "ec41d59c-9b8c-4a37-8fa0-9b7e1837c234"
+      ]
+    },
+    {
+      "accessibleLabel": "",
+      "anchorText": "Email the research team",
+      "batchId": "d3d760e3-1952-4fc7-9cc7-a31b2c8d4fbe",
+      "capturedAt": "2026-09-28T15:20:46.336Z",
+      "frameUrl": "http://127.0.0.1:52478/index.html",
+      "id": "15561243-2821-46a9-b28b-63e960a97030",
+      "notes": "",
+      "originalHref": "mailto:research@example.org",
+      "sourceTitle": "Meteor Research Lab — deterministic fixture",
+      "sourceUrl": "http://127.0.0.1:52478/index.html",
+      "tags": [],
+      "url": "mailto:research@example.org",
+      "occurrences": [
+        {
+          "accessibleLabel": "",
+          "anchorText": "Email the research team",
+          "batchId": "d3d760e3-1952-4fc7-9cc7-a31b2c8d4fbe",
+          "capturedAt": "2026-09-28T15:20:46.336Z",
+          "frameUrl": "http://127.0.0.1:52478/index.html",
+          "id": "15561243-2821-46a9-b28b-63e960a97030",
+          "notes": "",
+          "originalHref": "mailto:research@example.org",
+          "sourceTitle": "Meteor Research Lab — deterministic fixture",
+          "sourceUrl": "http://127.0.0.1:52478/index.html",
+          "tags": [],
+          "url": "mailto:research@example.org"
+        }
+      ],
+      "occurrenceIds": [
+        "15561243-2821-46a9-b28b-63e960a97030"
+      ]
+    },
+    {
+      "accessibleLabel": "",
+      "anchorText": "Call the lab",
+      "batchId": "d3d760e3-1952-4fc7-9cc7-a31b2c8d4fbe",
+      "capturedAt": "2026-09-28T15:20:46.336Z",
+      "frameUrl": "http://127.0.0.1:52478/index.html",
+      "id": "f8197220-a89b-4139-98de-e5086c022b34",
+      "notes": "",
+      "originalHref": "tel:+15550123",
+      "sourceTitle": "Meteor Research Lab — deterministic fixture",
+      "sourceUrl": "http://127.0.0.1:52478/index.html",
+      "tags": [],
+      "url": "tel:+15550123",
+      "occurrences": [
+        {
+          "accessibleLabel": "",
+          "anchorText": "Call the lab",
+          "batchId": "d3d760e3-1952-4fc7-9cc7-a31b2c8d4fbe",
+          "capturedAt": "2026-09-28T15:20:46.336Z",
+          "frameUrl": "http://127.0.0.1:52478/index.html",
+          "id": "f8197220-a89b-4139-98de-e5086c022b34",
+          "notes": "",
+          "originalHref": "tel:+15550123",
+          "sourceTitle": "Meteor Research Lab — deterministic fixture",
+          "sourceUrl": "http://127.0.0.1:52478/index.html",
+          "tags": [],
+          "url": "tel:+15550123"
+        }
+      ],
+      "occurrenceIds": [
+        "f8197220-a89b-4139-98de-e5086c022b34"
+      ]
+    },
+    {
+      "accessibleLabel": "",
+      "anchorText": "Open shadow source",
+      "batchId": "d3d760e3-1952-4fc7-9cc7-a31b2c8d4fbe",
+      "capturedAt": "2026-09-28T15:20:46.336Z",
+      "frameUrl": "http://127.0.0.1:52478/index.html",
+      "id": "eba450b4-3653-485b-aad8-457769db8a3d",
+      "notes": "",
+      "originalHref": "/shadow",
+      "sourceTitle": "Meteor Research Lab — deterministic fixture",
+      "sourceUrl": "http://127.0.0.1:52478/index.html",
+      "tags": [],
+      "url": "http://127.0.0.1:52478/shadow",
+      "occurrences": [
+        {
+          "accessibleLabel": "",
+          "anchorText": "Open shadow source",
+          "batchId": "d3d760e3-1952-4fc7-9cc7-a31b2c8d4fbe",
+          "capturedAt": "2026-09-28T15:20:46.336Z",
+          "frameUrl": "http://127.0.0.1:52478/index.html",
+          "id": "eba450b4-3653-485b-aad8-457769db8a3d",
+          "notes": "",
+          "originalHref": "/shadow",
+          "sourceTitle": "Meteor Research Lab — deterministic fixture",
+          "sourceUrl": "http://127.0.0.1:52478/index.html",
+          "tags": [],
+          "url": "http://127.0.0.1:52478/shadow"
+        }
+      ],
+      "occurrenceIds": [
+        "eba450b4-3653-485b-aad8-457769db8a3d"
+      ]
+    },
+    {
+      "accessibleLabel": "",
+      "anchorText": "Loaded after the page",
+      "batchId": "d3d760e3-1952-4fc7-9cc7-a31b2c8d4fbe",
+      "capturedAt": "2026-09-28T15:20:46.336Z",
+      "frameUrl": "http://127.0.0.1:52478/index.html",
+      "id": "7acf4e50-04ba-4b7d-aafc-dd2c2c2f6f1a",
+      "notes": "",
+      "originalHref": "/dynamic",
+      "sourceTitle": "Meteor Research Lab — deterministic fixture",
+      "sourceUrl": "http://127.0.0.1:52478/index.html",
+      "tags": [],
+      "url": "http://127.0.0.1:52478/dynamic",
+      "occurrences": [
+        {
+          "accessibleLabel": "",
+          "anchorText": "Loaded after the page",
+          "batchId": "d3d760e3-1952-4fc7-9cc7-a31b2c8d4fbe",
+          "capturedAt": "2026-09-28T15:20:46.336Z",
+          "frameUrl": "http://127.0.0.1:52478/index.html",
+          "id": "7acf4e50-04ba-4b7d-aafc-dd2c2c2f6f1a",
+          "notes": "",
+          "originalHref": "/dynamic",
+          "sourceTitle": "Meteor Research Lab — deterministic fixture",
+          "sourceUrl": "http://127.0.0.1:52478/index.html",
+          "tags": [],
+          "url": "http://127.0.0.1:52478/dynamic"
+        }
+      ],
+      "occurrenceIds": [
+        "7acf4e50-04ba-4b7d-aafc-dd2c2c2f6f1a"
+      ]
+    },
+    {
+      "accessibleLabel": "",
+      "anchorText": "Catalog source 0",
+      "batchId": "d3d760e3-1952-4fc7-9cc7-a31b2c8d4fbe",
+      "capturedAt": "2026-09-28T15:20:46.336Z",
+      "frameUrl": "http://127.0.0.1:52478/index.html",
+      "id": "514584ba-363c-4f80-8f92-7b3154611db5",
+      "notes": "",
+      "originalHref": "/catalog/0",
+      "sourceTitle": "Meteor Research Lab — deterministic fixture",
+      "sourceUrl": "http://127.0.0.1:52478/index.html",
+      "tags": [],
+      "url": "http://127.0.0.1:52478/catalog/0",
+      "occurrences": [
+        {
+          "accessibleLabel": "",
+          "anchorText": "Catalog source 0",
+          "batchId": "d3d760e3-1952-4fc7-9cc7-a31b2c8d4fbe",
+          "capturedAt": "2026-09-28T15:20:46.336Z",
+          "frameUrl": "http://127.0.0.1:52478/index.html",
+          "id": "514584ba-363c-4f80-8f92-7b3154611db5",
+          "notes": "",
+          "originalHref": "/catalog/0",
+          "sourceTitle": "Meteor Research Lab — deterministic fixture",
+          "sourceUrl": "http://127.0.0.1:52478/index.html",
+          "tags": [],
+          "url": "http://127.0.0.1:52478/catalog/0"
+        }
+      ],
+      "occurrenceIds": [
+        "514584ba-363c-4f80-8f92-7b3154611db5"
+      ]
+    },
+    {
+      "accessibleLabel": "",
+      "anchorText": "Catalog source 1",
+      "batchId": "d3d760e3-1952-4fc7-9cc7-a31b2c8d4fbe",
+      "capturedAt": "2026-09-28T15:20:46.336Z",
+      "frameUrl": "http://127.0.0.1:52478/index.html",
+      "id": "8769b1e1-5280-4714-a86d-251a52f29621",
+      "notes": "",
+      "originalHref": "/catalog/1",
+      "sourceTitle": "Meteor Research Lab — deterministic fixture",
+      "sourceUrl": "http://127.0.0.1:52478/index.html",
+      "tags": [],
+      "url": "http://127.0.0.1:52478/catalog/1",
+      "occurrences": [
+        {
+          "accessibleLabel": "",
+          "anchorText": "Catalog source 1",
+          "batchId": "d3d760e3-1952-4fc7-9cc7-a31b2c8d4fbe",
+          "capturedAt": "2026-09-28T15:20:46.336Z",
+          "frameUrl": "http://127.0.0.1:52478/index.html",
+          "id": "8769b1e1-5280-4714-a86d-251a52f29621",
+          "notes": "",
+          "originalHref": "/catalog/1",
+          "sourceTitle": "Meteor Research Lab — deterministic fixture",
+          "sourceUrl": "http://127.0.0.1:52478/index.html",
+          "tags": [],
+          "url": "http://127.0.0.1:52478/catalog/1"
+        }
+      ],
+      "occurrenceIds": [
+        "8769b1e1-5280-4714-a86d-251a52f29621"
+      ]
+    },
+    {
+      "accessibleLabel": "",
+      "anchorText": "Catalog source 2",
+      "batchId": "d3d760e3-1952-4fc7-9cc7-a31b2c8d4fbe",
+      "capturedAt": "2026-09-28T15:20:46.336Z",
+      "frameUrl": "http://127.0.0.1:52478/index.html",
+      "id": "657c44f6-c143-4cb0-8db3-33c13ba8831d",
+      "notes": "",
+      "originalHref": "/catalog/2",
+      "sourceTitle": "Meteor Research Lab — deterministic fixture",
+      "sourceUrl": "http://127.0.0.1:52478/index.html",
+      "tags": [],
+      "url": "http://127.0.0.1:52478/catalog/2",
+      "occurrences": [
+        {
+          "accessibleLabel": "",
+          "anchorText": "Catalog source 2",
+          "batchId": "d3d760e3-1952-4fc7-9cc7-a31b2c8d4fbe",
+          "capturedAt": "2026-09-28T15:20:46.336Z",
+          "frameUrl": "http://127.0.0.1:52478/index.html",
+          "id": "657c44f6-c143-4cb0-8db3-33c13ba8831d",
+          "notes": "",
+          "originalHref": "/catalog/2",
+          "sourceTitle": "Meteor Research Lab — deterministic fixture",
+          "sourceUrl": "http://127.0.0.1:52478/index.html",
+          "tags": [],
+          "url": "http://127.0.0.1:52478/catalog/2"
+        }
+      ],
+      "occurrenceIds": [
+        "657c44f6-c143-4cb0-8db3-33c13ba8831d"
+      ]
+    },
+    {
+      "accessibleLabel": "",
+      "anchorText": "Catalog source 3",
+      "batchId": "d3d760e3-1952-4fc7-9cc7-a31b2c8d4fbe",
+      "capturedAt": "2026-09-28T15:20:46.336Z",
+      "frameUrl": "http://127.0.0.1:52478/index.html",
+      "id": "86ef24d5-632b-4d62-9961-184ef9d18187",
+      "notes": "",
+      "originalHref": "/catalog/3",
+      "sourceTitle": "Meteor Research Lab — deterministic fixture",
+      "sourceUrl": "http://127.0.0.1:52478/index.html",
+      "tags": [],
+      "url": "http://127.0.0.1:52478/catalog/3",
+      "occurrences": [
+        {
+          "accessibleLabel": "",
+          "anchorText": "Catalog source 3",
+          "batchId": "d3d760e3-1952-4fc7-9cc7-a31b2c8d4fbe",
+          "capturedAt": "2026-09-28T15:20:46.336Z",
+          "frameUrl": "http://127.0.0.1:52478/index.html",
+          "id": "86ef24d5-632b-4d62-9961-184ef9d18187",
+          "notes": "",
+          "originalHref": "/catalog/3",
+          "sourceTitle": "Meteor Research Lab — deterministic fixture",
+          "sourceUrl": "http://127.0.0.1:52478/index.html",
+          "tags": [],
+          "url": "http://127.0.0.1:52478/catalog/3"
+        }
+      ],
+      "occurrenceIds": [
+        "86ef24d5-632b-4d62-9961-184ef9d18187"
+      ]
+    },
+    {
+      "accessibleLabel": "",
+      "anchorText": "Catalog source 4",
+      "batchId": "d3d760e3-1952-4fc7-9cc7-a31b2c8d4fbe",
+      "capturedAt": "2026-09-28T15:20:46.336Z",
+      "frameUrl": "http://127.0.0.1:52478/index.html",
+      "id": "d21f8edb-0558-4171-a8eb-dfd242118006",
+      "notes": "",
+      "originalHref": "/catalog/4",
+      "sourceTitle": "Meteor Research Lab — deterministic fixture",
+      "sourceUrl": "http://127.0.0.1:52478/index.html",
+      "tags": [],
+      "url": "http://127.0.0.1:52478/catalog/4",
+      "occurrences": [
+        {
+          "accessibleLabel": "",
+          "anchorText": "Catalog source 4",
+          "batchId": "d3d760e3-1952-4fc7-9cc7-a31b2c8d4fbe",
+          "capturedAt": "2026-09-28T15:20:46.336Z",
+          "frameUrl": "http://127.0.0.1:52478/index.html",
+          "id": "d21f8edb-0558-4171-a8eb-dfd242118006",
+          "notes": "",
+          "originalHref": "/catalog/4",
+          "sourceTitle": "Meteor Research Lab — deterministic fixture",
+          "sourceUrl": "http://127.0.0.1:52478/index.html",
+          "tags": [],
+          "url": "http://127.0.0.1:52478/catalog/4"
+        }
+      ],
+      "occurrenceIds": [
+        "d21f8edb-0558-4171-a8eb-dfd242118006"
+      ]
+    },
+    {
+      "accessibleLabel": "",
+      "anchorText": "Catalog source 5",
+      "batchId": "d3d760e3-1952-4fc7-9cc7-a31b2c8d4fbe",
+      "capturedAt": "2026-09-28T15:20:46.336Z",
+      "frameUrl": "http://127.0.0.1:52478/index.html",
+      "id": "fa47f3ae-dd6e-4c78-aad6-79bda279a779",
+      "notes": "",
+      "originalHref": "/catalog/5",
+      "sourceTitle": "Meteor Research Lab — deterministic fixture",
+      "sourceUrl": "http://127.0.0.1:52478/index.html",
+      "tags": [],
+      "url": "http://127.0.0.1:52478/catalog/5",
+      "occurrences": [
+        {
+          "accessibleLabel": "",
+          "anchorText": "Catalog source 5",
+          "batchId": "d3d760e3-1952-4fc7-9cc7-a31b2c8d4fbe",
+          "capturedAt": "2026-09-28T15:20:46.336Z",
+          "frameUrl": "http://127.0.0.1:52478/index.html",
+          "id": "fa47f3ae-dd6e-4c78-aad6-79bda279a779",
+          "notes": "",
+          "originalHref": "/catalog/5",
+          "sourceTitle": "Meteor Research Lab — deterministic fixture",
+          "sourceUrl": "http://127.0.0.1:52478/index.html",
+          "tags": [],
+          "url": "http://127.0.0.1:52478/catalog/5"
+        }
+      ],
+      "occurrenceIds": [
+        "fa47f3ae-dd6e-4c78-aad6-79bda279a779"
+      ]
+    },
+    {
+      "accessibleLabel": "",
+      "anchorText": "Catalog source 6",
+      "batchId": "d3d760e3-1952-4fc7-9cc7-a31b2c8d4fbe",
+      "capturedAt": "2026-09-28T15:20:46.336Z",
+      "frameUrl": "http://127.0.0.1:52478/index.html",
+      "id": "705cb8c6-d7e2-465d-973f-442f636632ae",
+      "notes": "",
+      "originalHref": "/catalog/6",
+      "sourceTitle": "Meteor Research Lab — deterministic fixture",
+      "sourceUrl": "http://127.0.0.1:52478/index.html",
+      "tags": [],
+      "url": "http://127.0.0.1:52478/catalog/6",
+      "occurrences": [
+        {
+          "accessibleLabel": "",
+          "anchorText": "Catalog source 6",
+          "batchId": "d3d760e3-1952-4fc7-9cc7-a31b2c8d4fbe",
+          "capturedAt": "2026-09-28T15:20:46.336Z",
+          "frameUrl": "http://127.0.0.1:52478/index.html",
+          "id": "705cb8c6-d7e2-465d-973f-442f636632ae",
+          "notes": "",
+          "originalHref": "/catalog/6",
+          "sourceTitle": "Meteor Research Lab — deterministic fixture",
+          "sourceUrl": "http://127.0.0.1:52478/index.html",
+          "tags": [],
+          "url": "http://127.0.0.1:52478/catalog/6"
+        }
+      ],
+      "occurrenceIds": [
+        "705cb8c6-d7e2-465d-973f-442f636632ae"
+      ]
+    },
+    {
+      "accessibleLabel": "",
+      "anchorText": "Catalog source 7",
+      "batchId": "d3d760e3-1952-4fc7-9cc7-a31b2c8d4fbe",
+      "capturedAt": "2026-09-28T15:20:46.336Z",
+      "frameUrl": "http://127.0.0.1:52478/index.html",
+      "id": "5749f8b0-b35a-48a3-a9c5-a524a1a7f6b9",
+      "notes": "",
+      "originalHref": "/catalog/7",
+      "sourceTitle": "Meteor Research Lab — deterministic fixture",
+      "sourceUrl": "http://127.0.0.1:52478/index.html",
+      "tags": [],
+      "url": "http://127.0.0.1:52478/catalog/7",
+      "occurrences": [
+        {
+          "accessibleLabel": "",
+          "anchorText": "Catalog source 7",
+          "batchId": "d3d760e3-1952-4fc7-9cc7-a31b2c8d4fbe",
+          "capturedAt": "2026-09-28T15:20:46.336Z",
+          "frameUrl": "http://127.0.0.1:52478/index.html",
+          "id": "5749f8b0-b35a-48a3-a9c5-a524a1a7f6b9",
+          "notes": "",
+          "originalHref": "/catalog/7",
+          "sourceTitle": "Meteor Research Lab — deterministic fixture",
+          "sourceUrl": "http://127.0.0.1:52478/index.html",
+          "tags": [],
+          "url": "http://127.0.0.1:52478/catalog/7"
+        }
+      ],
+      "occurrenceIds": [
+        "5749f8b0-b35a-48a3-a9c5-a524a1a7f6b9"
+      ]
+    },
+    {
+      "accessibleLabel": "",
+      "anchorText": "Catalog source 8",
+      "batchId": "d3d760e3-1952-4fc7-9cc7-a31b2c8d4fbe",
+      "capturedAt": "2026-09-28T15:20:46.336Z",
+      "frameUrl": "http://127.0.0.1:52478/index.html",
+      "id": "f51bbe71-dfba-40e8-8360-395cfda7e386",
+      "notes": "",
+      "originalHref": "/catalog/8",
+      "sourceTitle": "Meteor Research Lab — deterministic fixture",
+      "sourceUrl": "http://127.0.0.1:52478/index.html",
+      "tags": [],
+      "url": "http://127.0.0.1:52478/catalog/8",
+      "occurrences": [
+        {
+          "accessibleLabel": "",
+          "anchorText": "Catalog source 8",
+          "batchId": "d3d760e3-1952-4fc7-9cc7-a31b2c8d4fbe",
+          "capturedAt": "2026-09-28T15:20:46.336Z",
+          "frameUrl": "http://127.0.0.1:52478/index.html",
+          "id": "f51bbe71-dfba-40e8-8360-395cfda7e386",
+          "notes": "",
+          "originalHref": "/catalog/8",
+          "sourceTitle": "Meteor Research Lab — deterministic fixture",
+          "sourceUrl": "http://127.0.0.1:52478/index.html",
+          "tags": [],
+          "url": "http://127.0.0.1:52478/catalog/8"
+        }
+      ],
+      "occurrenceIds": [
+        "f51bbe71-dfba-40e8-8360-395cfda7e386"
+      ]
+    },
+    {
+      "accessibleLabel": "",
+      "anchorText": "Catalog source 9",
+      "batchId": "d3d760e3-1952-4fc7-9cc7-a31b2c8d4fbe",
+      "capturedAt": "2026-09-28T15:20:46.336Z",
+      "frameUrl": "http://127.0.0.1:52478/index.html",
+      "id": "a96c8349-9538-4911-854f-0cbc98609362",
+      "notes": "",
+      "originalHref": "/catalog/9",
+      "sourceTitle": "Meteor Research Lab — deterministic fixture",
+      "sourceUrl": "http://127.0.0.1:52478/index.html",
+      "tags": [],
+      "url": "http://127.0.0.1:52478/catalog/9",
+      "occurrences": [
+        {
+          "accessibleLabel": "",
+          "anchorText": "Catalog source 9",
+          "batchId": "d3d760e3-1952-4fc7-9cc7-a31b2c8d4fbe",
+          "capturedAt": "2026-09-28T15:20:46.336Z",
+          "frameUrl": "http://127.0.0.1:52478/index.html",
+          "id": "a96c8349-9538-4911-854f-0cbc98609362",
+          "notes": "",
+          "originalHref": "/catalog/9",
+          "sourceTitle": "Meteor Research Lab — deterministic fixture",
+          "sourceUrl": "http://127.0.0.1:52478/index.html",
+          "tags": [],
+          "url": "http://127.0.0.1:52478/catalog/9"
+        }
+      ],
+      "occurrenceIds": [
+        "a96c8349-9538-4911-854f-0cbc98609362"
+      ]
+    },
+    {
+      "accessibleLabel": "",
+      "anchorText": "Catalog source 10",
+      "batchId": "d3d760e3-1952-4fc7-9cc7-a31b2c8d4fbe",
+      "capturedAt": "2026-09-28T15:20:46.336Z",
+      "frameUrl": "http://127.0.0.1:52478/index.html",
+      "id": "cebd1aaf-c351-4cb7-bc24-a80e529eee4b",
+      "notes": "",
+      "originalHref": "/catalog/10",
+      "sourceTitle": "Meteor Research Lab — deterministic fixture",
+      "sourceUrl": "http://127.0.0.1:52478/index.html",
+      "tags": [],
+      "url": "http://127.0.0.1:52478/catalog/10",
+      "occurrences": [
+        {
+          "accessibleLabel": "",
+          "anchorText": "Catalog source 10",
+          "batchId": "d3d760e3-1952-4fc7-9cc7-a31b2c8d4fbe",
+          "capturedAt": "2026-09-28T15:20:46.336Z",
+          "frameUrl": "http://127.0.0.1:52478/index.html",
+          "id": "cebd1aaf-c351-4cb7-bc24-a80e529eee4b",
+          "notes": "",
+          "originalHref": "/catalog/10",
+          "sourceTitle": "Meteor Research Lab — deterministic fixture",
+          "sourceUrl": "http://127.0.0.1:52478/index.html",
+          "tags": [],
+          "url": "http://127.0.0.1:52478/catalog/10"
+        }
+      ],
+      "occurrenceIds": [
+        "cebd1aaf-c351-4cb7-bc24-a80e529eee4b"
+      ]
+    },
+    {
+      "accessibleLabel": "",
+      "anchorText": "Catalog source 11",
+      "batchId": "d3d760e3-1952-4fc7-9cc7-a31b2c8d4fbe",
+      "capturedAt": "2026-09-28T15:20:46.336Z",
+      "frameUrl": "http://127.0.0.1:52478/index.html",
+      "id": "e2b0ee8a-6f80-442a-913e-dea81075e0d8",
+      "notes": "",
+      "originalHref": "/catalog/11",
+      "sourceTitle": "Meteor Research Lab — deterministic fixture",
+      "sourceUrl": "http://127.0.0.1:52478/index.html",
+      "tags": [],
+      "url": "http://127.0.0.1:52478/catalog/11",
+      "occurrences": [
+        {
+          "accessibleLabel": "",
+          "anchorText": "Catalog source 11",
+          "batchId": "d3d760e3-1952-4fc7-9cc7-a31b2c8d4fbe",
+          "capturedAt": "2026-09-28T15:20:46.336Z",
+          "frameUrl": "http://127.0.0.1:52478/index.html",
+          "id": "e2b0ee8a-6f80-442a-913e-dea81075e0d8",
+          "notes": "",
+          "originalHref": "/catalog/11",
+          "sourceTitle": "Meteor Research Lab — deterministic fixture",
+          "sourceUrl": "http://127.0.0.1:52478/index.html",
+          "tags": [],
+          "url": "http://127.0.0.1:52478/catalog/11"
+        }
+      ],
+      "occurrenceIds": [
+        "e2b0ee8a-6f80-442a-913e-dea81075e0d8"
+      ]
+    },
+    {
+      "accessibleLabel": "",
+      "anchorText": "Catalog source 12",
+      "batchId": "d3d760e3-1952-4fc7-9cc7-a31b2c8d4fbe",
+      "capturedAt": "2026-09-28T15:20:46.336Z",
+      "frameUrl": "http://127.0.0.1:52478/index.html",
+      "id": "ffe8b488-8ade-48ca-a5e2-eb76714f7b14",
+      "notes": "",
+      "originalHref": "/catalog/12",
+      "sourceTitle": "Meteor Research Lab — deterministic fixture",
+      "sourceUrl": "http://127.0.0.1:52478/index.html",
+      "tags": [],
+      "url": "http://127.0.0.1:52478/catalog/12",
+      "occurrences": [
+        {
+          "accessibleLabel": "",
+          "anchorText": "Catalog source 12",
+          "batchId": "d3d760e3-1952-4fc7-9cc7-a31b2c8d4fbe",
+          "capturedAt": "2026-09-28T15:20:46.336Z",
+          "frameUrl": "http://127.0.0.1:52478/index.html",
+          "id": "ffe8b488-8ade-48ca-a5e2-eb76714f7b14",
+          "notes": "",
+          "originalHref": "/catalog/12",
+          "sourceTitle": "Meteor Research Lab — deterministic fixture",
+          "sourceUrl": "http://127.0.0.1:52478/index.html",
+          "tags": [],
+          "url": "http://127.0.0.1:52478/catalog/12"
+        }
+      ],
+      "occurrenceIds": [
+        "ffe8b488-8ade-48ca-a5e2-eb76714f7b14"
+      ]
+    },
+    {
+      "accessibleLabel": "",
+      "anchorText": "Catalog source 13",
+      "batchId": "d3d760e3-1952-4fc7-9cc7-a31b2c8d4fbe",
+      "capturedAt": "2026-09-28T15:20:46.336Z",
+      "frameUrl": "http://127.0.0.1:52478/index.html",
+      "id": "30bc01f0-8101-439a-a4c0-4b00b86337f3",
+      "notes": "",
+      "originalHref": "/catalog/13",
+      "sourceTitle": "Meteor Research Lab — deterministic fixture",
+      "sourceUrl": "http://127.0.0.1:52478/index.html",
+      "tags": [],
+      "url": "http://127.0.0.1:52478/catalog/13",
+      "occurrences": [
+        {
+          "accessibleLabel": "",
+          "anchorText": "Catalog source 13",
+          "batchId": "d3d760e3-1952-4fc7-9cc7-a31b2c8d4fbe",
+          "capturedAt": "2026-09-28T15:20:46.336Z",
+          "frameUrl": "http://127.0.0.1:52478/index.html",
+          "id": "30bc01f0-8101-439a-a4c0-4b00b86337f3",
+          "notes": "",
+          "originalHref": "/catalog/13",
+          "sourceTitle": "Meteor Research Lab — deterministic fixture",
+          "sourceUrl": "http://127.0.0.1:52478/index.html",
+          "tags": [],
+          "url": "http://127.0.0.1:52478/catalog/13"
+        }
+      ],
+      "occurrenceIds": [
+        "30bc01f0-8101-439a-a4c0-4b00b86337f3"
+      ]
+    },
+    {
+      "accessibleLabel": "",
+      "anchorText": "Catalog source 14",
+      "batchId": "d3d760e3-1952-4fc7-9cc7-a31b2c8d4fbe",
+      "capturedAt": "2026-09-28T15:20:46.336Z",
+      "frameUrl": "http://127.0.0.1:52478/index.html",
+      "id": "56fb423b-d07c-41b8-ba1f-0df4db0a5fb2",
+      "notes": "",
+      "originalHref": "/catalog/14",
+      "sourceTitle": "Meteor Research Lab — deterministic fixture",
+      "sourceUrl": "http://127.0.0.1:52478/index.html",
+      "tags": [],
+      "url": "http://127.0.0.1:52478/catalog/14",
+      "occurrences": [
+        {
+          "accessibleLabel": "",
+          "anchorText": "Catalog source 14",
+          "batchId": "d3d760e3-1952-4fc7-9cc7-a31b2c8d4fbe",
+          "capturedAt": "2026-09-28T15:20:46.336Z",
+          "frameUrl": "http://127.0.0.1:52478/index.html",
+          "id": "56fb423b-d07c-41b8-ba1f-0df4db0a5fb2",
+          "notes": "",
+          "originalHref": "/catalog/14",
+          "sourceTitle": "Meteor Research Lab — deterministic fixture",
+          "sourceUrl": "http://127.0.0.1:52478/index.html",
+          "tags": [],
+          "url": "http://127.0.0.1:52478/catalog/14"
+        }
+      ],
+      "occurrenceIds": [
+        "56fb423b-d07c-41b8-ba1f-0df4db0a5fb2"
+      ]
+    },
+    {
+      "accessibleLabel": "",
+      "anchorText": "Catalog source 15",
+      "batchId": "d3d760e3-1952-4fc7-9cc7-a31b2c8d4fbe",
+      "capturedAt": "2026-09-28T15:20:46.336Z",
+      "frameUrl": "http://127.0.0.1:52478/index.html",
+      "id": "4eab92b7-f353-48f0-b542-8de5557c3807",
+      "notes": "",
+      "originalHref": "/catalog/15",
+      "sourceTitle": "Meteor Research Lab — deterministic fixture",
+      "sourceUrl": "http://127.0.0.1:52478/index.html",
+      "tags": [],
+      "url": "http://127.0.0.1:52478/catalog/15",
+      "occurrences": [
+        {
+          "accessibleLabel": "",
+          "anchorText": "Catalog source 15",
+          "batchId": "d3d760e3-1952-4fc7-9cc7-a31b2c8d4fbe",
+          "capturedAt": "2026-09-28T15:20:46.336Z",
+          "frameUrl": "http://127.0.0.1:52478/index.html",
+          "id": "4eab92b7-f353-48f0-b542-8de5557c3807",
+          "notes": "",
+          "originalHref": "/catalog/15",
+          "sourceTitle": "Meteor Research Lab — deterministic fixture",
+          "sourceUrl": "http://127.0.0.1:52478/index.html",
+          "tags": [],
+          "url": "http://127.0.0.1:52478/catalog/15"
+        }
+      ],
+      "occurrenceIds": [
+        "4eab92b7-f353-48f0-b542-8de5557c3807"
+      ]
+    },
+    {
+      "accessibleLabel": "",
+      "anchorText": "Catalog source 16",
+      "batchId": "d3d760e3-1952-4fc7-9cc7-a31b2c8d4fbe",
+      "capturedAt": "2026-09-28T15:20:46.336Z",
+      "frameUrl": "http://127.0.0.1:52478/index.html",
+      "id": "01a075d0-67ce-4e7e-a3d5-52075a1bb811",
+      "notes": "",
+      "originalHref": "/catalog/16",
+      "sourceTitle": "Meteor Research Lab — deterministic fixture",
+      "sourceUrl": "http://127.0.0.1:52478/index.html",
+      "tags": [],
+      "url": "http://127.0.0.1:52478/catalog/16",
+      "occurrences": [
+        {
+          "accessibleLabel": "",
+          "anchorText": "Catalog source 16",
+          "batchId": "d3d760e3-1952-4fc7-9cc7-a31b2c8d4fbe",
+          "capturedAt": "2026-09-28T15:20:46.336Z",
+          "frameUrl": "http://127.0.0.1:52478/index.html",
+          "id": "01a075d0-67ce-4e7e-a3d5-52075a1bb811",
+          "notes": "",
+          "originalHref": "/catalog/16",
+          "sourceTitle": "Meteor Research Lab — deterministic fixture",
+          "sourceUrl": "http://127.0.0.1:52478/index.html",
+          "tags": [],
+          "url": "http://127.0.0.1:52478/catalog/16"
+        }
+      ],
+      "occurrenceIds": [
+        "01a075d0-67ce-4e7e-a3d5-52075a1bb811"
+      ]
+    },
+    {
+      "accessibleLabel": "",
+      "anchorText": "Catalog source 17",
+      "batchId": "d3d760e3-1952-4fc7-9cc7-a31b2c8d4fbe",
+      "capturedAt": "2026-09-28T15:20:46.336Z",
+      "frameUrl": "http://127.0.0.1:52478/index.html",
+      "id": "735846f8-bf22-4395-aacc-e7c15e2f23a5",
+      "notes": "",
+      "originalHref": "/catalog/17",
+      "sourceTitle": "Meteor Research Lab — deterministic fixture",
+      "sourceUrl": "http://127.0.0.1:52478/index.html",
+      "tags": [],
+      "url": "http://127.0.0.1:52478/catalog/17",
+      "occurrences": [
+        {
+          "accessibleLabel": "",
+          "anchorText": "Catalog source 17",
+          "batchId": "d3d760e3-1952-4fc7-9cc7-a31b2c8d4fbe",
+          "capturedAt": "2026-09-28T15:20:46.336Z",
+          "frameUrl": "http://127.0.0.1:52478/index.html",
+          "id": "735846f8-bf22-4395-aacc-e7c15e2f23a5",
+          "notes": "",
+          "originalHref": "/catalog/17",
+          "sourceTitle": "Meteor Research Lab — deterministic fixture",
+          "sourceUrl": "http://127.0.0.1:52478/index.html",
+          "tags": [],
+          "url": "http://127.0.0.1:52478/catalog/17"
+        }
+      ],
+      "occurrenceIds": [
+        "735846f8-bf22-4395-aacc-e7c15e2f23a5"
+      ]
+    },
+    {
+      "accessibleLabel": "",
+      "anchorText": "Catalog source 18",
+      "batchId": "d3d760e3-1952-4fc7-9cc7-a31b2c8d4fbe",
+      "capturedAt": "2026-09-28T15:20:46.336Z",
+      "frameUrl": "http://127.0.0.1:52478/index.html",
+      "id": "8daf2c3b-7ad7-4456-8470-b0438b3985a7",
+      "notes": "",
+      "originalHref": "/catalog/18",
+      "sourceTitle": "Meteor Research Lab — deterministic fixture",
+      "sourceUrl": "http://127.0.0.1:52478/index.html",
+      "tags": [],
+      "url": "http://127.0.0.1:52478/catalog/18",
+      "occurrences": [
+        {
+          "accessibleLabel": "",
+          "anchorText": "Catalog source 18",
+          "batchId": "d3d760e3-1952-4fc7-9cc7-a31b2c8d4fbe",
+          "capturedAt": "2026-09-28T15:20:46.336Z",
+          "frameUrl": "http://127.0.0.1:52478/index.html",
+          "id": "8daf2c3b-7ad7-4456-8470-b0438b3985a7",
+          "notes": "",
+          "originalHref": "/catalog/18",
+          "sourceTitle": "Meteor Research Lab — deterministic fixture",
+          "sourceUrl": "http://127.0.0.1:52478/index.html",
+          "tags": [],
+          "url": "http://127.0.0.1:52478/catalog/18"
+        }
+      ],
+      "occurrenceIds": [
+        "8daf2c3b-7ad7-4456-8470-b0438b3985a7"
+      ]
+    },
+    {
+      "accessibleLabel": "",
+      "anchorText": "Catalog source 19",
+      "batchId": "d3d760e3-1952-4fc7-9cc7-a31b2c8d4fbe",
+      "capturedAt": "2026-09-28T15:20:46.336Z",
+      "frameUrl": "http://127.0.0.1:52478/index.html",
+      "id": "96803c71-dd45-4797-852b-ffeb71ac8ecb",
+      "notes": "",
+      "originalHref": "/catalog/19",
+      "sourceTitle": "Meteor Research Lab — deterministic fixture",
+      "sourceUrl": "http://127.0.0.1:52478/index.html",
+      "tags": [],
+      "url": "http://127.0.0.1:52478/catalog/19",
+      "occurrences": [
+        {
+          "accessibleLabel": "",
+          "anchorText": "Catalog source 19",
+          "batchId": "d3d760e3-1952-4fc7-9cc7-a31b2c8d4fbe",
+          "capturedAt": "2026-09-28T15:20:46.336Z",
+          "frameUrl": "http://127.0.0.1:52478/index.html",
+          "id": "96803c71-dd45-4797-852b-ffeb71ac8ecb",
+          "notes": "",
+          "originalHref": "/catalog/19",
+          "sourceTitle": "Meteor Research Lab — deterministic fixture",
+          "sourceUrl": "http://127.0.0.1:52478/index.html",
+          "tags": [],
+          "url": "http://127.0.0.1:52478/catalog/19"
+        }
+      ],
+      "occurrenceIds": [
+        "96803c71-dd45-4797-852b-ffeb71ac8ecb"
+      ]
+    },
+    {
+      "accessibleLabel": "",
+      "anchorText": "Source inside a frame",
+      "batchId": "d3d760e3-1952-4fc7-9cc7-a31b2c8d4fbe",
+      "capturedAt": "2026-09-28T15:20:46.336Z",
+      "frameUrl": "http://127.0.0.1:52478/frame.html",
+      "id": "71d072e8-d9e3-4f7c-b1a3-4c14984d5f43",
+      "notes": "",
+      "originalHref": "/frame-source",
+      "sourceTitle": "Meteor Research Lab — deterministic fixture",
+      "sourceUrl": "http://127.0.0.1:52478/index.html",
+      "tags": [],
+      "url": "http://127.0.0.1:52478/frame-source",
+      "occurrences": [
+        {
+          "accessibleLabel": "",
+          "anchorText": "Source inside a frame",
+          "batchId": "d3d760e3-1952-4fc7-9cc7-a31b2c8d4fbe",
+          "capturedAt": "2026-09-28T15:20:46.336Z",
+          "frameUrl": "http://127.0.0.1:52478/frame.html",
+          "id": "71d072e8-d9e3-4f7c-b1a3-4c14984d5f43",
+          "notes": "",
+          "originalHref": "/frame-source",
+          "sourceTitle": "Meteor Research Lab — deterministic fixture",
+          "sourceUrl": "http://127.0.0.1:52478/index.html",
+          "tags": [],
+          "url": "http://127.0.0.1:52478/frame-source"
+        }
+      ],
+      "occurrenceIds": [
+        "71d072e8-d9e3-4f7c-b1a3-4c14984d5f43"
+      ]
+    },
+    {
+      "accessibleLabel": "",
+      "anchorText": "The final source",
+      "batchId": "d3d760e3-1952-4fc7-9cc7-a31b2c8d4fbe",
+      "capturedAt": "2026-09-28T15:20:46.336Z",
+      "frameUrl": "http://127.0.0.1:52478/index.html",
+      "id": "37211d3f-390a-4f79-af80-2fc5e31fb3c9",
+      "notes": "",
+      "originalHref": "/bottom",
+      "sourceTitle": "Meteor Research Lab — deterministic fixture",
+      "sourceUrl": "http://127.0.0.1:52478/index.html",
+      "tags": [],
+      "url": "http://127.0.0.1:52478/bottom",
+      "occurrences": [
+        {
+          "accessibleLabel": "",
+          "anchorText": "The final source",
+          "batchId": "d3d760e3-1952-4fc7-9cc7-a31b2c8d4fbe",
+          "capturedAt": "2026-09-28T15:20:46.336Z",
+          "frameUrl": "http://127.0.0.1:52478/index.html",
+          "id": "37211d3f-390a-4f79-af80-2fc5e31fb3c9",
+          "notes": "",
+          "originalHref": "/bottom",
+          "sourceTitle": "Meteor Research Lab — deterministic fixture",
+          "sourceUrl": "http://127.0.0.1:52478/index.html",
+          "tags": [],
+          "url": "http://127.0.0.1:52478/bottom"
+        }
+      ],
+      "occurrenceIds": [
+        "37211d3f-390a-4f79-af80-2fc5e31fb3c9"
+      ]
+    },
+    {
+      "accessibleLabel": "",
+      "anchorText": "Normal",
+      "batchId": "d0ecfc9f-12db-4571-b924-dfb7ab3faf4a",
+      "capturedAt": "2026-09-28T15:20:46.465Z",
+      "frameUrl": "http://127.0.0.1:52478/empty.html",
+      "id": "ef7ea78d-9f7c-4924-a693-52c24a54b8f1",
+      "notes": "",
+      "originalHref": "/normal",
+      "sourceTitle": "Empty fixture",
+      "sourceUrl": "http://127.0.0.1:52478/empty.html",
+      "tags": [],
+      "url": "http://127.0.0.1:52478/normal",
+      "occurrences": [
+        {
+          "accessibleLabel": "",
+          "anchorText": "Normal",
+          "batchId": "d0ecfc9f-12db-4571-b924-dfb7ab3faf4a",
+          "capturedAt": "2026-09-28T15:20:46.465Z",
+          "frameUrl": "http://127.0.0.1:52478/empty.html",
+          "id": "ef7ea78d-9f7c-4924-a693-52c24a54b8f1",
+          "notes": "",
+          "originalHref": "/normal",
+          "sourceTitle": "Empty fixture",
+          "sourceUrl": "http://127.0.0.1:52478/empty.html",
+          "tags": [],
+          "url": "http://127.0.0.1:52478/normal"
+        }
+      ],
+      "occurrenceIds": [
+        "ef7ea78d-9f7c-4924-a693-52c24a54b8f1"
+      ]
+    },
+    {
+      "accessibleLabel": "",
+      "anchorText": "Email subject",
+      "batchId": "d0ecfc9f-12db-4571-b924-dfb7ab3faf4a",
+      "capturedAt": "2026-09-28T15:20:46.465Z",
+      "frameUrl": "http://127.0.0.1:52478/empty.html",
+      "id": "af185d95-cbf5-4ce9-8670-c9a4845a4349",
+      "notes": "",
+      "originalHref": "mailto:?subject=Hello",
+      "sourceTitle": "Empty fixture",
+      "sourceUrl": "http://127.0.0.1:52478/empty.html",
+      "tags": [],
+      "url": "mailto:?subject=Hello",
+      "occurrences": [
+        {
+          "accessibleLabel": "",
+          "anchorText": "Email subject",
+          "batchId": "d0ecfc9f-12db-4571-b924-dfb7ab3faf4a",
+          "capturedAt": "2026-09-28T15:20:46.465Z",
+          "frameUrl": "http://127.0.0.1:52478/empty.html",
+          "id": "af185d95-cbf5-4ce9-8670-c9a4845a4349",
+          "notes": "",
+          "originalHref": "mailto:?subject=Hello",
+          "sourceTitle": "Empty fixture",
+          "sourceUrl": "http://127.0.0.1:52478/empty.html",
+          "tags": [],
+          "url": "mailto:?subject=Hello"
+        }
+      ],
+      "occurrenceIds": [
+        "af185d95-cbf5-4ce9-8670-c9a4845a4349"
+      ]
+    },
+    {
+      "accessibleLabel": "",
+      "anchorText": "Compose email",
+      "batchId": "d0ecfc9f-12db-4571-b924-dfb7ab3faf4a",
+      "capturedAt": "2026-09-28T15:20:46.465Z",
+      "frameUrl": "http://127.0.0.1:52478/empty.html",
+      "id": "4af924fc-198c-44be-92aa-a9864a9305a1",
+      "notes": "",
+      "originalHref": "mailto:",
+      "sourceTitle": "Empty fixture",
+      "sourceUrl": "http://127.0.0.1:52478/empty.html",
+      "tags": [],
+      "url": "mailto:",
+      "occurrences": [
+        {
+          "accessibleLabel": "",
+          "anchorText": "Compose email",
+          "batchId": "d0ecfc9f-12db-4571-b924-dfb7ab3faf4a",
+          "capturedAt": "2026-09-28T15:20:46.465Z",
+          "frameUrl": "http://127.0.0.1:52478/empty.html",
+          "id": "4af924fc-198c-44be-92aa-a9864a9305a1",
+          "notes": "",
+          "originalHref": "mailto:",
+          "sourceTitle": "Empty fixture",
+          "sourceUrl": "http://127.0.0.1:52478/empty.html",
+          "tags": [],
+          "url": "mailto:"
+        }
+      ],
+      "occurrenceIds": [
+        "4af924fc-198c-44be-92aa-a9864a9305a1"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+PASS Fresh profile, no optional grants; seeded a collection with a colon, quotes and a slash in its name
+PASS Every format downloads under the default name the Saves as line shows, with no colon
+PASS CSV, TSV, Markdown, HTML and URL list downloads equal the packaged 0.2.2 export code for the same rows
+PASS JSON download is {about, rows}; rows equal the 0.2.2 array and about names the time, collection, count, view and version
+PASS Downloaded workbook: bold frozen header, filters, fitted widths, exact hyperlinks, text-only cells and an About sheet (openpyxl)
+PASS A typed File name overrides the pattern for a download, is not doubled, follows the format, and clearing it returns to the pattern
+PASS Name pattern settings save a safe prefix (and say so), turn the date off, use date only, and persist across reopening
+PASS The about block records the grouping, sort, search and selection behind an export
+PASS A typed name is dropped when the collection changes
+PASS Bookmark access is requested only on choosing Existing folder or pressing Bookmark; declining is explained; the background refuses without access
+PASS Folder picker (stand-in background answers): paths listed with repeats told apart, search by words, choose, skip on by default, and saved/skipped/failed counts
+PASS No horizontal overflow at 320 and 390 px; new controls labeled; measured text contrast at least 4.5:1 in light and dark
+page.evaluate: DOMException: No valid data on clipboard.
+    at clipboard (<repo>/tests/exports-browser.mjs:353:30)
+    at <repo>/tests/exports-browser.mjs:366:24 {
+  log: [],
+  name: 'Error'
+}

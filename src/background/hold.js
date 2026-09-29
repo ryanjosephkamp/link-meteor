@@ -2,6 +2,7 @@
 // these sites" list), which trigger it uses, and keeping saved settings honest about what Chrome
 // still grants. The contracts are in docs/CONTRACTS.md ("All-sites access and the hold key").
 import {reduceState} from '../core/model.js';
+import {cardTheme} from '../core/themes.js';
 import {serial, readState, writeState} from './store.js';
 import {ordinaryUrl} from './urls.js';
 
@@ -10,6 +11,12 @@ const SCRIPT_PREFIX = 'meteor-hold-';
 const SCRIPT = {js: ['content/capture.js'], runAt: 'document_idle', persistAcrossSessions: true};
 // A saved change to any of these re-registers the page script and reconfigures open tabs.
 export const HOLD_FIELDS = ['holdScope', 'holdOrigins', 'holdExceptions', 'holdKey', 'holdTrigger'];
+// The page script also follows these (0.4.0): the card's theme and what a drag does. A change
+// reconfigures open tabs; the registration itself only changes with HOLD_FIELDS.
+export const CAPTURE_FIELDS = ['afterDrag', 'afterDragFormat', 'contentOnly', 'skipSaved'];
+const PAGE_FIELDS = [...HOLD_FIELDS, 'theme', 'appearance', ...CAPTURE_FIELDS];
+// What the page script needs besides the hold settings: the card theme and the capture settings.
+export const pageSettings = settings => ({card: cardTheme(settings.theme, settings.appearance), capture: Object.fromEntries(CAPTURE_FIELDS.map(key => [key, settings[key]]))});
 
 let holdQueue = Promise.resolve();
 // Hold operations run one at a time, so registrations never interleave.
@@ -86,7 +93,7 @@ async function configureTabs(settings, allSites, inject) {
     if (enabled && !tab.incognito && !tab.discarded && (inject === 'all' || inject.includes(origin))) {
       try { await chrome.scripting.executeScript({target: {tabId: tab.id}, files: ['content/capture.js']}); } catch { /* the page loads it on its next visit */ }
     }
-    try { await chrome.tabs.sendMessage(tab.id, {type: 'content.configure', holdKey: settings.holdKey, holdTrigger: settings.holdTrigger, enabled}); }
+    try { await chrome.tabs.sendMessage(tab.id, {type: 'content.configure', holdKey: settings.holdKey, holdTrigger: settings.holdTrigger, enabled, ...pageSettings(settings)}); }
     catch {
       // No page script answered. A page that loaded while the extension was starting can miss the
       // registered script, so load it where hold-drag should run; the fresh copy configures itself.
@@ -149,7 +156,7 @@ let settingsCache = null, settingsCachedAt = 0;
 // re-registers scripts and reconfigures open tabs.
 export function followHoldWrites(previous, next) {
   settingsCache = next?.settings || null; settingsCachedAt = Date.now();
-  const changed = HOLD_FIELDS.some(key => JSON.stringify(previous?.settings?.[key]) !== JSON.stringify(next?.settings?.[key]));
+  const changed = PAGE_FIELDS.some(key => JSON.stringify(previous?.settings?.[key]) !== JSON.stringify(next?.settings?.[key]));
   if (changed) requestSync();
 }
 
@@ -160,7 +167,7 @@ export async function grantedSettings() {
   const allSites = await allSitesGranted();
   const holdOrigins = [];
   for (const origin of settings.holdOrigins) if (await originGranted(origin)) holdOrigins.push(origin);
-  return {...settings, holdOrigins, holdScope: settings.holdScope === 'all' && !allSites ? 'sites' : settings.holdScope};
+  return {...settings, holdOrigins, holdScope: settings.holdScope === 'all' && !allSites ? 'sites' : settings.holdScope, card: pageSettings(settings).card};
 }
 
 // hold.scope: 'all' needs Chrome's all-sites access, requested by the page in the same click.

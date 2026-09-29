@@ -308,3 +308,333 @@ The service worker entry `background.js` owns capture, routing and Chrome events
 - `bookmarks.js`, `backup.js` and `hold.js` each export `workbenchMessages`, a table of workbench-only message handlers. The entry routes them and refuses a type claimed twice.
 
 The release contains the fixed files named in `scripts/release-files.mjs`, plus any `.js` or `.css` modules in `ui/workbench/` and `background/`. Any other file in `src/` stops the build.
+
+## Added in 0.4.0
+
+These contracts were written before the 0.4.0 features were built. [ACCEPTANCE.md](ACCEPTANCE.md) records what a release contains and how it was tested.
+
+### Settings: more additive schema-v1 fields
+
+| Field | Type and default | Meaning |
+| --- | --- | --- |
+| `theme` | one of `THEME_IDS`, `'meteor'` | The look of the workbench, the on-page card and the toolbar icon. |
+| `appearance` | `'system'`, `'light'` or `'dark'`, `'system'` | Light or dark for the workbench and the on-page card. System follows the computer. |
+| `afterDrag` | `'card'`, `'copy'` or `'add'`, `'card'` | What releasing a region selection does: show the card, copy right away, or add right away with Undo. |
+| `afterDragFormat` | `'tsv'`, `'text'`, `'markdown'` or `'rich'`, `'tsv'` | The copy format for `afterDrag: 'copy'`. |
+| `contentOnly` | boolean, `false` | Leave out links in page navigation, headers, footers and sidebars. |
+| `skipSaved` | boolean, `false` | When adding, skip links whose URL the destination collection already holds. |
+
+`migrateState` fills absent fields as before. **Backup format 2:** `BACKUP_FORMAT_VERSION` is 2, so 0.3.0 refuses a 0.4.0 backup with an update message instead of dropping these settings. `readBackup` still reads format 1 files; missing settings take their defaults.
+
+### Themes (`src/core/themes.js`, pure data)
+
+- `THEME_IDS`: `meteor`, `comet`, `aurora`, `ember`, `nebula`, `graphite`, `contrast` (High contrast).
+- `THEMES[id]` has `name`, `blurb` and `swatch`, plus:
+  - `light` and `dark`: every workbench token in `WORKBENCH_TOKENS` (the custom properties of `ui/workbench.css`);
+  - `card.light` and `card.dark`: every role in `CARD_ROLES` (`ground`, `ground2`, `strong`, `ink`, `soft`, `muted`, `faint`, `warn`, `accent`, `accent-hover`, `on-accent`, `link`, `link-hover`, `focus`);
+  - `highlight` and `edge`: the selection box and matched links, the same in both schemes.
+- **Meteor** is the 0.3.0 look, value for value (`tests/themes.test.mjs` checks it against the stylesheet and the page script).
+- `themeCss(id, scheme)` returns `:root{color-scheme:…;--token:…}` with every token, so it fully replaces the stylesheet's own values in either scheme.
+- `cardVars(id, scheme)` returns the card's custom properties (`--k-<role>`, `--k-hl`, `--k-edge`, `--k-shadow-45`, `--k-shadow-25`, `color-scheme`).
+- `cardTheme(id, appearance)` returns `{theme, appearance, light, dark}`.
+- An unknown id falls back to Meteor.
+
+### The page script's colors and settings
+
+- **Colors.** The card's style names every color by role: `:host` defaults are Meteor's dark card, and the theme's `cardVars` override them on the host element. The selection box and matched links use `--k-hl` and `--k-edge`, with the same dark navy ring on every page.
+- **Scheme.** The card picks `light` or `dark` from `appearance`, or for System from `prefers-color-scheme`, and follows a change while it is open.
+- **What carries the theme.** `settings.get` adds `card` (`cardTheme(settings.theme, settings.appearance)`). `content.configure` adds `card` and `capture` (`{afterDrag, afterDragFormat, contentOnly, skipSaved}`).
+- **When it's sent.** A saved change to `theme`, `appearance` or a capture setting reconfigures open tabs, as hold settings do. Script registration changes only with the hold fields.
+
+### Clipboard: rich links
+
+`core/export.js` exports `richLinks(rows)`, which returns `{html, text}`:
+- `html` is a `<ul>` of `<a href>` items with escaped anchor text; an empty anchor shows its URL;
+- `text` has one link per line, as `anchor text (URL)`, or just the URL;
+- only HTTP(S), `mailto:` and `tel:` URLs are accepted.
+
+Callers write a `ClipboardItem` with `text/html` and `text/plain`, and fall back to plain text.
+
+### Messages
+
+- **`capture.saved`** `{collectionId?, urls}` returns `{saved: string[]}`: which of those URLs the collection (default: the active one) already holds. It returns nothing else about the collection.
+- **`capture.commit`** accepts `skipSaved?: boolean`. It returns `{count, skipped, …}`: skipped links are left out, and `count` is what was added.
+- **`capture.copy`** accepts `format: 'rich'` and returns `{text, html}`.
+- **`capture.undoAdd`** `{collectionId, batchId}` removes the occurrences that one add created. It is refused if the collection no longer holds exactly that batch.
+- **`capture.preference`** `{contentOnly?, skipSaved?}` returns `{contentOnly, skipSaved}`. Page. It saves only those two settings, each a boolean, at least one; any other field is refused.
+- **`capture.includeLeftOut`** `{batchId}` returns `{state, count, skipped, total, collectionId, name}`. Workbench. It adds the navigation links that *Capture this page* left out (below) to the collection that capture went to.
+- **`diagnostics.get`** (workbench only) returns a JSON-safe object:
+  - version, the user agent and brands, platform and language;
+  - settings, with `holdOrigins` and `holdExceptions` reported as counts;
+  - permission booleans for `tabs`, `bookmarks`, `tabGroups`, `downloads` (0.4.0) and all sites, plus the count of per-site origins;
+  - script registrations (count and scope);
+  - storage bytes in use, collection count, total link count, and the time.
+
+  It never includes URLs, origins, page titles, notes, tags or collection names.
+
+### Workbench extras, as built
+
+**`diagnostics.get`** is answered by `background/diagnostics.js`, which exports `workbenchMessages` like `bookmarks.js`, `backup.js` and `hold.js`. It returns:
+
+```js
+{createdAt,                      // ISO time
+ version,                        // the manifest's
+ browser: {userAgent, brands: [{brand, version}], mobile, platform, os, arch, language, uiLanguage},
+ settings: {holdKey, holdOrigins, holdTrigger, holdScope, holdExceptions, welcomeSeen, exportPrefix,
+   exportTimestamp, exportTimestampFormat, theme, appearance, afterDrag, afterDragFormat,
+   contentOnly, skipSaved, otherFields} | null,
+ permissions: {tabs, bookmarks, tabGroups, downloads, allSites, siteOriginCount},
+ scripts: {count, scope: 'none'|'sites'|'all'|'other'|'mixed'|'unknown', matchCount, excludeCount, matchesSettings},
+ storage: {bytesInUse, stateBytes, restoreUndoBytes},
+ data: {readable, collections, links, undoLinks}}
+```
+
+- Every value is a number, a boolean, `null`, a fixed choice or a fact about the browser. `holdOrigins` and `holdExceptions` are counts, and `exportPrefix` is its length, because they hold the person's own text. A saved value outside its fixed choices reads `'invalid'`, never the value; a field that isn't saved reads `'missing'`. `otherFields` counts settings a later version saved, without their names.
+- `SETTING_REPORTS` in `background/diagnostics.js` says how each setting is reported. A new setting needs an entry there; `tests/diagnostics.test.mjs` fails otherwise.
+- `siteOriginCount` counts granted origins other than the two all-sites patterns. `scripts` counts every registration and its match and exclude patterns, never the patterns themselves. `matchesSettings` says whether the registrations are what the saved settings and Chrome's grants call for.
+- When the saved state can't be read, `settings` is `null`, `data.readable` is false and its counts are `null`. A Chrome call that fails leaves `null` (or `false` for a permission) instead of failing the request.
+
+**Copy as rich links** (`#copy-rich`, the fourth button in the Export panel's copy grid) uses `targetRows()`, like the other copies, and `richLinks()`. It writes a `ClipboardItem` with `text/html` and `text/plain`. The status reads "Copied 24 links as rich links. Paste into Google Docs, Word or Notion to keep them clickable." If Chrome refuses the item, it writes the plain text alone and says the links won't paste as clickable links.
+
+**Copy diagnostics** (`#copy-diagnostics`, described by `#diagnostics-help`, in About and help) copies `diagnostics.get` as JSON indented by two spaces, with a final newline.
+
+**Website links carry the theme.** About and help's links to the Link Meteor website (the guide and the home page) are marked `data-site-link`. On every render they add `?theme=<id>` from `settings.theme`, except for Meteor or an unknown theme. The other links never change.
+
+### Behaviors
+
+- **After a drag:**
+  - `card` is the 0.3.0 card;
+  - `copy` copies the selection at once in `afterDragFormat` and shows a small notice with *Show links*, which opens the card;
+  - `add` commits at once to the destination and shows a notice with *Undo* (`capture.undoAdd`) and *Show links*.
+
+  Escape closes the notice.
+- **Content links only:**
+  - A link is page chrome when it sits inside `nav` or `aside`, inside `[role=navigation]`, `[role=banner]`, `[role=contentinfo]` or `[role=complementary]`, or inside a page-level `header` or `footer` (one that is not inside an `article`, `main` or `section`, as HTML maps them to banner and contentinfo). A post's own header and footer are content.
+  - With `contentOnly`, the card starts with those links unticked and says how many, with *Include them*. *Capture this page* leaves them out and reports how many.
+  - Captured occurrences are otherwise unchanged.
+- **Card filters:** chips (All, Other sites, PDFs, Same site) untick the preview's links that don't match. They are not saved.
+- **Already saved:** the card asks `capture.saved` for its destination and marks matching rows *Saved*. A *Skip saved* checkbox follows `skipSaved`.
+- **Workbench:**
+  - `<html>` gets `data-theme` and `data-scheme`, and a style element holds `themeCss`;
+  - the last theme and scheme are cached in `localStorage` for the first paint: the key `linkMeteorTheme` holds `{theme, scheme, appearance}`, and the module script is render-blocking (`blocking="render"`), so the first frame already has them. For System, the scheme is read from `prefers-color-scheme` at startup and followed while the page is open;
+  - Settings gains Appearance (theme and System, Light or Dark) and After a drag (with the two capture defaults);
+  - the Export panel gains *Copy as rich links*;
+  - About and help gains *Copy diagnostics*.
+- **Toolbar icon:** drawn with `OffscreenCanvas` from the mark in the theme's `highlight` color, and set with `chrome.action.setIcon` at startup and when the theme changes. The manifest's icons stay Meteor.
+  - The image data is 16 and 32 px, with the geometry of `assets/brand/icon-16.svg` and `icon.svg`: the tile in the theme's light `mark-tile`, and the trail and head in `highlight`.
+  - Meteor sets the manifest's `action.default_icon` paths, so it is the packaged icon exactly.
+  - It is set on `runtime.onStartup`, on `runtime.onInstalled` (install and update), and after any saved write that changes `theme`, including a restore.
+- **Website:** the same palettes as CSS, a theme menu in the header kept in `localStorage`, and `?theme=<id>`, which About and help's links add. There is no `externally_connectable`: the site never detects the extension.
+  - `site/assets/css/site.css` has a `:root[data-theme="<id>"]` block per theme and scheme, derived from `THEMES`; `tests/themes.test.mjs` checks them. Meteor is the site's own `:root`.
+  - The header's inline script sets `data-theme` before first paint: a known `?theme=<id>` wins and is kept (key `linkMeteorSiteTheme`), then the kept choice, then Meteor. An unknown id is ignored.
+  - The menu is a menu button with `menuitemradio` items. Choosing a theme keeps it and removes `?theme=` from the address.
+
+### The capture card and Capture this page, as built
+
+**Messages**
+
+- `capture.saved` takes any sender (a page or the workbench). `urls` is an array of at most 20,000 strings, compared exactly with saved `url` values; the answer is unique and in the order asked. A chosen collection that no longer exists is an error.
+- `capture.commit` returns `{state, count, skipped, batchId, collectionId, warning}`. `batchId` is the new occurrences' batch, or `''` when nothing was added; `collectionId` is the destination. An absent `skipSaved` skips nothing, as in 0.3.0. Repeats of one URL within the same add are not "already saved".
+- `capture.copy` with `format: 'rich'` returns `richLinks()` of the ticked links. Any other format is refused.
+- `capture.undoAdd` is a page message, accepted only from the tab that made the add, and returns `{count}`. "Exactly that batch" means every occurrence the add created is still in that collection, with no notes or tags added. The workbench's removal Undo is kept. Each add is undone at most once.
+- `capture.run`: each result gains `leftOut` (navigation links left out) and `skipped` (links already saved), both numbers. The page script's `scan()` marks each candidate in page chrome with `pageChrome: true`; with `contentOnly`, those are left out. `skipSaved` applies to *Capture this page* too.
+- `capture.includeLeftOut` refuses a batch that isn't the one kept, and says so. With `skipSaved`, links already saved are skipped. Afterwards the kept links are removed, and the kept report gains `leftOutIncluded` (the number added), so a view that shows it later doesn't offer Include them again. A destination that no longer exists adds nothing and keeps the links.
+
+**Storage keys (session)**
+
+| Key | Contents |
+| --- | --- |
+| `linkMeteorLeftOut` | `{batchId, collectionId, total, links: Link[], createdAt}`: the latest *Capture this page*'s left-out links, at most 5,000 of `total`. The next capture replaces it, or removes it when nothing was left out. |
+| `linkMeteorRecentAdds` | `[{tabId, collectionId, batchId, count}]`: the 20 most recent adds from pages, for `capture.undoAdd`. |
+
+**The card**
+
+- **Page chrome** is checked through open shadow roots (a link counts when any shadow host around it is in page chrome) and same-origin frames (a frame inside page chrome makes all its links page chrome). The rule counts every `header` and `footer`, including those inside an `article`.
+- **After a drag** uses the links the card would start with ticked, so with `contentOnly` the navigation links are left out of the copy or the add. When none would be ticked, the card opens instead.
+- **The notice** (`.notice`) is a panel in the card's shadow root, in the card's colors, at the card's corner. Its text (`.notice-text`, a status region) reads "Copied 12 links as a table" (`as URLs`, `as Markdown`, `as rich links`, or `as plain text` when rich copy fell back), plus "Left out 9 navigation links." when any were; or "Added 12 links to “Thesis sources”." (with "; 4 were already saved" when some were skipped). Buttons: `.notice-undo` (after an add), `.notice-show` (*Show links*) and `.notice-close`. It closes itself 8 seconds after it last appeared, lost focus or lost the pointer, and never while it has focus or the pointer is over it. A new drag replaces it. Undo there says "Removed 12 links from “Thesis sources”." and lets the card add again; *Show links* after an add shows the receipt with an Undo button.
+- **Filters** (`.chips`, buttons with `aria-pressed` and a check mark when chosen) are one choice at a time. Choosing one ticks again what the previous filter unticked, then unticks what doesn't match; choosing it again, or *All*, returns to All. Ticks changed by hand stay as they are. A site is the host name without a leading `www.`; *Same site* and *Other sites* count only HTTP(S) links against the page's host; *PDFs* are links whose path ends in `.pdf`, in any case. Filters apply to every selected link, including those past the preview's first 1,000.
+- **Left out** (`.leftout`): "Left out 9 navigation links." with `.leftout-include` (*Include them*), then "Included 9 navigation links." with `.leftout-remember` (*Always include them*, shown while `contentOnly` is on), which sends `capture.preference {contentOnly: false}`.
+- **Already saved:** matching rows get a `.tag` reading "Saved". The *Skip saved* row (`.skip`, checkbox `.skip-saved`) shows only while some ticked links are already saved, and says how many. When the checkbox differs from the setting, `.skip-remember` (*Make this the default*) sends `capture.preference {skipSaved}`. With links skipped, the receipt reads "Added 8 links to “X”; 4 were already saved."; otherwise the card's receipt still reads "Saved 12 links to “X”."
+- **Copy as rich links** (`.m-rich`, shortcut L) writes a `ClipboardItem`. Where the async clipboard is unavailable, as on plain-HTTP pages, a copy event carries both types, and only then plain text.
+
+**The workbench's capture report**
+
+- The report ends with a line (`.report-left-out`): "Left out 9 navigation links." with *Include them*, then "Included 9 navigation links."; and "Skipped 4 links already saved." when any were. With several pages, each page's result also says how many.
+
+## Added in 0.4.0 release candidate 2
+
+Five additions from the owner's review of release candidate 1. As before, [ACCEPTANCE.md](ACCEPTANCE.md) records what was tested.
+
+### Custom columns (data)
+
+- A collection may have `fields: [{id, name}]`, up to `MAX_CUSTOM_FIELDS` (20):
+  - `id` is `f-…`, generated by `fields.add`;
+  - `name` is trimmed, spaces collapsed, at most 60 characters, and unique in the collection, ignoring case.
+- A link may have `fields: {fieldId: text}`: only column ids as keys; plain text up to `MAX_FIELD_VALUE` (2,000 characters); empty values dropped. A link with no values has no `fields` key.
+- Both are optional: absent means none. A 0.3.0 state needs no migration, and 0.3.0 keeps both when it writes. Values for a column that no longer exists are ignored, never an error.
+- **Reducer actions:**
+  - `fields.add {collectionId?, name}`;
+  - `fields.rename {collectionId?, fieldId, name}`;
+  - `fields.remove {collectionId?, fieldId}` removes the column and every value in it. The workbench keeps what it removed for Undo.
+  - `fields.restore {collectionId?, field, index, values: {linkId: text}}` puts a removed column back in its place, with its values.
+  - `fields.fill {collectionId?, fieldId, ids, value}` sets one value on many links; `''` clears it.
+  - `link.update` accepts `patch.fields: {fieldId: text}`, merged into the link's values; `''` clears one. Only the collection's own columns are accepted.
+- **Search, exports and backups:**
+  - `queryLinks` searches custom values.
+  - `makeExport(rows, {…, fields})` exports custom columns as keys `field:<id>`, headed by their names, with spreadsheet formula protection as for every column.
+  - Backup format 2 keeps columns and values. Merge joins a backup's columns to local ones by name, ignoring case; the rest are added while there is room, and each link's values follow. The summary counts `fieldsAdded` and `fieldsDropped`. Replace takes the backup's columns as they are.
+
+### Custom columns in the workbench, as built
+
+- **The collection editor** (`#fields-editor`, after the details form in `#collection-editor`) lists the columns in order. Each `.field-item` shows the name, how many links hold a value, *Rename* and *Remove*. `#fields-count` reads "3 of 20".
+  - Adding: `#field-add`, with `#field-new` (at most 60 characters) and `#field-add-button`. `#field-add-help` says why a name can't be used (empty, already used ignoring case, or 60 characters reached). At 20 columns the field is disabled and says why.
+  - Rename turns the row into a small form (`input[data-field-action="name"]`, help `#field-rename-help`). Enter saves; Escape cancels.
+  - Remove asks first (`#field-remove-confirm`, `#field-remove-confirm-text`, `#field-remove-confirm-yes`, `#field-remove-confirm-no`) and says how many links hold a value. Afterwards `#fields-status` (`#fields-status-text`, `#field-undo`) and the notice offer Undo, which sends `fields.restore` with the column, its place and its values. The page keeps only the last removal, and only while it is open.
+- **Link details:** after Note and Tags, one text field per column, labeled with its name (`input[data-link-field="field:<id>"]`). Save sends them with the note and tags in one `link.update`, whose `patch.fields` carries every column. A value over 2,000 characters is explained under the fields (`.field-limit`) and not saved. A single link's row shows its filled values after its note (`.field-value`).
+- **Fill for selected links** (`#fill-fields`, in the list toolbar) shows while the view has selected links and the collection has a column. It opens `#fill-panel`: `#fill-field`, `#fill-value`, `#fill-help` (how many values it replaces), `#fill-apply` and `#fill-cancel`.
+  - It sends one `fields.fill` for the selected links in the view, as Remove uses them. An empty value clears the column.
+  - The notice's Undo puts each link's earlier value back, with one `fields.fill` per distinct earlier value.
+- **Export columns:**
+  - *Add a column…* lists the built-in columns, then a "Custom columns" group with the collection's columns not yet chosen, ending with *New custom column…* (value `new-custom-column`, disabled at 20).
+  - *New custom column…* opens `#new-column` (`#new-column-name`, `#new-column-add`, `#new-column-cancel`, `#new-column-help`). It adds the column with `fields.add` and appends it to the export.
+  - Export columns are keys `field:<id>`. When the collection changes or a column is removed, columns that no longer exist are dropped. Downloads and Copy table pass the collection's `fields` to `makeExport`.
+- **JSON exports:** each row keeps its `fields`. When the collection has columns, `about` gains `fields: [{id, name}]`; otherwise it is unchanged.
+- **Restore preview:** a merge lists "Adds 2 custom columns to joined collections" and "1 custom column can't fit, because a collection holds at most 20; its values are left out" (`.restore-fields-dropped`). The merge notice adds "; added 2 custom columns" and "; 1 custom column didn't fit".
+- **Code:** `ui/workbench/fields.js` holds the editor's column list, the details fields, Fill for selected links and the shared name and length rules. `collections.js`, `review.js` and `export.js` call it.
+
+### Save tabs as links
+
+- The workbench's capture area gets a choice of what to capture:
+  - *Links in the pages* (default, as before);
+  - *The tabs themselves*, which makes one link per tab for the current scope (This page, Pick tabs, This window, All windows).
+- **Each saved tab:**
+  - `anchorText` is the tab's title, with whitespace collapsed; it is the browser's own title and nothing is fetched;
+  - `url`, `originalHref` and `sourceUrl` are the tab's address, and `sourceTitle` its title;
+  - `frameUrl` and `accessibleLabel` are empty;
+  - one `batchId` for the save.
+- Tabs that aren't HTTP(S) pages are skipped and counted, and so is a repeated address within one save. `skipSaved` applies.
+- **Message:** `capture.tabs {scope, tabIds?, collectionId?}` returns a report like `capture.run`'s, with `saved`, `skipped` and `unsupported` counts. The tabs permission is needed only where capture already needs it (picking tabs, a window, all windows).
+
+**As built** (`background/tabs.js`, and the capture area in `ui/workbench/capture.js`):
+
+- `capture.tabs` is a workbench message and returns `{state, report}`.
+  - `scope` is `'current'`, `'selected'`, `'window'` or `'all'`. `tabIds` (integers, at most 20,000, each taken once) are the tabs to save.
+  - Without `tabIds`: `'current'` is the target tab, found as for `capture.run`; `'window'` is the focused normal window's tabs; `'all'` is every normal window's tabs; `'selected'` is refused.
+  - A chosen collection that no longer exists is an error, and nothing is saved.
+- The report is `{kind: 'tabs', batchId, results, capturedCount, saved, skipped, repeated, unsupported}`, kept at `linkMeteorCaptureReport` like a capture's. `capturedCount` equals `saved`. Each result has `capture.run`'s shape:
+  - a saved tab is `success` with `count: 1`;
+  - a tab skipped as a repeated address or as already saved is `success` with `count: 0`, `skipped: 1` and the reason in `warning`;
+  - a tab that isn't an HTTP(S) page is `unsupported`, one whose address Chrome hides is `denied`, and a closed tab is `error`.
+
+  `skipped` counts repeated and already saved tabs; `repeated` counts the repeated ones.
+- **The workbench.** `#capture-what` is a radio group of `input[name=capture-what]` (`links`, the default, and `tabs`) under the scope. Like the scope, the choice lasts while the view is open.
+  - With `tabs`, the capture button reads "Save this tab as a link", "Save 45 tabs as links" or "Save selected tabs as links". The count leaves out tabs known not to be web pages; the preview says how many.
+  - The report's title reads "Saved 45 tabs as links", followed by "2 skipped: not web pages" (and "already saved", "a repeated address", "hidden by Chrome", "closed before saving"). It lists only the tabs that weren't saved, each with its reason, and offers *Show only these links*.
+  - Choosing Pick tabs or a window scope asks for tab access, as before. A save that still lacks it asks in the save click.
+- **The open intent** (`linkMeteorOpenIntent`) may also hold `what: 'tabs'` and `scope`. The view then chooses The tabs themselves and that scope, says why tab access is needed (with a notice whose button saves), and focuses the capture button. The menus write it (below).
+
+### Menus
+
+Chrome shows several items from one extension under a "Link Meteor" submenu, so titles don't repeat the name.
+
+| Right-click on (`contexts`) | Items |
+| --- | --- |
+| A link (`link`) | *Add link to “name”* (the active collection's name, updated when it changes) · *Copy link text + URL* · *Download linked file* (`targetUrlPatterns`: the file types below) · *Select a region* |
+| Selected text (`selection`) | *Capture links in the selection* · *Select a region* |
+| The page (`page`) | *Select a region* · *Capture this page* · *Save this tab as a link* |
+| The toolbar icon (`action`) | *Save this tab as a link* · *Save all tabs in this window as links* · *Open the full view* |
+
+- **The link's own text.** Chrome gives a menu click the link's address, not its text. The page script records the link under the last right-click (a `contextmenu` listener). After a menu click, which grants temporary access to the tab, the background loads the page script if needed and asks `content.contextLink {url}`. The answer is that link's captured fields, or the first link in the page with that address. The saved anchor text stays exact.
+- **The selection.** `content.selectionLinks` returns the captured fields of every link that intersects the page's selection, across open shadow roots and same-origin frames as capture does.
+- **Feedback.** Saving from a menu uses the page's notice: "Added 1 link to “Thesis sources”", with *Undo* (`capture.undoAdd`) and *Show links*. *Copy link text + URL* copies two tab-separated columns with a header, like the card.
+
+**As built** (`background/menus.js`, and the page script's menu section):
+
+- **Items.** The IDs are `meteor-add-link`, `meteor-copy-link`, `meteor-selection`, `meteor-region` and `meteor-page` (both kept from 0.3.0), `meteor-save-tab` (contexts `page` and `action`), `meteor-save-window` and `meteor-full-view`.
+  - `createMenus({extra})` creates them in the table's order on install and update. An `extra` item `{after, ...item}` goes after the item `after` names, so *Download linked file* can follow `meteor-copy-link`.
+  - `menuClicked` answers only these IDs and leaves other items' clicks to their own modules.
+- **The title** "Add link to “name”" is updated after every saved write that changes which collection is active or its name, and at startup. A "%s" in a name gets a zero-width space, because Chrome puts the selected text in place of %s.
+- **Page messages.** The background sends them to the tab's top frame and loads the page script first when none answers. The page answers `{ok: true, data}` or `{ok: false, error}`.
+  - `content.contextLink {url}` answers `{link}`: the captured fields of the link under the last right-click when its URL equals `url`; otherwise those of the first link in the page with that URL, found as capture finds links; otherwise `null`.
+  - `content.selectionLinks` answers `{links, warnings}`. A link is selected when it intersects the selection of the innermost tree (a shadow root or a document) that holds selected ranges. So a selected shadow host counts the links inside it, and a same-origin frame's own selection counts.
+  - `content.notice {text, added?, copy?}` answers `{}` and shows the notice alone, with no selection layer and no card; the page keeps taking clicks.
+    - `added` is `{collectionId, batchId, name}`. It adds *Undo* (`capture.undoAdd`) and *Show links*, which sends `ui.open {view: 'links', batchId}`. Without it, the notice has only its close button.
+    - `copy` is text the page writes to the clipboard first, as the card copies, including the hidden text-area fallback.
+- **What each item does.** Saves go to the active collection, whatever the card last chose, and `skipSaved` applies. A save that adds links is remembered for `capture.undoAdd` with the tab that shows its notice (`rememberAdd` in `background/card.js`).
+  - *Add link*: a link the page can't find (inside another site's frame, say) is saved with its URL, an empty anchor text and original href, and the frame's URL. The notice says it was saved with its address only. Links other than HTTP(S), `mailto:` and `tel:` are refused. When nothing is added, the notice reads "Nothing was added: 1 link was already in “X”."
+  - *Copy link text + URL*: `makeExport([link], {format: 'tsv', columns: ['anchorText', 'url']})`, as the card copies. Nothing is saved.
+  - *Capture links in the selection*: one add in one batch. An empty selection saves nothing and says so.
+  - *Save this tab as a link* and *Save all tabs in this window as links* save through `capture.tabs`'s rules. The notice reads "Saved this tab as a link in “X”." or "Saved 12 tabs as links in “X”; 2 skipped: not web pages."
+  - *Save all tabs in this window* without the tabs permission saves nothing. It keeps the open intent `{view: 'links', batchId: '', what: 'tabs', scope: 'window'}` and opens the full view in that window.
+  - Where the page can't show the notice (a browser page, say): after a save, the full view opens at that batch. Otherwise the reason is shown there, as an activation error.
+  - *Select a region* and *Capture this page* do what they did in 0.3.0. *Open the full view* opens it in a new tab.
+
+### Downloads
+
+- **The permission.** The optional `downloads` permission is requested from the workbench, with a user gesture, the first time someone downloads. The reason sits next to the control. The card and the menus can't show Chrome's prompt; without the permission, they explain and open the full view at its downloads section.
+- **Which links are files:**
+  - the URL's path ends in a file extension (PDF, office and OpenDocument files, text and data files, e-books, archives, images, audio, video);
+  - or the anchor text starts with `[PDF]`;
+  - or the URL matches a known PDF address (arXiv `/pdf/`, OpenReview `/pdf?id=`).
+
+  A link's details offer *Download* for any link.
+- **Saving:**
+  - `chrome.downloads.download` into `Downloads/Link Meteor/<collection name>/`;
+  - each file is named after its anchor text (`fileNamePart`), with the extension from the URL or, failing that, from the type Chrome reports;
+  - `conflictAction: 'uniquify'`, never a Save As dialog.
+  - Up to 100 files per action, confirmed above 10, at most 3 at a time, with progress and Cancel.
+- **Honest results.** Each download is followed to completion:
+  - a finished file whose type is HTML is reported as "gave a web page instead of a file";
+  - an interrupted one reports Chrome's reason.
+
+  Link Meteor never searches, opens, changes or removes other downloads.
+- **Messages:** `downloads.start {links, collectionName, requestId}` (workbench), `capture.download` (page), `downloads.cancel {requestId}`, and `downloads.progress` notifications to the sender.
+
+#### Downloads, as built
+
+**Which links are files** (`src/core/files.js`, pure; the page script keeps a copy of `fileLink` that `tests/files.test.mjs` checks against it):
+- `FILE_TYPES`, by kind: documents (`pdf ps eps`), office (`doc docx docm dot dotx xls xlsx xlsm xlt xltx ppt pptx pptm pps ppsx pot potx rtf`), OpenDocument (`odt ods odp odg odf ott ots otp`), text and data (`txt md markdown csv tsv json jsonl xml yaml yml bib ris enw nbib tex ipynb`), e-books (`epub mobi azw azw3 djvu fb2`), archives (`zip gz tgz tar bz2 xz 7z rar zst`), images (`png jpg jpeg gif webp svg tif tiff bmp avif heic heif ico`), audio (`mp3 wav m4a aac ogg oga flac opus`), video (`mp4 m4v mov webm mkv avi ogv`). Web pages and programs are never file types. The extension is the last path segment's, in any case; the query and fragment don't count.
+- Anchor text that starts with `[PDF]`, in any case.
+- Known PDF addresses: arXiv `/pdf/…` (any `arxiv.org` host), OpenReview `/pdf?id=…`, the ACM Digital Library `dl.acm.org/doi/pdf/…`, and PubMed Central `…/pmc/articles/PMC…/pdf` and `pmc.ncbi.nlm.nih.gov/articles/PMC…/pdf`.
+- `isFileLink(link)`, `fileLinks(links)` (one per address, in order), `urlFileType`, `knownPdf`.
+
+**Names and folders:**
+- The folder is `Link Meteor/<fileNamePart(collection name, 80)>`, or `Link Meteor/links` without a name.
+- The file is `fileNamePart(anchor text, 100)`, without a leading `[PDF]`, `[HTML]`, `[DOC]`, `[DOCX]`, `[PS]`, `[BOOK]` or `[CITATION]` label; else the accessible label; else the address's own file name; else `file`. An anchor that already ends in the extension isn't doubled. Windows device names get `_` (`CON_.pdf`).
+- The extension (`downloadExtension`): **a web page is saved as `.html`**, so a sign-in page never becomes a fake PDF; otherwise the address's file type, then the type Chrome reports, then the extension of the name Chrome suggests, then `pdf` for a known PDF address.
+- Chrome names the file through `onDeterminingFilename`, once it knows the type, with `conflictAction: 'uniquify'` (Chrome adds " (1)"). `download()` also gets `saveAs: false` and a fallback name from the address alone.
+
+**The background** (`src/background/downloads.js`):
+- `downloads.start {links:[{url, anchorText?, accessibleLabel?}], collectionName?, requestId?, confirmed?}`. Workbench. Web (HTTP(S)) links only, one per address; 1 to 100; more than 10 need `confirmed: true`. Any link may be downloaded; a file link that brings back a web page counts as a web page.
+- `capture.download {links, collectionId?, requestId?, confirmed?}`. Page. Only the file links among the links are downloaded, into the folder of the destination collection (default: the active one). With no file links it is refused.
+- The result of both: `{requestId, folder, total, done, saved, webPages, failed, cancelled, held, results, summary}`. Each result is `{url, anchorText, file, mime, status}`, with `status` one of `saved`, `web-page`, `failed` (with `error`, Chrome's interruption code, and `reason`, in plain words with the code), `cancelled` or `held` (Chrome holds a file it considers dangerous for the person to review; Link Meteor doesn't wait for it). `file` is the base name only, and empty when nothing was saved. `summary` is one sentence, for example "Saved 4 files to Link Meteor › Thesis-sources in your downloads folder. 1 link gave a web page instead of a file, often a sign-in page. 1 download failed."
+- `downloads.progress {requestId, total, done, saved, webPages, failed, cancelled, held}`: once at the start and after each file, to the workbench (`runtime.sendMessage`) or to the card's tab. The menu's download ends with one more to its tab, with `final: true` and `text` (the summary).
+- `downloads.cancel {requestId}` => `{cancelled}`. Workbench, or the page that started the request. Nothing more starts, and downloads in progress are canceled; Chrome removes their partial files. Files already saved stay.
+- At most 3 downloads run at a time across every request, first come first served. Each is followed with `onChanged` and looked up by its own id once a second (which also keeps the service worker awake) until it completes, is interrupted, is held, or disappears from Chrome's list (`failed`, "it was removed from Chrome’s downloads list").
+- The `onDeterminingFilename` and `onChanged` listeners exist only while something downloads. Chrome asks every such listener about every download; Link Meteor answers `suggest()` with no name for any download it didn't start (checked by id, or by address and `byExtensionId` when Chrome asks before `download()` answers), so those keep Chrome's own names.
+- Without access (`permissions.contains({permissions:['downloads']})` and `chrome.downloads`), `downloads.start` and `capture.download` are refused with an error that begins "Download access is needed". `capture.download` first keeps its file links at session key `linkMeteorPendingDownloads`: `{links, collectionName, source: 'card'|'menu', createdAt}`.
+
+**The menu item:** `{id: 'meteor-download', title: 'Download linked file', contexts: ['link'], targetUrlPatterns: menuPatterns()}`, created on install. The patterns are `*://*/*.<ext>` and `*://*/*.<ext>?*` for every file type, in lowercase and uppercase, plus the known PDF addresses; `[PDF]` labels can't be matched by address. A click loads the page script (the click grants temporary access), asks `content.contextLink {url}` for the link's own fields and falls back to the address alone, then downloads into the active collection's folder and sends the tab the final `downloads.progress`. Without access, the link waits at `linkMeteorPendingDownloads` (`source: 'menu'`) and the full view opens (`ui.open`).
+
+**The workbench** (`src/ui/workbench/downloads.js`):
+- The Export panel's *Download files* section downloads the file links in the export target (`targetRows()`): "Download 6 files", with "…" above 10, disabled with no file links or more than 100. The help says where files go and how many other links aren't file links. While Chrome reports no access, `#downloads-access` gives the reason next to the button.
+- The click that starts downloading calls `chrome.permissions.request({permissions: ['downloads']})` before anything is awaited: the button up to 10 files, the confirmation's button above 10, a link's *Download*, or the waiting files' button. A decline downloads nothing and says so.
+- Above 10, an inline confirmation names the count and the folder; Escape closes it. Progress ("Downloading 12 files: 5 done…") with Cancel, then the result: the summary and a list of the links that brought a web page, failed or were held.
+- Each link's details offer *Download* (`.occurrence-download`), for any link, into the collection's folder.
+- Files waiting at `linkMeteorPendingDownloads` are shown once by the next full view that opens, if they are at most 10 minutes old: at compact widths it switches to the export view, and it focuses their button. The key is removed when read.
+
+**The capture card:** *Download N files* (`.m-files`, shortcut F) in the More menu, after *Download this selection*, counts the file links among the ticked ones, one per address. Above 10 it asks first (`.fconfirm`: "Download 12 files into your downloads folder?", Download 12, Cancel; Escape closes it). While downloading, the status shows progress (`.fstatus-text`) and Cancel (`.fcancel`), then the summary. Without access it shows the error and *Open the full view* (`ui.open`), where the files wait. After the menu's download, the final `downloads.progress` text goes in an open card's status, or in a small notice (`#link-meteor-download-notice`, marked like the card, in the card's colors, `.notice-text` with `role="status"`, `.notice-close`), which closes itself 8 seconds after it last had the pointer or focus.
+
+**Stable element IDs:** `#downloads-section`, `#downloads-title`, `#downloads-start`, `#downloads-label`, `#downloads-help`, `#downloads-access`, `#downloads-confirm`, `#downloads-confirm-text`, `#downloads-confirm-yes`, `#downloads-confirm-no`, `#downloads-progress`, `#downloads-progress-text`, `#downloads-progress-bar`, `#downloads-cancel`, `#downloads-result`, `#downloads-pending`, `#downloads-pending-text`, `#downloads-pending-start`, `#downloads-pending-dismiss`.
+
+**Chrome's behavior, as observed in Chrome for Testing:**
+- Without DevTools download settings, `chrome.downloads` saves into the profile's `download.default_directory` preference and, without it, into the system's Downloads folder (on macOS, in the home folder the browser process sees).
+- DevTools `Browser.setDownloadBehavior` (Playwright's `acceptDownloads` uses it) takes over `chrome.downloads` too: files go to its folder, `onDeterminingFilename` never fires, and the `filename` option and folders are ignored.
+- When any extension listens to `onDeterminingFilename`, a download's creator `filename` is used only if a listener suggests one; `suggest()` with no name gives Chrome's own name.
+- A 404 ends as `interrupted` with `SERVER_BAD_CONTENT`. A canceled download leaves no partial file.
+
+### Highlights after release
+
+- **What's highlighted:** after a region selection is released, every selected link (up to 250), not only those under the last rectangle. Each box is redrawn from its link's current rectangles, including through same-origin frames, once per animation frame whenever the page or a scrolling box scrolls or the window resizes. So the highlights stay on their links.
+- **Unticked links** show a dashed outline instead of a filled box.
+- **The selection rectangle** disappears on release.

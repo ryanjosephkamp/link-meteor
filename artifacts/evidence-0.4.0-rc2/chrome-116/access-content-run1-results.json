@@ -1,0 +1,109 @@
+{
+  "started": "2026-09-29T14:25:47.323Z",
+  "kind": "simulation: real page script, stub chrome object, real input events in Chrome for Testing",
+  "checks": [
+    {
+      "name": "Plain Command-click on a link passes through to the page untouched"
+    },
+    {
+      "name": "A Command-press that moves 5 px stays a click and starts no selection"
+    },
+    {
+      "name": "A drag without the modifier does nothing"
+    },
+    {
+      "name": "Command-drag of 6 px or more starts selection; the ending click is suppressed once",
+      "pageTextSelected": 0
+    },
+    {
+      "name": "Only one click is suppressed; the next click reaches the page"
+    },
+    {
+      "name": "Command-drag that starts on a link selects instead of dragging the link"
+    },
+    {
+      "name": "A Command-drag that starts in a text field starts no selection"
+    },
+    {
+      "name": "content.configure switches off, then to the letter Q, without a reload"
+    },
+    {
+      "name": "Unticking a link in the preview leaves it out of every action",
+      "sent": 4
+    },
+    {
+      "name": "Shortcuts U and K copy URLs and Markdown while focus is in the card",
+      "shortcuts": "CAORNMWGUKLDFB"
+    },
+    {
+      "name": "Typing in the page does not trigger card shortcuts"
+    },
+    {
+      "name": "The More menu lists eight actions (Download 1 file counts the one ticked file address), moves with the arrow keys and closes on Escape",
+      "items": [
+        "Open in a new window",
+        "Open as a tab group",
+        "Copy URLs",
+        "Copy as Markdown",
+        "Copy as rich links",
+        "Download this selection",
+        "Download 1 file",
+        "Bookmark this selection"
+      ]
+    },
+    {
+      "name": "The destination picker sends collectionId and the receipt names that collection"
+    },
+    {
+      "name": "Review after saving opens the full view at that capture (ui.open with view and batchId)"
+    },
+    {
+      "name": "Open 3 in tabs opens at once, with no confirmation"
+    },
+    {
+      "name": "Download this selection saves the file name the background chose",
+      "file": "My-research_2026-09-26_1432.csv"
+    },
+    {
+      "name": "Bookmark without access explains it and offers the full view at the export panel"
+    },
+    {
+      "name": "45 links: the card confirms (Open 45, New window, Cancel) before opening"
+    },
+    {
+      "name": "150 links: stronger wording; Escape cancels only the confirmation"
+    },
+    {
+      "name": "520 links: refused before anything is sent"
+    },
+    {
+      "name": "The card shows progress and cancels its own opening"
+    },
+    {
+      "name": "Content links only: header, nav (with its shadow root), role=navigation, aside (with its same-origin frame), contentinfo and footer links start unticked, and the card says how many",
+      "leftOut": 10
+    },
+    {
+      "name": "Already saved: capture.saved is asked for the destination when the card opens and when it changes; matching rows say Saved",
+      "checks": 10
+    },
+    {
+      "name": "Include them ticks the 10 navigation links again; Always include them saves only contentOnly: false (capture.preference)"
+    },
+    {
+      "name": "Filters All, Other sites, PDFs and Same site untick what doesn’t match; All ticks those again; keyboard and aria-pressed work",
+      "chips": [
+        "All",
+        "Other sites",
+        "PDFs",
+        "Same site"
+      ]
+    },
+    {
+      "name": "Skip saved starts from the setting; Make this the default saves only skipSaved (capture.preference)"
+    }
+  ],
+  "result": "FAIL",
+  "error": "page.evaluate: DOMException: No valid data on clipboard.\n    at clipboard (<repo>/tests/access-content.mjs:366:32)\n    at <repo>/tests/access-content.mjs:479:22",
+  "finished": "2026-09-29T14:25:52.712Z"
+}

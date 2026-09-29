@@ -8,9 +8,9 @@ Instructions for coding agents and people working in this repository. Link Meteo
 | --- | --- |
 | `src/manifest.json` | Version, permissions (optional ones are requested at runtime), minimum Chrome version. |
 | `src/background.js` | The service worker's entry point: messages, context menus, the command, install and startup. |
-| `src/background/` | Service worker areas: `store.js` (the one serialized queue for saved state), `hold.js` (hold-key drag, script registration, all-sites access), `card.js` (the on-page capture card's actions), `open.js` (opening up to 500 links), `bookmarks.js`, `backup.js`, `urls.js`. |
+| `src/background/` | Service worker areas: `store.js` (the one serialized queue for saved state), `hold.js` (hold-key drag, script registration, all-sites access), `card.js` (the on-page capture card's actions), `open.js` (opening up to 500 links), `downloads.js` (downloading the files behind links, and the Download linked file menu item), `menus.js` (the right-click and toolbar menus), `tabs.js` (saving tabs as links), `theme.js` (the toolbar icon), `diagnostics.js` (Copy diagnostics), `bookmarks.js`, `backup.js`, `urls.js`. |
 | `src/content/capture.js` | The page script: region selection, hold-key drag and the capture card, in a shadow root. It is injected on demand and registered on sites where hold-key drag runs. |
-| `src/core/` | Pure modules with no Chrome or DOM access: `model.js` (state, reducer, migration, backup format), `export.js` (every export format and file names), `xlsx.js` (the workbook writer). |
+| `src/core/` | Pure modules with no Chrome or DOM access: `model.js` (state, reducer, migration, backup format), `export.js` (every export format, file names and rich links), `xlsx.js` (the workbook writer), `themes.js` (every theme's tokens and card colors), `files.js` (which links are files, and how downloads are named). |
 | `src/ui/workbench.*`, `src/ui/workbench/` | The side panel and full view: one page in two widths, split into area modules. |
 | `scripts/` | `build.mjs` (copies `src/` to `dist/`), `package.mjs` (deterministic ZIP and receipt), `verify-package.mjs`, `sync-site.mjs`, `release-files.mjs` (the allowlist), `check.mjs`. |
 | `tests/` | `*.test.mjs` unit tests (Node's test runner), browser suites (`*.mjs`), `helpers/browser.mjs` (Playwright launch, fixture server, build fingerprints), `helpers/action.mjs` (Chrome over a DevTools pipe, for the toolbar action), `debug-session.mjs`, and `fixtures/`. |
@@ -48,13 +48,14 @@ Browser checks need the Playwright library and its Chromium (Chrome for Testing)
 | `capture-page-access` | *Capture this page* after the tab moves to a new site. |
 | `access-content` | The page script with a stubbed `chrome` object (a simulation, with real input events). |
 | `exports-browser`, `backup-browser` | Export names and workbooks; backup, restore, Undo and removing all. |
+| `downloads-browser` | Download files in the Export panel, Download in a link's details and files left waiting, with Chrome's prompt stubbed; nothing downloads. |
 | `audit-overlay`, `audit-actions`, `audit-regressions` | Earlier fixes stay fixed. |
 | `visual-browser` | Widths from 320 px, labels, focus, measured contrast, screenshots. Needs `LINK_METEOR_SEED_JSON`; `check` supplies one. |
 | `site-check`, `sync-site --check` | The website, and its match with the packaged build. |
 
 **Need a person's Allow clicks** on Chrome's native prompts, never run in CI:
 1. First prepare grants in a new profile with `LINK_METEOR_TEST_PROFILE=<new-name> node tests/prepare-grants.mjs`. Add `LINK_METEOR_GRANTS=all-sites` for the all-sites profile. The owner, or computer use at the owner's direction, clicks Allow.
-2. Then run `browser`, `extended-browser`, `site-browser`, `audit-granted-regressions`, `verify-downloads.py` and `access-granted` in those profiles.
+2. Then run `browser`, `extended-browser`, `site-browser`, `audit-granted-regressions`, `verify-downloads.py` and `access-granted` in those profiles, and `downloads-granted` in the per-site profile, with the same fixture port as its preparation.
 3. Run `permission-browser` last, because it removes grants.
 
 Visible runs need the real mouse pointer parked away from the test windows: ask before starting one.
@@ -74,6 +75,7 @@ Visible runs need the real mouse pointer parked away from the test windows: ask 
 
 ## Rules
 
+- **Downloads.** No test downloads into a person's Downloads folder. `launch()` sends every profile's downloads to `.scratch/<profile>-downloads`. On macOS, every test browser also gets a home folder under `.scratch/` (`browserHome`), because Chrome for Testing briefly writes a temporary file to the system's Downloads folder for each download. With `chromeDownloads` (Chrome's own naming, for `downloads-granted`), `launch()` first checks that Chrome's settings report the profile's folder.
 - **Profiles.** Use task-owned profiles under `.scratch/` only. Never use a personal Chrome profile, its collections, or an installed copy in `artifacts/link-meteor-*/` (those folders belong to the owner). A profile belongs to one build: the harness refuses a profile whose build changed, so use a new name.
 - **Permissions are real.** Never forge grants, edit Chrome's permission files, or treat headless grants as proof of a native prompt. Every permission needs a reason in the UI, `docs/PRIVACY.md`, `site/privacy.html` and `CHROMEWEBSTORE.md` before it ships. Optional access is asked for only through an explained choice, never at install.
 - **Privacy.** Extension pages keep `connect-src 'none'`. A feature that contacts any site must be opt-in and state what it sends where. No telemetry.

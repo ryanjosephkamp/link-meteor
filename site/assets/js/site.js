@@ -16,6 +16,50 @@ if (toggle && nav) {
 const here = location.pathname.split('/').pop() || 'index.html';
 for (const link of $$('.nav a')) if (link.getAttribute('href') === here) link.setAttribute('aria-current', 'page');
 
+/* Theme menu --------------------------------------------------------------- */
+// The header's inline script applies the kept theme before first paint (?theme= wins and is kept).
+// The menu follows the menu button pattern: arrows move, Enter or Space chooses, Escape closes.
+const themeToggle = $('#theme-toggle');
+const themeList = $('#theme-list');
+if (themeToggle && themeList) {
+  const items = $$('[role="menuitemradio"]', themeList);
+  const checked = () => Math.max(0, items.findIndex((item) => item.getAttribute('aria-checked') === 'true'));
+  const show = (id) => {
+    const chosen = items.find((item) => item.dataset.themeId === id) || items[0];
+    document.documentElement.dataset.theme = chosen.dataset.themeId;
+    for (const item of items) item.setAttribute('aria-checked', String(item === chosen));
+    $('.theme-current', themeToggle).textContent = chosen.textContent.trim();
+  };
+  const open = (index = checked()) => { themeList.hidden = false; themeToggle.setAttribute('aria-expanded', 'true'); items[index].focus(); };
+  const close = (returnFocus = true) => {
+    if (themeList.hidden) return;
+    themeList.hidden = true; themeToggle.setAttribute('aria-expanded', 'false');
+    if (returnFocus) themeToggle.focus();
+  };
+  const choose = (item) => {
+    show(item.dataset.themeId);
+    try { localStorage.setItem('linkMeteorSiteTheme', item.dataset.themeId); } catch { /* shown, not kept */ }
+    // A ?theme= in the address would bring the old choice back on reload.
+    const url = new URL(location.href);
+    if (url.searchParams.has('theme')) { url.searchParams.delete('theme'); history.replaceState(history.state, '', url); }
+    close();
+  };
+  show(document.documentElement.dataset.theme);
+  themeToggle.addEventListener('click', () => (themeList.hidden ? open() : close()));
+  themeToggle.addEventListener('keydown', (event) => {
+    if (event.key === 'ArrowDown' || event.key === 'ArrowUp') { event.preventDefault(); open(event.key === 'ArrowUp' ? items.length - 1 : checked()); }
+  });
+  themeList.addEventListener('click', (event) => { const item = event.target.closest('[role="menuitemradio"]'); if (item) choose(item); });
+  themeList.addEventListener('keydown', (event) => {
+    const at = items.indexOf(document.activeElement);
+    const next = { ArrowDown: at + 1, ArrowUp: at - 1, Home: 0, End: items.length - 1 }[event.key];
+    if (next !== undefined) { event.preventDefault(); items[(next + items.length) % items.length].focus(); }
+    else if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); close(); }
+    else if (event.key === 'Tab') close(false);
+  });
+  document.addEventListener('click', (event) => { if (!event.target.closest('.theme-menu')) close(false); });
+}
+
 /* Capture demo -------------------------------------------------------------- */
 const page = $('#demo-page');
 const selection = { links: [] };

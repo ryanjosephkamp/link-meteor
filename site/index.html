@@ -20,6 +20,7 @@
 </head>
 <body>
   <!-- site-header -->
+  <script>/* The site theme before first paint: ?theme= wins and is kept, then the kept choice, then Meteor. */(() => { const ids = ['meteor', 'comet', 'aurora', 'ember', 'nebula', 'graphite', 'contrast']; let id = new URLSearchParams(location.search).get('theme'); try { if (ids.includes(id)) localStorage.setItem('linkMeteorSiteTheme', id); else id = localStorage.getItem('linkMeteorSiteTheme'); } catch { /* not kept */ } document.documentElement.dataset.theme = ids.includes(id) ? id : 'meteor'; })();</script>
   <a class="skip" href="#main">Skip to content</a>
   <header class="site-header">
     <div class="wrap">
@@ -39,6 +40,18 @@
           <li><a class="gh" href="https://github.com/ryanjosephkamp/link-meteor">Source<svg aria-hidden="true"><use href="assets/img/icons.svg#external"/></svg><span class="sr-only"> (GitHub)</span></a></li>
         </ul>
       </nav>
+      <div class="theme-menu">
+        <button class="theme-toggle" id="theme-toggle" type="button" title="Theme" aria-haspopup="menu" aria-expanded="false" aria-controls="theme-list"><span class="theme-dot" aria-hidden="true"></span><span class="theme-toggle-label">Theme</span><span class="sr-only">: <span class="theme-current">Meteor</span></span></button>
+        <ul class="theme-list" id="theme-list" role="menu" aria-labelledby="theme-toggle" hidden>
+          <li role="none"><button type="button" role="menuitemradio" aria-checked="true" tabindex="-1" data-theme-id="meteor"><span class="theme-dot" style="--dot: #c3f344" aria-hidden="true"></span>Meteor<svg aria-hidden="true"><use href="assets/img/icons.svg#check"/></svg></button></li>
+          <li role="none"><button type="button" role="menuitemradio" aria-checked="false" tabindex="-1" data-theme-id="comet"><span class="theme-dot" style="--dot: oklch(0.86 0.12 205)" aria-hidden="true"></span>Comet<svg aria-hidden="true"><use href="assets/img/icons.svg#check"/></svg></button></li>
+          <li role="none"><button type="button" role="menuitemradio" aria-checked="false" tabindex="-1" data-theme-id="aurora"><span class="theme-dot" style="--dot: oklch(0.85 0.14 168)" aria-hidden="true"></span>Aurora<svg aria-hidden="true"><use href="assets/img/icons.svg#check"/></svg></button></li>
+          <li role="none"><button type="button" role="menuitemradio" aria-checked="false" tabindex="-1" data-theme-id="ember"><span class="theme-dot" style="--dot: oklch(0.78 0.15 42)" aria-hidden="true"></span>Ember<svg aria-hidden="true"><use href="assets/img/icons.svg#check"/></svg></button></li>
+          <li role="none"><button type="button" role="menuitemradio" aria-checked="false" tabindex="-1" data-theme-id="nebula"><span class="theme-dot" style="--dot: oklch(0.8 0.14 315)" aria-hidden="true"></span>Nebula<svg aria-hidden="true"><use href="assets/img/icons.svg#check"/></svg></button></li>
+          <li role="none"><button type="button" role="menuitemradio" aria-checked="false" tabindex="-1" data-theme-id="graphite"><span class="theme-dot" style="--dot: oklch(0.9 0 0)" aria-hidden="true"></span>Graphite<svg aria-hidden="true"><use href="assets/img/icons.svg#check"/></svg></button></li>
+          <li role="none"><button type="button" role="menuitemradio" aria-checked="false" tabindex="-1" data-theme-id="contrast"><span class="theme-dot" style="--dot: oklch(0.92 0.19 105)" aria-hidden="true"></span>High contrast<svg aria-hidden="true"><use href="assets/img/icons.svg#check"/></svg></button></li>
+        </ul>
+      </div>
     </div>
   </header>
   <!-- /site-header -->
@@ -232,6 +245,11 @@
               <div><h3>This window, or all windows</h3><p>Every ordinary tab, up to 100 per capture, each with its own result. Browser pages, the Chrome Web Store and incognito windows are left out and named as such.</p>
               <p class="perm"><svg aria-hidden="true"><use href="assets/img/icons.svg#lock"/></svg>Optional. Same tab-list and site access requests as picked tabs.</p></div>
             </li>
+            <li class="scope-item" data-scope="window" tabindex="0">
+              <span class="ico"><svg aria-hidden="true"><use href="assets/img/icons.svg#tabs"/></svg></span>
+              <div><h3>Or the tabs themselves</h3><p>Save each tab as one link, with its title, instead of the links inside it: this tab, tabs you pick, or whole windows. Right-click the toolbar icon to save every tab in the window.</p>
+              <p class="perm"><svg aria-hidden="true"><use href="assets/img/icons.svg#lock"/></svg>Optional. Asks to see your tab list; no site access needed.</p></div>
+            </li>
           </ul>
         </div>
         <figure class="shot wide-shot">
@@ -274,6 +292,8 @@
             <li><svg aria-hidden="true"><use href="assets/img/icons.svg#check"/></svg><span>Filter by domain, file type, or links that stay on the source site.</span></li>
             <li><svg aria-hidden="true"><use href="assets/img/icons.svg#check"/></svg><span>Group by URL to see every label and page that points to it, then switch back.</span></li>
             <li><svg aria-hidden="true"><use href="assets/img/icons.svg#check"/></svg><span>Open any link to see its full provenance and add notes and tags.</span></li>
+            <li><svg aria-hidden="true"><use href="assets/img/icons.svg#check"/></svg><span>Add your own columns, such as a deadline or a contact, and fill one in for many links at once.</span></li>
+            <li><svg aria-hidden="true"><use href="assets/img/icons.svg#check"/></svg><span>Download the files behind links, such as PDFs and images, named after their anchor text.</span></li>
             <li><svg aria-hidden="true"><use href="assets/img/icons.svg#check"/></svg><span>Remove what you don't need, with undo that restores the original order.</span></li>
           </ul>
         </div>
@@ -309,7 +329,7 @@
           </div>
         </div>
         <ul class="formats" aria-label="All output options">
-          <li>Excel .xlsx</li><li>CSV</li><li>TSV</li><li>Markdown links</li><li>HTML table</li><li>JSON with full provenance</li><li>URL list</li><li>Clipboard</li><li>Chrome bookmark folder, new or existing</li><li>Open up to 500 in tabs, a window or a tab group</li>
+          <li>Excel .xlsx</li><li>CSV</li><li>TSV</li><li>Markdown links</li><li>HTML table</li><li>JSON with full provenance</li><li>URL list</li><li>Clipboard</li><li>Rich links for Docs, Word or Notion</li><li>Chrome bookmark folder, new or existing</li><li>Open up to 500 in tabs, a window or a tab group</li><li>The linked files themselves</li>
         </ul>
       </div>
     </section>
@@ -318,7 +338,7 @@
       <div class="wrap">
         <div class="section-head">
           <h2 id="privacy-title">Private by construction</h2>
-          <p>Link Meteor has no server to send anything to. Your collections are stored by Chrome on your computer, the extension contains no code that contacts a server, and its security policy forbids its pages from making network requests.</p>
+          <p>Link Meteor has no server to send anything to. Your collections are stored by Chrome on your computer, and the extension's security policy forbids its pages from making network requests. It visits a site only when you ask it to open a link or download a file.</p>
         </div>
         <ul class="never">
           <li><strong>No account</strong><span>Nothing to sign up for, nothing to sign in to.</span></li>
@@ -341,7 +361,7 @@
           <li><svg aria-hidden="true"><use href="assets/img/icons.svg#minus"/></svg><div><strong>Some parts of pages are closed to it</strong><span>Frames from other sites and closed shadow roots can't be read. Captures say when frames were skipped.</span></div></li>
           <li><svg aria-hidden="true"><use href="assets/img/icons.svg#minus"/></svg><div><strong>No PDF text or button scripts</strong><span>A link to a PDF is captured; links inside the PDF are not. JavaScript-only buttons without a real link aren't links.</span></div></li>
           <li><svg aria-hidden="true"><use href="assets/img/icons.svg#minus"/></svg><div><strong>Desktop Chrome only, for now</strong><span>There's no Firefox, Safari or mobile version. Chrome's own pages, the Web Store and incognito are off limits.</span></div></li>
-          <li><svg aria-hidden="true"><use href="assets/img/icons.svg#minus"/></svg><div><strong>No citations or titles invented</strong><span>It never fetches destinations, so it won't look up authors, dates or DOIs for you.</span></div></li>
+          <li><svg aria-hidden="true"><use href="assets/img/icons.svg#minus"/></svg><div><strong>No citations or titles invented</strong><span>It never looks up the pages it links to, so it won't add authors, dates or DOIs for you.</span></div></li>
           <li><svg aria-hidden="true"><use href="assets/img/icons.svg#minus"/></svg><div><strong>No cloud copy</strong><span>Collections live in this browser profile. Download a backup file to keep a copy or move them to another computer.</span></div></li>
         </ul>
       </div>

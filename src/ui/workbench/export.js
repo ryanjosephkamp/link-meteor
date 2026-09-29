@@ -1,11 +1,16 @@
-// Export: format, columns, what an export covers, downloads and clipboard copies.
-import { COLUMNS, makeExport } from '../../core/export.js';
+// Export: format, columns (including custom columns), what an export covers, downloads and
+// clipboard copies, including rich links.
+import { COLUMNS, makeExport, richLinks } from '../../core/export.js';
+import { MAX_CUSTOM_FIELDS } from '../../core/model.js';
 import { $, node, icon, count, plural } from './helpers.js';
 import { ui, action, show, currentCollection, DEFAULT_COLUMNS } from './state.js';
+import { onRender, onEscape } from './rendering.js';
+import { FIELD_KEY, NAME_HELP, fieldsOf, addField, nameHelp } from './fields.js';
 import { targetRows, requiredRows } from './review.js';
 import { renderBookmarkTarget } from './bookmarks.js';
 import { renderOpenTarget } from './open.js';
 import { bindNames, renderNames, renderSavesAs, exportName, followFormatChange } from './names.js';
+import { bindDownloads, renderDownloadTarget } from './downloads.js';
 
 const FORMAT_HELP = {
   xlsx: 'Every cell is stored as text, so nothing is reinterpreted as a formula, number or date. Web and email addresses are clickable, and a second sheet, About, records when and how the file was exported.',
@@ -17,7 +22,13 @@ const FORMAT_HELP = {
   text: 'One URL per line, exactly as captured. Columns do not apply.',
 };
 
-export function columnLabel(key) { return COLUMNS.find((item) => item.key === key)?.label || key; }
+// The Add a column menu's last choice, which names and adds a custom column.
+const NEW_COLUMN = 'new-custom-column';
+
+export function columnLabel(key) {
+  if (key.startsWith(FIELD_KEY)) return fieldsOf().find((field) => FIELD_KEY + field.id === key)?.name || key;
+  return COLUMNS.find((item) => item.key === key)?.label || key;
+}
 
 export function renderColumns() {
   const area = $('columns'); area.replaceChildren();
@@ -44,7 +55,14 @@ export function renderColumns() {
   }
   const add = $('add-column'); add.replaceChildren(new Option('Add a column…', ''));
   for (const column of COLUMNS.filter((item) => !ui.columns.includes(item.key))) add.add(new Option(column.label, column.key));
-  add.disabled = ui.columns.length === COLUMNS.length;
+  // The collection's custom columns, then New custom column…, which stays last.
+  const fields = fieldsOf(), custom = document.createElement('optgroup');
+  custom.label = 'Custom columns';
+  for (const field of fields.filter((item) => !ui.columns.includes(FIELD_KEY + item.id))) custom.append(new Option(field.name, FIELD_KEY + field.id));
+  const create = new Option(fields.length >= MAX_CUSTOM_FIELDS ? `New custom column… (${MAX_CUSTOM_FIELDS} is the most per collection)` : 'New custom column…', NEW_COLUMN);
+  create.disabled = !currentCollection() || fields.length >= MAX_CUSTOM_FIELDS;
+  custom.append(create); add.append(custom);
+  add.disabled = [...add.options].every((option) => !option.value || option.disabled);
   $('reset-columns').hidden = ui.columns.join() === DEFAULT_COLUMNS.join();
   $('copy-table-note').textContent = ui.columns.map(columnLabel).join(' · ');
   $('dock-copy-label').textContent = ui.columns.join() === DEFAULT_COLUMNS.join() ? 'Copy text + URL' : 'Copy table';
@@ -77,18 +95,19 @@ export function renderExportTarget() {
   if (selected) notes.push('Only selected links that match the current filters are used.');
   else if (filtered) notes.push(`Filtered from ${plural(collection.links.length, 'link')}. Every matching link is used, across all pages.`);
   else if (rows.length) notes.push('Every link in the collection, across all pages.');
-  if (grouped && rows.length) notes.push('Grouped rows use their first link for tables, text and Markdown. JSON keeps every occurrence and source.');
+  if (grouped && rows.length) notes.push('Grouped rows use their first link for tables, text, Markdown and rich links. JSON keeps every occurrence and source.');
   $('export-scope').textContent = notes.join(' ');
   const format = $('format').value;
   $('download-label').textContent = `Download ${{ xlsx: 'Excel file', csv: 'CSV file', tsv: 'TSV file', markdown: 'Markdown file', html: 'HTML file', json: 'JSON file', text: 'URL list' }[format]}`;
   renderNames();
-  $('format-help').textContent = FORMAT_HELP[format] || '';
+  $('format-help').textContent = (FORMAT_HELP[format] || '') + (format === 'json' && fieldsOf(collection).length ? ' Custom columns are in each link’s fields, and the about block names them.' : '');
   $('columns-help').textContent = ['markdown', 'json', 'text'].includes(format)
     ? 'Columns apply to the Table copy and to CSV, TSV, Excel and HTML files. This format ignores them.'
     : 'Columns apply to the Table copy and to CSV, TSV, Excel and HTML files.';
-  for (const id of ['copy-table', 'copy-urls', 'copy-markdown', 'download', 'dock-copy']) $(id).disabled = !rows.length;
+  for (const id of ['copy-table', 'copy-urls', 'copy-markdown', 'copy-rich', 'download', 'dock-copy']) $(id).disabled = !rows.length;
   renderBookmarkTarget(rows);
   renderOpenTarget(rows);
+  renderDownloadTarget(rows);
 }
 
 // How the rows were chosen, for the About sheet and JSON about block. Read from the review
@@ -120,7 +139,7 @@ export async function download() {
   const rows = requiredRows();
   const date = new Date();
   const name = exportName(date);
-  const result = makeExport(rows, { format: $('format').value, columns: ui.columns, about: exportAbout(rows, date) });
+  const result = makeExport(rows, { format: $('format').value, columns: ui.columns, about: exportAbout(rows, date), fields: fieldsOf() });
   const blob = new Blob([result.data], { type: result.mime });
   const href = URL.createObjectURL(blob);
   const link = document.createElement('a'); link.href = href; link.download = name;
@@ -132,7 +151,7 @@ export async function download() {
 
 export async function copy(format, columns) {
   const rows = requiredRows();
-  const result = makeExport(rows, { format, columns });
+  const result = makeExport(rows, { format, columns, fields: fieldsOf() });
   await navigator.clipboard.writeText(result.data);
   const n = rows.length;
   show(format === 'text' ? `Copied ${plural(n, 'URL')}, one per line.`
@@ -140,14 +159,87 @@ export async function copy(format, columns) {
     : `Copied ${plural(n, 'row')} as a table (${columns.map(columnLabel).join(', ')}). Paste into any spreadsheet.`);
 }
 
+// Rich links: HTML that Google Docs, Word and Notion paste as clickable anchor text, with a plain
+// text copy alongside. If Chrome refuses the HTML, the plain text alone is copied and the status
+// says so.
+export async function copyRich() {
+  const rows = requiredRows();
+  const { html, text } = richLinks(rows);
+  const n = rows.length;
+  try {
+    await navigator.clipboard.write([new ClipboardItem({ 'text/html': new Blob([html], { type: 'text/html' }), 'text/plain': new Blob([text], { type: 'text/plain' }) })]);
+  } catch {
+    await navigator.clipboard.writeText(text);
+    show(`Copied ${plural(n, 'link')} as plain text, each with its URL, because Chrome didn't accept rich links here. They won't paste as clickable links.`);
+    return;
+  }
+  show(`Copied ${plural(n, 'link')} as rich links. Paste into Google Docs, Word or Notion to keep them clickable.`);
+}
+
+/* Custom columns in the export ------------------------------------------------------------ */
+let fieldsKey = '', fieldsCollection = '';
+// When the collection or its columns change, export columns that no longer exist are dropped and
+// the list shows current names.
+function followFields(collection) {
+  if (collection.id !== fieldsCollection) { fieldsCollection = collection.id; closeNewColumn(); }
+  const fields = fieldsOf(collection), key = JSON.stringify([collection.id, fields]);
+  if (key === fieldsKey) return;
+  fieldsKey = key;
+  const known = new Set(fields.map((field) => FIELD_KEY + field.id));
+  ui.columns = ui.columns.filter((column) => !column.startsWith(FIELD_KEY) || known.has(column));
+  if (!ui.columns.length) ui.columns = [...DEFAULT_COLUMNS];
+  renderColumns();
+}
+
+function newColumnHelp() { return `Adds a column to “${currentCollection()?.name || ''}” and to this export. Fill it in each link’s details. ${NAME_HELP}`; }
+
+function openNewColumn() {
+  $('new-column').hidden = false;
+  $('new-column-name').value = ''; $('new-column-name').removeAttribute('aria-invalid');
+  $('new-column-help').textContent = newColumnHelp(); $('new-column-help').classList.remove('is-problem');
+  $('new-column-name').focus();
+}
+function closeNewColumn() { $('new-column').hidden = true; }
+
+async function createColumn() {
+  const input = $('new-column-name'), help = $('new-column-help');
+  const collection = currentCollection();
+  let field;
+  try { field = await addField(input.value); } catch (error) {
+    help.textContent = error.message; help.classList.add('is-problem'); input.setAttribute('aria-invalid', 'true'); input.focus();
+    return;
+  }
+  ui.columns.push(FIELD_KEY + field.id);
+  closeNewColumn(); renderColumns(); $('add-column').focus();
+  show(`Added the column “${field.name}” to “${collection.name}” and to this export. Fill it in each link’s details, or select links and use Fill for selected links.`);
+}
+
 export function bindExport() {
   $('dock-copy').addEventListener('click', () => action(() => copy('tsv', ui.columns)));
   $('format').addEventListener('change', () => { followFormatChange(); renderExportTarget(); });
   bindNames();
-  $('add-column').addEventListener('change', (event) => { if (event.target.value) { ui.columns.push(event.target.value); renderColumns(); $('add-column').focus(); } });
+  $('add-column').addEventListener('change', (event) => {
+    const { value } = event.target;
+    if (value === NEW_COLUMN) { event.target.value = ''; openNewColumn(); return; }
+    if (value) { ui.columns.push(value); renderColumns(); $('add-column').focus(); }
+  });
+  $('new-column').addEventListener('submit', (event) => { event.preventDefault(); action(createColumn); });
+  $('new-column-name').addEventListener('input', () => {
+    $('new-column-name').removeAttribute('aria-invalid'); $('new-column-help').classList.remove('is-problem');
+    $('new-column-help').textContent = nameHelp($('new-column-name').value, newColumnHelp());
+  });
+  $('new-column-cancel').addEventListener('click', () => { closeNewColumn(); $('add-column').focus(); });
+  onEscape(() => {
+    if ($('new-column').hidden) return false;
+    closeNewColumn(); $('add-column').focus();
+    return true;
+  });
+  onRender(followFields);
   $('reset-columns').addEventListener('click', () => { ui.columns = [...DEFAULT_COLUMNS]; renderColumns(); $('add-column').focus(); });
   $('download').addEventListener('click', () => action(download));
   $('copy-table').addEventListener('click', () => action(() => copy('tsv', ui.columns)));
   $('copy-urls').addEventListener('click', () => action(() => copy('text', ui.columns)));
   $('copy-markdown').addEventListener('click', () => action(() => copy('markdown', ui.columns)));
+  $('copy-rich').addEventListener('click', () => action(copyRich));
+  bindDownloads();
 }

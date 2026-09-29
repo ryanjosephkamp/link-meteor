@@ -1,5 +1,6 @@
 // Pure collection state and non-destructive review views.
 import { fileNamePart } from './export.js';
+import { THEME_IDS } from './themes.js';
 
 const LINK_STRINGS = ['id', 'anchorText', 'accessibleLabel', 'url', 'originalHref', 'sourceUrl', 'sourceTitle', 'frameUrl', 'capturedAt', 'batchId', 'notes'];
 const SORTS = new Set(['page', 'anchor', 'url', 'domain', 'newest']);
@@ -20,16 +21,29 @@ export const SETTINGS_DEFAULTS = Object.freeze({
   exportPrefix: '',                 // optional file-name prefix, already a safe file-name part
   exportTimestamp: true,            // add the export date to default file names
   exportTimestampFormat: 'datetime',// 'datetime' (YYYY-MM-DD_HHmm) or 'date' (YYYY-MM-DD)
+  theme: 'meteor',                  // one of THEME_IDS (core/themes.js)
+  appearance: 'system',             // 'system', 'light' or 'dark', for the workbench and the page card
+  afterDrag: 'card',                // what releasing a drag does: 'card', 'copy' or 'add'
+  afterDragFormat: 'tsv',           // the copy format for afterDrag 'copy': 'tsv', 'text', 'markdown' or 'rich'
+  contentOnly: false,               // leave out navigation, header, footer and sidebar links
+  skipSaved: false,                 // when adding, skip URLs already in the destination collection
 });
 const HOLD_TRIGGERS = new Set(['letter', 'modifier']);
 const HOLD_SCOPES = new Set(['sites', 'all']);
 const TIMESTAMP_FORMATS = new Set(['datetime', 'date']);
+const APPEARANCES = new Set(['system', 'light', 'dark']);
+const AFTER_DRAG = new Set(['card', 'copy', 'add']);
+const AFTER_DRAG_FORMATS = new Set(['tsv', 'text', 'markdown', 'rich']);
 export const MAX_HOLD_EXCEPTIONS = 1000;
+// Custom columns (0.4.0): per collection, named and filled in by hand, plain text.
+export const MAX_CUSTOM_FIELDS = 20, MAX_FIELD_NAME = 60, MAX_FIELD_VALUE = 2000;
+const FIELD_ID = /^[a-z0-9][a-z0-9-]{0,80}$/;
 export const MAX_EXPORT_PREFIX = 40;
 
 // Backup files have their own format version, independent of the storage schema.
 export const BACKUP_FORMAT = 'link-meteor-backup';
-export const BACKUP_FORMAT_VERSION = 1;
+// Format 2 (0.4.0) adds the appearance and capture settings; format 1 files still restore.
+export const BACKUP_FORMAT_VERSION = 2;
 // Backups travel through extension messaging, which carries at most 64 MiB per message.
 export const BACKUP_LIMITS = Object.freeze({ bytes: 50 * 1024 * 1024, collections: 10000, links: 250000 });
 
@@ -76,7 +90,51 @@ function link(value) {
   object(value, 'link');
   for (const key of LINK_STRINGS) string(value[key], `link.${key}`, key === 'id');
   destinationUrl(value.url);
-  return { ...value, tags: stringList(value.tags, 'link.tags') };
+  const checked = { ...value, tags: stringList(value.tags, 'link.tags') };
+  if (value.fields !== undefined) checked.fields = fieldValues(value.fields);
+  return checked;
+}
+
+/* Custom columns (0.4.0). A collection may list `fields: [{id, name}]`, and each of its links may
+   hold `fields: {fieldId: text}`. Both are optional (absent means none), so a 0.3.0 state needs no
+   migration, and 0.3.0 keeps both when it writes because it keeps unknown fields. Values for a
+   column that no longer exists are ignored, never an error. */
+function fieldName(value, name) {
+  const text = string(value, name, true).trim().replace(/\s+/gu, ' ');
+  if (text.length > MAX_FIELD_NAME) throw new Error(`${name} can be at most ${MAX_FIELD_NAME} characters`);
+  return text;
+}
+function fieldDefs(value, name = 'collection.fields') {
+  if (value === undefined) return [];
+  if (!Array.isArray(value)) throw new Error(`${name} must be an array`);
+  if (value.length > MAX_CUSTOM_FIELDS) throw new Error(`A collection can have at most ${MAX_CUSTOM_FIELDS} custom columns`);
+  const ids = new Set(), names = new Set();
+  return value.map((field, i) => {
+    object(field, `${name} entry`);
+    const fieldId = string(field.id, `${name} id`, true), label = fieldName(field.name, `${name} name`);
+    if (!FIELD_ID.test(fieldId)) throw new Error(`${name} id ${fieldId} is not a valid column id`);
+    if (ids.has(fieldId)) throw new Error(`${name} lists column ${fieldId} twice`);
+    if (names.has(label.toLowerCase())) throw new Error(`Two custom columns are named “${label}”`);
+    ids.add(fieldId); names.add(label.toLowerCase());
+    return { id: fieldId, name: label };
+  });
+}
+// A link's custom values: only column ids as keys, only text up to MAX_FIELD_VALUE; empty values are dropped.
+function fieldValues(value, name = 'link.fields') {
+  object(value, name);
+  const kept = {};
+  for (const [key, text] of Object.entries(value)) {
+    if (!FIELD_ID.test(key)) throw new Error(`${name} has an invalid column id: ${key}`);
+    if (typeof text !== 'string') throw new Error(`${name}.${key} must be text`);
+    if (text.length > MAX_FIELD_VALUE) throw new Error(`A custom value can be at most ${MAX_FIELD_VALUE.toLocaleString('en-US')} characters`);
+    if (text) kept[key] = text;
+  }
+  if (Object.keys(kept).length > MAX_CUSTOM_FIELDS) throw new Error(`${name} has more than ${MAX_CUSTOM_FIELDS} values`);
+  return kept;
+}
+function withFields(item, fields) {
+  const { fields: _old, ...rest } = item;
+  return Object.keys(fields).length ? { ...rest, fields } : rest;
 }
 
 function collection(name) {
@@ -93,10 +151,12 @@ function validState(state) {
     for (const key of ['id', 'name', 'notes', 'createdAt', 'updatedAt']) string(current[key], `collection.${key}`);
     stringList(current.tags, 'collection.tags');
     if (!Array.isArray(current.links)) throw new Error('collection.links must be an array');
+    fieldDefs(current.fields);
     for (const item of current.links) {
       object(item, 'link');
       for (const key of LINK_STRINGS) string(item[key], `link.${key}`);
       stringList(item.tags, 'link.tags');
+      if (item.fields !== undefined) fieldValues(item.fields);
     }
   }
   object(state.settings, 'settings');
@@ -158,7 +218,7 @@ function settingsField(key, value, name = key) {
     case 'holdScope':
       if (!HOLD_SCOPES.has(value)) throw new Error(`${name} must be 'sites' or 'all'`);
       return value;
-    case 'welcomeSeen': case 'exportTimestamp':
+    case 'welcomeSeen': case 'exportTimestamp': case 'contentOnly': case 'skipSaved':
       if (typeof value !== 'boolean') throw new Error(`${name} must be true or false`);
       return value;
     case 'exportPrefix':
@@ -168,6 +228,18 @@ function settingsField(key, value, name = key) {
       return value;
     case 'exportTimestampFormat':
       if (!TIMESTAMP_FORMATS.has(value)) throw new Error(`${name} must be 'datetime' or 'date'`);
+      return value;
+    case 'theme':
+      if (!THEME_IDS.includes(value)) throw new Error(`${name} must be one of ${THEME_IDS.join(', ')}`);
+      return value;
+    case 'appearance':
+      if (!APPEARANCES.has(value)) throw new Error(`${name} must be 'system', 'light' or 'dark'`);
+      return value;
+    case 'afterDrag':
+      if (!AFTER_DRAG.has(value)) throw new Error(`${name} must be 'card', 'copy' or 'add'`);
+      return value;
+    case 'afterDragFormat':
+      if (!AFTER_DRAG_FORMATS.has(value)) throw new Error(`${name} must be 'tsv', 'text', 'markdown' or 'rich'`);
       return value;
     default: throw new Error(`Unsupported settings field: ${key}`);
   }
@@ -267,7 +339,61 @@ export function reduceState(input, action) {
       const position = current.links.findIndex(x => x.id === action.id);
       if (position < 0) throw new Error(`Link not found: ${action.id}`);
       const links = [...current.links];
-      links[position] = { ...links[position], ...patchFields(action.patch, ['notes', 'tags'], 'link patch') };
+      object(action.patch, 'link patch');
+      const { fields: fieldPatch, ...rest } = action.patch;
+      let updated = { ...links[position], ...patchFields(rest, ['notes', 'tags'], 'link patch') };
+      if (fieldPatch !== undefined) {
+        const known = new Set(fieldDefs(current.fields).map(field => field.id));
+        object(fieldPatch, 'link patch fields');
+        for (const key of Object.keys(fieldPatch)) if (!known.has(key)) throw new Error(`No custom column ${key} in this collection`);
+        updated = withFields(updated, fieldValues({ ...(updated.fields || {}), ...fieldPatch }));
+      }
+      links[position] = updated;
+      return replaceCollection(state, index, { ...current, links });
+    }
+    // Custom columns: add, rename, remove (values too), restore (Undo of a remove) and fill many.
+    case 'fields.add': {
+      const { index, collection: current } = target(state, action.collectionId);
+      const fields = fieldDefs(current.fields);
+      if (fields.length >= MAX_CUSTOM_FIELDS) throw new Error(`A collection can have at most ${MAX_CUSTOM_FIELDS} custom columns`);
+      return replaceCollection(state, index, { ...current, fields: fieldDefs([...fields, { id: `f-${id()}`, name: action.name }]) });
+    }
+    case 'fields.rename': {
+      const { index, collection: current } = target(state, action.collectionId);
+      const fields = fieldDefs(current.fields);
+      if (!fields.some(field => field.id === action.fieldId)) throw new Error(`No custom column ${action.fieldId} in this collection`);
+      return replaceCollection(state, index, { ...current, fields: fieldDefs(fields.map(field => field.id === action.fieldId ? { ...field, name: action.name } : field)) });
+    }
+    case 'fields.remove': {
+      const { index, collection: current } = target(state, action.collectionId);
+      const fields = fieldDefs(current.fields);
+      if (!fields.some(field => field.id === action.fieldId)) return state;
+      const links = current.links.map(item => {
+        if (!item.fields || !(action.fieldId in item.fields)) return item;
+        const { [action.fieldId]: _gone, ...others } = item.fields;
+        return withFields(item, others);
+      });
+      return replaceCollection(state, index, { ...current, fields: fields.filter(field => field.id !== action.fieldId), links });
+    }
+    case 'fields.restore': {
+      const { index, collection: current } = target(state, action.collectionId);
+      const fields = fieldDefs(current.fields);
+      const [field] = fieldDefs([action.field], 'restored column');
+      if (fields.some(item => item.id === field.id)) return state;
+      const at = Math.max(0, Math.min(fields.length, Number.isInteger(action.index) ? action.index : fields.length));
+      // values: {linkId: text}, the removed column's values; each goes back through the usual checks.
+      const restored = object(action.values || {}, 'restored values');
+      const links = current.links.map(item => typeof restored[item.id] === 'string' && restored[item.id]
+        ? withFields(item, fieldValues({ ...(item.fields || {}), [field.id]: restored[item.id] })) : item);
+      return replaceCollection(state, index, { ...current, fields: fieldDefs([...fields.slice(0, at), field, ...fields.slice(at)]), links });
+    }
+    case 'fields.fill': {
+      const { index, collection: current } = target(state, action.collectionId);
+      if (!fieldDefs(current.fields).some(field => field.id === action.fieldId)) throw new Error(`No custom column ${action.fieldId} in this collection`);
+      const ids = new Set(stringList(action.ids, 'ids'));
+      const value = string(action.value, 'value');
+      if (value.length > MAX_FIELD_VALUE) throw new Error(`A custom value can be at most ${MAX_FIELD_VALUE.toLocaleString('en-US')} characters`);
+      const links = current.links.map(item => ids.has(item.id) ? withFields(item, fieldValues({ ...(item.fields || {}), [action.fieldId]: value })) : item);
       return replaceCollection(state, index, { ...current, links });
     }
     case 'settings.update': {
@@ -304,7 +430,7 @@ export function queryLinks(links, options = {}) {
   const extension = fileType.toLowerCase().replace(/^\./, '');
   const matched = links.filter(item => {
     const host = hostname(item.url);
-    if (term && ![item.anchorText, item.url, item.sourceTitle, item.sourceUrl, item.notes, ...(item.tags || [])]
+    if (term && ![item.anchorText, item.url, item.sourceTitle, item.sourceUrl, item.notes, ...(item.tags || []), ...Object.values(item.fields || {})]
       .some(value => String(value).toLowerCase().includes(term))) return false;
     if (hostTerm && !host.includes(hostTerm)) return false;
     if (extension) {
@@ -339,17 +465,20 @@ export function queryLinks(links, options = {}) {
 
 /* Backup files ------------------------------------------------------------------------------
    A backup is UTF-8 JSON:
-   {format:'link-meteor-backup', formatVersion:1, createdAt, extensionVersion,
+   {format:'link-meteor-backup', formatVersion:2, createdAt, extensionVersion,
     state:{schemaVersion:1, activeCollectionId, collections, settings}}
    The removal undo snapshot is not included. Readers keep only contract fields, so a release
    that adds stored fields must raise BACKUP_FORMAT_VERSION: older releases then refuse the
    file with an update message instead of silently dropping data. */
 
-function backupLink(value) {
+function backupLink(value, columns = new Set()) {
   const checked = link(value);
   const kept = {};
   for (const key of LINK_STRINGS) kept[key] = checked[key];
   kept.tags = checked.tags;
+  // Custom values are kept only for the collection's own columns.
+  const fields = Object.fromEntries(Object.entries(checked.fields || {}).filter(([key]) => columns.has(key)));
+  if (Object.keys(fields).length) kept.fields = fields;
   return kept;
 }
 
@@ -361,8 +490,11 @@ function backupCollection(value, index, collectionIds, linkIds) {
   if (collectionIds.has(kept.id)) throw new Error(`The backup lists collection ${kept.id} twice`);
   collectionIds.add(kept.id);
   if (!Array.isArray(value.links)) throw new Error('collection.links must be an array');
+  const fields = fieldDefs(value.fields);
+  if (fields.length) kept.fields = fields;
+  const columns = new Set(fields.map(field => field.id));
   kept.links = value.links.map(item => {
-    const checked = backupLink(item);
+    const checked = backupLink(item, columns);
     if (linkIds.has(checked.id)) throw new Error(`The backup lists link ${checked.id} twice`);
     linkIds.add(checked.id);
     return checked;
@@ -471,8 +603,19 @@ export function planRestore(input, backupInput, mode) {
     const current = collections[at];
     const tags = [...new Set([...current.tags, ...source.tags])];
     const notes = current.notes.trim() ? current.notes : source.notes;
-    if (fresh.length || notes !== current.notes || tags.length !== current.tags.length) {
-      collections[at] = { ...current, notes, tags, links: [...current.links, ...fresh], updatedAt: now };
+    // Custom columns join by name (ignoring case); a backup column with no match is added while
+    // there is room. The fresh links' values follow their column to its local id.
+    const fields = fieldDefs(current.fields), remap = new Map();
+    for (const column of source.fields || []) {
+      const match = fields.find(field => field.name.toLowerCase() === column.name.toLowerCase());
+      if (match) remap.set(column.id, match.id);
+      else if (fields.length < MAX_CUSTOM_FIELDS) { const added = { id: fields.some(field => field.id === column.id) ? `f-${id()}` : column.id, name: column.name }; fields.push(added); remap.set(column.id, added.id); summary.fieldsAdded = (summary.fieldsAdded || 0) + 1; }
+      else summary.fieldsDropped = (summary.fieldsDropped || 0) + 1;
+    }
+    const joined = fresh.map(item => item.fields ? withFields(item, Object.fromEntries(Object.entries(item.fields).filter(([key]) => remap.has(key)).map(([key, text]) => [remap.get(key), text]))) : item);
+    const fieldsChanged = fields.length !== fieldDefs(current.fields).length;
+    if (fresh.length || notes !== current.notes || tags.length !== current.tags.length || fieldsChanged) {
+      collections[at] = { ...current, notes, tags, ...(fields.length ? { fields } : {}), links: [...current.links, ...joined], updatedAt: now };
     }
   }
   const local = state.settings;

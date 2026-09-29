@@ -1,0 +1,67 @@
+{
+  "createdAt": "2026-09-29T14:39:41.767Z",
+  "version": "0.4.0",
+  "browser": {
+    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/151.0.0.0 Safari/537.36",
+    "brands": [
+      {
+        "brand": "Chromium",
+        "version": "151"
+      },
+      {
+        "brand": "Not=A?Brand",
+        "version": "99"
+      }
+    ],
+    "mobile": false,
+    "platform": "macOS",
+    "os": "mac",
+    "arch": "arm64",
+    "language": "en-US",
+    "uiLanguage": "en-US"
+  },
+  "settings": {
+    "holdKey": "z",
+    "holdOrigins": 0,
+    "holdTrigger": "letter",
+    "holdScope": "sites",
+    "holdExceptions": 0,
+    "welcomeSeen": false,
+    "exportPrefix": 0,
+    "exportTimestamp": true,
+    "exportTimestampFormat": "datetime",
+    "theme": "meteor",
+    "appearance": "system",
+    "afterDrag": "card",
+    "afterDragFormat": "tsv",
+    "contentOnly": false,
+    "skipSaved": false,
+    "otherFields": 0
+  },
+  "permissions": {
+    "tabs": false,
+    "bookmarks": false,
+    "tabGroups": false,
+    "downloads": false,
+    "allSites": false,
+    "siteOriginCount": 0
+  },
+  "scripts": {
+    "count": 0,
+    "scope": "none",
+    "matchCount": 0,
+    "excludeCount": 0,
+    "matchesSettings": true
+  },
+  "storage": {
+    "bytesInUse": 24221,
+    "stateBytes": 24221,
+    "restoreUndoBytes": 0
+  },
+  "data": {
+    "readable": true,
+    "collections": 3,
+    "links": 53,
+    "undoLinks": 0
+  }
+}

@@ -478,7 +478,7 @@ try {
   // 0.5.0: a toolbar press is not site access, so no tab's citation tags are read, and nothing asks.
   assert.deepEqual(tabsReport.citations, {tabs: 3, read: 0, found: 0, needAccess: 3});
   assert.equal((await state()).collections.find((c) => c.id === labTabs).pages, undefined, 'no citation without site access');
-  pass('Save tabs as links (capture.tabs): three fixture tabs become three links with their titles and addresses, in one batch; a tab Chrome hides is reported, not saved; without site access no citation tags are read', {saved: savedTabs.length, hidden: !!hiddenTab});
+  pass('Save tabs as links (capture.tabs): three fixture tabs become three links with their titles and addresses, in one batch; a tab Chrome hides is reported, not saved; without site access no citation tags are read (This page’s tab, with the toolbar’s temporary access, is)', {saved: savedTabs.length, hidden: !!hiddenTab});
 
   // The workbench: The tabs themselves, with This page.
   await js(ui, `document.querySelector('input[name="capture-what"][value="tabs"]').click(); true`);
@@ -488,8 +488,9 @@ try {
   const targetUrl = inventoryNow.tabs.find((tab) => tab.id === inventoryNow.targetTabId)?.url;
   await click('capture');
   await until(async () => /^Saved 1 tab as a link/.test(await text('capture-report')), 'this tab saved');
-  assert.match(await text('notice'), /^Saved 1 tab as a link\. Read no citation details; the tab needs site access\.$/);
-  assert.match(await text('capture-report'), /Read no citation details; the tab needs site access\./);
+  // This page's tab is the one the toolbar press gave temporary access to, so its citation tags are read.
+  assert.match(await text('notice'), /^Saved 1 tab as a link\. Read the tab’s citation details\.$/);
+  assert.match(await text('capture-report'), /Read the tab’s citation details\./);
   const thisTab = (await state()).collections.find((c) => c.id === labTabs).links.at(-1);
   assert.equal(thisTab.anchorText, tabTitles[new URL(thisTab.url).pathname + new URL(thisTab.url).search]);
   if (targetUrl) assert.equal(thisTab.url, targetUrl);

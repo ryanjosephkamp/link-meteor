@@ -149,6 +149,6 @@ test('saving into an existing folder changes nothing else in the bookmarks', asy
   assert.equal(root.children[0].children[0].children[1].children.at(-1).url, 'https://example.org/new');
 });
 
-test('the message table answers exactly links.bookmark and bookmarks.folders', () => {
-  assert.deepEqual(Object.keys(workbenchMessages).sort(), ['bookmarks.folders', 'links.bookmark']);
+test('the message table answers exactly links.bookmark, bookmarks.folders and bookmarks.folderLinks (0.5.0 imports)', () => {
+  assert.deepEqual(Object.keys(workbenchMessages).sort(), ['bookmarks.folderLinks', 'bookmarks.folders', 'links.bookmark']);
 });

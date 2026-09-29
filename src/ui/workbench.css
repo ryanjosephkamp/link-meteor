@@ -674,3 +674,54 @@ label.backup-choose { display: inline-flex; cursor: pointer; }
 .occurrence-download { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; padding-top: 10px; border-top: 1px solid var(--line); }
 .occurrence-download .help { flex: 1 1 200px; min-width: 0; overflow-wrap: anywhere; }
 /* End of area: downloading files */
+/* 0.5.0 lane J: imports. The rail's Import links, and the import view that takes the place of
+   Capture and the list in the main column while it is open. */
+.import-panel { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
+.import-panel .rail-title { margin-bottom: 0; }
+.import-sources { display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px; }
+.import-sources .btn { justify-content: flex-start; width: 100%; }
+label.import-choose { display: inline-flex; cursor: pointer; }
+.import-file:focus-visible + .import-choose { outline: 2px solid var(--focus); outline-offset: 2px; }
+.main.is-importing > .capture, .main.is-importing > .review { display: none; }
+.import { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; margin-top: 18px; padding: 16px; border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--surface); min-width: 0; }
+.import h2 { margin: 0; font-size: var(--text-md); font-weight: 700; color: var(--ink); }
+.import h2:focus { outline: none; }
+.import h2:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.import .source-line { color: var(--ink-2); font-size: var(--text-sm); overflow-wrap: anywhere; }
+.import .source-line .file { font-weight: 650; color: var(--ink); }
+.import-step, .import-plan { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; min-width: 0; }
+.import-step textarea { min-height: 120px; font: 400 var(--text-sm)/1.45 var(--mono); }
+.import-progress { color: var(--ink-2); font-size: var(--text-sm); font-variant-numeric: tabular-nums; }
+.import-options { display: flex; flex-wrap: wrap; align-items: end; gap: 8px 16px; }
+.import-options label:not(.name-check) { min-width: min(100%, 220px); }
+.import .name-check { font-size: var(--text-sm); }
+.import .map { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 150px), 1fr)); gap: 8px 12px; }
+.import .map label { display: grid; align-content: start; gap: 4px; min-width: 0; font-size: var(--text-xs); font-weight: 600; color: var(--ink-2); }
+.import .map .map-label { overflow-wrap: anywhere; }
+.import .map .map-note { color: var(--muted); font-weight: 400; }
+.import .map select { min-height: 32px; min-width: 0; width: 100%; font-size: var(--text-sm); }
+.import .table-scroll { overflow-x: auto; max-height: 460px; overflow-y: auto; border: 1px solid var(--line); border-radius: var(--r); }
+.import .table-scroll:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.import table { width: 100%; border-collapse: collapse; font-size: var(--text-xs); }
+.import th, .import td { padding: 6px 10px; text-align: left; border-bottom: 1px solid var(--line); vertical-align: top; color: var(--ink); }
+.import th { position: sticky; top: 0; background: var(--sunken); color: var(--ink-2); font-weight: 650; white-space: nowrap; }
+.import tbody tr:last-child td { border-bottom: 0; }
+.import td { min-width: 90px; max-width: 280px; overflow-wrap: anywhere; }
+.import td.num { min-width: 0; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.import td.url { font-family: var(--mono); color: var(--ink-2); min-width: 180px; }
+.import tr.skip td { color: var(--muted); text-decoration: line-through; text-decoration-color: var(--line-strong); }
+.import tr.skip td.num, .import tr.skip td.why { text-decoration: none; }
+.import tr.skip td.why { min-width: 120px; color: var(--warn); font-weight: 600; }
+.import-table-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 14px; }
+.import-table-foot .name-check { font-size: var(--text-xs); }
+.import-row { display: flex; flex-wrap: wrap; align-items: end; gap: 8px 16px; font-size: var(--text-sm); }
+.import-row label:not(.name-check) { flex: 0 1 320px; min-width: 0; }
+.import-row select { width: 100%; }
+.import-row .name-check { min-height: 32px; }
+.import-summary { display: grid; gap: 4px; padding: 10px 12px; border-radius: var(--r); background: var(--accent-wash); border: 1px solid var(--accent-edge); color: var(--ink); font-size: var(--text-sm); }
+.import-summary .skips { color: var(--ink-2); font-size: var(--text-xs); }
+.import-summary.is-empty { background: var(--sunken); border-color: var(--line-strong); }
+.import-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.import .bookmark-folders { width: 100%; }
+@media (forced-colors: active) { .import, .import-summary, .import .table-scroll { border: 1px solid CanvasText; } }
+/* End of area: imports */

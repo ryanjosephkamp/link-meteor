@@ -1,0 +1,108 @@
+{
+  "started": "2026-09-29T14-42-06-536Z",
+  "finished": "2026-09-29T14:46:01.187Z",
+  "version": "0.4.0",
+  "platform": "darwin",
+  "arch": "arm64",
+  "node": "v25.2.1",
+  "browser": "116.0.5845.96",
+  "result": "FAIL",
+  "results": [
+    {
+      "check": "build",
+      "status": "pass",
+      "exitCode": 0,
+      "seconds": 0,
+      "log": "logs/build.txt"
+    },
+    {
+      "check": "unit",
+      "status": "pass",
+      "exitCode": 0,
+      "seconds": 2,
+      "log": "logs/unit.txt"
+    },
+    {
+      "check": "access-browser",
+      "status": "fail",
+      "exitCode": 1,
+      "seconds": 15,
+      "log": "logs/access-browser.txt"
+    },
+    {
+      "check": "capture-page-access",
+      "status": "fail",
+      "exitCode": 1,
+      "seconds": 17,
+      "log": "logs/capture-page-access.txt"
+    },
+    {
+      "check": "access-content",
+      "status": "pass",
+      "exitCode": 0,
+      "seconds": 37,
+      "log": "logs/access-content.txt"
+    },
+    {
+      "check": "exports-browser",
+      "status": "pass",
+      "exitCode": 0,
+      "seconds": 13,
+      "log": "logs/exports-browser.txt"
+    },
+    {
+      "check": "backup-browser",
+      "status": "pass",
+      "exitCode": 0,
+      "seconds": 35,
+      "log": "logs/backup-browser.txt"
+    },
+    {
+      "check": "downloads-browser",
+      "status": "pass",
+      "exitCode": 0,
+      "seconds": 3,
+      "log": "logs/downloads-browser.txt"
+    },
+    {
+      "check": "audit-overlay",
+      "status": "pass",
+      "exitCode": 0,
+      "seconds": 2,
+      "log": "logs/audit-overlay.txt"
+    },
+    {
+      "check": "audit-actions",
+      "status": "pass",
+      "exitCode": 0,
+      "seconds": 2,
+      "log": "logs/audit-actions.txt"
+    },
+    {
+      "check": "audit-regressions",
+      "status": "pass",
+      "exitCode": 0,
+      "seconds": 2,
+      "log": "logs/audit-regressions.txt"
+    },
+    {
+      "check": "visual-browser",
+      "status": "pass",
+      "exitCode": 0,
+      "seconds": 16,
+      "log": "logs/visual-browser.txt"
+    },
+    {
+      "check": "site-check",
+      "status": "pass",
+      "exitCode": 0,
+      "seconds": 88,
+      "log": "logs/site-check.txt"
+    },
+    {
+      "check": "sync-site",
+      "status": "skip",
+      "reason": "no artifacts/link-meteor-0.4.0.zip yet; package this version first"
+    }
+  ]
+}

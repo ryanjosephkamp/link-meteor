@@ -1,0 +1,24 @@
+PASS Fresh profile, no optional grants; seeded a collection with a colon, quotes and a slash in its name
+PASS Every format downloads under the default name the Saves as line shows, with no colon
+PASS CSV, TSV, Markdown, HTML and URL list downloads equal the packaged 0.2.2 export code for the same rows
+PASS JSON download is {about, rows}; rows equal the 0.2.2 array and about names the time, collection, count, view and version
+PASS Downloaded workbook: bold frozen header, filters, fitted widths, exact hyperlinks, text-only cells and an About sheet (openpyxl)
+PASS A typed File name overrides the pattern for a download, is not doubled, follows the format, and clearing it returns to the pattern
+PASS Name pattern settings save a safe prefix (and say so), turn the date off, use date only, and persist across reopening
+PASS The about block records the grouping, sort, search and selection behind an export
+PASS A typed name is dropped when the collection changes
+PASS Bookmark access is requested only on choosing Existing folder or pressing Bookmark; declining is explained; the background refuses without access
+PASS Folder picker (stand-in background answers): paths listed with repeats told apart, search by words, choose, skip on by default, and saved/skipped/failed counts
+PASS No horizontal overflow at 320 and 390 px; new controls labeled; measured text contrast at least 4.5:1 in light and dark
+PASS Copy as rich links puts the exact HTML and plain text on the clipboard for the rows in view or the selection, and falls back to plain text with a clear status
+PASS Copy diagnostics puts indented JSON on the clipboard with version, counts and permissions, and no address, host, title, note, tag or collection name; its line says so; contrast at least 4.5:1
+PASS About and help links to the website add ?theme= after a theme change and after reopening; Meteor and the other links stay plain
+PASS Custom columns are added in the collection editor; a repeated, empty or 61-character name is refused with a plain reason, and at 20 columns adding stops and says why
+PASS Each link's details show a text field per custom column, labeled with its name, saved with the note; a value over 2,000 characters is explained and not saved
+PASS Fill for selected links sets one column on the selected links (saying how many values it replaces), refuses a value over 2,000 characters, undoes to each link's earlier value, and clears with an empty value
+PASS Search finds links by their custom values
+PASS Add a column lists the collection's custom columns and ends with New custom column…, which names a column, adds it to the collection and to the export, and refuses a repeated name
+PASS CSV, TSV, HTML and Markdown downloads equal the export code for the custom columns; formula-looking values and names start with an apostrophe in CSV and TSV; HTML escapes names; JSON keeps each row's fields and names the columns in about.fields; the workbook (openpyxl) has the names as headers, text-only cells, no formulas and no links in custom columns; Copy table carries them too
+PASS A column is renamed from the keyboard (a repeated name is refused; Escape cancels) and the export follows; Remove asks first, removes the values, and Undo puts the column back in place with every value
+PASS Custom column controls: no horizontal overflow at 320 px in the links and export views, every control labeled, measured text contrast at least 4.5:1 in light and dark
+PASS No page errors or console errors

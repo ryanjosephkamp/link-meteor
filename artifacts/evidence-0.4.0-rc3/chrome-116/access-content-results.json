@@ -1,0 +1,197 @@
+{
+  "started": "2026-09-29T14:42:42.253Z",
+  "kind": "simulation: real page script, stub chrome object, real input events in Chrome for Testing",
+  "checks": [
+    {
+      "name": "Plain Command-click on a link passes through to the page untouched"
+    },
+    {
+      "name": "A Command-press that moves 5 px stays a click and starts no selection"
+    },
+    {
+      "name": "A drag without the modifier does nothing"
+    },
+    {
+      "name": "Command-drag of 6 px or more starts selection; the ending click is suppressed once",
+      "pageTextSelected": 0
+    },
+    {
+      "name": "Only one click is suppressed; the next click reaches the page"
+    },
+    {
+      "name": "Command-drag that starts on a link selects instead of dragging the link"
+    },
+    {
+      "name": "A Command-drag that starts in a text field starts no selection"
+    },
+    {
+      "name": "content.configure switches off, then to the letter Q, without a reload"
+    },
+    {
+      "name": "Unticking a link in the preview leaves it out of every action",
+      "sent": 4
+    },
+    {
+      "name": "Shortcuts U and K copy URLs and Markdown while focus is in the card",
+      "shortcuts": "CAORNMWGUKLDFB"
+    },
+    {
+      "name": "Typing in the page does not trigger card shortcuts"
+    },
+    {
+      "name": "The More menu lists eight actions (Download 1 file counts the one ticked file address), moves with the arrow keys and closes on Escape",
+      "items": [
+        "Open in a new window",
+        "Open as a tab group",
+        "Copy URLs",
+        "Copy as Markdown",
+        "Copy as rich links",
+        "Download this selection",
+        "Download 1 file",
+        "Bookmark this selection"
+      ]
+    },
+    {
+      "name": "The destination picker sends collectionId and the receipt names that collection"
+    },
+    {
+      "name": "Review after saving opens the full view at that capture (ui.open with view and batchId)"
+    },
+    {
+      "name": "Open 3 in tabs opens at once, with no confirmation"
+    },
+    {
+      "name": "Download this selection saves the file name the background chose",
+      "file": "My-research_2026-09-26_1432.csv"
+    },
+    {
+      "name": "Bookmark without access explains it and offers the full view at the export panel"
+    },
+    {
+      "name": "45 links: the card confirms (Open 45, New window, Cancel) before opening"
+    },
+    {
+      "name": "150 links: stronger wording; Escape cancels only the confirmation"
+    },
+    {
+      "name": "520 links: refused before anything is sent"
+    },
+    {
+      "name": "The card shows progress and cancels its own opening"
+    },
+    {
+      "name": "Content links only: header, nav (with its shadow root), role=navigation, aside (with its same-origin frame), contentinfo and footer links start unticked, and the card says how many",
+      "leftOut": 10
+    },
+    {
+      "name": "Already saved: capture.saved is asked for the destination when the card opens and when it changes; matching rows say Saved",
+      "checks": 10
+    },
+    {
+      "name": "Include them ticks the 10 navigation links again; Always include them saves only contentOnly: false (capture.preference)"
+    },
+    {
+      "name": "Filters All, Other sites, PDFs and Same site untick what doesn’t match; All ticks those again; keyboard and aria-pressed work",
+      "chips": [
+        "All",
+        "Other sites",
+        "PDFs",
+        "Same site"
+      ]
+    },
+    {
+      "name": "Skip saved starts from the setting; Make this the default saves only skipSaved (capture.preference)"
+    },
+    {
+      "name": "Copy as rich links (More menu and L) puts HTML and plain text on the clipboard, also through the copy-event fallback",
+      "types": null
+    },
+    {
+      "name": "Skip saved: capture.commit gets skipSaved, and the receipt says “Added 14 links …; 2 were already saved”"
+    },
+    {
+      "name": "After a drag, copy: copies the content links as a table at once; the notice is themed like the card (Ember light), and Show links opens the card with the same links",
+      "notice": [
+        "oklch(1 0 0)",
+        "oklch(0.2 0.024 45)"
+      ]
+    },
+    {
+      "name": "After a drag, copy in every format (URLs, Markdown, rich links); the close button and Escape close the notice"
+    },
+    {
+      "name": "The notice closes itself after about 8 seconds, stays while it has focus, and a new drag replaces it",
+      "closedAfterMs": 8016
+    },
+    {
+      "name": "After a drag, add: commits at once with skipSaved; the notice has Undo (capture.undoAdd) and Show links; after Undo the card can add again"
+    },
+    {
+      "name": "Undo also works from the card after Show links; a refused Undo says why in the notice"
+    },
+    {
+      "name": "After release, highlights stay on their links while the page scrolls, and an unticked link is only outlined",
+      "placed": {
+        "hit": 381,
+        "link": 381,
+        "count": 5,
+        "off": 0
+      },
+      "scrolled": {
+        "hit": 261,
+        "link": 261,
+        "count": 5,
+        "off": 0
+      }
+    },
+    {
+      "name": "Content links only keeps a post’s own header and footer links: only page-level headers and footers are page chrome",
+      "/site": true,
+      "/post": false,
+      "/cited": false,
+      "/tags": false,
+      "/section-top": false,
+      "/about": true
+    },
+    {
+      "name": "Download 6 files in the More menu (F) sends only the file links among the ticked ones and shows what was saved",
+      "sent": 6
+    },
+    {
+      "name": "The card shows download progress for its own request only, and Cancel sends downloads.cancel"
+    },
+    {
+      "name": "12 files: the card asks “Download 12 files into your downloads folder?” first; Escape closes only the question"
+    },
+    {
+      "name": "Without download access the card says so and opens the full view, where the files wait with Chrome’s question"
+    },
+    {
+      "name": "After the right-click menu’s Download linked file, a notice in the card’s colors says what arrived, and closes",
+      "marked": true,
+      "role": "status",
+      "close": "Close notice",
+      "contrast": 16.83
+    },
+    {
+      "name": "On Windows and Linux the modifier is Ctrl, not Command"
+    },
+    {
+      "name": "content.contextLink answers the right-clicked link’s fields, or the first link with that address (page, shadow root, frame), or null"
+    },
+    {
+      "name": "content.selectionLinks answers every link that intersects the selection: in the page, a shadow root (also when Chrome misreports it as collapsed, as Chrome 116 does) and a same-origin frame"
+    },
+    {
+      "name": "content.notice after a menu save: the notice alone, the page still takes clicks, Undo sends capture.undoAdd, Show links opens the full view at that save"
+    },
+    {
+      "name": "content.notice after Copy link text + URL puts the two columns on the clipboard (also through the text-area fallback) and offers only Close"
+    }
+  ],
+  "limits": [
+    "This Chrome's headless clipboard can't be read with navigator.clipboard.read(): 5 clipboard reads checked the plain text only, not the HTML."
+  ],
+  "result": "PASS",
+  "finished": "2026-09-29T14:43:19.054Z"
+}

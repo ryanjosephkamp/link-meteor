@@ -1,6 +1,7 @@
 // Pure collection state and non-destructive review views.
 import { fileNamePart } from './export.js';
 import { THEME_IDS } from './themes.js';
+import { typeGroup } from './insights.js';
 
 const LINK_STRINGS = ['id', 'anchorText', 'accessibleLabel', 'url', 'originalHref', 'sourceUrl', 'sourceTitle', 'frameUrl', 'capturedAt', 'batchId', 'notes'];
 const SORTS = new Set(['page', 'anchor', 'url', 'domain', 'newest']);
@@ -27,6 +28,7 @@ export const SETTINGS_DEFAULTS = Object.freeze({
   afterDragFormat: 'tsv',           // the copy format for afterDrag 'copy': 'tsv', 'text', 'markdown' or 'rich'
   contentOnly: false,               // leave out navigation, header, footer and sidebar links
   skipSaved: false,                 // when adding, skip URLs already in the destination collection
+  saveContext: true,                // save the words around each link when capturing (0.5.0)
 });
 const HOLD_TRIGGERS = new Set(['letter', 'modifier']);
 const HOLD_SCOPES = new Set(['sites', 'all']);
@@ -39,11 +41,20 @@ export const MAX_HOLD_EXCEPTIONS = 1000;
 export const MAX_CUSTOM_FIELDS = 20, MAX_FIELD_NAME = 60, MAX_FIELD_VALUE = 2000;
 const FIELD_ID = /^[a-z0-9][a-z0-9-]{0,80}$/;
 export const MAX_EXPORT_PREFIX = 40;
+// Research data (0.5.0): optional per-link and per-collection fields; absent means none.
+export const MAX_CONTEXT = 400, MAX_IMPORTED = 300, MAX_PAGES = 5000;
+const LINK_STATUSES = new Set(['reading', 'read']);
+const STATUS_FILTERS = new Set(['any', 'unread', 'reading', 'read']);
+// A page citation's text fields and their limits; authors is a list of names as printed.
+const PAGE_TEXT = { title: 300, date: 40, journal: 300, publisher: 300, volume: 300, issue: 300, firstPage: 300, lastPage: 300,
+  doi: 300, pmid: 300, arxiv: 300, isbn: 300, pdfUrl: 2000, readAt: 40 };
+export const MAX_AUTHORS = 50, MAX_AUTHOR = 200;
 
 // Backup files have their own format version, independent of the storage schema.
 export const BACKUP_FORMAT = 'link-meteor-backup';
-// Format 2 (0.4.0) adds the appearance and capture settings; format 1 files still restore.
-export const BACKUP_FORMAT_VERSION = 2;
+// Format 2 (0.4.0) adds the appearance and capture settings; format 3 (0.5.0) adds context,
+// reading status, stars, imported labels and page citations. Formats 1 and 2 still restore.
+export const BACKUP_FORMAT_VERSION = 3;
 // Backups travel through extension messaging, which carries at most 64 MiB per message.
 export const BACKUP_LIMITS = Object.freeze({ bytes: 50 * 1024 * 1024, collections: 10000, links: 250000 });
 
@@ -92,7 +103,80 @@ function link(value) {
   destinationUrl(value.url);
   const checked = { ...value, tags: stringList(value.tags, 'link.tags') };
   if (value.fields !== undefined) checked.fields = fieldValues(value.fields);
-  return checked;
+  return research(checked);
+}
+
+/* Research data (0.5.0). A link may hold `context` (the words around it on its page), `status`
+   ('reading' or 'read'; absent means unread), `starred: true` and `imported` (where an imported
+   link came from). A collection may hold `pages: {pageUrl: PageCitation}`, citation details read
+   from pages Link Meteor had open. All optional, so a 0.4.0 state needs no migration. */
+function research(item, name = 'link') {
+  const kept = { ...item };
+  for (const [key, max] of [['context', MAX_CONTEXT], ['imported', MAX_IMPORTED]]) {
+    if (kept[key] === undefined) continue;
+    if (typeof kept[key] !== 'string') throw new Error(`${name}.${key} must be text`);
+    if (kept[key].length > max) throw new Error(`${name}.${key} can be at most ${max} characters`);
+    if (!kept[key]) delete kept[key];
+  }
+  if (kept.status !== undefined && !LINK_STATUSES.has(kept.status)) throw new Error(`${name}.status must be 'reading' or 'read'`);
+  if (kept.starred !== undefined) {
+    if (typeof kept.starred !== 'boolean') throw new Error(`${name}.starred must be true or false`);
+    if (!kept.starred) delete kept.starred;
+  }
+  return kept;
+}
+
+// A page's address without its fragment: the key for its citation.
+export function pageKey(url) {
+  try { const parsed = new URL(url); parsed.hash = ''; return ['http:', 'https:'].includes(parsed.protocol) ? parsed.href : ''; } catch { return ''; }
+}
+
+function pageCitation(value, name = 'page citation') {
+  object(value, name);
+  const kept = {};
+  for (const [key, text] of Object.entries(value)) {
+    if (key === 'authors') {
+      const authors = stringList(text, `${name}.authors`).map(author => author.trim().replace(/\s+/gu, ' ')).filter(Boolean);
+      if (authors.length > MAX_AUTHORS) throw new Error(`${name} can list at most ${MAX_AUTHORS} authors`);
+      if (authors.some(author => author.length > MAX_AUTHOR)) throw new Error(`An author's name can be at most ${MAX_AUTHOR} characters`);
+      if (authors.length) kept.authors = authors;
+      continue;
+    }
+    if (!(key in PAGE_TEXT)) throw new Error(`Unsupported ${name} field: ${key}`);
+    if (typeof text !== 'string') throw new Error(`${name}.${key} must be text`);
+    const clean = text.trim().replace(/\s+/gu, ' ');
+    if (clean.length > PAGE_TEXT[key]) throw new Error(`${name}.${key} can be at most ${PAGE_TEXT[key]} characters`);
+    if (clean) kept[key] = clean;
+  }
+  return kept;
+}
+
+function pagesMap(value, name = 'collection.pages') {
+  if (value === undefined) return {};
+  object(value, name);
+  const entries = Object.entries(value);
+  if (entries.length > MAX_PAGES) throw new Error(`A collection can keep citation details for at most ${MAX_PAGES.toLocaleString('en-US')} pages`);
+  const kept = {};
+  for (const [url, citation] of entries) {
+    if (!url || pageKey(url) !== url) throw new Error(`${name} has an invalid page address: ${url}`);
+    kept[url] = pageCitation(citation, `${name} entry`);
+  }
+  return kept;
+}
+
+// Merges newer page citations into older ones (a newer reading of the same address replaces it)
+// and keeps at most MAX_PAGES, dropping the oldest readings first.
+function mergePages(older, newer) {
+  const merged = { ...older };
+  for (const [url, citation] of Object.entries(newer)) { delete merged[url]; merged[url] = citation; }
+  const entries = Object.entries(merged);
+  if (entries.length <= MAX_PAGES) return merged;
+  entries.sort(([, a], [, b]) => String(a.readAt || '').localeCompare(String(b.readAt || '')));
+  return Object.fromEntries(entries.slice(entries.length - MAX_PAGES));
+}
+function withPages(item, pages) {
+  const { pages: _old, ...rest } = item;
+  return Object.keys(pages).length ? { ...rest, pages } : rest;
 }
 
 /* Custom columns (0.4.0). A collection may list `fields: [{id, name}]`, and each of its links may
@@ -152,11 +236,13 @@ function validState(state) {
     stringList(current.tags, 'collection.tags');
     if (!Array.isArray(current.links)) throw new Error('collection.links must be an array');
     fieldDefs(current.fields);
+    pagesMap(current.pages);
     for (const item of current.links) {
       object(item, 'link');
       for (const key of LINK_STRINGS) string(item[key], `link.${key}`);
       stringList(item.tags, 'link.tags');
       if (item.fields !== undefined) fieldValues(item.fields);
+      research(item);
     }
   }
   object(state.settings, 'settings');
@@ -218,7 +304,7 @@ function settingsField(key, value, name = key) {
     case 'holdScope':
       if (!HOLD_SCOPES.has(value)) throw new Error(`${name} must be 'sites' or 'all'`);
       return value;
-    case 'welcomeSeen': case 'exportTimestamp': case 'contentOnly': case 'skipSaved':
+    case 'welcomeSeen': case 'exportTimestamp': case 'contentOnly': case 'skipSaved': case 'saveContext':
       if (typeof value !== 'boolean') throw new Error(`${name} must be true or false`);
       return value;
     case 'exportPrefix':
@@ -313,8 +399,28 @@ export function reduceState(input, action) {
         existing.add(item.id);
         appended.push(item);
       }
-      if (!appended.length) return state;
-      return replaceCollection(state, index, { ...current, links: [...current.links, ...appended] });
+      // Citation details read from the pages involved (0.5.0) come with the links, if any.
+      const pages = action.pages === undefined ? null : pagesMap(action.pages, 'pages');
+      if (!appended.length && !(pages && Object.keys(pages).length)) return state;
+      const updated = { ...current, links: [...current.links, ...appended] };
+      return replaceCollection(state, index, pages && Object.keys(pages).length ? withPages(updated, mergePages(pagesMap(current.pages), pages)) : updated);
+    }
+    // Reading status and stars (0.5.0), for many links at once. The workbench keeps the earlier
+    // values for Undo and sends one action per earlier value.
+    case 'links.status': case 'links.star': {
+      const { index, collection: current } = target(state, action.collectionId);
+      const ids = new Set(stringList(action.ids, 'ids'));
+      let apply;
+      if (action.type === 'links.status') {
+        if (action.status !== '' && !LINK_STATUSES.has(action.status)) throw new Error("status must be '', 'reading' or 'read'");
+        apply = ({ status: _old, ...rest }) => (action.status ? { ...rest, status: action.status } : rest);
+      } else {
+        if (typeof action.starred !== 'boolean') throw new Error('starred must be true or false');
+        apply = ({ starred: _old, ...rest }) => (action.starred ? { ...rest, starred: true } : rest);
+      }
+      let changed = false;
+      const links = current.links.map(item => { if (!ids.has(item.id)) return item; changed = true; return apply(item); });
+      return changed ? replaceCollection(state, index, { ...current, links }) : state;
     }
     case 'links.remove': {
       const { index, collection: current } = target(state, action.collectionId);
@@ -419,19 +525,24 @@ function hostname(value) {
 export function queryLinks(links, options = {}) {
   if (!Array.isArray(links)) throw new Error('links must be an array');
   object(options, 'options');
-  const { search = '', domain = '', fileType = '', relation = 'all', sort = 'page', direction = 'asc', dedupe = 'none' } = options;
+  const { search = '', domain = '', fileType = '', relation = 'all', sort = 'page', direction = 'asc', dedupe = 'none', status = 'any', starred = false, typeGroup: group = '' } = options;
+  if (!STATUS_FILTERS.has(status)) throw new Error(`Invalid status: ${status}`);
+  if (typeof starred !== 'boolean') throw new Error('starred must be true or false');
   if (!SORTS.has(sort)) throw new Error(`Invalid sort: ${sort}`);
   if (!DEDUPES.has(dedupe)) throw new Error(`Invalid dedupe: ${dedupe}`);
   if (!RELATIONS.has(relation)) throw new Error(`Invalid relation: ${relation}`);
   if (!['asc', 'desc'].includes(direction)) throw new Error(`Invalid direction: ${direction}`);
-  for (const [key, value] of Object.entries({ search, domain, fileType })) string(value, key);
+  for (const [key, value] of Object.entries({ search, domain, fileType, typeGroup: group })) string(value, key);
   const term = search.toLowerCase();
   const hostTerm = domain.toLowerCase();
   const extension = fileType.toLowerCase().replace(/^\./, '');
   const matched = links.filter(item => {
     const host = hostname(item.url);
-    if (term && ![item.anchorText, item.url, item.sourceTitle, item.sourceUrl, item.notes, ...(item.tags || []), ...Object.values(item.fields || {})]
+    if (term && ![item.anchorText, item.url, item.sourceTitle, item.sourceUrl, item.notes, ...(item.tags || []), ...Object.values(item.fields || {}), item.context || '', item.imported || '']
       .some(value => String(value).toLowerCase().includes(term))) return false;
+    if (status !== 'any' && (item.status || 'unread') !== status) return false;
+    if (starred && item.starred !== true) return false;
+    if (group && typeGroup(item) !== group) return false;
     if (hostTerm && !host.includes(hostTerm)) return false;
     if (extension) {
       let path;
@@ -465,7 +576,7 @@ export function queryLinks(links, options = {}) {
 
 /* Backup files ------------------------------------------------------------------------------
    A backup is UTF-8 JSON:
-   {format:'link-meteor-backup', formatVersion:2, createdAt, extensionVersion,
+   {format:'link-meteor-backup', formatVersion:3, createdAt, extensionVersion,
     state:{schemaVersion:1, activeCollectionId, collections, settings}}
    The removal undo snapshot is not included. Readers keep only contract fields, so a release
    that adds stored fields must raise BACKUP_FORMAT_VERSION: older releases then refuse the
@@ -479,6 +590,7 @@ function backupLink(value, columns = new Set()) {
   // Custom values are kept only for the collection's own columns.
   const fields = Object.fromEntries(Object.entries(checked.fields || {}).filter(([key]) => columns.has(key)));
   if (Object.keys(fields).length) kept.fields = fields;
+  for (const key of ['context', 'status', 'starred', 'imported']) if (checked[key] !== undefined) kept[key] = checked[key];
   return kept;
 }
 
@@ -499,6 +611,10 @@ function backupCollection(value, index, collectionIds, linkIds) {
     linkIds.add(checked.id);
     return checked;
   });
+  // Page citations are kept only for pages a link refers to: its own address or its source page.
+  const used = new Set(kept.links.flatMap(item => [pageKey(item.url), pageKey(item.sourceUrl)]));
+  const pages = Object.fromEntries(Object.entries(pagesMap(value.pages)).filter(([url]) => used.has(url)));
+  if (Object.keys(pages).length) kept.pages = pages;
   return kept;
 }
 
@@ -614,8 +730,11 @@ export function planRestore(input, backupInput, mode) {
     }
     const joined = fresh.map(item => item.fields ? withFields(item, Object.fromEntries(Object.entries(item.fields).filter(([key]) => remap.has(key)).map(([key, text]) => [remap.get(key), text]))) : item);
     const fieldsChanged = fields.length !== fieldDefs(current.fields).length;
-    if (fresh.length || notes !== current.notes || tags.length !== current.tags.length || fieldsChanged) {
-      collections[at] = { ...current, notes, tags, ...(fields.length ? { fields } : {}), links: [...current.links, ...joined], updatedAt: now };
+    // Page citations join too; a page already known here keeps its local reading.
+    const localPages = pagesMap(current.pages), pages = mergePages(source.pages || {}, localPages);
+    const pagesChanged = Object.keys(pages).length !== Object.keys(localPages).length;
+    if (fresh.length || notes !== current.notes || tags.length !== current.tags.length || fieldsChanged || pagesChanged) {
+      collections[at] = withPages({ ...current, notes, tags, ...(fields.length ? { fields } : {}), links: [...current.links, ...joined], updatedAt: now }, pages);
     }
   }
   const local = state.settings;

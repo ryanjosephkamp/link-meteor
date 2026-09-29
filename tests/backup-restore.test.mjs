@@ -4,7 +4,7 @@
 // objects that were written. Loaded-extension behavior is checked in tests/backup-browser.mjs.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createState, reduceState, createBackup, planRestore } from '../src/core/model.js';
+import { createState, reduceState, createBackup, planRestore, BACKUP_FORMAT_VERSION } from '../src/core/model.js';
 
 const sorted = (value) => {
   if (Array.isArray(value)) return value.map(sorted);
@@ -123,7 +123,7 @@ test('a failed restore write changes neither the state nor an earlier snapshot, 
 test('invalid files and modes are refused with the reader\'s message before anything is written', async () => {
   const fresh = reset();
   await assert.rejects(call('backup.restore', { backup: '{"format":', mode: 'merge' }), /not valid JSON/);
-  await assert.rejects(call('backup.restore', { backup: { ...backup, formatVersion: 3 }, mode: 'merge' }), /newer version of Link Meteor/);
+  await assert.rejects(call('backup.restore', { backup: { ...backup, formatVersion: BACKUP_FORMAT_VERSION + 1 }, mode: 'merge' }), /newer version of Link Meteor/);
   const bad = structuredClone(backup); bad.state.collections[0].links[0].url = 'javascript:alert(1)';
   await assert.rejects(call('backup.restore', { backup: bad, mode: 'replace' }), /url/);
   await assert.rejects(call('backup.restore', { backup: backupText, mode: 'overwrite' }), /merge' or 'replace/);

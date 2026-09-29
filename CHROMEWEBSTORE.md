@@ -102,7 +102,7 @@ Each reason names the feature that uses the permission and when it is used. Chro
 |------------|------|---------------|
 | `activeTab` | permissions | When the person clicks the toolbar icon, presses the region shortcut or chooses a Link Meteor item in the right-click menu, Link Meteor can read the links on that one page to capture them or start region selection. It is temporary and ends when the tab moves to another page, so capturing the current page needs no lasting site access. |
 | `scripting` | permissions | Runs Link Meteor's own bundled capture script on a page the person asked to capture: it reads each link's text and address and draws the selection rectangle and capture card. For hold-key drag, the same bundled script is registered only on sites the person allowed. No remote or generated code is run. |
-| `storage` | permissions | Saves collections, notes, tags and settings locally in the browser, and keeps the latest capture report for the browser session so the side panel and full view show the same result. Link Meteor does not use Chrome Sync for this data. |
+| `storage` | permissions | Saves collections, notes, tags, reading status, stars, context snippets, page citation details and settings locally in the browser, and keeps the latest capture report for the browser session so the side panel and full view show the same result. Link Meteor does not use Chrome Sync for this data. |
 | `sidePanel` | permissions | Clicking the toolbar icon opens the review workbench in Chrome's side panel, beside the page being captured. |
 | `contextMenus` | permissions | Adds Link Meteor's actions to the right-click menu, depending on what was right-clicked: on a link, add it to the active collection, copy its text and address, or download a linked file; on selected text, capture its links; on a page, select a region, capture the page or save the tab as a link. The toolbar icon's menu saves the tab or the window's tabs as links, or opens the full view. |
 | `clipboardWrite` | permissions | Copies the links the person selected, as a two-column table, URLs, Markdown or rich links (clickable HTML with a plain-text version), when they press a Copy button on the capture card or in the workbench, or right after a drag when they chose that setting. It also copies Copy diagnostics, which never includes addresses or names. On the capture card the copy completes after Link Meteor formats the links, which can outlast the page's normal click window, so the permission keeps an explicit Copy press from failing. Link Meteor never reads the clipboard. |
@@ -133,9 +133,9 @@ Recommended answers, to check against the dashboard's definitions at submission.
 | Location | No | No | — | No |
 | Web history | No (addresses of pages the person captures are saved on the device as each link's source) | No | Show where each link came from | No |
 | User activity | No | No | — | No |
-| Website content | No (link text and addresses from pages the person captures are saved on the device) | No | The collections the person builds | No |
+| Website content | No (link text and addresses, the words around each link, and citation details that pages publish about themselves, from pages the person captures, are saved on the device) | No | The collections the person builds | No |
 
-Actions the person takes can move data, as described in the privacy policy: copying puts it on the clipboard, downloads save files, bookmarks may be synced by Chrome's own bookmark sync, and opening links visits them.
+Actions the person takes can move data, as described in the privacy policy: copying puts it on the clipboard, downloads save files (including citation files), bookmarks may be synced by Chrome's own bookmark sync, and opening links visits them. Importing reads a file, pasted text or a bookmark folder the person chooses, in the browser. Nothing is looked up online: identifiers are read from each link's address, and citation details from the pages the person has open.
 
 ### Data Use Certification
 

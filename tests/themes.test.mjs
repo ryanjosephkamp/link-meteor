@@ -141,6 +141,23 @@ test('every theme keeps text, highlight and accent readable under color-vision s
   assert.ok(lowest.text >= 4.5 && lowest.highlight >= 0.08 && lowest.accent >= 1, JSON.stringify(lowest));
 });
 
+// 0.5.0: the danger color (Remove, Delete) must not look like a link. One pair is allowed, with
+// its reason: Meteor light under deuteranopia. Meteor stays the 0.3.0 look value for value, and
+// its Remove buttons also carry a trash icon and the word Remove.
+const DANGER_LINK_ALLOWED = new Set(['meteor light deuteranopia']);
+test('danger stays distinguishable from link text in every theme and color-vision simulation', () => {
+  const problems = [], allowedSeen = [];
+  for (const id of THEME_IDS) for (const scheme of ['light', 'dark']) for (const [vision, matrix] of Object.entries(VISIONS)) {
+    const t = THEMES[id][scheme], at = `${id} ${scheme} ${vision}`;
+    const danger = simulate(t.danger, matrix), text = simulate(t['accent-text'], matrix);
+    if (distinguishable(danger, text)) continue;
+    if (DANGER_LINK_ALLOWED.has(at)) { allowedSeen.push(at); continue; }
+    problems.push(`${at}: danger and link text, distance ${distance(danger, text).toFixed(3)}, ${contrastOf(danger, text).toFixed(2)}:1`);
+  }
+  assert.deepEqual(problems, []);
+  assert.deepEqual(allowedSeen, [...DANGER_LINK_ALLOWED], 'the allowed pair is still the one exception; remove it from the list if it no longer needs one');
+});
+
 // The website's theme tokens, derived from the same palettes. Meteor is the site's own :root. The
 // hued themes and Graphite keep the site's lightness steps, tinted toward the theme's neutral hue
 // (read from its ink token), with the accent family from the theme. High contrast uses its tokens.

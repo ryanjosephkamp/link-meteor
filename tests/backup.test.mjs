@@ -94,17 +94,22 @@ test('readers keep only contract fields and fill settings missing from older bac
   assert.deepEqual(read.state.settings, { ...createState().settings, holdKey: 'q', holdOrigins: ['https://a.example'], theme: 'ember' });
 });
 
-test('backup format 2 (0.4.0) still reads a format 1 file from 0.3.0, filling the new settings', () => {
+test('backup format 3 (0.5.0) still reads format 1 files from 0.3.0 and format 2 files from 0.4.0, filling the new settings', () => {
   const one = structuredClone(createBackup(machineA(), { extensionVersion: '0.3.0' }));
   one.formatVersion = 1;
-  for (const key of ['theme', 'appearance', 'afterDrag', 'afterDragFormat', 'contentOnly', 'skipSaved']) delete one.state.settings[key];
+  for (const key of ['theme', 'appearance', 'afterDrag', 'afterDragFormat', 'contentOnly', 'skipSaved', 'saveContext']) delete one.state.settings[key];
   const read = readBackup(JSON.stringify(one));
-  assert.equal(read.formatVersion, 2);
+  assert.equal(read.formatVersion, BACKUP_FORMAT_VERSION);
   assert.equal(read.state.settings.theme, 'meteor');
   assert.equal(read.state.settings.appearance, 'system');
   assert.equal(read.state.settings.afterDrag, 'card');
   assert.equal(read.state.settings.skipSaved, false);
-  assert.equal(BACKUP_FORMAT_VERSION, 2);
+  assert.equal(read.state.settings.saveContext, true);
+  const two = structuredClone(createBackup(machineA(), { extensionVersion: '0.4.0' }));
+  two.formatVersion = 2;
+  delete two.state.settings.saveContext;
+  assert.equal(readBackup(JSON.stringify(two)).state.settings.saveContext, true);
+  assert.equal(BACKUP_FORMAT_VERSION, 3);
 });
 
 test('merging into a fresh install joins the default collection by name and adds the rest', () => {

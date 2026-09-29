@@ -31,6 +31,7 @@ export const SETTING_REPORTS = Object.freeze({
   afterDragFormat: choice(['tsv', 'text', 'markdown', 'rich']),
   contentOnly: yesNo,
   skipSaved: yesNo,
+  saveContext: yesNo,
 });
 
 function settingsReport(settings) {

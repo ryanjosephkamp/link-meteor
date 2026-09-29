@@ -85,6 +85,13 @@
         <section aria-labelledby="stored">
           <h2 id="stored">What's stored, and where</h2>
           <p>Each collection holds its name, notes and tags, and the links you captured. For every link: visible anchor text, accessible label, destination URL, the original href, the source page's address and title, the frame's address, the capture time and batch ID, and your notes and tags.</p>
+          <p>From version 0.5.0, a collection can also hold:</p>
+          <ul>
+            <li><strong>The words around each link</strong> on its page, up to 400 characters, unless you turn this off.</li>
+            <li><strong>Citation details that pages publish about themselves</strong> in their own citation tags (title, authors, date, journal, DOI and similar). They're read from the page you capture from, or from a tab you save as a link, while Link Meteor already has it open. Nothing is looked up online.</li>
+            <li><strong>Your reading status and stars.</strong></li>
+            <li><strong>For imported links,</strong> the name of the file or bookmark folder they came from.</li>
+          </ul>
           <p>This is kept in <code>chrome.storage.local</code>, extension storage in your current Chrome profile. Link Meteor does not put it in Chrome Sync. Backups of your computer or Chrome profile are separate from Link Meteor and follow their own settings.</p>
           <p>While Chrome is open, Link Meteor also keeps the tab you last opened it from and the latest capture report in session storage, so the side panel and full workbench agree. If you leave out navigation links, the latest capture's left-out links wait there too, so you can still include them, and the card's recent adds are listed so Undo can take one back. Files the card or the right-click menu couldn't download yet, before Chrome gave download access, wait there for up to 10 minutes, until the full view shows them. Session storage is cleared when Chrome closes, and you can dismiss the report at any time.</p>
           <p>Your settings are saved with your collections:</p>
@@ -95,7 +102,8 @@
             <li>your answer to the welcome card;</li>
             <li>your export file-name preferences;</li>
             <li>your theme, and whether it is light, dark or follows the system;</li>
-            <li>what releasing a drag does, and the two capture defaults.</li>
+            <li>what releasing a drag does, and the two capture defaults;</li>
+            <li>whether to save the words around each link.</li>
           </ul>
           <p>The side panel and full view also keep the last theme and light or dark choice in their own page storage, so they open in it without a flash.</p>
           <p>After you restore a backup, the state from just before is kept once in the same local storage, so the restore can be undone. It's replaced by the next restore, and cleared when you discard it or change anything else.</p>
@@ -134,6 +142,8 @@
             <dt>Copy</dt><dd>Puts the text you chose on your computer's clipboard, where other apps can read it.</dd>
             <dt>Download</dt><dd>Saves a file to your normal downloads folder.</dd>
             <dt>Backup</dt><dd>Saves one file with every collection, link, note, tag and setting to your downloads folder. Nothing is uploaded. Restoring reads a file you choose, shows a preview before anything changes, and treats the file as untrusted: links are checked and unknown fields are dropped.</dd>
+            <dt>Import</dt><dd>Reads a file you choose (CSV, TSV, Excel, a list, an HTML or bookmarks file, or a Link Meteor export), text you paste, or a Chrome bookmark folder you pick. Files are read in your browser and never uploaded. Nothing is added until you confirm the preview, and an import can be undone.</dd>
+            <dt>Citations</dt><dd>BibTeX, RIS, CSL-JSON, an annotated bibliography or an Obsidian note, downloaded or copied when you ask. They're built only from what the pages showed and from your notes and tags: identifiers such as DOIs are read from each link's own address, and nothing is looked up online.</dd>
             <dt>Bookmarks</dt><dd>Creates bookmarks in Chrome, in a new folder or one you choose. <strong>Chrome may sync bookmarks to your other devices</strong>, depending on your own Chrome sync settings.</dd>
             <dt>Open in tabs</dt><dd>Visits those links, in tabs, a new window or a tab group, exactly as if you had clicked them, so those sites receive ordinary requests from your browser. Up to 500 at a time, and Link Meteor asks first above 20.</dd>
           </dl>

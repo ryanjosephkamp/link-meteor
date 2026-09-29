@@ -13,7 +13,7 @@ import assert from 'node:assert/strict';
 import {readFile, writeFile, mkdir, rm, cp} from 'node:fs/promises';
 import {resolve} from 'node:path';
 import {launch, fixtureServer, rpc, until, evidence, scratch, root} from './helpers/browser.mjs';
-import {createState, reduceState, createBackup, readBackup, BACKUP_LIMITS, MAX_CUSTOM_FIELDS} from '../src/core/model.js';
+import {createState, reduceState, createBackup, readBackup, BACKUP_LIMITS, BACKUP_FORMAT_VERSION, MAX_CUSTOM_FIELDS} from '../src/core/model.js';
 const VERSION = JSON.parse(await readFile(new URL('../src/manifest.json', import.meta.url), 'utf8')).version;
 
 const stamp = new Date().toISOString().replace(/[:.]/g, '-');
@@ -146,7 +146,7 @@ try {
   const invalid = {
     'not-json.json': ['{"format":', 'This file is not a Link Meteor backup: it is not valid JSON.'],
     'not-a-backup.json': ['[]', 'This file is not a Link Meteor backup.'],
-    'newer-format.json': [JSON.stringify({...backup, formatVersion: 3}), 'This backup was made by a newer version of Link Meteor (backup format 3). Update Link Meteor, then restore it.'],
+    'newer-format.json': [JSON.stringify({...backup, formatVersion: BACKUP_FORMAT_VERSION + 1}), `This backup was made by a newer version of Link Meteor (backup format ${BACKUP_FORMAT_VERSION + 1}). Update Link Meteor, then restore it.`],
     'bad-url.json': [JSON.stringify({...backup, state: {...backup.state, collections: [{...backup.state.collections[0], links: [{...backup.state.collections[0].links[0], url: 'javascript:alert(1)'}]}, ...backup.state.collections.slice(1)]}}), "This backup can't be restored: link.url must be an HTTP(S), mailto, or tel URL."],
     'oversized.json': [' '.repeat(BACKUP_LIMITS.bytes + 1), 'This backup is larger than 50 MB, the most Link Meteor can restore at once.'],
   };

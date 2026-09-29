@@ -199,6 +199,8 @@ try{
  for(const theme of THEME_IDS)for(const scheme of ['light','dark']){
   await ui.setViewportSize({width:1440,height:1000});await rpc(ui,{type:'state.mutate',action:{type:'settings.update',patch:{theme,appearance:scheme}}});await until(()=>applied(ui,theme,scheme),`${theme} ${scheme} applied`);
   await until(async()=>await ui.locator('.occurrence').count()===3,'Details still open');
+  // Colors change through a short transition even with reduced motion: measure once it has ended (slower machines caught it halfway).
+  await until(()=>ui.evaluate(()=>!document.getAnimations().length),`${theme} ${scheme} colors settled`);
   const list=await contrast(ui,readingPairs);await ui.locator('#show-insights').click();await until(()=>ui.locator('#insights').isVisible(),'Insights');const cards=await contrast(ui,insightPairs);
   for(const entry of [...list,...cards]){assert.ok(!entry.missing,`${theme} ${scheme} ${entry.name} missing`);assert.ok(entry.ratio>=4.5,`${theme} ${scheme} ${entry.name} contrast ${entry.ratio}`);}
   await ui.setViewportSize({width:320,height:900});const insightsOverflow=await overflow(ui);await ui.locator('#show-links').click();const detailsOverflow=await overflow(ui);

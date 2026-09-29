@@ -1,0 +1,239 @@
+{
+  "formatVersion": 1,
+  "extensionVersion": "0.4.0",
+  "sourceGitHead": "4ea3614915b3ffdbe200ff5a493f62a073de3f11",
+  "sourceFilesGitDirty": false,
+  "gitWorkingTreeDirtyAtPackaging": true,
+  "archive": {
+    "path": "artifacts/link-meteor-0.4.0.zip",
+    "bytes": 570447,
+    "sha256": "68105db8e9dc47e1a222a2f668e5cbc22df315f8a24f09d83f57f036f6bc7036"
+  },
+  "buildFiles": [
+    {
+      "path": "background.js",
+      "bytes": 11671,
+      "sha256": "4b2fab6512b0ed6768d408f3b36d6a0dda3c53a0774c7605c5570fd6a7b0ac91"
+    },
+    {
+      "path": "background/backup.js",
+      "bytes": 5348,
+      "sha256": "9cfcfefdb648fa40f639bffcd23b0346f3b8f5a52483abf9ed311566a594d1fc"
+    },
+    {
+      "path": "background/bookmarks.js",
+      "bytes": 4206,
+      "sha256": "f3f58649fc63f361e9e7ffb511b5af90344edbfe9541d252681c7f9ccfcaa3dc"
+    },
+    {
+      "path": "background/card.js",
+      "bytes": 15199,
+      "sha256": "478acccb21543bf91b34869535206afdef345af9980077b6ce12195167f4b489"
+    },
+    {
+      "path": "background/diagnostics.js",
+      "bytes": 6642,
+      "sha256": "d7a3fa6e6fcae0b664e692792da3ea6afabcb1fb366cf4fcbc093fde57b700e1"
+    },
+    {
+      "path": "background/downloads.js",
+      "bytes": 18758,
+      "sha256": "8e7f203ace6a7b6f63ef6e3bdae32161759be7f31997c0e2175e2aed3d07b925"
+    },
+    {
+      "path": "background/hold.js",
+      "bytes": 12878,
+      "sha256": "22f1d1774cce5382bcf84c1981a26500ce7230f9e71da0500131a7532bb40ee1"
+    },
+    {
+      "path": "background/menus.js",
+      "bytes": 9919,
+      "sha256": "f8f2bd78500927c8f6aef1890c49fcfe3b48ac7ad22c0f67a102e5cbfb26650c"
+    },
+    {
+      "path": "background/open.js",
+      "bytes": 5455,
+      "sha256": "43542d42f8ab3e42b76d8e1b3e23fc5679c1865f47870b3810570dff87eb2e83"
+    },
+    {
+      "path": "background/store.js",
+      "bytes": 2261,
+      "sha256": "9fbde391d7dc88ae6921a613be777d362bdc4a2e62276c90e813126511d76ecc"
+    },
+    {
+      "path": "background/tabs.js",
+      "bytes": 6916,
+      "sha256": "c2c049de01b3cd2bdd9015c73c98590c3e51cd9b4e50bc19e5ccbc6ae75c125c"
+    },
+    {
+      "path": "background/theme.js",
+      "bytes": 3019,
+      "sha256": "0cffb269cdcc26b1de633fdeb367376e5fb348c2d62407ec9bb86373c2a5378a"
+    },
+    {
+      "path": "background/urls.js",
+      "bytes": 654,
+      "sha256": "8aac87aa279a6fd7e7abcb901c1f89e3eaf2e10b294cfa8309684dafbd973c32"
+    },
+    {
+      "path": "content/capture.js",
+      "bytes": 79361,
+      "sha256": "6d092ecabd937812d73787281ba068797487a7f8a3680a9a6c6f9fe03cd21db2"
+    },
+    {
+      "path": "core/export.js",
+      "bytes": 12917,
+      "sha256": "3895f2229f888816c4767393e86ce0591c5b076c8ccc78f0ca84e20cf977ce21"
+    },
+    {
+      "path": "core/files.js",
+      "bytes": 8752,
+      "sha256": "5afb78e81767eb264660dd28eb7be626a1e798844496c684faa1513e0aa8e35d"
+    },
+    {
+      "path": "core/model.js",
+      "bytes": 35624,
+      "sha256": "00b34c0e5d8d032e9a2f0d51f43a5bbc1c6d7953a00307846495794e51df3810"
+    },
+    {
+      "path": "core/themes.js",
+      "bytes": 13455,
+      "sha256": "985d61870d074862bfbae92b88a90fc26af0a05d6f7e90a72bb3d06204f5e22d"
+    },
+    {
+      "path": "core/xlsx.js",
+      "bytes": 15078,
+      "sha256": "3d621ef53b4aeba170aa170d3902962d0945015ccf7fbe3517d378a17897548e"
+    },
+    {
+      "path": "icons/128.png",
+      "bytes": 3421,
+      "sha256": "f19d094c0c128b5e78e07e6916dfc51aaf730f8839b0e54c3234999b0510e07f"
+    },
+    {
+      "path": "icons/16.png",
+      "bytes": 493,
+      "sha256": "0951c895a07be571c8f625ebfbd705e96e313e86bdafa012fe9670178175d148"
+    },
+    {
+      "path": "icons/32.png",
+      "bytes": 928,
+      "sha256": "87a081dc2c356a718cad319b9587ecaae4959ecd8d33a026ccece95e477a6549"
+    },
+    {
+      "path": "icons/48.png",
+      "bytes": 1446,
+      "sha256": "6f33c5d61124d84636da3b3c650e6664e5de8564b013354d49483e0f5e02e0a5"
+    },
+    {
+      "path": "manifest.json",
+      "bytes": 1179,
+      "sha256": "133298741bf02aeeddc424f3ddbec9ab2076fcd588c69157ab0ad8ac592e6d5a"
+    },
+    {
+      "path": "ui/workbench.css",
+      "bytes": 55082,
+      "sha256": "87db778ccfcf2b9ba14bc3d792158e8ebb52b1592b8607cb2d3612e542ae37fd"
+    },
+    {
+      "path": "ui/workbench.html",
+      "bytes": 44656,
+      "sha256": "c23f7cf19bae235228cd7a923c1018933b071e7718b1ada265dc0f6afbada042"
+    },
+    {
+      "path": "ui/workbench.js",
+      "bytes": 1682,
+      "sha256": "86a5bd72274a9800b7a3fc11ea2e7422d11bdfc13085c2b4ffa938e3b3aefc31"
+    },
+    {
+      "path": "ui/workbench/about.js",
+      "bytes": 2226,
+      "sha256": "b658ae04c6a586736b6ab9413f00abf29c43fde99641239ba94c4bdec9a5bdbb"
+    },
+    {
+      "path": "ui/workbench/access.js",
+      "bytes": 4300,
+      "sha256": "12126033ee8f56da5032b421984133a288e90cd869071636ba2d03b5e8c66afa"
+    },
+    {
+      "path": "ui/workbench/appearance.js",
+      "bytes": 4834,
+      "sha256": "74935220057743b2e761c828e0092cc06d03f4e8e9472523f7a6a547a59e481a"
+    },
+    {
+      "path": "ui/workbench/backup.js",
+      "bytes": 15713,
+      "sha256": "ba69ad595e9db3948168f6740d65f140bf4b7634ed05588ca8fc0ac872dc12bb"
+    },
+    {
+      "path": "ui/workbench/bookmarks.js",
+      "bytes": 7311,
+      "sha256": "234d660043e2406f91a198b6abc79cc5bb8d8bb095e1a01eadea9f180298f2c7"
+    },
+    {
+      "path": "ui/workbench/capture.js",
+      "bytes": 34936,
+      "sha256": "4c6a49fb6bea3715b6cc858099196291ec8898f6d68482b85ea66d267948376c"
+    },
+    {
+      "path": "ui/workbench/collections.js",
+      "bytes": 7768,
+      "sha256": "cba131675ea2be70b11ef94c1a969a5d69826218eb768b47d750772bc9e32603"
+    },
+    {
+      "path": "ui/workbench/downloads.js",
+      "bytes": 12030,
+      "sha256": "48a749ba6624932182d901247968debff9486029dc60b694320dfc82fa673984"
+    },
+    {
+      "path": "ui/workbench/export.js",
+      "bytes": 14252,
+      "sha256": "7c2404c95c48ce041eb505f979102b6a3d7d3e157b3272a8e86b8f3d1aabc30c"
+    },
+    {
+      "path": "ui/workbench/fields.js",
+      "bytes": 21187,
+      "sha256": "fc69aeb5f935b416b90d6ba0a8f5aa488406ce59798ad3b0e584679f078d0973"
+    },
+    {
+      "path": "ui/workbench/helpers.js",
+      "bytes": 4440,
+      "sha256": "230553f69fc3d70c0a93e58c378cef5360b3bcbac3e05314fd32beb562f569ef"
+    },
+    {
+      "path": "ui/workbench/names.js",
+      "bytes": 4943,
+      "sha256": "e15431e0863b20552b6a7f20735af658a56ef7647dc4b0ccb57ec7dfc9db6dd2"
+    },
+    {
+      "path": "ui/workbench/open.js",
+      "bytes": 5836,
+      "sha256": "2b722af4a8fde5012ccde29d7e875752543af79f58e77e8b8ee7c29b409d2e5b"
+    },
+    {
+      "path": "ui/workbench/rendering.js",
+      "bytes": 3125,
+      "sha256": "d2061a73739a42401bc77dc9b0578fe8dcf593d004ad67e7195f64b78a04570f"
+    },
+    {
+      "path": "ui/workbench/review.js",
+      "bytes": 26312,
+      "sha256": "f742a0221bf0afd5f35af1c27535f0aaa794d84978f6250ca95ef0bbf11e05c5"
+    },
+    {
+      "path": "ui/workbench/settings.js",
+      "bytes": 13191,
+      "sha256": "658c9efdd80c9d50afacb5f37be3dffb1f470226e98c0c36cda2c0b8885b8980"
+    },
+    {
+      "path": "ui/workbench/state.js",
+      "bytes": 3342,
+      "sha256": "0e704b4787e799c32a282d75cecc80b1ec70d3f791d78cc5aaeeebabb1d76d3a"
+    },
+    {
+      "path": "ui/workbench/welcome.js",
+      "bytes": 2541,
+      "sha256": "0b676316289de3d58b7bbbd8ecba664e7b89a94edc1a9fb12b6dac7f181eef25"
+    }
+  ]
+}

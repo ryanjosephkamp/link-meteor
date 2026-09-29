@@ -1,0 +1,30 @@
+PASS Nothing opens a tab at install {"pages":["about:blank"]}
+PASS Welcome card on a fresh profile; keyboard order Allow, Later, Close at 320 px; Choose sites later sets welcomeSeen {"order":["welcome-allow","welcome-later","welcome-close"]}
+PASS Allow requests http and https in the click; a (simulated) decline says so plainly and sets welcomeSeen 
+PASS Close sets welcomeSeen 
+PASS Settings: the all-sites switch shows the true state; the trigger offers a letter or the modifier only; the Never list lists and removes; each permission has a reason {"triggers":[["letter","A letter key"],["modifier","Command"]],"reasons":{"allSites":"Hold-key drag and Capture this page then work on every website without asking site by site. Link Meteor reads a page’s links only when you capture or drag, and keeps them in this browser.","site":"Hold the key below and drag to select links, without opening Link Meteor first. Chrome asks for access to this site only.","tabGroups":"A tab group is named after the collection when Chrome lets Link Meteor manage tab groups. Chrome asks the first time you choose one."}}
+PASS Capture this page: no prompt after a toolbar press; on a new site whose address Chrome hides, a denied result says why and offers all sites (a decline changes nothing); a toolbar press there allows it 
+PASS Card destination picker saves the ticked links to the chosen collection {"saved":4}
+PASS Card copy formats: table, URLs (U) and Markdown (K) 
+PASS Card Open 3 in tabs opens the unique ticked web links at once {"opened":["/appendix","/papers/attention.pdf","/papers/geometry.pdf"]}
+PASS Card Download this selection (D) saves a workbook named after the chosen collection {"file":"Card-target_2026-09-29_1051.xlsx"}
+PASS Card Bookmark this selection without access explains it and offers the full view 
+PASS Card Review opens the full view at that capture, in its collection, once 
+PASS Card with 30 links confirms first, then opens all 30 in batches 
+PASS A theme or appearance change restyles a card already open on the page, without a reload (content.configure from the background) 
+PASS Add right away saves at once and says so; Undo (capture.undoAdd) removes exactly that add; Show links then adds again from the card 
+PASS Already saved: the card asks capture.saved and marks the 5 saved rows; Skip saved starts from the setting; Make this the default saves it (capture.preference) {"marked":["Attention in small systems [Saved]","Geometry, “frames” & 雪 [Saved]","Download PDF [Saved]","No anchor text (labeled “Open illustrated appendix”) [Saved]","Visible label [Saved]","Atlas notebook — field edition","Open-sky telescope","OBS-42","OBS-43"]}
+PASS Copy as rich links (L) puts the background’s HTML and plain text on the clipboard; the payload escapes anchor text and URLs {"types":["text/plain","text/html"]}
+PASS Skip saved: the card’s Add skips the 5 links already saved and says “Added 4 links …; 5 were already saved” 
+PASS Capture this page with content links only leaves out 5 links in header (shadow root), nav, aside (frame) and footer, reports them, and Include them adds them once {"captured":37,"leftOut":5}
+PASS Save tabs as links (capture.tabs): three fixture tabs become three links with their titles and addresses, in one batch; a tab Chrome hides is reported, not saved {"saved":3,"hidden":true}
+PASS The tabs themselves with This page: the button says Save this tab as a link, saves the current tab, and fits at 320 px 
+PASS Pick tabs: three tabs chosen, the button says Save 3 tabs as links, and the report says Saved 3 tabs as links (tab access: simulated accept) 
+PASS Save all tabs in this window without tab access: the full view opens with The tabs themselves and This window, says why, and asks in the save click (simulated decline) 
+PASS Workbench: 20 links open without a confirmation 
+PASS Workbench: a tab group without tab-group access (simulated decline) opens unnamed, with a note {"groupedTabs":20}
+PASS Workbench: 45 links confirm inline (Open 45 tabs, new window, tab group, Cancel); a new window opens all 45 {"buttons":[["open-confirm-yes","Open 45 tabs"],["open-confirm-window","Open in a new window"],["open-confirm-group","Open as a tab group"],["open-confirm-no","Cancel"]]}
+PASS Workbench: 150 links use stronger wording, open in batches with progress, and Cancel stops before the next batch {"openedBeforeStop":10}
+PASS Workbench: 520 links are refused before anything opens, in the page and in the background 
+PASS A state saved by 0.2.2 shows the welcome card once, with the saved hold key 
+PASS After Link Meteor restarts in place, region selection works on the same unreloaded page and its script answers messages 

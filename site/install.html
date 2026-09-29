@@ -79,18 +79,18 @@
         <section aria-labelledby="before">
           <h2 id="before">Before you start</h2>
           <p>Link Meteor is built for <strong>desktop Google Chrome</strong>. It doesn't run on phones or tablets, and there are no Firefox or Safari versions.</p>
-          <div class="note warn"><svg aria-hidden="true"><use href="assets/img/icons.svg#alert"/></svg><div><p><strong>What has been tested so far.</strong> Version 0.3.0 passed automated checks in Chrome for Testing on macOS, using synthetic pages. They cover capture, exports, bookmarks, backup and restore, site access and permission removal, including Chrome's own permission prompts, which the project owner answered by hand. The project owner then used 0.3.0 in everyday Google Chrome on macOS, going through every new feature, and everything worked. They also tested it in Brave and Microsoft Edge. The checks that need no extra permissions also passed in Chrome <span data-build="minimumChromeVersion">116</span>, the oldest version Link Meteor supports. Windows, Linux and screen readers haven't been tested yet. If something doesn't work for you, please <a href="https://github.com/ryanjosephkamp/link-meteor/issues">report it</a>.</p></div></div>
+          <div class="note warn"><svg aria-hidden="true"><use href="assets/img/icons.svg#alert"/></svg><div><p><strong>What has been tested so far.</strong> Version 0.4.0 passed automated checks in Chrome for Testing on macOS, using synthetic pages. They cover capture, exports, bookmarks, backup and restore, file downloads, site access and permission removal, including Chrome's own permission prompts, which the project owner answered by hand. The checks that need no extra permissions also pass on Windows and Linux. The project owner then used 0.4.0 in everyday Google Chrome on macOS, going through every new feature, and everything worked; they also tested 0.3.0 in Brave and Microsoft Edge. The automated checks that can run in Chrome <span data-build="minimumChromeVersion">116</span>, the oldest version Link Meteor supports, passed there too. Nobody has tried it by hand on Windows or Linux yet, and screen readers haven't been tested. If something doesn't work for you, please <a href="https://github.com/ryanjosephkamp/link-meteor/issues">report it</a>.</p></div></div>
           <p>A development build is installed with Chrome's <em>Developer mode</em>. That's a normal Chrome setting for loading extensions from a folder on your computer; it doesn't change anything else about your browser.</p>
         </section>
 
         <section aria-labelledby="works">
           <h2 id="works">Works in</h2>
           <dl class="defs">
-            <dt>Google Chrome</dt><dd>Tested on macOS. Link Meteor needs Chrome <span data-build="minimumChromeVersion">116</span> or newer, and that oldest version passed the automated checks that need no extra permissions.</dd>
-            <dt>Brave and Microsoft Edge</dt><dd>Tested by hand on macOS. Load the ZIP the same way, from the browser's own extensions page with Developer mode on.</dd>
+            <dt>Google Chrome</dt><dd>Tested by hand on macOS. Link Meteor needs Chrome <span data-build="minimumChromeVersion">116</span> or newer, and that oldest version passed the automated checks that can run there.</dd>
+            <dt>Brave and Microsoft Edge</dt><dd>Version 0.3.0 was tested by hand on macOS. Load the ZIP the same way, from the browser's own extensions page with Developer mode on.</dd>
             <dt>Firefox and Safari</dt><dd>Not supported.</dd>
           </dl>
-          <p>Windows and Linux haven't been tested yet. If you try Link Meteor there, or in another Chromium-based browser, a <a href="https://github.com/ryanjosephkamp/link-meteor/issues">report</a> of what worked helps.</p>
+          <p>Automated checks pass on Windows and Linux, but nobody has tried Link Meteor there by hand yet. If you try it there, or in another Chromium-based browser, a <a href="https://github.com/ryanjosephkamp/link-meteor/issues">report</a> of what worked helps.</p>
         </section>
 
         <section aria-labelledby="watch">
@@ -146,9 +146,9 @@
         <section aria-labelledby="download">
           <h2 id="download">Download</h2>
           <div class="download-card">
-            <p><strong>Link Meteor <span data-build="version">0.3.0</span></strong>, development build · <span data-build="size">360 KB ZIP</span></p>
-            <a class="btn btn-ink" href="downloads/link-meteor-0.3.0.zip" data-build-href="file" download><svg aria-hidden="true"><use href="assets/img/icons.svg#download"/></svg>Download <span data-build="filename">link-meteor-0.3.0.zip</span></a>
-            <p class="hash">SHA-256 <code data-build="sha256">25463687d2f0a7b9e280de7d4f905753cb9b8cc57b359129937f8ea5e98302c7</code></p>
+            <p><strong>Link Meteor <span data-build="version">0.4.0</span></strong>, development build · <span data-build="size">557 KB ZIP</span></p>
+            <a class="btn btn-ink" href="downloads/link-meteor-0.4.0.zip" data-build-href="file" download><svg aria-hidden="true"><use href="assets/img/icons.svg#download"/></svg>Download <span data-build="filename">link-meteor-0.4.0.zip</span></a>
+            <p class="hash">SHA-256 <code data-build="sha256">68105db8e9dc47e1a222a2f668e5cbc22df315f8a24f09d83f57f036f6bc7036</code></p>
           </div>
           <p>To check the file, compare its SHA-256 with the value above. On a Mac, run <code>shasum -a 256</code> followed by the file's path in Terminal; on Windows, run <code>certutil -hashfile</code> with the path and <code>SHA256</code> in Command Prompt.</p>
           <h3>Or build it from source</h3>
@@ -190,7 +190,7 @@
         <section aria-labelledby="update">
           <h2 id="update">Update or remove</h2>
           <h3>Update</h3>
-          <p>Download the new build and replace the contents of your Link Meteor folder with it, keeping the same folder. Then open <code>chrome://extensions</code>, press the reload button on Link Meteor's card, and reload any pages you had open. Your collections are kept. From version 0.3.0 on, you can also <a href="guide.html#collections">download a backup</a> first.</p>
+          <p>Download the new build and replace the contents of your Link Meteor folder with it, keeping the same folder. Then open <code>chrome://extensions</code>, press the reload button on Link Meteor's card, and reload any pages you had open. Your collections are kept. From version 0.3.0 on, you can also <a href="guide.html#collections">download a backup</a> first. A backup made with 0.4.0 can't be restored by 0.3.0.</p>
           <h3>Remove</h3>
           <p>Choose <em>Remove</em> on Link Meteor's card in <code>chrome://extensions</code>. <strong>This deletes your saved collections</strong>, because they are stored only in this browser. Download a backup or export anything you want to keep first.</p>
         </section>

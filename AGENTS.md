@@ -49,6 +49,7 @@ Browser checks need the Playwright library and its Chromium (Chrome for Testing)
 | `access-content` | The page script with a stubbed `chrome` object (a simulation, with real input events). |
 | `exports-browser`, `backup-browser` | Export names and workbooks; backup, restore, Undo and removing all. |
 | `downloads-browser` | Download files in the Export panel, Download in a link's details and files left waiting, with Chrome's prompt stubbed; nothing downloads. |
+| `reading-browser` | Reading status and stars (details, rows, selection, Undo), the Reading and Starred only view options, and Insights against `insights()`; 320 px and contrast. |
 | `audit-overlay`, `audit-actions`, `audit-regressions` | Earlier fixes stay fixed. |
 | `visual-browser` | Widths from 320 px, labels, focus, measured contrast, screenshots. Needs `LINK_METEOR_SEED_JSON`; `check` supplies one. |
 | `site-check`, `sync-site --check` | The website, and its match with the packaged build. |

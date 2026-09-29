@@ -135,6 +135,9 @@ function filterDescriptions() {
   if ($('file-type').value.trim()) filters.push(`File type: ${$('file-type').value.replace(/^\./, '')}`);
   if ($('relation').value === 'internal') filters.push('Internal links only (same site as the source page)');
   if ($('relation').value === 'external') filters.push('External links only (other sites)');
+  if ($('status-filter').value !== 'any') filters.push(`Reading status: ${$('status-filter').selectedOptions[0].textContent}`);
+  if ($('starred-filter').checked) filters.push('Starred links only');
+  if ($('type-group').value) filters.push(`Type: ${$('type-group').value}`);
   if (ui.selectedIds.size) filters.push('Selected links only');
   return filters;
 }

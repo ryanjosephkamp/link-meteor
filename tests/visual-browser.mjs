@@ -179,5 +179,35 @@ try{
  const collection=(await rpc(ui,{type:'state.get'})).activeCollectionId;await rpc(ui,{type:'state.mutate',action:{type:'collection.update',id:collection,patch:{name:'L'.repeat(120)}}});await until(async()=>(await ui.locator('#collection-heading').innerText()).length===120,'Long name');
  for(const width of [320,390,1440]){await ui.setViewportSize({width,height:900});assert.equal(await overflow(ui),false);}result.checks.push({longCollectionNameOverflow:false,widths:[320,390,1440]});
  await rpc(ui,{type:'state.mutate',action:{type:'collection.create',name:'Empty collection'}});await ui.setViewportSize({width:390,height:760});await until(async()=>(await ui.locator('#empty-state h3').innerText()).includes('Start'),'Empty state');await shot(ui,'panel-empty.png');
+ // 0.5.0 reading status, stars, link details and Insights, in every theme and scheme: measured contrast of the new badges, details,
+ // switch, selection actions, view options and Insights cards; no horizontal overflow at 320 px; a side-panel screenshot of each.
+ const review='https://review.example.net/articles/cooling-cities',at=(d)=>new Date(Date.UTC(2026,7,3+d,10)).toISOString();
+ const R=(id,anchorText,url,d,extra={})=>({id,anchorText,accessibleLabel:'',url,originalHref:url,sourceUrl:review,sourceTitle:'Cooling cities: a review of street-level interventions',frameUrl:'',capturedAt:at(d),batchId:`visual-research-${d>6?2:1}`,notes:'',tags:[],...extra});
+ await rpc(ui,{type:'state.mutate',action:{type:'collection.create',name:'Research details'}});
+ await rpc(ui,{type:'state.mutate',action:{type:'links.append',links:[
+  R('vr-1','the canopy study','https://doi.org/10.5555/uhi.2024.0142',0,{status:'read',starred:true,context:'Across forty mid-sized cities, the canopy study found that blocks with more than 30% tree cover stayed 2.1 °C cooler at 3 p.m. than blocks with less than 10%.'}),
+  R('vr-2','Preprint','https://arxiv.org/abs/2401.12345v2',1,{status:'reading'}),
+  R('vr-3','Heat and Health Lab','https://heat-health.example.edu/',8,{sourceUrl:'',sourceTitle:'',imported:'labs-shortlist.csv, row 2'}),
+  R('vr-4','Methods (PDF)','https://review.example.net/files/methods.pdf',9)],
+  pages:{[review]:{title:'Cooling cities: a review of street-level interventions',authors:['Amara Okafor','Jun Watanabe'],journal:'Journal of Example Climate',date:'March 2025',doi:'10.5555/cool.2025.0007',readAt:at(0)}}}});
+ await ui.setViewportSize({width:1440,height:1000});await until(async()=>await ui.locator('.link-row').count()===4,'Research rows');await ui.waitForTimeout(400);// let the storage reload's render settle before opening details
+ for(const i of [0,1,2]){await ui.locator('.row-details summary').nth(i).click();await until(async()=>await ui.locator('.link-row').nth(i).locator('.occurrence').count()===1,'Research details open');}
+ await ui.locator('.row-select').nth(3).check();await ui.locator('#filters-toggle').click();
+ const readingPairs=[['star badge','.link-row .badge.star'],['status badge','.link-row .badge.status'],['identifier badge','.link-row .badge.badge-id'],['imported badge','.link-row .badge.imported'],['status choice','.status-seg label:not(:has(input:checked))'],['chosen status','.status-seg label:has(input:checked)'],['star','.star-btn[aria-pressed="false"]'],['starred','.star-btn[aria-pressed="true"]'],['details label','.occ-label'],['context','.context'],['context mark','.context mark'],['context line','.context-meta'],['identifier kind','.ident b'],['identifier','.ident .ident-value'],['identifier copy','.ident .link-btn'],['cited title','.cited-title'],['cited line','.cited-line'],['cited note','.cited-note'],['imported from','.imported-from'],['Links switch','#show-links'],['Insights switch','#show-insights'],['Mark as read','#mark-read'],['Starred only','.filter-check span']];
+ const insightPairs=[['card title','.insight h3'],['total','.total b'],['total label','.total span'],['bar label','.bar-row .label'],['bar count','.bar-row .num'],['card note','.insight .note'],['legend','.legend li'],['chart axis','.chart-axis span'],['whole collection','#result-count']];
+ const readingResults=[];
+ for(const theme of THEME_IDS)for(const scheme of ['light','dark']){
+  await ui.setViewportSize({width:1440,height:1000});await rpc(ui,{type:'state.mutate',action:{type:'settings.update',patch:{theme,appearance:scheme}}});await until(()=>applied(ui,theme,scheme),`${theme} ${scheme} applied`);
+  await until(async()=>await ui.locator('.occurrence').count()===3,'Details still open');
+  const list=await contrast(ui,readingPairs);await ui.locator('#show-insights').click();await until(()=>ui.locator('#insights').isVisible(),'Insights');const cards=await contrast(ui,insightPairs);
+  for(const entry of [...list,...cards]){assert.ok(!entry.missing,`${theme} ${scheme} ${entry.name} missing`);assert.ok(entry.ratio>=4.5,`${theme} ${scheme} ${entry.name} contrast ${entry.ratio}`);}
+  await ui.setViewportSize({width:320,height:900});const insightsOverflow=await overflow(ui);await ui.locator('#show-links').click();const detailsOverflow=await overflow(ui);
+  assert.equal(insightsOverflow,false,`${theme} ${scheme}: Insights overflow at 320`);assert.equal(detailsOverflow,false,`${theme} ${scheme}: details overflow at 320`);
+  await ui.setViewportSize({width:390,height:1100});await ui.evaluate(()=>{document.getElementById('notice').hidden=true;const first=document.querySelector('.link-row');scrollTo(0,first.getBoundingClientRect().top+scrollY-8);});const details=`panel-research-${theme}-${scheme}.png`;await shot(ui,details);
+  await ui.locator('#show-insights').click();await until(()=>ui.locator('#insights').isVisible(),'Insights');await ui.evaluate(()=>{const review=document.getElementById('review');scrollTo(0,review.getBoundingClientRect().top+scrollY-8);});const cardsShot=`panel-insights-${theme}-${scheme}.png`;await shot(ui,cardsShot);await ui.locator('#show-links').click();
+  readingResults.push({theme,scheme,horizontalOverflowAt320:{details:detailsOverflow,insights:insightsOverflow},screenshots:[details,cardsShot],contrast:[...list,...cards]});
+ }
+ await rpc(ui,{type:'state.mutate',action:{type:'settings.update',patch:{theme:'meteor',appearance:'system'}}});
+ result.checks.push({readingAndInsights:{themes:readingResults.length,lowestContrast:Math.min(...readingResults.flatMap(entry=>entry.contrast.map(item=>item.ratio))),results:readingResults}});
  result.result='PASS';
 }catch(e){result.result='FAIL';result.error=e.stack;console.error(e);process.exitCode=1;}finally{await context.close();result.finished=new Date().toISOString();await writeFile(resolve(evidence,'visual-results.json'),JSON.stringify(result,null,2)+'\n');console.log(JSON.stringify({result:result.result,checks:result.checks.length,screenshots:result.screenshots}));}

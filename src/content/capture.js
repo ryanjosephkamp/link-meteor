@@ -842,7 +842,7 @@
     pressStart=null;
     if(!holdEnabled||busy()||event.button!==0||!event.isPrimary||editable(event))return;
     if(holdTrigger==='letter'){if(held){event.preventDefault();event.stopImmediatePropagation();suppressNextClick();arm(event);}return;}
-    if(modifierHeld(event)){const selection=getSelection();pressStart={x:event.clientX,y:event.clientY,pointerId:event.pointerId,selectionEmpty:!selection||selection.isCollapsed||!selection.rangeCount};}
+    if(modifierHeld(event)){const selection=getSelection();pressStart={x:event.clientX,y:event.clientY,pointerId:event.pointerId,selectionEmpty:!selection||!Array.from({length:selection.rangeCount},(_,i)=>selection.getRangeAt(i)).some(range=>!range.collapsed)};}
   },true);
   listen(document,'pointermove',event=>{
     if(!pressStart||event.pointerId!==pressStart.pointerId)return;
@@ -873,10 +873,12 @@
   }
   // Whether a link intersects the selection, judged in the innermost tree (a shadow root or a
   // document) that holds selected ranges: a link inside a selected shadow host counts through its host.
+  // Each range decides, not selection.isCollapsed: Chrome 116 reports a selection inside a shadow root
+  // as collapsed although its range isn't.
   function selected(element){
     for(let node=element;node;node=node.getRootNode().host){
       const root=node.getRootNode(),selection=root.getSelection?.();
-      const ranges=!selection||selection.isCollapsed?[]:Array.from({length:selection.rangeCount},(_,i)=>selection.getRangeAt(i)).filter(range=>!range.collapsed&&range.commonAncestorContainer.getRootNode()===root);
+      const ranges=!selection?[]:Array.from({length:selection.rangeCount},(_,i)=>selection.getRangeAt(i)).filter(range=>!range.collapsed&&range.commonAncestorContainer.getRootNode()===root);
       if(ranges.length)return ranges.some(range=>range.intersectsNode(node));
     }
     return false;

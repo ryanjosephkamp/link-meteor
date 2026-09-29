@@ -842,11 +842,15 @@ try {
   assert.deepEqual(await selectionTexts(), ['First text'], 'a few letters of one link');
   await menuPage.locator('#menu-host').evaluate((host) => { const bold = host.shadowRoot.querySelector('b').firstChild; getSelection().setBaseAndExtent(bold, 0, bold, 4); });
   assert.deepEqual(await selectionTexts(), ['Shadow menu link'], 'a selection inside a shadow root');
+  // Chrome 116 reports that same selection as collapsed although its range isn't; the ranges decide.
+  await menuPage.evaluate(() => { window.__isCollapsed = Object.getOwnPropertyDescriptor(Selection.prototype, 'isCollapsed'); Object.defineProperty(Selection.prototype, 'isCollapsed', {configurable: true, get: () => true}); });
+  try { assert.deepEqual(await selectionTexts(), ['Shadow menu link'], 'a shadow-root selection that Chrome misreports as collapsed'); }
+  finally { await menuPage.evaluate(() => Object.defineProperty(Selection.prototype, 'isCollapsed', window.__isCollapsed)); }
   await menuPage.evaluate(() => { getSelection().removeAllRanges(); const doc = document.getElementById('menu-frame').contentDocument, link = doc.getElementById('frame-link'); doc.getSelection().selectAllChildren(link); });
   assert.deepEqual(await selectionTexts(), ['Source inside a frame'], 'a selection in a same-origin frame');
   await menuPage.evaluate(() => { document.getElementById('menu-frame').contentDocument.getSelection().removeAllRanges(); getSelection().removeAllRanges(); });
   assert.deepEqual(await selectionTexts(), [], 'no selection, no links');
-  pass('content.selectionLinks answers every link that intersects the selection: in the page, a shadow root and a same-origin frame');
+  pass('content.selectionLinks answers every link that intersects the selection: in the page, a shadow root (also when Chrome misreports it as collapsed, as Chrome 116 does) and a same-origin frame');
 
   // The notice after a menu save: no selection or card, the page stays usable, Undo and Show links.
   answer = await ask({type: 'content.notice', text: 'Added 1 link to “Thesis sources”.', added: {collectionId: 'c1', batchId: 'menu-batch', name: 'Thesis sources'}});

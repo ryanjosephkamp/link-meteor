@@ -1,0 +1,5 @@
+PASS 5,037 real page occurrences captured; only 100 top-level rows and no closed details rendered {"elapsedMs":794}
+PASS Selection persists across pages and unselected export includes all 5,037 rows {}
+Error: Large filter (timed out)
+    at until (file:///<repo>/tests/helpers/browser.mjs:110:9)
+    at async file:///<repo>/tests/extended-browser.mjs:26:56

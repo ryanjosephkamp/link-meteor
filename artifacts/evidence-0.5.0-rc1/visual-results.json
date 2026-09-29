@@ -1,0 +1,3951 @@
+{
+  "started": "2026-09-29T19:50:47.680Z",
+  "checks": [
+    {
+      "welcomeCard": {
+        "shownOnFreshProfile": true,
+        "answeredWith": "Choose sites later",
+        "contrast": [
+          {
+            "name": "welcome title",
+            "ratio": 15.2
+          },
+          {
+            "name": "welcome help",
+            "ratio": 9.6
+          },
+          {
+            "name": "welcome allow",
+            "ratio": 13.41
+          },
+          {
+            "name": "dark welcome title",
+            "ratio": 13.68
+          },
+          {
+            "name": "dark welcome help",
+            "ratio": 10.19
+          },
+          {
+            "name": "dark welcome allow",
+            "ratio": 13.41
+          }
+        ]
+      }
+    },
+    {
+      "width": 320,
+      "view": "links",
+      "horizontalOverflow": false
+    },
+    {
+      "width": 390,
+      "view": "links",
+      "horizontalOverflow": false
+    },
+    {
+      "width": 412,
+      "view": "links",
+      "horizontalOverflow": false
+    },
+    {
+      "width": 900,
+      "view": "links",
+      "horizontalOverflow": false
+    },
+    {
+      "width": 1440,
+      "view": "links",
+      "horizontalOverflow": false
+    },
+    {
+      "width": 320,
+      "view": "collections",
+      "horizontalOverflow": false
+    },
+    {
+      "width": 320,
+      "view": "export",
+      "horizontalOverflow": false
+    },
+    {
+      "measuredTextContrast": [
+        {
+          "name": "all-sites help",
+          "ratio": 5.42
+        },
+        {
+          "name": "hold trigger help",
+          "ratio": 5.42
+        },
+        {
+          "name": "exception origin",
+          "ratio": 9.37
+        },
+        {
+          "name": "muted summary",
+          "ratio": 5.77
+        },
+        {
+          "name": "destructive action",
+          "ratio": 5.57
+        },
+        {
+          "name": "link action",
+          "ratio": 5.1
+        },
+        {
+          "name": "field label",
+          "ratio": 9.37
+        },
+        {
+          "name": "help text",
+          "ratio": 5.42
+        },
+        {
+          "name": "tag help",
+          "ratio": 6.02
+        },
+        {
+          "name": "input text",
+          "ratio": 16.48
+        },
+        {
+          "name": "toolbar count",
+          "ratio": 5.77
+        },
+        {
+          "name": "row URL",
+          "ratio": 5.77
+        },
+        {
+          "name": "source cell",
+          "ratio": 5.77
+        },
+        {
+          "name": "primary button",
+          "ratio": 13.41
+        },
+        {
+          "name": "dark all-sites help",
+          "ratio": 8.07
+        },
+        {
+          "name": "dark hold trigger help",
+          "ratio": 8.07
+        },
+        {
+          "name": "dark exception origin",
+          "ratio": 12.61
+        },
+        {
+          "name": "dark muted summary",
+          "ratio": 7.78
+        },
+        {
+          "name": "dark destructive action",
+          "ratio": 8.37
+        },
+        {
+          "name": "dark link action",
+          "ratio": 14
+        },
+        {
+          "name": "dark field label",
+          "ratio": 12.61
+        },
+        {
+          "name": "dark help text",
+          "ratio": 8.07
+        },
+        {
+          "name": "dark tag help",
+          "ratio": 7.36
+        },
+        {
+          "name": "dark input text",
+          "ratio": 15.41
+        },
+        {
+          "name": "dark toolbar count",
+          "ratio": 7.78
+        },
+        {
+          "name": "dark row URL",
+          "ratio": 7.78
+        },
+        {
+          "name": "dark source cell",
+          "ratio": 7.78
+        },
+        {
+          "name": "dark primary button",
+          "ratio": 13.41
+        }
+      ]
+    },
+    {
+      "themes": {
+        "switchedThrough": "settings.update",
+        "results": [
+          {
+            "theme": "meteor",
+            "scheme": "light",
+            "horizontalOverflowAt320": {
+              "links": false,
+              "settings": false
+            },
+            "screenshot": "panel-theme-meteor-light.png",
+            "contrast": [
+              {
+                "name": "all-sites help",
+                "ratio": 5.42
+              },
+              {
+                "name": "hold trigger help",
+                "ratio": 5.42
+              },
+              {
+                "name": "exception origin",
+                "ratio": 9.37
+              },
+              {
+                "name": "muted summary",
+                "ratio": 5.77
+              },
+              {
+                "name": "destructive action",
+                "ratio": 5.57
+              },
+              {
+                "name": "link action",
+                "ratio": 5.1
+              },
+              {
+                "name": "field label",
+                "ratio": 9.37
+              },
+              {
+                "name": "help text",
+                "ratio": 5.42
+              },
+              {
+                "name": "tag help",
+                "ratio": 6.02
+              },
+              {
+                "name": "input text",
+                "ratio": 16.48
+              },
+              {
+                "name": "toolbar count",
+                "ratio": 5.77
+              },
+              {
+                "name": "row URL",
+                "ratio": 5.77
+              },
+              {
+                "name": "source cell",
+                "ratio": 5.77
+              },
+              {
+                "name": "primary button",
+                "ratio": 13.41
+              },
+              {
+                "name": "theme name",
+                "ratio": 10.41
+              },
+              {
+                "name": "chosen theme name",
+                "ratio": 16.48
+              },
+              {
+                "name": "theme description",
+                "ratio": 5.42
+              },
+              {
+                "name": "scheme choice",
+                "ratio": 5.42
+              },
+              {
+                "name": "chosen scheme",
+                "ratio": 16.48
+              },
+              {
+                "name": "appearance help",
+                "ratio": 5.42
+              },
+              {
+                "name": "after-drag choice",
+                "ratio": 14.83
+              },
+              {
+                "name": "after-drag help",
+                "ratio": 5.42
+              },
+              {
+                "name": "copy format",
+                "ratio": 16.48
+              },
+              {
+                "name": "capture default",
+                "ratio": 14.83
+              },
+              {
+                "name": "capture default help",
+                "ratio": 5.42
+              }
+            ]
+          },
+          {
+            "theme": "meteor",
+            "scheme": "dark",
+            "horizontalOverflowAt320": {
+              "links": false,
+              "settings": false
+            },
+            "screenshot": "panel-theme-meteor-dark.png",
+            "contrast": [
+              {
+                "name": "all-sites help",
+                "ratio": 8.07
+              },
+              {
+                "name": "hold trigger help",
+                "ratio": 8.07
+              },
+              {
+                "name": "exception origin",
+                "ratio": 12.61
+              },
+              {
+                "name": "muted summary",
+                "ratio": 7.78
+              },
+              {
+                "name": "destructive action",
+                "ratio": 8.37
+              },
+              {
+                "name": "link action",
+                "ratio": 14
+              },
+              {
+                "name": "field label",
+                "ratio": 12.61
+              },
+              {
+                "name": "help text",
+                "ratio": 8.07
+              },
+              {
+                "name": "tag help",
+                "ratio": 7.36
+              },
+              {
+                "name": "input text",
+                "ratio": 15.41
+              },
+              {
+                "name": "toolbar count",
+                "ratio": 7.78
+              },
+              {
+                "name": "row URL",
+                "ratio": 7.78
+              },
+              {
+                "name": "source cell",
+                "ratio": 7.78
+              },
+              {
+                "name": "primary button",
+                "ratio": 13.41
+              },
+              {
+                "name": "theme name",
+                "ratio": 11.49
+              },
+              {
+                "name": "chosen theme name",
+                "ratio": 15.41
+              },
+              {
+                "name": "theme description",
+                "ratio": 8.07
+              },
+              {
+                "name": "scheme choice",
+                "ratio": 8.07
+              },
+              {
+                "name": "chosen scheme",
+                "ratio": 15.41
+              },
+              {
+                "name": "appearance help",
+                "ratio": 8.07
+              },
+              {
+                "name": "after-drag choice",
+                "ratio": 16.92
+              },
+              {
+                "name": "after-drag help",
+                "ratio": 8.07
+              },
+              {
+                "name": "copy format",
+                "ratio": 15.41
+              },
+              {
+                "name": "capture default",
+                "ratio": 16.92
+              },
+              {
+                "name": "capture default help",
+                "ratio": 8.07
+              }
+            ]
+          },
+          {
+            "theme": "comet",
+            "scheme": "light",
+            "horizontalOverflowAt320": {
+              "links": false,
+              "settings": false
+            },
+            "screenshot": "panel-theme-comet-light.png",
+            "contrast": [
+              {
+                "name": "all-sites help",
+                "ratio": 5.34
+              },
+              {
+                "name": "hold trigger help",
+                "ratio": 5.34
+              },
+              {
+                "name": "exception origin",
+                "ratio": 9.23
+              },
+              {
+                "name": "muted summary",
+                "ratio": 5.73
+              },
+              {
+                "name": "destructive action",
+                "ratio": 5.57
+              },
+              {
+                "name": "link action",
+                "ratio": 5.07
+              },
+              {
+                "name": "field label",
+                "ratio": 9.23
+              },
+              {
+                "name": "help text",
+                "ratio": 5.34
+              },
+              {
+                "name": "tag help",
+                "ratio": 5.96
+              },
+              {
+                "name": "input text",
+                "ratio": 16.33
+              },
+              {
+                "name": "toolbar count",
+                "ratio": 5.73
+              },
+              {
+                "name": "row URL",
+                "ratio": 5.73
+              },
+              {
+                "name": "source cell",
+                "ratio": 5.73
+              },
+              {
+                "name": "primary button",
+                "ratio": 11.76
+              },
+              {
+                "name": "theme name",
+                "ratio": 10.3
+              },
+              {
+                "name": "chosen theme name",
+                "ratio": 16.33
+              },
+              {
+                "name": "theme description",
+                "ratio": 5.34
+              },
+              {
+                "name": "scheme choice",
+                "ratio": 5.34
+              },
+              {
+                "name": "chosen scheme",
+                "ratio": 16.33
+              },
+              {
+                "name": "appearance help",
+                "ratio": 5.34
+              },
+              {
+                "name": "after-drag choice",
+                "ratio": 14.64
+              },
+              {
+                "name": "after-drag help",
+                "ratio": 5.34
+              },
+              {
+                "name": "copy format",
+                "ratio": 16.33
+              },
+              {
+                "name": "capture default",
+                "ratio": 14.64
+              },
+              {
+                "name": "capture default help",
+                "ratio": 5.34
+              }
+            ]
+          },
+          {
+            "theme": "comet",
+            "scheme": "dark",
+            "horizontalOverflowAt320": {
+              "links": false,
+              "settings": false
+            },
+            "screenshot": "panel-theme-comet-dark.png",
+            "contrast": [
+              {
+                "name": "all-sites help",
+                "ratio": 8.1
+              },
+              {
+                "name": "hold trigger help",
+                "ratio": 8.1
+              },
+              {
+                "name": "exception origin",
+                "ratio": 12.6
+              },
+              {
+                "name": "muted summary",
+                "ratio": 7.8
+              },
+              {
+                "name": "destructive action",
+                "ratio": 8.31
+              },
+              {
+                "name": "link action",
+                "ratio": 13.09
+              },
+              {
+                "name": "field label",
+                "ratio": 12.6
+              },
+              {
+                "name": "help text",
+                "ratio": 8.1
+              },
+              {
+                "name": "tag help",
+                "ratio": 7.33
+              },
+              {
+                "name": "input text",
+                "ratio": 15.35
+              },
+              {
+                "name": "toolbar count",
+                "ratio": 7.8
+              },
+              {
+                "name": "row URL",
+                "ratio": 7.8
+              },
+              {
+                "name": "source cell",
+                "ratio": 7.8
+              },
+              {
+                "name": "primary button",
+                "ratio": 11.76
+              },
+              {
+                "name": "theme name",
+                "ratio": 11.41
+              },
+              {
+                "name": "chosen theme name",
+                "ratio": 15.35
+              },
+              {
+                "name": "theme description",
+                "ratio": 8.1
+              },
+              {
+                "name": "scheme choice",
+                "ratio": 8.1
+              },
+              {
+                "name": "chosen scheme",
+                "ratio": 15.35
+              },
+              {
+                "name": "appearance help",
+                "ratio": 8.1
+              },
+              {
+                "name": "after-drag choice",
+                "ratio": 16.95
+              },
+              {
+                "name": "after-drag help",
+                "ratio": 8.1
+              },
+              {
+                "name": "copy format",
+                "ratio": 15.35
+              },
+              {
+                "name": "capture default",
+                "ratio": 16.95
+              },
+              {
+                "name": "capture default help",
+                "ratio": 8.1
+              }
+            ]
+          },
+          {
+            "theme": "aurora",
+            "scheme": "light",
+            "horizontalOverflowAt320": {
+              "links": false,
+              "settings": false
+            },
+            "screenshot": "panel-theme-aurora-light.png",
+            "contrast": [
+              {
+                "name": "all-sites help",
+                "ratio": 5.37
+              },
+              {
+                "name": "hold trigger help",
+                "ratio": 5.37
+              },
+              {
+                "name": "exception origin",
+                "ratio": 9.31
+              },
+              {
+                "name": "muted summary",
+                "ratio": 5.72
+              },
+              {
+                "name": "destructive action",
+                "ratio": 5.57
+              },
+              {
+                "name": "link action",
+                "ratio": 5.11
+              },
+              {
+                "name": "field label",
+                "ratio": 9.31
+              },
+              {
+                "name": "help text",
+                "ratio": 5.37
+              },
+              {
+                "name": "tag help",
+                "ratio": 5.96
+              },
+              {
+                "name": "input text",
+                "ratio": 16.36
+              },
+              {
+                "name": "toolbar count",
+                "ratio": 5.72
+              },
+              {
+                "name": "row URL",
+                "ratio": 5.72
+              },
+              {
+                "name": "source cell",
+                "ratio": 5.72
+              },
+              {
+                "name": "primary button",
+                "ratio": 11.48
+              },
+              {
+                "name": "theme name",
+                "ratio": 10.34
+              },
+              {
+                "name": "chosen theme name",
+                "ratio": 16.36
+              },
+              {
+                "name": "theme description",
+                "ratio": 5.37
+              },
+              {
+                "name": "scheme choice",
+                "ratio": 5.37
+              },
+              {
+                "name": "chosen scheme",
+                "ratio": 16.36
+              },
+              {
+                "name": "appearance help",
+                "ratio": 5.37
+              },
+              {
+                "name": "after-drag choice",
+                "ratio": 14.74
+              },
+              {
+                "name": "after-drag help",
+                "ratio": 5.37
+              },
+              {
+                "name": "copy format",
+                "ratio": 16.36
+              },
+              {
+                "name": "capture default",
+                "ratio": 14.74
+              },
+              {
+                "name": "capture default help",
+                "ratio": 5.37
+              }
+            ]
+          },
+          {
+            "theme": "aurora",
+            "scheme": "dark",
+            "horizontalOverflowAt320": {
+              "links": false,
+              "settings": false
+            },
+            "screenshot": "panel-theme-aurora-dark.png",
+            "contrast": [
+              {
+                "name": "all-sites help",
+                "ratio": 8.08
+              },
+              {
+                "name": "hold trigger help",
+                "ratio": 8.08
+              },
+              {
+                "name": "exception origin",
+                "ratio": 12.6
+              },
+              {
+                "name": "muted summary",
+                "ratio": 7.78
+              },
+              {
+                "name": "destructive action",
+                "ratio": 7.21
+              },
+              {
+                "name": "link action",
+                "ratio": 13.17
+              },
+              {
+                "name": "field label",
+                "ratio": 12.6
+              },
+              {
+                "name": "help text",
+                "ratio": 8.08
+              },
+              {
+                "name": "tag help",
+                "ratio": 7.31
+              },
+              {
+                "name": "input text",
+                "ratio": 15.29
+              },
+              {
+                "name": "toolbar count",
+                "ratio": 7.78
+              },
+              {
+                "name": "row URL",
+                "ratio": 7.78
+              },
+              {
+                "name": "source cell",
+                "ratio": 7.78
+              },
+              {
+                "name": "primary button",
+                "ratio": 11.48
+              },
+              {
+                "name": "theme name",
+                "ratio": 11.4
+              },
+              {
+                "name": "chosen theme name",
+                "ratio": 15.29
+              },
+              {
+                "name": "theme description",
+                "ratio": 8.08
+              },
+              {
+                "name": "scheme choice",
+                "ratio": 8.08
+              },
+              {
+                "name": "chosen scheme",
+                "ratio": 15.29
+              },
+              {
+                "name": "appearance help",
+                "ratio": 8.08
+              },
+              {
+                "name": "after-drag choice",
+                "ratio": 16.89
+              },
+              {
+                "name": "after-drag help",
+                "ratio": 8.08
+              },
+              {
+                "name": "copy format",
+                "ratio": 15.29
+              },
+              {
+                "name": "capture default",
+                "ratio": 16.89
+              },
+              {
+                "name": "capture default help",
+                "ratio": 8.08
+              }
+            ]
+          },
+          {
+            "theme": "ember",
+            "scheme": "light",
+            "horizontalOverflowAt320": {
+              "links": false,
+              "settings": false
+            },
+            "screenshot": "panel-theme-ember-light.png",
+            "contrast": [
+              {
+                "name": "all-sites help",
+                "ratio": 5.44
+              },
+              {
+                "name": "hold trigger help",
+                "ratio": 5.44
+              },
+              {
+                "name": "exception origin",
+                "ratio": 9.45
+              },
+              {
+                "name": "muted summary",
+                "ratio": 5.77
+              },
+              {
+                "name": "destructive action",
+                "ratio": 9.32
+              },
+              {
+                "name": "link action",
+                "ratio": 5.32
+              },
+              {
+                "name": "field label",
+                "ratio": 9.45
+              },
+              {
+                "name": "help text",
+                "ratio": 5.44
+              },
+              {
+                "name": "tag help",
+                "ratio": 6.05
+              },
+              {
+                "name": "input text",
+                "ratio": 16.51
+              },
+              {
+                "name": "toolbar count",
+                "ratio": 5.77
+              },
+              {
+                "name": "row URL",
+                "ratio": 5.77
+              },
+              {
+                "name": "source cell",
+                "ratio": 5.77
+              },
+              {
+                "name": "primary button",
+                "ratio": 8.04
+              },
+              {
+                "name": "theme name",
+                "ratio": 10.52
+              },
+              {
+                "name": "chosen theme name",
+                "ratio": 16.51
+              },
+              {
+                "name": "theme description",
+                "ratio": 5.44
+              },
+              {
+                "name": "scheme choice",
+                "ratio": 5.44
+              },
+              {
+                "name": "chosen scheme",
+                "ratio": 16.51
+              },
+              {
+                "name": "appearance help",
+                "ratio": 5.44
+              },
+              {
+                "name": "after-drag choice",
+                "ratio": 14.84
+              },
+              {
+                "name": "after-drag help",
+                "ratio": 5.44
+              },
+              {
+                "name": "copy format",
+                "ratio": 16.51
+              },
+              {
+                "name": "capture default",
+                "ratio": 14.84
+              },
+              {
+                "name": "capture default help",
+                "ratio": 5.44
+              }
+            ]
+          },
+          {
+            "theme": "ember",
+            "scheme": "dark",
+            "horizontalOverflowAt320": {
+              "links": false,
+              "settings": false
+            },
+            "screenshot": "panel-theme-ember-dark.png",
+            "contrast": [
+              {
+                "name": "all-sites help",
+                "ratio": 8.04
+              },
+              {
+                "name": "hold trigger help",
+                "ratio": 8.04
+              },
+              {
+                "name": "exception origin",
+                "ratio": 12.56
+              },
+              {
+                "name": "muted summary",
+                "ratio": 7.78
+              },
+              {
+                "name": "destructive action",
+                "ratio": 6.04
+              },
+              {
+                "name": "link action",
+                "ratio": 10.64
+              },
+              {
+                "name": "field label",
+                "ratio": 12.56
+              },
+              {
+                "name": "help text",
+                "ratio": 8.04
+              },
+              {
+                "name": "tag help",
+                "ratio": 7.35
+              },
+              {
+                "name": "input text",
+                "ratio": 15.43
+              },
+              {
+                "name": "toolbar count",
+                "ratio": 7.78
+              },
+              {
+                "name": "row URL",
+                "ratio": 7.78
+              },
+              {
+                "name": "source cell",
+                "ratio": 7.78
+              },
+              {
+                "name": "primary button",
+                "ratio": 8.04
+              },
+              {
+                "name": "theme name",
+                "ratio": 11.49
+              },
+              {
+                "name": "chosen theme name",
+                "ratio": 15.43
+              },
+              {
+                "name": "theme description",
+                "ratio": 8.04
+              },
+              {
+                "name": "scheme choice",
+                "ratio": 8.04
+              },
+              {
+                "name": "chosen scheme",
+                "ratio": 15.43
+              },
+              {
+                "name": "appearance help",
+                "ratio": 8.04
+              },
+              {
+                "name": "after-drag choice",
+                "ratio": 16.87
+              },
+              {
+                "name": "after-drag help",
+                "ratio": 8.04
+              },
+              {
+                "name": "copy format",
+                "ratio": 15.43
+              },
+              {
+                "name": "capture default",
+                "ratio": 16.87
+              },
+              {
+                "name": "capture default help",
+                "ratio": 8.04
+              }
+            ]
+          },
+          {
+            "theme": "nebula",
+            "scheme": "light",
+            "horizontalOverflowAt320": {
+              "links": false,
+              "settings": false
+            },
+            "screenshot": "panel-theme-nebula-light.png",
+            "contrast": [
+              {
+                "name": "all-sites help",
+                "ratio": 5.45
+              },
+              {
+                "name": "hold trigger help",
+                "ratio": 5.45
+              },
+              {
+                "name": "exception origin",
+                "ratio": 9.48
+              },
+              {
+                "name": "muted summary",
+                "ratio": 5.79
+              },
+              {
+                "name": "destructive action",
+                "ratio": 5.57
+              },
+              {
+                "name": "link action",
+                "ratio": 5.44
+              },
+              {
+                "name": "field label",
+                "ratio": 9.48
+              },
+              {
+                "name": "help text",
+                "ratio": 5.45
+              },
+              {
+                "name": "tag help",
+                "ratio": 6.08
+              },
+              {
+                "name": "input text",
+                "ratio": 16.59
+              },
+              {
+                "name": "toolbar count",
+                "ratio": 5.79
+              },
+              {
+                "name": "row URL",
+                "ratio": 5.79
+              },
+              {
+                "name": "source cell",
+                "ratio": 5.79
+              },
+              {
+                "name": "primary button",
+                "ratio": 8.85
+              },
+              {
+                "name": "theme name",
+                "ratio": 10.56
+              },
+              {
+                "name": "chosen theme name",
+                "ratio": 16.59
+              },
+              {
+                "name": "theme description",
+                "ratio": 5.45
+              },
+              {
+                "name": "scheme choice",
+                "ratio": 5.45
+              },
+              {
+                "name": "chosen scheme",
+                "ratio": 16.59
+              },
+              {
+                "name": "appearance help",
+                "ratio": 5.45
+              },
+              {
+                "name": "after-drag choice",
+                "ratio": 14.89
+              },
+              {
+                "name": "after-drag help",
+                "ratio": 5.45
+              },
+              {
+                "name": "copy format",
+                "ratio": 16.59
+              },
+              {
+                "name": "capture default",
+                "ratio": 14.89
+              },
+              {
+                "name": "capture default help",
+                "ratio": 5.45
+              }
+            ]
+          },
+          {
+            "theme": "nebula",
+            "scheme": "dark",
+            "horizontalOverflowAt320": {
+              "links": false,
+              "settings": false
+            },
+            "screenshot": "panel-theme-nebula-dark.png",
+            "contrast": [
+              {
+                "name": "all-sites help",
+                "ratio": 8.01
+              },
+              {
+                "name": "hold trigger help",
+                "ratio": 8.01
+              },
+              {
+                "name": "exception origin",
+                "ratio": 12.55
+              },
+              {
+                "name": "muted summary",
+                "ratio": 7.76
+              },
+              {
+                "name": "destructive action",
+                "ratio": 8.34
+              },
+              {
+                "name": "link action",
+                "ratio": 11.33
+              },
+              {
+                "name": "field label",
+                "ratio": 12.55
+              },
+              {
+                "name": "help text",
+                "ratio": 8.01
+              },
+              {
+                "name": "tag help",
+                "ratio": 7.27
+              },
+              {
+                "name": "input text",
+                "ratio": 15.31
+              },
+              {
+                "name": "toolbar count",
+                "ratio": 7.76
+              },
+              {
+                "name": "row URL",
+                "ratio": 7.76
+              },
+              {
+                "name": "source cell",
+                "ratio": 7.76
+              },
+              {
+                "name": "primary button",
+                "ratio": 8.85
+              },
+              {
+                "name": "theme name",
+                "ratio": 11.39
+              },
+              {
+                "name": "chosen theme name",
+                "ratio": 15.31
+              },
+              {
+                "name": "theme description",
+                "ratio": 8.01
+              },
+              {
+                "name": "scheme choice",
+                "ratio": 8.01
+              },
+              {
+                "name": "chosen scheme",
+                "ratio": 15.31
+              },
+              {
+                "name": "appearance help",
+                "ratio": 8.01
+              },
+              {
+                "name": "after-drag choice",
+                "ratio": 16.87
+              },
+              {
+                "name": "after-drag help",
+                "ratio": 8.01
+              },
+              {
+                "name": "copy format",
+                "ratio": 15.31
+              },
+              {
+                "name": "capture default",
+                "ratio": 16.87
+              },
+              {
+                "name": "capture default help",
+                "ratio": 8.01
+              }
+            ]
+          },
+          {
+            "theme": "graphite",
+            "scheme": "light",
+            "horizontalOverflowAt320": {
+              "links": false,
+              "settings": false
+            },
+            "screenshot": "panel-theme-graphite-light.png",
+            "contrast": [
+              {
+                "name": "all-sites help",
+                "ratio": 5.41
+              },
+              {
+                "name": "hold trigger help",
+                "ratio": 5.41
+              },
+              {
+                "name": "exception origin",
+                "ratio": 9.34
+              },
+              {
+                "name": "muted summary",
+                "ratio": 5.76
+              },
+              {
+                "name": "destructive action",
+                "ratio": 5.57
+              },
+              {
+                "name": "link action",
+                "ratio": 12.24
+              },
+              {
+                "name": "field label",
+                "ratio": 9.34
+              },
+              {
+                "name": "help text",
+                "ratio": 5.41
+              },
+              {
+                "name": "tag help",
+                "ratio": 6.01
+              },
+              {
+                "name": "input text",
+                "ratio": 16.48
+              },
+              {
+                "name": "toolbar count",
+                "ratio": 5.76
+              },
+              {
+                "name": "row URL",
+                "ratio": 5.76
+              },
+              {
+                "name": "source cell",
+                "ratio": 5.76
+              },
+              {
+                "name": "primary button",
+                "ratio": 13.01
+              },
+              {
+                "name": "theme name",
+                "ratio": 10.37
+              },
+              {
+                "name": "chosen theme name",
+                "ratio": 16.48
+              },
+              {
+                "name": "theme description",
+                "ratio": 5.41
+              },
+              {
+                "name": "scheme choice",
+                "ratio": 5.41
+              },
+              {
+                "name": "chosen scheme",
+                "ratio": 16.48
+              },
+              {
+                "name": "appearance help",
+                "ratio": 5.41
+              },
+              {
+                "name": "after-drag choice",
+                "ratio": 14.85
+              },
+              {
+                "name": "after-drag help",
+                "ratio": 5.41
+              },
+              {
+                "name": "copy format",
+                "ratio": 16.48
+              },
+              {
+                "name": "capture default",
+                "ratio": 14.85
+              },
+              {
+                "name": "capture default help",
+                "ratio": 5.41
+              }
+            ]
+          },
+          {
+            "theme": "graphite",
+            "scheme": "dark",
+            "horizontalOverflowAt320": {
+              "links": false,
+              "settings": false
+            },
+            "screenshot": "panel-theme-graphite-dark.png",
+            "contrast": [
+              {
+                "name": "all-sites help",
+                "ratio": 8.1
+              },
+              {
+                "name": "hold trigger help",
+                "ratio": 8.1
+              },
+              {
+                "name": "exception origin",
+                "ratio": 12.64
+              },
+              {
+                "name": "muted summary",
+                "ratio": 7.79
+              },
+              {
+                "name": "destructive action",
+                "ratio": 8.37
+              },
+              {
+                "name": "link action",
+                "ratio": 15.18
+              },
+              {
+                "name": "field label",
+                "ratio": 12.64
+              },
+              {
+                "name": "help text",
+                "ratio": 8.1
+              },
+              {
+                "name": "tag help",
+                "ratio": 7.38
+              },
+              {
+                "name": "input text",
+                "ratio": 15.43
+              },
+              {
+                "name": "toolbar count",
+                "ratio": 7.79
+              },
+              {
+                "name": "row URL",
+                "ratio": 7.79
+              },
+              {
+                "name": "source cell",
+                "ratio": 7.79
+              },
+              {
+                "name": "primary button",
+                "ratio": 13.45
+              },
+              {
+                "name": "theme name",
+                "ratio": 11.51
+              },
+              {
+                "name": "chosen theme name",
+                "ratio": 15.43
+              },
+              {
+                "name": "theme description",
+                "ratio": 8.1
+              },
+              {
+                "name": "scheme choice",
+                "ratio": 8.1
+              },
+              {
+                "name": "chosen scheme",
+                "ratio": 15.43
+              },
+              {
+                "name": "appearance help",
+                "ratio": 8.1
+              },
+              {
+                "name": "after-drag choice",
+                "ratio": 16.94
+              },
+              {
+                "name": "after-drag help",
+                "ratio": 8.1
+              },
+              {
+                "name": "copy format",
+                "ratio": 15.43
+              },
+              {
+                "name": "capture default",
+                "ratio": 16.94
+              },
+              {
+                "name": "capture default help",
+                "ratio": 8.1
+              }
+            ]
+          },
+          {
+            "theme": "contrast",
+            "scheme": "light",
+            "horizontalOverflowAt320": {
+              "links": false,
+              "settings": false
+            },
+            "screenshot": "panel-theme-contrast-light.png",
+            "contrast": [
+              {
+                "name": "all-sites help",
+                "ratio": 12.13
+              },
+              {
+                "name": "hold trigger help",
+                "ratio": 12.13
+              },
+              {
+                "name": "exception origin",
+                "ratio": 17.58
+              },
+              {
+                "name": "muted summary",
+                "ratio": 13.58
+              },
+              {
+                "name": "destructive action",
+                "ratio": 7.82
+              },
+              {
+                "name": "link action",
+                "ratio": 8.4
+              },
+              {
+                "name": "field label",
+                "ratio": 17.58
+              },
+              {
+                "name": "help text",
+                "ratio": 12.13
+              },
+              {
+                "name": "tag help",
+                "ratio": 13.58
+              },
+              {
+                "name": "input text",
+                "ratio": 21
+              },
+              {
+                "name": "toolbar count",
+                "ratio": 13.58
+              },
+              {
+                "name": "row URL",
+                "ratio": 13.58
+              },
+              {
+                "name": "source cell",
+                "ratio": 13.58
+              },
+              {
+                "name": "primary button",
+                "ratio": 21
+              },
+              {
+                "name": "theme name",
+                "ratio": 19.68
+              },
+              {
+                "name": "chosen theme name",
+                "ratio": 21
+              },
+              {
+                "name": "theme description",
+                "ratio": 12.13
+              },
+              {
+                "name": "scheme choice",
+                "ratio": 12.13
+              },
+              {
+                "name": "chosen scheme",
+                "ratio": 21
+              },
+              {
+                "name": "appearance help",
+                "ratio": 12.13
+              },
+              {
+                "name": "after-drag choice",
+                "ratio": 18.76
+              },
+              {
+                "name": "after-drag help",
+                "ratio": 12.13
+              },
+              {
+                "name": "copy format",
+                "ratio": 21
+              },
+              {
+                "name": "capture default",
+                "ratio": 18.76
+              },
+              {
+                "name": "capture default help",
+                "ratio": 12.13
+              }
+            ]
+          },
+          {
+            "theme": "contrast",
+            "scheme": "dark",
+            "horizontalOverflowAt320": {
+              "links": false,
+              "settings": false
+            },
+            "screenshot": "panel-theme-contrast-dark.png",
+            "contrast": [
+              {
+                "name": "all-sites help",
+                "ratio": 13.67
+              },
+              {
+                "name": "hold trigger help",
+                "ratio": 13.67
+              },
+              {
+                "name": "exception origin",
+                "ratio": 17.51
+              },
+              {
+                "name": "muted summary",
+                "ratio": 13.75
+              },
+              {
+                "name": "destructive action",
+                "ratio": 9.27
+              },
+              {
+                "name": "link action",
+                "ratio": 16.68
+              },
+              {
+                "name": "field label",
+                "ratio": 17.51
+              },
+              {
+                "name": "help text",
+                "ratio": 13.67
+              },
+              {
+                "name": "tag help",
+                "ratio": 13.19
+              },
+              {
+                "name": "input text",
+                "ratio": 20.14
+              },
+              {
+                "name": "toolbar count",
+                "ratio": 13.75
+              },
+              {
+                "name": "row URL",
+                "ratio": 13.75
+              },
+              {
+                "name": "source cell",
+                "ratio": 13.75
+              },
+              {
+                "name": "primary button",
+                "ratio": 16.78
+              },
+              {
+                "name": "theme name",
+                "ratio": 16.9
+              },
+              {
+                "name": "chosen theme name",
+                "ratio": 20.14
+              },
+              {
+                "name": "theme description",
+                "ratio": 13.67
+              },
+              {
+                "name": "scheme choice",
+                "ratio": 13.67
+              },
+              {
+                "name": "chosen scheme",
+                "ratio": 20.14
+              },
+              {
+                "name": "appearance help",
+                "ratio": 13.67
+              },
+              {
+                "name": "after-drag choice",
+                "ratio": 20.87
+              },
+              {
+                "name": "after-drag help",
+                "ratio": 13.67
+              },
+              {
+                "name": "copy format",
+                "ratio": 20.14
+              },
+              {
+                "name": "capture default",
+                "ratio": 20.87
+              },
+              {
+                "name": "capture default help",
+                "ratio": 13.67
+              }
+            ]
+          }
+        ]
+      },
+      "toolbarIcon": {
+        "meteor": {
+          "path": {
+            "16": "icons/16.png",
+            "32": "icons/32.png"
+          }
+        },
+        "drawn": [
+          {
+            "theme": "comet",
+            "sizes": [
+              16,
+              32
+            ],
+            "head": "oklch(0.86 0.12 205)",
+            "tile": "oklch(0.235 0.03 235)"
+          },
+          {
+            "theme": "aurora",
+            "sizes": [
+              16,
+              32
+            ],
+            "head": "oklch(0.85 0.14 168)",
+            "tile": "oklch(0.235 0.027 195)"
+          },
+          {
+            "theme": "ember",
+            "sizes": [
+              16,
+              32
+            ],
+            "head": "oklch(0.78 0.15 42)",
+            "tile": "oklch(0.235 0.024 45)"
+          },
+          {
+            "theme": "nebula",
+            "sizes": [
+              16,
+              32
+            ],
+            "head": "oklch(0.8 0.14 315)",
+            "tile": "oklch(0.235 0.03 300)"
+          },
+          {
+            "theme": "graphite",
+            "sizes": [
+              16,
+              32
+            ],
+            "head": "oklch(0.74 0 0)",
+            "tile": "oklch(0.235 0 0)"
+          },
+          {
+            "theme": "contrast",
+            "sizes": [
+              16,
+              32
+            ],
+            "head": "oklch(0.92 0.19 105)",
+            "tile": "oklch(0 0 0)"
+          }
+        ],
+        "screenshot": "toolbar-icons.png"
+      },
+      "appearanceKeyboard": {
+        "arrowKeySavesTheme": true,
+        "focusRing": "solid",
+        "arrowKeySavesAppearance": true
+      },
+      "afterDrag": {
+        "choicesSaved": true,
+        "copyFormatOnlyForCopy": true
+      },
+      "firstFrame": {
+        "theme": "ember",
+        "scheme": "dark",
+        "themeStyle": true,
+        "bodyBackground": "oklch(0.185 0.0128 45)",
+        "renderBlocking": true
+      }
+    },
+    {
+      "stateContrast": {
+        "strongConfirmationFromRealTarget": true,
+        "sampleTextIn": [
+          "#all-sites-note",
+          "#open-progress-text"
+        ],
+        "results": [
+          {
+            "name": "strong confirmation",
+            "ratio": 15.08
+          },
+          {
+            "name": "all-sites note",
+            "ratio": 15.08
+          },
+          {
+            "name": "opening progress",
+            "ratio": 14.83
+          },
+          {
+            "name": "dark strong confirmation",
+            "ratio": 13.22
+          },
+          {
+            "name": "dark all-sites note",
+            "ratio": 13.22
+          },
+          {
+            "name": "dark opening progress",
+            "ratio": 16.92
+          }
+        ]
+      }
+    },
+    {
+      "unlabeledFormControls": 0,
+      "keyboardFocusReachedControl": true,
+      "firstFocusRing": {
+        "tag": "BUTTON",
+        "outline": "solid",
+        "width": "2px"
+      }
+    },
+    {
+      "aboutAndHelp": {
+        "links": 6,
+        "version": "v0.5.0",
+        "startsCollapsed": true,
+        "keyboardCompact": true,
+        "noAutomaticNavigation": true
+      }
+    },
+    {
+      "longCollectionNameOverflow": false,
+      "widths": [
+        320,
+        390,
+        1440
+      ]
+    },
+    {
+      "readingAndInsights": {
+        "themes": 14,
+        "lowestContrast": 5.34,
+        "results": [
+          {
+            "theme": "meteor",
+            "scheme": "light",
+            "horizontalOverflowAt320": {
+              "details": false,
+              "insights": false
+            },
+            "screenshots": [
+              "panel-research-meteor-light.png",
+              "panel-insights-meteor-light.png"
+            ],
+            "contrast": [
+              {
+                "name": "star badge",
+                "ratio": 13.85
+              },
+              {
+                "name": "status badge",
+                "ratio": 10.41
+              },
+              {
+                "name": "identifier badge",
+                "ratio": 5.66
+              },
+              {
+                "name": "imported badge",
+                "ratio": 6.02
+              },
+              {
+                "name": "status choice",
+                "ratio": 5.42
+              },
+              {
+                "name": "chosen status",
+                "ratio": 16.48
+              },
+              {
+                "name": "star",
+                "ratio": 10.41
+              },
+              {
+                "name": "starred",
+                "ratio": 15.2
+              },
+              {
+                "name": "details label",
+                "ratio": 6.02
+              },
+              {
+                "name": "context",
+                "ratio": 9.37
+              },
+              {
+                "name": "context mark",
+                "ratio": 13.85
+              },
+              {
+                "name": "context line",
+                "ratio": 6.02
+              },
+              {
+                "name": "identifier kind",
+                "ratio": 6.02
+              },
+              {
+                "name": "identifier",
+                "ratio": 16.48
+              },
+              {
+                "name": "identifier copy",
+                "ratio": 5.66
+              },
+              {
+                "name": "cited title",
+                "ratio": 16.48
+              },
+              {
+                "name": "cited line",
+                "ratio": 10.41
+              },
+              {
+                "name": "cited note",
+                "ratio": 6.02
+              },
+              {
+                "name": "imported from",
+                "ratio": 10.41
+              },
+              {
+                "name": "Links switch",
+                "ratio": 16.48
+              },
+              {
+                "name": "Insights switch",
+                "ratio": 5.42
+              },
+              {
+                "name": "Mark as read",
+                "ratio": 9.97
+              },
+              {
+                "name": "Starred only",
+                "ratio": 10.41
+              },
+              {
+                "name": "card title",
+                "ratio": 10.41
+              },
+              {
+                "name": "total",
+                "ratio": 16.48
+              },
+              {
+                "name": "total label",
+                "ratio": 6.02
+              },
+              {
+                "name": "bar label",
+                "ratio": 16.48
+              },
+              {
+                "name": "bar count",
+                "ratio": 10.41
+              },
+              {
+                "name": "card note",
+                "ratio": 6.02
+              },
+              {
+                "name": "legend",
+                "ratio": 10.41
+              },
+              {
+                "name": "chart axis",
+                "ratio": 6.02
+              },
+              {
+                "name": "whole collection",
+                "ratio": 5.77
+              }
+            ]
+          },
+          {
+            "theme": "meteor",
+            "scheme": "dark",
+            "horizontalOverflowAt320": {
+              "details": false,
+              "insights": false
+            },
+            "screenshots": [
+              "panel-research-meteor-dark.png",
+              "panel-insights-meteor-dark.png"
+            ],
+            "contrast": [
+              {
+                "name": "star badge",
+                "ratio": 11.31
+              },
+              {
+                "name": "status badge",
+                "ratio": 11.49
+              },
+              {
+                "name": "identifier badge",
+                "ratio": 12.76
+              },
+              {
+                "name": "imported badge",
+                "ratio": 7.36
+              },
+              {
+                "name": "status choice",
+                "ratio": 8.07
+              },
+              {
+                "name": "chosen status",
+                "ratio": 15.41
+              },
+              {
+                "name": "star",
+                "ratio": 11.49
+              },
+              {
+                "name": "starred",
+                "ratio": 13.68
+              },
+              {
+                "name": "details label",
+                "ratio": 7.36
+              },
+              {
+                "name": "context",
+                "ratio": 12.61
+              },
+              {
+                "name": "context mark",
+                "ratio": 11.31
+              },
+              {
+                "name": "context line",
+                "ratio": 7.36
+              },
+              {
+                "name": "identifier kind",
+                "ratio": 7.36
+              },
+              {
+                "name": "identifier",
+                "ratio": 15.41
+              },
+              {
+                "name": "identifier copy",
+                "ratio": 12.76
+              },
+              {
+                "name": "cited title",
+                "ratio": 15.41
+              },
+              {
+                "name": "cited line",
+                "ratio": 11.49
+              },
+              {
+                "name": "cited note",
+                "ratio": 7.36
+              },
+              {
+                "name": "imported from",
+                "ratio": 11.49
+              },
+              {
+                "name": "Links switch",
+                "ratio": 15.41
+              },
+              {
+                "name": "Insights switch",
+                "ratio": 8.07
+              },
+              {
+                "name": "Mark as read",
+                "ratio": 12.16
+              },
+              {
+                "name": "Starred only",
+                "ratio": 11.49
+              },
+              {
+                "name": "card title",
+                "ratio": 11.49
+              },
+              {
+                "name": "total",
+                "ratio": 15.41
+              },
+              {
+                "name": "total label",
+                "ratio": 7.36
+              },
+              {
+                "name": "bar label",
+                "ratio": 15.41
+              },
+              {
+                "name": "bar count",
+                "ratio": 11.49
+              },
+              {
+                "name": "card note",
+                "ratio": 7.36
+              },
+              {
+                "name": "legend",
+                "ratio": 11.49
+              },
+              {
+                "name": "chart axis",
+                "ratio": 7.36
+              },
+              {
+                "name": "whole collection",
+                "ratio": 7.78
+              }
+            ]
+          },
+          {
+            "theme": "comet",
+            "scheme": "light",
+            "horizontalOverflowAt320": {
+              "details": false,
+              "insights": false
+            },
+            "screenshots": [
+              "panel-research-comet-light.png",
+              "panel-insights-comet-light.png"
+            ],
+            "contrast": [
+              {
+                "name": "star badge",
+                "ratio": 13.76
+              },
+              {
+                "name": "status badge",
+                "ratio": 10.3
+              },
+              {
+                "name": "identifier badge",
+                "ratio": 5.66
+              },
+              {
+                "name": "imported badge",
+                "ratio": 5.96
+              },
+              {
+                "name": "status choice",
+                "ratio": 5.34
+              },
+              {
+                "name": "chosen status",
+                "ratio": 16.33
+              },
+              {
+                "name": "star",
+                "ratio": 10.3
+              },
+              {
+                "name": "starred",
+                "ratio": 15.06
+              },
+              {
+                "name": "details label",
+                "ratio": 5.96
+              },
+              {
+                "name": "context",
+                "ratio": 9.23
+              },
+              {
+                "name": "context mark",
+                "ratio": 13.76
+              },
+              {
+                "name": "context line",
+                "ratio": 5.96
+              },
+              {
+                "name": "identifier kind",
+                "ratio": 5.96
+              },
+              {
+                "name": "identifier",
+                "ratio": 16.33
+              },
+              {
+                "name": "identifier copy",
+                "ratio": 5.66
+              },
+              {
+                "name": "cited title",
+                "ratio": 16.33
+              },
+              {
+                "name": "cited line",
+                "ratio": 10.3
+              },
+              {
+                "name": "cited note",
+                "ratio": 5.96
+              },
+              {
+                "name": "imported from",
+                "ratio": 10.3
+              },
+              {
+                "name": "Links switch",
+                "ratio": 16.33
+              },
+              {
+                "name": "Insights switch",
+                "ratio": 5.34
+              },
+              {
+                "name": "Mark as read",
+                "ratio": 9.91
+              },
+              {
+                "name": "Starred only",
+                "ratio": 10.3
+              },
+              {
+                "name": "card title",
+                "ratio": 10.3
+              },
+              {
+                "name": "total",
+                "ratio": 16.33
+              },
+              {
+                "name": "total label",
+                "ratio": 5.96
+              },
+              {
+                "name": "bar label",
+                "ratio": 16.33
+              },
+              {
+                "name": "bar count",
+                "ratio": 10.3
+              },
+              {
+                "name": "card note",
+                "ratio": 5.96
+              },
+              {
+                "name": "legend",
+                "ratio": 10.3
+              },
+              {
+                "name": "chart axis",
+                "ratio": 5.96
+              },
+              {
+                "name": "whole collection",
+                "ratio": 5.73
+              }
+            ]
+          },
+          {
+            "theme": "comet",
+            "scheme": "dark",
+            "horizontalOverflowAt320": {
+              "details": false,
+              "insights": false
+            },
+            "screenshots": [
+              "panel-research-comet-dark.png",
+              "panel-insights-comet-dark.png"
+            ],
+            "contrast": [
+              {
+                "name": "star badge",
+                "ratio": 11.35
+              },
+              {
+                "name": "status badge",
+                "ratio": 11.41
+              },
+              {
+                "name": "identifier badge",
+                "ratio": 11.85
+              },
+              {
+                "name": "imported badge",
+                "ratio": 7.33
+              },
+              {
+                "name": "status choice",
+                "ratio": 8.1
+              },
+              {
+                "name": "chosen status",
+                "ratio": 15.35
+              },
+              {
+                "name": "star",
+                "ratio": 11.41
+              },
+              {
+                "name": "starred",
+                "ratio": 13.71
+              },
+              {
+                "name": "details label",
+                "ratio": 7.33
+              },
+              {
+                "name": "context",
+                "ratio": 12.6
+              },
+              {
+                "name": "context mark",
+                "ratio": 11.35
+              },
+              {
+                "name": "context line",
+                "ratio": 7.33
+              },
+              {
+                "name": "identifier kind",
+                "ratio": 7.33
+              },
+              {
+                "name": "identifier",
+                "ratio": 15.35
+              },
+              {
+                "name": "identifier copy",
+                "ratio": 11.85
+              },
+              {
+                "name": "cited title",
+                "ratio": 15.35
+              },
+              {
+                "name": "cited line",
+                "ratio": 11.41
+              },
+              {
+                "name": "cited note",
+                "ratio": 7.33
+              },
+              {
+                "name": "imported from",
+                "ratio": 11.41
+              },
+              {
+                "name": "Links switch",
+                "ratio": 15.35
+              },
+              {
+                "name": "Insights switch",
+                "ratio": 8.1
+              },
+              {
+                "name": "Mark as read",
+                "ratio": 12.15
+              },
+              {
+                "name": "Starred only",
+                "ratio": 11.41
+              },
+              {
+                "name": "card title",
+                "ratio": 11.41
+              },
+              {
+                "name": "total",
+                "ratio": 15.35
+              },
+              {
+                "name": "total label",
+                "ratio": 7.33
+              },
+              {
+                "name": "bar label",
+                "ratio": 15.35
+              },
+              {
+                "name": "bar count",
+                "ratio": 11.41
+              },
+              {
+                "name": "card note",
+                "ratio": 7.33
+              },
+              {
+                "name": "legend",
+                "ratio": 11.41
+              },
+              {
+                "name": "chart axis",
+                "ratio": 7.33
+              },
+              {
+                "name": "whole collection",
+                "ratio": 7.8
+              }
+            ]
+          },
+          {
+            "theme": "aurora",
+            "scheme": "light",
+            "horizontalOverflowAt320": {
+              "details": false,
+              "insights": false
+            },
+            "screenshots": [
+              "panel-research-aurora-light.png",
+              "panel-insights-aurora-light.png"
+            ],
+            "contrast": [
+              {
+                "name": "star badge",
+                "ratio": 13.86
+              },
+              {
+                "name": "status badge",
+                "ratio": 10.34
+              },
+              {
+                "name": "identifier badge",
+                "ratio": 5.67
+              },
+              {
+                "name": "imported badge",
+                "ratio": 5.96
+              },
+              {
+                "name": "status choice",
+                "ratio": 5.37
+              },
+              {
+                "name": "chosen status",
+                "ratio": 16.36
+              },
+              {
+                "name": "star",
+                "ratio": 10.34
+              },
+              {
+                "name": "starred",
+                "ratio": 15.08
+              },
+              {
+                "name": "details label",
+                "ratio": 5.96
+              },
+              {
+                "name": "context",
+                "ratio": 9.31
+              },
+              {
+                "name": "context mark",
+                "ratio": 13.86
+              },
+              {
+                "name": "context line",
+                "ratio": 5.96
+              },
+              {
+                "name": "identifier kind",
+                "ratio": 5.96
+              },
+              {
+                "name": "identifier",
+                "ratio": 16.36
+              },
+              {
+                "name": "identifier copy",
+                "ratio": 5.67
+              },
+              {
+                "name": "cited title",
+                "ratio": 16.36
+              },
+              {
+                "name": "cited line",
+                "ratio": 10.34
+              },
+              {
+                "name": "cited note",
+                "ratio": 5.96
+              },
+              {
+                "name": "imported from",
+                "ratio": 10.34
+              },
+              {
+                "name": "Links switch",
+                "ratio": 16.36
+              },
+              {
+                "name": "Insights switch",
+                "ratio": 5.37
+              },
+              {
+                "name": "Mark as read",
+                "ratio": 9.92
+              },
+              {
+                "name": "Starred only",
+                "ratio": 10.34
+              },
+              {
+                "name": "card title",
+                "ratio": 10.34
+              },
+              {
+                "name": "total",
+                "ratio": 16.36
+              },
+              {
+                "name": "total label",
+                "ratio": 5.96
+              },
+              {
+                "name": "bar label",
+                "ratio": 16.36
+              },
+              {
+                "name": "bar count",
+                "ratio": 10.34
+              },
+              {
+                "name": "card note",
+                "ratio": 5.96
+              },
+              {
+                "name": "legend",
+                "ratio": 10.34
+              },
+              {
+                "name": "chart axis",
+                "ratio": 5.96
+              },
+              {
+                "name": "whole collection",
+                "ratio": 5.72
+              }
+            ]
+          },
+          {
+            "theme": "aurora",
+            "scheme": "dark",
+            "horizontalOverflowAt320": {
+              "details": false,
+              "insights": false
+            },
+            "screenshots": [
+              "panel-research-aurora-dark.png",
+              "panel-insights-aurora-dark.png"
+            ],
+            "contrast": [
+              {
+                "name": "star badge",
+                "ratio": 11.29
+              },
+              {
+                "name": "status badge",
+                "ratio": 11.4
+              },
+              {
+                "name": "identifier badge",
+                "ratio": 11.92
+              },
+              {
+                "name": "imported badge",
+                "ratio": 7.31
+              },
+              {
+                "name": "status choice",
+                "ratio": 8.08
+              },
+              {
+                "name": "chosen status",
+                "ratio": 15.29
+              },
+              {
+                "name": "star",
+                "ratio": 11.4
+              },
+              {
+                "name": "starred",
+                "ratio": 13.67
+              },
+              {
+                "name": "details label",
+                "ratio": 7.31
+              },
+              {
+                "name": "context",
+                "ratio": 12.6
+              },
+              {
+                "name": "context mark",
+                "ratio": 11.29
+              },
+              {
+                "name": "context line",
+                "ratio": 7.31
+              },
+              {
+                "name": "identifier kind",
+                "ratio": 7.31
+              },
+              {
+                "name": "identifier",
+                "ratio": 15.29
+              },
+              {
+                "name": "identifier copy",
+                "ratio": 11.92
+              },
+              {
+                "name": "cited title",
+                "ratio": 15.29
+              },
+              {
+                "name": "cited line",
+                "ratio": 11.4
+              },
+              {
+                "name": "cited note",
+                "ratio": 7.31
+              },
+              {
+                "name": "imported from",
+                "ratio": 11.4
+              },
+              {
+                "name": "Links switch",
+                "ratio": 15.29
+              },
+              {
+                "name": "Insights switch",
+                "ratio": 8.08
+              },
+              {
+                "name": "Mark as read",
+                "ratio": 12.14
+              },
+              {
+                "name": "Starred only",
+                "ratio": 11.4
+              },
+              {
+                "name": "card title",
+                "ratio": 11.4
+              },
+              {
+                "name": "total",
+                "ratio": 15.29
+              },
+              {
+                "name": "total label",
+                "ratio": 7.31
+              },
+              {
+                "name": "bar label",
+                "ratio": 15.29
+              },
+              {
+                "name": "bar count",
+                "ratio": 11.4
+              },
+              {
+                "name": "card note",
+                "ratio": 7.31
+              },
+              {
+                "name": "legend",
+                "ratio": 11.4
+              },
+              {
+                "name": "chart axis",
+                "ratio": 7.31
+              },
+              {
+                "name": "whole collection",
+                "ratio": 7.78
+              }
+            ]
+          },
+          {
+            "theme": "ember",
+            "scheme": "light",
+            "horizontalOverflowAt320": {
+              "details": false,
+              "insights": false
+            },
+            "screenshots": [
+              "panel-research-ember-light.png",
+              "panel-insights-ember-light.png"
+            ],
+            "contrast": [
+              {
+                "name": "star badge",
+                "ratio": 12.74
+              },
+              {
+                "name": "status badge",
+                "ratio": 10.52
+              },
+              {
+                "name": "identifier badge",
+                "ratio": 5.92
+              },
+              {
+                "name": "imported badge",
+                "ratio": 6.05
+              },
+              {
+                "name": "status choice",
+                "ratio": 5.44
+              },
+              {
+                "name": "chosen status",
+                "ratio": 16.51
+              },
+              {
+                "name": "star",
+                "ratio": 10.52
+              },
+              {
+                "name": "starred",
+                "ratio": 14.52
+              },
+              {
+                "name": "details label",
+                "ratio": 6.05
+              },
+              {
+                "name": "context",
+                "ratio": 9.45
+              },
+              {
+                "name": "context mark",
+                "ratio": 12.74
+              },
+              {
+                "name": "context line",
+                "ratio": 6.05
+              },
+              {
+                "name": "identifier kind",
+                "ratio": 6.05
+              },
+              {
+                "name": "identifier",
+                "ratio": 16.51
+              },
+              {
+                "name": "identifier copy",
+                "ratio": 5.92
+              },
+              {
+                "name": "cited title",
+                "ratio": 16.51
+              },
+              {
+                "name": "cited line",
+                "ratio": 10.52
+              },
+              {
+                "name": "cited note",
+                "ratio": 6.05
+              },
+              {
+                "name": "imported from",
+                "ratio": 10.52
+              },
+              {
+                "name": "Links switch",
+                "ratio": 16.51
+              },
+              {
+                "name": "Insights switch",
+                "ratio": 5.44
+              },
+              {
+                "name": "Mark as read",
+                "ratio": 10.04
+              },
+              {
+                "name": "Starred only",
+                "ratio": 10.52
+              },
+              {
+                "name": "card title",
+                "ratio": 10.52
+              },
+              {
+                "name": "total",
+                "ratio": 16.51
+              },
+              {
+                "name": "total label",
+                "ratio": 6.05
+              },
+              {
+                "name": "bar label",
+                "ratio": 16.51
+              },
+              {
+                "name": "bar count",
+                "ratio": 10.52
+              },
+              {
+                "name": "card note",
+                "ratio": 6.05
+              },
+              {
+                "name": "legend",
+                "ratio": 10.52
+              },
+              {
+                "name": "chart axis",
+                "ratio": 6.05
+              },
+              {
+                "name": "whole collection",
+                "ratio": 5.77
+              }
+            ]
+          },
+          {
+            "theme": "ember",
+            "scheme": "dark",
+            "horizontalOverflowAt320": {
+              "details": false,
+              "insights": false
+            },
+            "screenshots": [
+              "panel-research-ember-dark.png",
+              "panel-insights-ember-dark.png"
+            ],
+            "contrast": [
+              {
+                "name": "star badge",
+                "ratio": 11.7
+              },
+              {
+                "name": "status badge",
+                "ratio": 11.49
+              },
+              {
+                "name": "identifier badge",
+                "ratio": 9.73
+              },
+              {
+                "name": "imported badge",
+                "ratio": 7.35
+              },
+              {
+                "name": "status choice",
+                "ratio": 8.04
+              },
+              {
+                "name": "chosen status",
+                "ratio": 15.43
+              },
+              {
+                "name": "star",
+                "ratio": 11.49
+              },
+              {
+                "name": "starred",
+                "ratio": 13.96
+              },
+              {
+                "name": "details label",
+                "ratio": 7.35
+              },
+              {
+                "name": "context",
+                "ratio": 12.56
+              },
+              {
+                "name": "context mark",
+                "ratio": 11.7
+              },
+              {
+                "name": "context line",
+                "ratio": 7.35
+              },
+              {
+                "name": "identifier kind",
+                "ratio": 7.35
+              },
+              {
+                "name": "identifier",
+                "ratio": 15.43
+              },
+              {
+                "name": "identifier copy",
+                "ratio": 9.73
+              },
+              {
+                "name": "cited title",
+                "ratio": 15.43
+              },
+              {
+                "name": "cited line",
+                "ratio": 11.49
+              },
+              {
+                "name": "cited note",
+                "ratio": 7.35
+              },
+              {
+                "name": "imported from",
+                "ratio": 11.49
+              },
+              {
+                "name": "Links switch",
+                "ratio": 15.43
+              },
+              {
+                "name": "Insights switch",
+                "ratio": 8.04
+              },
+              {
+                "name": "Mark as read",
+                "ratio": 12.16
+              },
+              {
+                "name": "Starred only",
+                "ratio": 11.49
+              },
+              {
+                "name": "card title",
+                "ratio": 11.49
+              },
+              {
+                "name": "total",
+                "ratio": 15.43
+              },
+              {
+                "name": "total label",
+                "ratio": 7.35
+              },
+              {
+                "name": "bar label",
+                "ratio": 15.43
+              },
+              {
+                "name": "bar count",
+                "ratio": 11.49
+              },
+              {
+                "name": "card note",
+                "ratio": 7.35
+              },
+              {
+                "name": "legend",
+                "ratio": 11.49
+              },
+              {
+                "name": "chart axis",
+                "ratio": 7.35
+              },
+              {
+                "name": "whole collection",
+                "ratio": 7.78
+              }
+            ]
+          },
+          {
+            "theme": "nebula",
+            "scheme": "light",
+            "horizontalOverflowAt320": {
+              "details": false,
+              "insights": false
+            },
+            "screenshots": [
+              "panel-research-nebula-light.png",
+              "panel-insights-nebula-light.png"
+            ],
+            "contrast": [
+              {
+                "name": "star badge",
+                "ratio": 13.4
+              },
+              {
+                "name": "status badge",
+                "ratio": 10.56
+              },
+              {
+                "name": "identifier badge",
+                "ratio": 6.07
+              },
+              {
+                "name": "imported badge",
+                "ratio": 6.08
+              },
+              {
+                "name": "status choice",
+                "ratio": 5.45
+              },
+              {
+                "name": "chosen status",
+                "ratio": 16.59
+              },
+              {
+                "name": "star",
+                "ratio": 10.56
+              },
+              {
+                "name": "starred",
+                "ratio": 14.89
+              },
+              {
+                "name": "details label",
+                "ratio": 6.08
+              },
+              {
+                "name": "context",
+                "ratio": 9.48
+              },
+              {
+                "name": "context mark",
+                "ratio": 13.4
+              },
+              {
+                "name": "context line",
+                "ratio": 6.08
+              },
+              {
+                "name": "identifier kind",
+                "ratio": 6.08
+              },
+              {
+                "name": "identifier",
+                "ratio": 16.59
+              },
+              {
+                "name": "identifier copy",
+                "ratio": 6.07
+              },
+              {
+                "name": "cited title",
+                "ratio": 16.59
+              },
+              {
+                "name": "cited line",
+                "ratio": 10.56
+              },
+              {
+                "name": "cited note",
+                "ratio": 6.08
+              },
+              {
+                "name": "imported from",
+                "ratio": 10.56
+              },
+              {
+                "name": "Links switch",
+                "ratio": 16.59
+              },
+              {
+                "name": "Insights switch",
+                "ratio": 5.45
+              },
+              {
+                "name": "Mark as read",
+                "ratio": 10.07
+              },
+              {
+                "name": "Starred only",
+                "ratio": 10.56
+              },
+              {
+                "name": "card title",
+                "ratio": 10.56
+              },
+              {
+                "name": "total",
+                "ratio": 16.59
+              },
+              {
+                "name": "total label",
+                "ratio": 6.08
+              },
+              {
+                "name": "bar label",
+                "ratio": 16.59
+              },
+              {
+                "name": "bar count",
+                "ratio": 10.56
+              },
+              {
+                "name": "card note",
+                "ratio": 6.08
+              },
+              {
+                "name": "legend",
+                "ratio": 10.56
+              },
+              {
+                "name": "chart axis",
+                "ratio": 6.08
+              },
+              {
+                "name": "whole collection",
+                "ratio": 5.79
+              }
+            ]
+          },
+          {
+            "theme": "nebula",
+            "scheme": "dark",
+            "horizontalOverflowAt320": {
+              "details": false,
+              "insights": false
+            },
+            "screenshots": [
+              "panel-research-nebula-dark.png",
+              "panel-insights-nebula-dark.png"
+            ],
+            "contrast": [
+              {
+                "name": "star badge",
+                "ratio": 11.76
+              },
+              {
+                "name": "status badge",
+                "ratio": 11.39
+              },
+              {
+                "name": "identifier badge",
+                "ratio": 10.28
+              },
+              {
+                "name": "imported badge",
+                "ratio": 7.27
+              },
+              {
+                "name": "status choice",
+                "ratio": 8.01
+              },
+              {
+                "name": "chosen status",
+                "ratio": 15.31
+              },
+              {
+                "name": "star",
+                "ratio": 11.39
+              },
+              {
+                "name": "starred",
+                "ratio": 13.99
+              },
+              {
+                "name": "details label",
+                "ratio": 7.27
+              },
+              {
+                "name": "context",
+                "ratio": 12.55
+              },
+              {
+                "name": "context mark",
+                "ratio": 11.76
+              },
+              {
+                "name": "context line",
+                "ratio": 7.27
+              },
+              {
+                "name": "identifier kind",
+                "ratio": 7.27
+              },
+              {
+                "name": "identifier",
+                "ratio": 15.31
+              },
+              {
+                "name": "identifier copy",
+                "ratio": 10.28
+              },
+              {
+                "name": "cited title",
+                "ratio": 15.31
+              },
+              {
+                "name": "cited line",
+                "ratio": 11.39
+              },
+              {
+                "name": "cited note",
+                "ratio": 7.27
+              },
+              {
+                "name": "imported from",
+                "ratio": 11.39
+              },
+              {
+                "name": "Links switch",
+                "ratio": 15.31
+              },
+              {
+                "name": "Insights switch",
+                "ratio": 8.01
+              },
+              {
+                "name": "Mark as read",
+                "ratio": 12.15
+              },
+              {
+                "name": "Starred only",
+                "ratio": 11.39
+              },
+              {
+                "name": "card title",
+                "ratio": 11.39
+              },
+              {
+                "name": "total",
+                "ratio": 15.31
+              },
+              {
+                "name": "total label",
+                "ratio": 7.27
+              },
+              {
+                "name": "bar label",
+                "ratio": 15.31
+              },
+              {
+                "name": "bar count",
+                "ratio": 11.39
+              },
+              {
+                "name": "card note",
+                "ratio": 7.27
+              },
+              {
+                "name": "legend",
+                "ratio": 11.39
+              },
+              {
+                "name": "chart axis",
+                "ratio": 7.27
+              },
+              {
+                "name": "whole collection",
+                "ratio": 7.76
+              }
+            ]
+          },
+          {
+            "theme": "graphite",
+            "scheme": "light",
+            "horizontalOverflowAt320": {
+              "details": false,
+              "insights": false
+            },
+            "screenshots": [
+              "panel-research-graphite-light.png",
+              "panel-insights-graphite-light.png"
+            ],
+            "contrast": [
+              {
+                "name": "star badge",
+                "ratio": 12.37
+              },
+              {
+                "name": "status badge",
+                "ratio": 10.37
+              },
+              {
+                "name": "identifier badge",
+                "ratio": 13.58
+              },
+              {
+                "name": "imported badge",
+                "ratio": 6.01
+              },
+              {
+                "name": "status choice",
+                "ratio": 5.41
+              },
+              {
+                "name": "chosen status",
+                "ratio": 16.48
+              },
+              {
+                "name": "star",
+                "ratio": 10.37
+              },
+              {
+                "name": "starred",
+                "ratio": 14.46
+              },
+              {
+                "name": "details label",
+                "ratio": 6.01
+              },
+              {
+                "name": "context",
+                "ratio": 9.34
+              },
+              {
+                "name": "context mark",
+                "ratio": 12.37
+              },
+              {
+                "name": "context line",
+                "ratio": 6.01
+              },
+              {
+                "name": "identifier kind",
+                "ratio": 6.01
+              },
+              {
+                "name": "identifier",
+                "ratio": 16.48
+              },
+              {
+                "name": "identifier copy",
+                "ratio": 13.58
+              },
+              {
+                "name": "cited title",
+                "ratio": 16.48
+              },
+              {
+                "name": "cited line",
+                "ratio": 10.37
+              },
+              {
+                "name": "cited note",
+                "ratio": 6.01
+              },
+              {
+                "name": "imported from",
+                "ratio": 10.37
+              },
+              {
+                "name": "Links switch",
+                "ratio": 16.48
+              },
+              {
+                "name": "Insights switch",
+                "ratio": 5.41
+              },
+              {
+                "name": "Mark as read",
+                "ratio": 9.93
+              },
+              {
+                "name": "Starred only",
+                "ratio": 10.37
+              },
+              {
+                "name": "card title",
+                "ratio": 10.37
+              },
+              {
+                "name": "total",
+                "ratio": 16.48
+              },
+              {
+                "name": "total label",
+                "ratio": 6.01
+              },
+              {
+                "name": "bar label",
+                "ratio": 16.48
+              },
+              {
+                "name": "bar count",
+                "ratio": 10.37
+              },
+              {
+                "name": "card note",
+                "ratio": 6.01
+              },
+              {
+                "name": "legend",
+                "ratio": 10.37
+              },
+              {
+                "name": "chart axis",
+                "ratio": 6.01
+              },
+              {
+                "name": "whole collection",
+                "ratio": 5.76
+              }
+            ]
+          },
+          {
+            "theme": "graphite",
+            "scheme": "dark",
+            "horizontalOverflowAt320": {
+              "details": false,
+              "insights": false
+            },
+            "screenshots": [
+              "panel-research-graphite-dark.png",
+              "panel-insights-graphite-dark.png"
+            ],
+            "contrast": [
+              {
+                "name": "star badge",
+                "ratio": 10.76
+              },
+              {
+                "name": "status badge",
+                "ratio": 11.51
+              },
+              {
+                "name": "identifier badge",
+                "ratio": 13.83
+              },
+              {
+                "name": "imported badge",
+                "ratio": 7.38
+              },
+              {
+                "name": "status choice",
+                "ratio": 8.1
+              },
+              {
+                "name": "chosen status",
+                "ratio": 15.43
+              },
+              {
+                "name": "star",
+                "ratio": 11.51
+              },
+              {
+                "name": "starred",
+                "ratio": 13.28
+              },
+              {
+                "name": "details label",
+                "ratio": 7.38
+              },
+              {
+                "name": "context",
+                "ratio": 12.64
+              },
+              {
+                "name": "context mark",
+                "ratio": 10.76
+              },
+              {
+                "name": "context line",
+                "ratio": 7.38
+              },
+              {
+                "name": "identifier kind",
+                "ratio": 7.38
+              },
+              {
+                "name": "identifier",
+                "ratio": 15.43
+              },
+              {
+                "name": "identifier copy",
+                "ratio": 13.83
+              },
+              {
+                "name": "cited title",
+                "ratio": 15.43
+              },
+              {
+                "name": "cited line",
+                "ratio": 11.51
+              },
+              {
+                "name": "cited note",
+                "ratio": 7.38
+              },
+              {
+                "name": "imported from",
+                "ratio": 11.51
+              },
+              {
+                "name": "Links switch",
+                "ratio": 15.43
+              },
+              {
+                "name": "Insights switch",
+                "ratio": 8.1
+              },
+              {
+                "name": "Mark as read",
+                "ratio": 12.17
+              },
+              {
+                "name": "Starred only",
+                "ratio": 11.51
+              },
+              {
+                "name": "card title",
+                "ratio": 11.51
+              },
+              {
+                "name": "total",
+                "ratio": 15.43
+              },
+              {
+                "name": "total label",
+                "ratio": 7.38
+              },
+              {
+                "name": "bar label",
+                "ratio": 15.43
+              },
+              {
+                "name": "bar count",
+                "ratio": 11.51
+              },
+              {
+                "name": "card note",
+                "ratio": 7.38
+              },
+              {
+                "name": "legend",
+                "ratio": 11.51
+              },
+              {
+                "name": "chart axis",
+                "ratio": 7.38
+              },
+              {
+                "name": "whole collection",
+                "ratio": 7.79
+              }
+            ]
+          },
+          {
+            "theme": "contrast",
+            "scheme": "light",
+            "horizontalOverflowAt320": {
+              "details": false,
+              "insights": false
+            },
+            "screenshots": [
+              "panel-research-contrast-light.png",
+              "panel-insights-contrast-light.png"
+            ],
+            "contrast": [
+              {
+                "name": "star badge",
+                "ratio": 14.61
+              },
+              {
+                "name": "status badge",
+                "ratio": 19.68
+              },
+              {
+                "name": "identifier badge",
+                "ratio": 9.4
+              },
+              {
+                "name": "imported badge",
+                "ratio": 13.58
+              },
+              {
+                "name": "status choice",
+                "ratio": 12.13
+              },
+              {
+                "name": "chosen status",
+                "ratio": 21
+              },
+              {
+                "name": "star",
+                "ratio": 19.68
+              },
+              {
+                "name": "starred",
+                "ratio": 17.64
+              },
+              {
+                "name": "details label",
+                "ratio": 13.58
+              },
+              {
+                "name": "context",
+                "ratio": 17.58
+              },
+              {
+                "name": "context mark",
+                "ratio": 14.61
+              },
+              {
+                "name": "context line",
+                "ratio": 13.58
+              },
+              {
+                "name": "identifier kind",
+                "ratio": 13.58
+              },
+              {
+                "name": "identifier",
+                "ratio": 21
+              },
+              {
+                "name": "identifier copy",
+                "ratio": 9.4
+              },
+              {
+                "name": "cited title",
+                "ratio": 21
+              },
+              {
+                "name": "cited line",
+                "ratio": 19.68
+              },
+              {
+                "name": "cited note",
+                "ratio": 13.58
+              },
+              {
+                "name": "imported from",
+                "ratio": 19.68
+              },
+              {
+                "name": "Links switch",
+                "ratio": 21
+              },
+              {
+                "name": "Insights switch",
+                "ratio": 12.13
+              },
+              {
+                "name": "Mark as read",
+                "ratio": 19.68
+              },
+              {
+                "name": "Starred only",
+                "ratio": 19.68
+              },
+              {
+                "name": "card title",
+                "ratio": 19.68
+              },
+              {
+                "name": "total",
+                "ratio": 21
+              },
+              {
+                "name": "total label",
+                "ratio": 13.58
+              },
+              {
+                "name": "bar label",
+                "ratio": 21
+              },
+              {
+                "name": "bar count",
+                "ratio": 19.68
+              },
+              {
+                "name": "card note",
+                "ratio": 13.58
+              },
+              {
+                "name": "legend",
+                "ratio": 19.68
+              },
+              {
+                "name": "chart axis",
+                "ratio": 13.58
+              },
+              {
+                "name": "whole collection",
+                "ratio": 13.58
+              }
+            ]
+          },
+          {
+            "theme": "contrast",
+            "scheme": "dark",
+            "horizontalOverflowAt320": {
+              "details": false,
+              "insights": false
+            },
+            "screenshots": [
+              "panel-research-contrast-dark.png",
+              "panel-insights-contrast-dark.png"
+            ],
+            "contrast": [
+              {
+                "name": "star badge",
+                "ratio": 12.61
+              },
+              {
+                "name": "status badge",
+                "ratio": 16.9
+              },
+              {
+                "name": "identifier badge",
+                "ratio": 16.1
+              },
+              {
+                "name": "imported badge",
+                "ratio": 13.19
+              },
+              {
+                "name": "status choice",
+                "ratio": 13.67
+              },
+              {
+                "name": "chosen status",
+                "ratio": 20.14
+              },
+              {
+                "name": "star",
+                "ratio": 16.9
+              },
+              {
+                "name": "starred",
+                "ratio": 15.91
+              },
+              {
+                "name": "details label",
+                "ratio": 13.19
+              },
+              {
+                "name": "context",
+                "ratio": 17.51
+              },
+              {
+                "name": "context mark",
+                "ratio": 12.61
+              },
+              {
+                "name": "context line",
+                "ratio": 13.19
+              },
+              {
+                "name": "identifier kind",
+                "ratio": 13.19
+              },
+              {
+                "name": "identifier",
+                "ratio": 20.14
+              },
+              {
+                "name": "identifier copy",
+                "ratio": 16.1
+              },
+              {
+                "name": "cited title",
+                "ratio": 20.14
+              },
+              {
+                "name": "cited line",
+                "ratio": 16.9
+              },
+              {
+                "name": "cited note",
+                "ratio": 13.19
+              },
+              {
+                "name": "imported from",
+                "ratio": 16.9
+              },
+              {
+                "name": "Links switch",
+                "ratio": 20.14
+              },
+              {
+                "name": "Insights switch",
+                "ratio": 13.67
+              },
+              {
+                "name": "Mark as read",
+                "ratio": 17.62
+              },
+              {
+                "name": "Starred only",
+                "ratio": 16.9
+              },
+              {
+                "name": "card title",
+                "ratio": 16.9
+              },
+              {
+                "name": "total",
+                "ratio": 20.14
+              },
+              {
+                "name": "total label",
+                "ratio": 13.19
+              },
+              {
+                "name": "bar label",
+                "ratio": 20.14
+              },
+              {
+                "name": "bar count",
+                "ratio": 16.9
+              },
+              {
+                "name": "card note",
+                "ratio": 13.19
+              },
+              {
+                "name": "legend",
+                "ratio": 16.9
+              },
+              {
+                "name": "chart axis",
+                "ratio": 13.19
+              },
+              {
+                "name": "whole collection",
+                "ratio": 13.75
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "screenshots": [
+    "panel-welcome.png",
+    "workbench-desktop.png",
+    "workbench-review.png",
+    "workbench-dark.png",
+    "panel-theme-meteor-light.png",
+    "panel-theme-meteor-dark.png",
+    "panel-theme-comet-light.png",
+    "panel-theme-comet-dark.png",
+    "panel-theme-aurora-light.png",
+    "panel-theme-aurora-dark.png",
+    "panel-theme-ember-light.png",
+    "panel-theme-ember-dark.png",
+    "panel-theme-nebula-light.png",
+    "panel-theme-nebula-dark.png",
+    "panel-theme-graphite-light.png",
+    "panel-theme-graphite-dark.png",
+    "panel-theme-contrast-light.png",
+    "panel-theme-contrast-dark.png",
+    "toolbar-icons.png",
+    "workbench-settings.png",
+    "panel-dark.png",
+    "workbench-narrow.png",
+    "panel-export.png",
+    "panel-collections.png",
+    "workbench-about.png",
+    "panel-about.png",
+    "panel-empty.png",
+    "panel-research-meteor-light.png",
+    "panel-insights-meteor-light.png",
+    "panel-research-meteor-dark.png",
+    "panel-insights-meteor-dark.png",
+    "panel-research-comet-light.png",
+    "panel-insights-comet-light.png",
+    "panel-research-comet-dark.png",
+    "panel-insights-comet-dark.png",
+    "panel-research-aurora-light.png",
+    "panel-insights-aurora-light.png",
+    "panel-research-aurora-dark.png",
+    "panel-insights-aurora-dark.png",
+    "panel-research-ember-light.png",
+    "panel-insights-ember-light.png",
+    "panel-research-ember-dark.png",
+    "panel-insights-ember-dark.png",
+    "panel-research-nebula-light.png",
+    "panel-insights-nebula-light.png",
+    "panel-research-nebula-dark.png",
+    "panel-insights-nebula-dark.png",
+    "panel-research-graphite-light.png",
+    "panel-insights-graphite-light.png",
+    "panel-research-graphite-dark.png",
+    "panel-insights-graphite-dark.png",
+    "panel-research-contrast-light.png",
+    "panel-insights-contrast-light.png",
+    "panel-research-contrast-dark.png",
+    "panel-insights-contrast-dark.png"
+  ],
+  "limits": [
+    "Keyboard/label/contrast spot checks in automated Chrome for Testing, not a complete screen-reader or WCAG audit.",
+    "Compact widths render the workbench page at side-panel widths in a tab; the native side-panel frame itself is not captured."
+  ],
+  "seed": "artifacts/evidence-0.3.0-rc2/exports/browser.json",
+  "result": "PASS",
+  "finished": "2026-09-29T19:51:07.481Z"
+}

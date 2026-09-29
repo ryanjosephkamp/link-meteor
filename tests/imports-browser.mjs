@@ -11,7 +11,7 @@
 // Nothing is uploaded: no request leaves the extension while importing.
 //   npm run build && LINK_METEOR_FIXTURE_PORT=52580 node tests/imports-browser.mjs
 import assert from 'node:assert/strict';
-import {mkdir, writeFile} from 'node:fs/promises';
+import {mkdir, writeFile, rm} from 'node:fs/promises';
 import {resolve} from 'node:path';
 import {deflateRawSync, crc32} from 'node:zlib';
 import {launch, rpc, until, evidence} from './helpers/browser.mjs';
@@ -482,6 +482,8 @@ try {
 } catch (error) { result.result = 'FAIL'; result.error = error.stack; console.error(error); process.exitCode = 1; }
 finally {
   if (context) await context.close();
+  // The two large generated files are rebuilt on each run and not kept with the evidence.
+  for (const name of ['too-large.csv', 'large-list.csv']) await rm(resolve(files, name), {force: true});
   result.finished = new Date().toISOString();
   await mkdir(evidence, {recursive: true});
   await writeFile(resolve(evidence, 'imports-browser-results.json'), JSON.stringify(result, null, 2) + '\n');

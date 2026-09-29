@@ -1,0 +1,18 @@
+PASS Loaded actual extension and initialized state
+PASS Collection created through UI
+PASS 37 faithful occurrences including duplicates, empty anchor, shadow root, frame provenance and explicit partial coverage
+PASS Current page resolves the invoking page from full workbench
+PASS Region Escape leaves collection unchanged
+PASS Regional quick-copy reports successful two-column clipboard write
+PASS Real rectangle pointer drag highlights and saves exactly 5 links without navigating
+PASS Add-another-region does not duplicate an already saved region
+PASS Positive-area 1px overlap of a wrapped line captures the actual anchor
+PASS Nested wheel scrolling extends the selection and retains earlier matches
+PASS Page scrolling during a drag retains selected links
+PASS Regional geometry includes an accessible same-origin frame
+PASS Loaded dynamic links captured on next scan
+PASS Recipientless mail links retained while malformed destinations are skipped with an explicit count
+PASS Collection notes and tags saved through UI
+Error: Search occurrences (timed out)
+    at until (file:///<repo>/tests/helpers/browser.mjs:110:9)
+    at async file:///<repo>/tests/browser.mjs:85:66

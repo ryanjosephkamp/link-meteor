@@ -1,0 +1,186 @@
+[
+  {
+    "id": "surface",
+    "type": "webpage",
+    "title": "Surface temperature and tree canopy in 40 mid-sized cities",
+    "DOI": "10.5555/uhi.2024.0142",
+    "URL": "https://doi.org/10.5555/uhi.2024.0142",
+    "accessed": {
+      "date-parts": [[2026, 9, 25]]
+    },
+    "note": "Primary source for chapter 2.\nTable 3 has the canopy thresholds.",
+    "keyword": "chapter 2, canopy"
+  },
+  {
+    "id": "okafor2025",
+    "type": "article-journal",
+    "title": "Cooling cities: a review of street-level interventions",
+    "author": [
+      {
+        "family": "Okafor",
+        "given": "Amara"
+      },
+      {
+        "literal": "Jun Watanabe"
+      }
+    ],
+    "issued": {
+      "date-parts": [[2025, 3, 14]]
+    },
+    "container-title": "Journal of Example Climate",
+    "volume": "12",
+    "issue": "3",
+    "page": "45-52",
+    "DOI": "10.5555/cool.2025.0007",
+    "URL": "https://journal.example.org/articles/42#results",
+    "accessed": {
+      "date-parts": [[2026, 9, 25]]
+    },
+    "keyword": "review"
+  },
+  {
+    "id": "okafor2025a",
+    "type": "article-journal",
+    "title": "Green roofs & street canyons",
+    "author": [
+      {
+        "family": "Okafor",
+        "given": "Amara"
+      }
+    ],
+    "issued": {
+      "date-parts": [[2025, 3, 14]]
+    },
+    "container-title": "Journal of Example Climate",
+    "page": "e1024",
+    "URL": "https://journal.example.org/articles/43",
+    "accessed": {
+      "date-parts": [[2026, 9, 25]]
+    }
+  },
+  {
+    "id": "attention",
+    "type": "webpage",
+    "title": "Attention Is All You Need",
+    "container-title": "arxiv.org",
+    "URL": "https://arxiv.org/abs/1706.03762v5",
+    "accessed": {
+      "date-parts": [[2026, 9, 25]]
+    }
+  },
+  {
+    "id": "heat",
+    "type": "webpage",
+    "title": "Heat-related mortality, a cohort study",
+    "container-title": "pubmed.ncbi.nlm.nih.gov",
+    "PMID": "31452104",
+    "URL": "https://pubmed.ncbi.nlm.nih.gov/31452104/",
+    "accessed": {
+      "date-parts": [[2026, 9, 25]]
+    }
+  },
+  {
+    "id": "full",
+    "type": "webpage",
+    "title": "Full text on PMC",
+    "container-title": "pmc.ncbi.nlm.nih.gov",
+    "PMCID": "PMC6702837",
+    "URL": "https://pmc.ncbi.nlm.nih.gov/articles/PMC6702837/",
+    "accessed": {
+      "date-parts": [[2026, 9, 25]]
+    }
+  },
+  {
+    "id": "urban",
+    "type": "webpage",
+    "title": "Urban Climates",
+    "container-title": "openlibrary.org",
+    "ISBN": "9780306406157",
+    "URL": "https://openlibrary.org/isbn/9780306406157",
+    "accessed": {
+      "date-parts": [[2026, 9, 25]]
+    }
+  },
+  {
+    "id": "heata",
+    "type": "webpage",
+    "title": "Heat & cooling: 50% of #cities_{2024} \\ ~ ^ <b> | $5 == [draft]",
+    "container-title": "example.org",
+    "URL": "https://example.org/a_b?q={x}&y=%20",
+    "accessed": {
+      "date-parts": [[2026, 9, 25]]
+    },
+    "note": "- = not a list\n## not a heading",
+    "keyword": "#heat island, 2024"
+  },
+  {
+    "id": "surfacea",
+    "type": "webpage",
+    "title": "Surface albedo and street heat",
+    "container-title": "data.example.com",
+    "URL": "https://data.example.com/albedo",
+    "accessed": {
+      "date-parts": [[2026, 9, 25]]
+    }
+  },
+  {
+    "id": "download",
+    "type": "webpage",
+    "title": "Download the dataset",
+    "container-title": "data.example.com",
+    "URL": "https://data.example.com/files/stations.csv",
+    "accessed": {
+      "date-parts": [[2026, 9, 25]]
+    }
+  },
+  {
+    "id": "coolstreets",
+    "type": "webpage",
+    "title": "https://www.cool-streets.example.org/",
+    "container-title": "cool-streets.example.org",
+    "URL": "https://www.cool-streets.example.org/",
+    "accessed": {
+      "date-parts": [[2026, 9, 25]]
+    }
+  },
+  {
+    "id": "organization",
+    "type": "webpage",
+    "title": "Heat and health",
+    "author": [
+      {
+        "literal": "World Health Organization"
+      },
+      {
+        "literal": "Smith, Jr., John"
+      }
+    ],
+    "issued": {
+      "literal": "n.d."
+    },
+    "container-title": "who.example.int",
+    "URL": "https://who.example.int/heat",
+    "accessed": {
+      "date-parts": [[2026, 9, 25]]
+    }
+  },
+  {
+    "id": "write",
+    "type": "webpage",
+    "title": "Write to the lab",
+    "URL": "mailto:lab@example.edu?subject=Data",
+    "accessed": {
+      "date-parts": [[2026, 9, 25]]
+    }
+  },
+  {
+    "id": "canopy",
+    "type": "webpage",
+    "title": "The canopy paper again",
+    "DOI": "10.5555/uhi.2024.0142",
+    "URL": "https://doi.org/10.5555/uhi.2024.0142",
+    "accessed": {
+      "date-parts": [[2026, 9, 25]]
+    }
+  }
+]

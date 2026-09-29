@@ -696,6 +696,68 @@ When capturing, the page script reads the top document's own citation tags, once
 
 A page with none of these has no page citation. **Save tabs as links** also reads each tab's citation tags when Link Meteor already has access to that site (all sites, or that site); it never asks for access to do so, and the report says how many tabs it read.
 
+### Context snippets and page citations, as built
+
+Files: `content/capture.js`, `background/citations.js` (new), `background/card.js`, `background/menus.js`, `background/tabs.js` and the capture pipeline in `background.js`. Fixtures: `tests/fixtures/research/*.html`, served at `/research/<name>.html`.
+
+**Context.**
+- The block is the link's nearest ancestor in its own tree from the list above; otherwise its parent node (an element, or the open shadow root the link sits in).
+- The text is the block's text nodes (textContent), read outward from the link on each side only as far as needed, at most 120 text nodes a side.
+  - Text in `script`, `style`, `noscript`, `template` and SVG `title` or `desc` is skipped.
+  - A space separates text in different block-level elements, and text on either side of a `br`, where textContent would join the words.
+  - An open shadow root's text isn't part of its host's block.
+- The middle is the link's anchor text as captured (innerText), so hidden text inside the link stays out and the anchor text can be found in the context.
+- The room is 400 characters minus the anchor text's length, half on each side; a side that needs less gives the rest to the other. A cut side starts or ends with "…", which counts toward the 400, and never splits a word.
+- Empty when neither side has text, or when the anchor text alone leaves less than 2 characters.
+- Speed: in Chrome for Testing on a Mac, a scan of 20,000 links took 0.37 s with context and 0.15 s without (`tests/access-content.mjs` records it). Region drags read context only when saving, never while dragging.
+- Set by `scan(options)` (`options.context`, default the page's `saveContext`), the card's `capture.commit` (ticked links only), `content.contextLink` and `content.selectionLinks`. Copying, opening, downloading and bookmarking don't read it.
+- The background keeps it through `occurrences` (text, spaces collapsed, at most 400 characters; absent when empty). `appendLinks` drops every link's `context` when `saveContext` is `false`, whatever the page sent. *Capture this page* sends the setting as `scan`'s argument (`{context}`).
+
+**`saveContext`.**
+- It reaches the page script in `settings.get` and in `content.configure`'s `capture` (it joined `CAPTURE_FIELDS` in `background/hold.js`); a change reconfigures open tabs.
+- In the rail, under *After a drag*: `#save-context`, a checkbox labeled "Save the words around each link", described by `#save-context-help`. Restore previews name the setting.
+
+**Reading citation tags.** `pageCitation()` in the page script and `readCitationTags()` in `background/citations.js` are the same code; the second stands alone for `chrome.scripting.executeScript`. `tests/access-content.mjs` checks that they agree on every fixture.
+- Meta tags come from the first 2,000 `meta[name][content]`, names compared ignoring case.
+- Beyond the list above:
+  - Highwire: `citation_authors` (split at semicolons) when there is no `citation_author`.
+  - PRISM: the title, authors and publisher come from Dublin Core (`dc.title`, `dc.creator`, `dc.publisher`, or their `dcterms.` names); the date from `prism.publicationDate` or `prism.coverDate`, then `dc.date`. `prism.endingPage`, `prism.issueIdentifier`, `prism.publisher` and `prism.isbn` are read too.
+  - Dublin Core: `dcterms.` names count as `DC.` ones (`dcterms.issued`, `dcterms.date` or `dcterms.created` for the date). A DOI comes from an identifier written as `10.…`, `doi:10.…`, `info:doi/10.…` or a doi.org address.
+- JSON-LD:
+  - The first 20 `script[type*="ld+json" i]` of at most 1,000,000 characters; bad JSON is skipped.
+  - Nodes are found in arrays and `@graph`, 4 levels deep. A reference (`{"@id": …}` alone) is followed once within the page.
+  - Types, with or without the `https://schema.org/` prefix: the four above plus schema.org's common kinds of article (`MedicalScholarlyArticle`, `NewsArticle`, `BlogPosting`, `TechArticle`), so blog and news posts count.
+  - Fields: title from `headline` or `name`; authors from `author` (`name`, or given and family names); date from `datePublished` or `dateCreated`; `publisher`'s name; `pageStart`, `pageEnd`, `isbn`.
+  - Journal, volume and issue come from `isPartOf`, through `PublicationIssue` (`issueNumber`), `PublicationVolume` (`volumeNumber`) and `Periodical` (`name`).
+  - A DOI only from `identifier` (a `PropertyValue` whose `propertyID` says DOI, or a DOI written as text) or `sameAs` (a doi.org address).
+- Limits:
+  - Each value is read from at most 10,000 characters, spaces collapsed.
+  - Title, journal and publisher are cut to 300 characters at a word boundary with "…".
+  - A date over 40 characters, any other value over 300, and author names over 200 are left out; at most the first 50 authors are kept.
+  - `citation_pdf_url` is resolved against the page, and kept only as an HTTP(S) address of at most 2,000 characters.
+  - Nothing throws: what can't be read is left out, and a page with no usable title gives `null`.
+- The reading is `{title, authors?, date?, journal?, publisher?, volume?, issue?, firstPage?, lastPage?, doi?, pmid?, arxiv?, isbn?, pdfUrl?}` as printed, or `null`.
+
+**Saving citations.**
+- The page's reading goes as `page` in `scan`'s result and in `capture.commit`, and in the menus' answers: `content.contextLink` answers `{link, page}`, and `content.selectionLinks` answers `{links, warnings, page}`.
+- `citationPages(page, url)` (`background/citations.js`) turns it into `{[pageKey(url)]: PageCitation}`, keyed by the tab's address (or the links' `sourceUrl` where Chrome hides it):
+  - known fields only, with the model's limits (a title, journal or publisher is cut; anything else too long is left out);
+  - `doi` as identifiers read it (`doiIn`), `pmid` as digits (`PMID: 42` becomes `42`), `arxiv` without `arXiv:`, `pdfUrl` only as an HTTP(S) address;
+  - `readAt`, the time it was read;
+  - no title, no citation.
+- `appendLinks(links, {pages})` passes them to `links.append`, even when every link was skipped as already saved, so a newer reading of the page replaces the older. If the model refused a citation, the links would still be saved without it.
+- One citation per scanned document: *Capture this page* and tab captures (per tab), the card's commit, *Add link* and *Capture links in the selection*.
+
+**Save tabs as links.**
+- For each web page in the save (one per address), `permissions.contains({origins: [origin + '/*']})`, asked once per origin, decides whether Link Meteor already has access: all sites, or that site. A toolbar press's temporary access doesn't count.
+- Where it has access, `executeScript({target: {tabId}, func: readCitationTags, injectImmediately: true})` reads the tags, 8 tabs at a time, each given 3 seconds. A discarded tab, or one that fails or doesn't answer in time, is not read. Nothing asks for access.
+- Each tab's citation is kept under its own address, so each saved link has its own citation.
+- The report gains `citations: {tabs, read, found, needAccess}`: the web pages in the save, those whose tags were read, those that had a citation, and those without site access.
+- The report (`.report-citations`, under its title) and the menus' notice add one sentence after the summary: "Read citation details from 12 of 45 tabs; the others need site access."
+  - Other forms: "Read citation details from all 45 tabs.", "Read the tab’s citation details.", "Read no citation details; the tabs need site access.", and "the other needs site access".
+  - When tabs with access didn't answer: "didn’t answer", or "need site access or didn’t answer".
+  - *Save this tab as a link* from a menu adds "Read its citation details." only when the page had a citation.
+
 ### Identifiers (`src/core/identifiers.js`, pure)
 
 `identifiersOf(link, pages?)` returns `{doi?, arxiv?, pmid?, pmcid?, isbn?}`, found in `url` and `originalHref`, and in the link's own page citation's `doi`. They are derived each time, never stored.

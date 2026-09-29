@@ -435,6 +435,11 @@ try {
   await ui.setViewportSize({width: 320, height: 900});
   await ui.waitForFunction(() => innerWidth === 320);
   assert.equal(await overflow(), false, 'no horizontal overflow at 320 px (the preview table scrolls inside its box)');
+  await ui.locator('#collection-switch').click();
+  assert.equal(await ui.locator('#import-panel').isVisible(), true);
+  assert.equal(await overflow(), false, 'no horizontal overflow in the rail at 320 px, with Import links');
+  assert.deepEqual(await unlabeled(), [], 'the rail’s import controls have labels');
+  await ui.locator('#rail-done').click();
   assert.deepEqual(await unlabeled(), [], 'every import control has a label');
   await ui.evaluate(() => document.getElementById('import').scrollIntoView());
   await shot('import-320-meteor-light.png');
@@ -453,6 +458,8 @@ try {
   for (const theme of THEME_IDS) for (const scheme of ['light', 'dark']) {
     await rpc(ui, {type: 'state.mutate', action: {type: 'settings.update', patch: {theme, appearance: scheme}}});
     await until(() => ui.evaluate(([theme, scheme]) => document.documentElement.dataset.theme === theme && document.documentElement.dataset.scheme === scheme, [theme, scheme]), `${theme} ${scheme} applied`);
+    // Even with reduced motion, colors change through a 0.01 ms transition: measure once it has ended.
+    await until(() => ui.evaluate(() => !document.getAnimations().length), `${theme} ${scheme} settled`);
     const measured = await contrast();
     for (const entry of measured) { assert.ok(!entry.missing, `${theme} ${scheme} ${entry.name} missing`); assert.ok(entry.ratio >= 4.5, `${theme} ${scheme} ${entry.name} contrast ${entry.ratio}`); }
     assert.equal(await overflow(), false, `${theme} ${scheme}: overflow at 320`);

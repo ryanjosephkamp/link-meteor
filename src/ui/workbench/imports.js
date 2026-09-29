@@ -160,7 +160,7 @@ async function readFileTable(file, bytes, run) {
   if (type === 'xlsx') return readWorkbook(bytes);
   if (type === 'html') return htmlTable(decodeText(bytes));
   if (type === 'json') return { ...readExportJson(decodeText(bytes)), unit: 'row', fixed: true };
-  const read = await parseText({ bytes, kind: type === 'csv' ? 'table' : type === 'tsv' ? 'table' : type, delimiter: type === 'tsv' ? '\t' : 'sniff' },
+  const read = await parseText({ bytes, kind: type === 'csv' || type === 'tsv' ? 'table' : type, delimiter: type === 'tsv' ? '\t' : 'sniff' },
     (rows) => { if (run === view.run) progress(`Reading ${file.name}: ${count(rows)} ${type === 'list' ? 'lines' : 'rows'} so far…`); });
   return read.kind === 'list' ? listTable(read.entries) : { rows: read.rows, unit: 'row', fixed: false };
 }

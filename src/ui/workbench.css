@@ -681,6 +681,8 @@ label.backup-choose { display: inline-flex; cursor: pointer; }
 .import-sources { display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px; }
 .import-sources .btn { justify-content: flex-start; width: 100%; }
 label.import-choose { display: inline-flex; cursor: pointer; }
+/* The file input stays focusable but visually hidden; the shared input sizing would widen it. */
+#import-file { width: 1px; min-width: 0; height: 1px; min-height: 0; padding: 0; border: 0; }
 .import-file:focus-visible + .import-choose { outline: 2px solid var(--focus); outline-offset: 2px; }
 .main.is-importing > .capture, .main.is-importing > .review { display: none; }
 .import { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; margin-top: 18px; padding: 16px; border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--surface); min-width: 0; }

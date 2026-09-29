@@ -105,7 +105,7 @@ async function addLinks(tab, candidates, deps, note = '', page = null) {
 
 // Save this tab, or every tab in its window, as links, with the notice in that tab.
 async function saveFromMenu(tab, tabIds, deps, single = false) {
-  const {report, collectionId, name} = await saveTabs(tabIds);
+  const {report, collectionId, name} = await saveTabs(tabIds, {tryTabIds: [tab.id]});
   if (report.saved) await rememberAdd({tabId: tab.id, collectionId, batchId: report.batchId, count: report.saved});
   return tell(tab, {text: tabsSummary(report, {name, single}), ...(report.saved ? {added: {collectionId, batchId: report.batchId, name}} : {})}, deps);
 }

@@ -34,21 +34,24 @@ function within(promise, ms) {
 }
 
 // Reads the tabs' own citation tags where Link Meteor already has access to their sites, never
-// asking for more. A tab that doesn't answer (discarded, busy or closed) is simply not read.
+// asking for more. The tab a person just acted on (a right-click, or the tab the side panel was
+// opened from) is tried too, since Chrome gives temporary access to it; if that fails, it counts as
+// needing access. A tab that doesn't answer (discarded, busy or closed) is simply not read.
 // Returns {pages, counts: {tabs, read, found, needAccess}}.
-async function readCitations(tabs) {
+async function readCitations(tabs, tryIds = new Set()) {
   const pages = {}, known = new Map(), queue = [...tabs], readAt = new Date().toISOString();
   const counts = {tabs: tabs.length, read: 0, found: 0, needAccess: 0};
   async function reader() {
     for (let tab = queue.shift(); tab; tab = queue.shift()) {
-      if (!(await siteAccess(tab.url, known))) { counts.needAccess++; continue; }
+      const access = await siteAccess(tab.url, known);
+      if (!access && !tryIds.has(tab.id)) { counts.needAccess++; continue; }
       if (tab.discarded) continue;
       try {
         const [answer] = await within(chrome.scripting.executeScript({target: {tabId: tab.id}, func: readCitationTags, injectImmediately: true}), READ_MS);
         counts.read++;
         const entry = citationPages(answer?.result, tab.url, readAt);
         if (Object.keys(entry).length) { Object.assign(pages, entry); counts.found++; }
-      } catch { /* not read */ }
+      } catch { if (!access) counts.needAccess++; /* otherwise not read */ }
     }
   }
   await Promise.all(Array.from({length: Math.min(READERS, tabs.length)}, reader));
@@ -60,7 +63,7 @@ async function readCitations(tabs) {
 // with skipSaved, so are addresses the collection already holds. The report is kept like a
 // capture's, so the workbench shows it, with how many tabs' citation tags were read (citations).
 // Returns {state, report, collectionId, name}.
-export async function saveTabs(tabIds, {collectionId} = {}) {
+export async function saveTabs(tabIds, {collectionId, tryTabIds = []} = {}) {
   const batchId = crypto.randomUUID(), capturedAt = new Date().toISOString();
   const results = [], links = [], linkIds = new Map(), addresses = new Set(), readable = [];
   let repeated = 0;
@@ -81,7 +84,7 @@ export async function saveTabs(tabIds, {collectionId} = {}) {
     }
   }
   // Each tab's citation is kept under its own address, so each saved link has its own citation.
-  const {pages, counts} = await readCitations(readable);
+  const {pages, counts} = await readCitations(readable, new Set(tryTabIds));
   const added = await appendLinks(links, {collectionId, pages});
   const home = added.state.collections.find(c => c.id === added.collectionId);
   const kept = new Set((home?.links || []).filter(link => link.batchId === batchId).map(link => link.id));
@@ -151,6 +154,7 @@ export async function tabsMessage(message, {target}) {
     if (scope === 'selected') throw new Error('Select at least one tab to save.');
     ids = scope === 'current' ? [(await target()).id] : await windowTabs(scope === 'window');
   }
-  const {state, report} = await saveTabs(ids, {collectionId: message.collectionId});
+  const tryTabIds = scope === 'current' ? ids : [];
+  const {state, report} = await saveTabs(ids, {collectionId: message.collectionId, tryTabIds});
   return {state, report};
 }

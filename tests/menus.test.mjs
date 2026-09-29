@@ -276,7 +276,8 @@ test('Save all tabs in this window: web pages of that window only, repeated addr
   await click('meteor-save-window', tabs[0]);
   const added = active().links.slice(before);
   assert.deepEqual(added.map((l) => [l.anchorText, l.url]), [['Thesis sources page', tabs[0].url], ['B', 'https://b.test/'], ['Another page', 'https://a.test/other']]);
-  assert.equal(lastNotice().text, 'Saved 3 tabs as links in “Thesis sources”; 1 skipped: not a web page; 1 skipped: a repeated address. Read no citation details; the tabs need site access.');
+  // The right-clicked tab is read with the temporary access the click gives; the others need site access.
+  assert.equal(lastNotice().text, 'Saved 3 tabs as links in “Thesis sources”; 1 skipped: not a web page; 1 skipped: a repeated address. Read citation details from 1 of 3 tabs; the others need site access.');
   const report = session.linkMeteorCaptureReport.report;
   assert.deepEqual({kind: report.kind, saved: report.saved, skipped: report.skipped, repeated: report.repeated, unsupported: report.unsupported, capturedCount: report.capturedCount}, {kind: 'tabs', saved: 3, skipped: 1, repeated: 1, unsupported: 1, capturedCount: 3});
   assert.deepEqual(report.results.map((r) => [r.tabId, r.status, r.count, r.skipped]), [[1, 'success', 1, 0], [2, 'success', 1, 0], [3, 'unsupported', 0, 0], [4, 'success', 0, 1], [6, 'success', 1, 0]]);

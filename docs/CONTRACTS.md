@@ -749,7 +749,7 @@ Files: `content/capture.js`, `background/citations.js` (new), `background/card.j
 - One citation per scanned document: *Capture this page* and tab captures (per tab), the card's commit, *Add link* and *Capture links in the selection*.
 
 **Save tabs as links.**
-- For each web page in the save (one per address), `permissions.contains({origins: [origin + '/*']})`, asked once per origin, decides whether Link Meteor already has access: all sites, or that site. A toolbar press's temporary access doesn't count.
+- For each web page in the save (one per address), `permissions.contains({origins: [origin + '/*']})`, asked once per origin, decides whether Link Meteor already has access: all sites, or that site. The tab a person just acted on is tried as well: the right-clicked tab for a menu save, and This page's tab from the workbench. Chrome gives temporary access to it, and if reading still fails it counts as needing access. Other tabs never use temporary access.
 - Where it has access, `executeScript({target: {tabId}, func: readCitationTags, injectImmediately: true})` reads the tags, 8 tabs at a time, each given 3 seconds. A discarded tab, or one that fails or doesn't answer in time, is not read. Nothing asks for access.
 - Each tab's citation is kept under its own address, so each saved link has its own citation.
 - The report gains `citations: {tabs, read, found, needAccess}`: the web pages in the save, those whose tags were read, those that had a citation, and those without site access.

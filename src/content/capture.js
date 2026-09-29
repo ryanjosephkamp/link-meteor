@@ -39,7 +39,7 @@
   let active = null, held = false, holdKey = 'z', holdTrigger = 'letter', holdEnabled = false, lastDestinationId = '';
   // The card's theme ({theme, appearance, light, dark}, from settings.get or content.configure) and
   // the capture settings the card follows. Until they arrive, the card keeps its built-in look.
-  let cardTheme = null, captureSettings = {afterDrag: 'card', afterDragFormat: 'tsv', contentOnly: false, skipSaved: false}, overlayHost = null;
+  let cardTheme = null, captureSettings = {afterDrag: 'card', afterDragFormat: 'tsv', contentOnly: false, skipSaved: false, saveContext: true}, overlayHost = null;
   const darkScheme = matchMedia('(prefers-color-scheme: dark)');
   const cardScheme = () => cardTheme?.appearance === 'light' || cardTheme?.appearance === 'dark' ? cardTheme.appearance : (darkScheme.matches ? 'dark' : 'light');
   // Sets the theme's custom properties on the card's host, where the page's own styles can't reach.
@@ -90,6 +90,114 @@
     if (!accessibleLabel && anchor.getAttribute('aria-labelledby')) accessibleLabel = normalize(anchor.getAttribute('aria-labelledby').split(/\s+/).map(id => anchor.ownerDocument.getElementById(id)?.textContent || '').join(' '));
     if (!accessibleLabel) accessibleLabel = normalize([...anchor.querySelectorAll('img[alt]')].map(img => img.alt).join(' '));
     return {anchorText,accessibleLabel,url:url.href,originalHref:href,sourceUrl:location.href,sourceTitle:document.title,frameUrl:anchor.ownerDocument.URL};
+  }
+
+  /* Context snippets (0.5.0) ------------------------------------------------------------------- */
+  // The words around a link: its nearest block's text, at most MAX_CONTEXT characters around the
+  // anchor text, cut at word boundaries with "…"; empty when the block holds only the link. Text is
+  // read from text nodes (textContent, not innerText, so 20,000 links stay fast), walking out from
+  // the link on each side only as far as needed. Script and style text is skipped, and a space
+  // separates words that block elements or line breaks keep apart on the page.
+  const MAX_CONTEXT=400,CONTEXT_BLOCKS='p,li,dd,dt,td,th,blockquote,figcaption,caption,h1,h2,h3,h4,h5,h6,summary',CONTEXT_VISITS=120;
+  const BOXES=new Set('address article aside blockquote caption dd details div dl dt figcaption figure footer form h1 h2 h3 h4 h5 h6 header li main nav ol p pre section summary table td th tr ul'.split(' ')),SILENT=new Set(['script','style','noscript','template','title','desc']);
+  // The box a node's text sits in: its nearest block-level element inside the block, or the block.
+  function boxOf(element,block,boxes){
+    let box=boxes.get(element);if(box)return box;
+    for(box=element;box&&box!==block&&!BOXES.has(box.localName);box=box.parentElement);
+    box=box||block;boxes.set(element,box);return box;
+  }
+  // One side of the link: {text, more}, whitespace collapsed; more when the block holds more text.
+  function contextSide(block,anchor,forward,limit){
+    const walker=anchor.ownerDocument.createTreeWalker(block,NodeFilter.SHOW_TEXT),boxes=new Map();
+    let at=anchor;if(forward)while(at.lastChild)at=at.lastChild;walker.currentNode=at;
+    let text='',count=0,box=boxOf(anchor,block,boxes),visits=0,node;
+    const step=()=>forward?walker.nextNode():walker.previousNode();
+    for(node=step();node&&visits<CONTEXT_VISITS&&count<=limit;node=step(),visits++){
+      const parent=node.parentElement;
+      if(!parent||SILENT.has(parent.localName)||!node.data)continue;
+      // A line break, or another block, between this text and the text next to it on the anchor's side.
+      const here=boxOf(parent,block,boxes),gap=here!==box||(forward?node.previousSibling:node.nextSibling)?.localName==='br';box=here;
+      const piece=(forward?node.data.slice(0,limit*3):node.data.slice(-limit*3)).replace(/\s+/gu,' '),join=gap?' ':'';
+      text=forward?text+join+piece:piece+join+text;count+=piece.length;
+    }
+    text=text.replace(/\s+/gu,' ');
+    return {text:forward?text.trimEnd():text.trimStart(),more:!!node&&(count>limit||visits>=CONTEXT_VISITS)};
+  }
+  // Cuts one side to at most `max` characters with "…", dropping a word the cut would split.
+  function cutHead(text,more,max){
+    if(text.length<=max&&!more)return text;if(max<2)return '';
+    let kept=text.slice(-(max-1));if(kept.length<text.length&&/\S/.test(text[text.length-kept.length-1])&&/^\S/.test(kept))kept=kept.replace(/^\S+/u,'');
+    return '…'+kept.trimStart();
+  }
+  function cutTail(text,more,max){
+    if(text.length<=max&&!more)return text;if(max<2)return '';
+    let kept=text.slice(0,max-1);if(kept.length<text.length&&/\S/.test(text[kept.length])&&/\S$/.test(kept))kept=kept.replace(/\S+$/u,'');
+    return kept.trimEnd()+'…';
+  }
+  function contextOf(anchor,anchorText=''){
+    try{
+      const block=anchor.closest(CONTEXT_BLOCKS)||anchor.parentNode,room=MAX_CONTEXT-anchorText.length;
+      if(!block||room<2)return '';
+      // Half the room on each side; what one side doesn't need goes to the other, read again further.
+      const half=Math.floor(room/2),needs=side=>side.more?Infinity:side.text.length;
+      let before=contextSide(block,anchor,false,half),after=contextSide(block,anchor,true,room-half);
+      if(!before.text.trim()&&!after.text.trim())return '';
+      if(needs(before)<half&&after.more)after=contextSide(block,anchor,true,room-needs(before));
+      else if(needs(after)<room-half&&before.more)before=contextSide(block,anchor,false,room-needs(after));
+      let left=Math.min(needs(before),half),right=room-left;
+      if(needs(after)<right){right=needs(after);left=Math.min(needs(before),room-right);}
+      return (cutHead(before.text,before.more,left)+anchorText+cutTail(after.text,after.more,right)).replace(/\s+/gu,' ').trim().slice(0,MAX_CONTEXT);
+    }catch{return '';}
+  }
+  // A candidate with its context when capture saves context (saveContext, or the caller's choice).
+  const withContext=(link,element,save=captureSettings.saveContext)=>save===false?link:{...link,context:contextOf(element,link.anchorText)};
+
+  /* Page citations (0.5.0) --------------------------------------------------------------------- */
+  // The top document's own citation tags, read the same way as readCitationTags in
+  // background/citations.js (Save tabs as links); tests/access-content.mjs checks that they agree.
+  function pageCitation(){
+    const LONG=300,DATE=40,ADDRESS=2000,AUTHORS=50,AUTHOR=200,METAS=2000,SCRIPTS=20,JSON_BYTES=1000000;
+    const TYPES=new Set(['ScholarlyArticle','MedicalScholarlyArticle','Article','NewsArticle','BlogPosting','TechArticle','Report','Book']);
+    const clean=value=>String(value??'').slice(0,10000).replace(/\s+/gu,' ').trim();
+    const cut=(value,max)=>{const text=clean(value);if(text.length<=max)return text;const part=text.slice(0,max-1);return (part.replace(/\s+\S*$/u,'')||part)+'…';};
+    const code=(value,max)=>{const text=clean(value);return text.length<=max?text:'';};
+    const textOf=value=>typeof value==='string'||typeof value==='number'?String(value):Array.isArray(value)?textOf(value[0]):value&&typeof value==='object'&&'@value' in value?textOf(value['@value']):'';
+    const doiOf=value=>/^(?:doi:\s*|info:doi\/|https?:\/\/(?:dx\.)?doi\.org\/)?(10\.\d{4,9}\/\S+)$/i.exec(clean(value))?.[1]||'';
+    try{
+      const metas=new Map();
+      for(const meta of [...document.querySelectorAll('meta[name][content]')].slice(0,METAS)){const name=meta.getAttribute('name').trim().toLowerCase(),content=clean(meta.getAttribute('content'));if(!content)continue;if(metas.has(name))metas.get(name).push(content);else metas.set(name,[content]);}
+      const all=(...names)=>names.flatMap(name=>metas.get(name)||[]),first=(...names)=>all(...names)[0]||'';
+      const dublin={title:first('dc.title','dcterms.title'),authors:all('dc.creator','dcterms.creator'),date:first('dc.date','dcterms.issued','dcterms.date','dcterms.created'),publisher:first('dc.publisher','dcterms.publisher')};
+      const highwire=()=>({title:first('citation_title'),authors:all('citation_author').length?all('citation_author'):first('citation_authors').split(';'),date:first('citation_publication_date','citation_date'),journal:first('citation_journal_title'),publisher:first('citation_publisher'),volume:first('citation_volume'),issue:first('citation_issue'),firstPage:first('citation_firstpage'),lastPage:first('citation_lastpage'),doi:first('citation_doi'),pmid:first('citation_pmid'),arxiv:first('citation_arxiv_id'),isbn:first('citation_isbn'),pdfUrl:first('citation_pdf_url')});
+      const prism=()=>[...metas.keys()].some(name=>name.startsWith('prism.'))?{...dublin,date:first('prism.publicationdate','prism.coverdate')||dublin.date,journal:first('prism.publicationname'),publisher:dublin.publisher||first('prism.publisher'),volume:first('prism.volume'),issue:first('prism.number','prism.issueidentifier'),firstPage:first('prism.startingpage'),lastPage:first('prism.endingpage'),doi:first('prism.doi'),isbn:first('prism.isbn')}:{};
+      const jsonld=()=>{
+        const nodes=[];
+        const visit=(value,depth)=>{if(depth>4||!value||typeof value!=='object')return;if(Array.isArray(value)){for(const item of value.slice(0,200))visit(item,depth+1);return;}nodes.push(value);if(value['@graph'])visit(value['@graph'],depth+1);};
+        for(const script of [...document.querySelectorAll('script[type*="ld+json" i]')].slice(0,SCRIPTS)){const text=script.textContent;if(text.length>JSON_BYTES)continue;try{visit(JSON.parse(text),0);}catch{/* bad JSON-LD is skipped */}}
+        const byId=new Map(nodes.filter(node=>typeof node['@id']==='string').map(node=>[node['@id'],node]));
+        const deref=value=>value&&typeof value==='object'&&!Array.isArray(value)&&typeof value['@id']==='string'&&Object.keys(value).length===1?byId.get(value['@id'])||value:value;
+        const list=value=>[].concat(value??[]).slice(0,1000).map(deref);
+        const types=node=>[].concat(node?.['@type']??[]).map(type=>String(type).replace(/^https?:\/\/schema\.org\//,''));
+        const nameOf=value=>{const node=deref(value);return typeof node==='string'?node:node&&typeof node==='object'?textOf(node.name)||[textOf(node.givenName),textOf(node.familyName)].filter(Boolean).join(' '):'';};
+        const article=nodes.find(node=>types(node).some(type=>TYPES.has(type)));
+        if(!article)return {};
+        const found={title:textOf(article.headline)||textOf(article.name),authors:list(article.author).map(nameOf),date:textOf(article.datePublished)||textOf(article.dateCreated),publisher:nameOf(list(article.publisher)[0]),firstPage:textOf(article.pageStart),lastPage:textOf(article.pageEnd),isbn:textOf(article.isbn)};
+        for(let part=list(article.isPartOf)[0],depth=0;part&&typeof part==='object'&&depth<4;part=list(part.isPartOf)[0],depth++){const kinds=types(part);if(kinds.includes('PublicationIssue'))found.issue||=textOf(part.issueNumber);if(kinds.includes('PublicationVolume'))found.volume||=textOf(part.volumeNumber);if(kinds.includes('Periodical'))found.journal||=textOf(part.name);}
+        for(const value of [...list(article.identifier),...list(article.sameAs)]){const doi=value&&typeof value==='object'?(/doi/i.test(textOf(value.propertyID))?doiOf(textOf(value.value)):''):doiOf(textOf(value));if(doi){found.doi=doi;break;}}
+        return found;
+      };
+      const dc=()=>({...dublin,doi:all('dc.identifier','dcterms.identifier').map(doiOf).find(Boolean)||''});
+      for(const read of [highwire,prism,jsonld,dc]){
+        let found;try{found=read();}catch{continue;}
+        const title=cut(found.title,LONG);if(!title)continue;
+        const citation={title};
+        const authors=(found.authors||[]).map(clean).filter(name=>name&&name.length<=AUTHOR).slice(0,AUTHORS);if(authors.length)citation.authors=authors;
+        for(const [key,value] of [['date',code(found.date,DATE)],['journal',cut(found.journal,LONG)],['publisher',cut(found.publisher,LONG)],...['volume','issue','firstPage','lastPage','doi','pmid','arxiv','isbn'].map(key=>[key,code(found[key],LONG)])])if(value)citation[key]=value;
+        try{const pdf=new URL(clean(found.pdfUrl),document.baseURI);if(found.pdfUrl&&/^https?:$/.test(pdf.protocol)&&pdf.href.length<=ADDRESS)citation.pdfUrl=pdf.href;}catch{/* not an address */}
+        return citation;
+      }
+    }catch{/* an odd page gives no citation */}
+    return null;
   }
 
   // Whether a link sits in page chrome, looking out through open shadow roots to their hosts.
@@ -167,10 +275,12 @@
     return {records,inaccessibleFrames,warnings};
   }
 
-  function scan() {
+  // options.context: whether to add each link's context (default: the saveContext setting).
+  function scan(options={}) {
     const {records,inaccessibleFrames,warnings} = collect();
     // Links in page chrome carry pageChrome: true, so Capture this page can leave them out.
-    return {links:records.map(record=>record.chrome?{...record.link,pageChrome:true}:record.link),inaccessibleFrames,warnings};
+    const links=records.map(record=>{const link=withContext(record.link,record.element,options?.context);return record.chrome?{...link,pageChrome:true}:link;});
+    return {links,inaccessibleFrames,warnings,page:pageCitation()};
   }
 
   async function request(message) {
@@ -416,8 +526,8 @@
       $('.copy').focus();checkSaved();
     }
 
-    /* Ticked links: every card action uses only these. */
-    const tickedLinks=()=>selected.filter((entry,index)=>ticks[index]).map(entry=>entry.link);
+    /* Ticked links: every card action uses only these. Saving adds each one's context. */
+    const tickedEntries=()=>selected.filter((entry,index)=>ticks[index]),tickedLinks=()=>tickedEntries().map(entry=>entry.link);
     function renderPreview() {
       const list=$('.preview');list.replaceChildren();rows=[];
       selected.slice(0,PREVIEW_LIMIT).forEach(({link},index)=>{
@@ -558,7 +668,7 @@
       if(saveInFlight){await saveInFlight;if(review)await openReview();return;}
       if(committed){if(review)await openReview();return;}
       saveInFlight=(async()=>{
-        const result=await request({type:'capture.commit',links:tickedLinks(),inaccessibleFrames,review,skipSaved:skip,...(destinationId?{collectionId:destinationId}:{})});
+        const result=await request({type:'capture.commit',links:tickedEntries().map(entry=>withContext(entry.link,entry.element)),page:pageCitation(),inaccessibleFrames,review,skipSaved:skip,...(destinationId?{collectionId:destinationId}:{})});
         committed=true;const saved=savedBatch(result);destination=saved.name;savedBatchId=saved.batchId;savedCollectionId=saved.collectionId;
         $('.pick').hidden=true;$('.add').disabled=true;$('.add').innerHTML=`${ICON_CHECK}Added`;renderDest();renderChoices();
         $('.status').textContent=`${receipt(result,quick)} ${result.warning || ''}`.trim();
@@ -869,7 +979,9 @@
   // The recorded link when its address matches, otherwise the first link in the page with that address.
   function contextLink(url){
     const recorded=contextAnchor?.isConnected?candidate(contextAnchor,()=>{}):null;
-    return recorded?.url===url?recorded:collect().records.find(record=>record.link.url===url)?.link || null;
+    if(recorded?.url===url)return withContext(recorded,contextAnchor);
+    const record=collect().records.find(record=>record.link.url===url);
+    return record?withContext(record.link,record.element):null;
   }
   // Whether a link intersects the selection, judged in the innermost tree (a shadow root or a
   // document) that holds selected ranges: a link inside a selected shadow host counts through its host.
@@ -884,10 +996,10 @@
     return false;
   }
   // Every link that intersects the selection, in the page, its open shadow roots and same-origin frames.
-  function selectionLinks(){const {records,warnings}=collect();return {links:records.filter(record=>selected(record.element)).map(record=>record.link),warnings};}
-  // Answers the menus' requests; replies {ok, data} or {ok:false, error}.
+  function selectionLinks(){const {records,warnings}=collect();return {links:records.filter(record=>selected(record.element)).map(record=>withContext(record.link,record.element)),warnings,page:pageCitation()};}
+  // Answers the menus' requests; replies {ok, data} or {ok:false, error}. Saves keep the page's citation (page).
   function menuMessage(message,reply){
-    const answers={'content.contextLink':()=>({link:contextLink(String(message.url || ''))}),'content.selectionLinks':selectionLinks,'content.notice':()=>{arm(null,null,message);return {};}};
+    const answers={'content.contextLink':()=>({link:contextLink(String(message.url || '')),page:pageCitation()}),'content.selectionLinks':selectionLinks,'content.notice':()=>{arm(null,null,message);return {};}};
     if(!Object.hasOwn(answers,message?.type))return;
     try{reply?.({ok:true,data:answers[message.type]()});}catch(error){reply?.({ok:false,error:String(error.message || error)});}
   }

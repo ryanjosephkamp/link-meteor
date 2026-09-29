@@ -9,6 +9,7 @@ import {WORKBENCH, occurrences, commitCapture, openWorkbench, pageMessages, appe
 import {syncIcon, followThemeWrites} from './background/theme.js';
 import {createMenus, menuClicked, followMenuWrites, syncMenuTitle, MENU} from './background/menus.js';
 import {tabsMessage} from './background/tabs.js';
+import {citationPages} from './background/citations.js';
 import {workbenchMessages as downloadMessages, pageMessages as downloadPageMessages, cancelDownloads, downloadMenuItem, downloadFromMenu, DOWNLOAD_MENU_ID} from './background/downloads.js';
 
 const LAST_TARGET_KEY = 'linkMeteorTarget';
@@ -70,10 +71,11 @@ async function arm(tabId, callerTabId) {
 
 // With contentOnly, links the page marks as page chrome (navigation, headers, footers, sidebars)
 // are left out, counted per page and kept for the workbench's Include them. With skipSaved, links
-// the collection already holds are skipped and counted.
+// the collection already holds are skipped and counted. 0.5.0: each link keeps the words around it
+// (unless saveContext is off), and each page its own citation tags, keyed by its address.
 async function captureTabs(tabIds,callerTabId) {
   const stateBefore = await serial(readState);
-  const collectionId = stateBefore.activeCollectionId, contentOnly = stateBefore.settings.contentOnly === true;
+  const collectionId = stateBefore.activeCollectionId, contentOnly = stateBefore.settings.contentOnly === true, context = stateBefore.settings.saveContext !== false;
   const ids = Array.isArray(tabIds) && tabIds.length ? [...new Set(tabIds)] : [(await resolveTarget(undefined,callerTabId)).id];
   if (ids.length > 100 || ids.some(id => !Number.isInteger(id))) throw new Error('Choose at most 100 tabs per capture. You can append another batch.');
   const batchId = crypto.randomUUID(), results = [], leftOutLinks = [];
@@ -88,14 +90,15 @@ async function captureTabs(tabIds,callerTabId) {
         continue;
       }
       await inject(tab);
-      const [{result}] = await chrome.scripting.executeScript({target:{tabId},func:() => globalThis.__linkMeteor.scan()});
+      const [{result}] = await chrome.scripting.executeScript({target:{tabId},func:options => globalThis.__linkMeteor.scan(options),args:[{context}]});
       const after = await chrome.tabs.get(tabId);
       if (tab.url && after.url !== tab.url) throw new Error('The tab navigated during capture; retry on the new page.');
       const found = occurrences(result.links, tab, batchId);
       const pageChrome = found.map((_, i) => contentOnly && result.links[i]?.pageChrome === true);
       const links = found.filter((_, i) => !pageChrome[i]), leftOut = found.filter((_, i) => pageChrome[i]);
       let count = 0, skipped = 0;
-      if (links.length) ({state, count, skipped} = await appendLinks(links,{collectionId,missing:'The active collection was deleted during the capture, so nothing was saved from this page.'}));
+      const pages = citationPages(result.page, tab.url || found[0]?.sourceUrl);
+      if (links.length) ({state, count, skipped} = await appendLinks(links,{collectionId,pages,missing:'The active collection was deleted during the capture, so nothing was saved from this page.'}));
       leftOutLinks.push(...leftOut.slice(0,Math.max(0,LEFT_OUT_LIMIT - leftOutLinks.length)));
       leftOutTotal += leftOut.length;
       capturedCount += count;

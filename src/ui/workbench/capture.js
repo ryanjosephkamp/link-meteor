@@ -307,7 +307,11 @@ export function captureReport(report, { source = 'workbench', key = '', createdA
     }
   }));
   head.append(title, dismiss); box.append(head);
-  if (tabs) { reportTabs(box, results); syncReportAction(); return; }
+  if (tabs) {
+    const cited = tabsCitations(report);
+    if (cited) box.append(node('p', 'help report-citations', cited));
+    reportTabs(box, results); syncReportAction(); return;
+  }
   const list = node('ul', 'report-list');
   const quiet = results.length === 1 && results[0].status === 'success' && results[0].count && !results[0].warning;
   for (const result of quiet ? [] : results) {
@@ -352,8 +356,19 @@ function tabsSkipped(report) {
     closed && `${count(closed)} skipped: closed before saving`,
   ].filter(Boolean);
 }
-// "Saved 45 tabs as links; 2 skipped: not web pages."
-export function tabsSummary(report) { return `${[tabsHeadline(report), ...tabsSkipped(report)].join('; ')}.`; }
+// How many tabs' citation tags were read (0.5.0): "Read citation details from 12 of 45 tabs; the
+// others need site access." The background's notices say it the same way.
+function tabsCitations(report) {
+  const { tabs = 0, read = 0, needAccess = 0 } = report.citations || {};
+  if (!tabs) return '';
+  if (read === tabs) return tabs === 1 ? 'Read the tab’s citation details.' : `Read citation details from all ${count(tabs)} tabs.`;
+  const others = tabs - read, silent = others - needAccess;
+  const why = (many) => (!silent ? (many ? 'need site access' : 'needs site access') : !needAccess ? 'didn’t answer' : 'need site access or didn’t answer');
+  if (!read) return `Read no citation details; ${tabs === 1 ? 'the tab' : 'the tabs'} ${why(tabs > 1)}.`;
+  return `Read citation details from ${count(read)} of ${count(tabs)} tabs; ${others === 1 ? 'the other' : 'the others'} ${why(others > 1)}.`;
+}
+// "Saved 45 tabs as links; 2 skipped: not web pages. Read citation details from 12 of 43 tabs; the others need site access."
+export function tabsSummary(report) { return [`${[tabsHeadline(report), ...tabsSkipped(report)].join('; ')}.`, tabsCitations(report)].filter(Boolean).join(' '); }
 
 // The report lists only the tabs that weren't saved, each with its reason.
 const TAB_STATUS = { unsupported: ['i-ban', 'Not a web page'], denied: ['i-ban', 'Address hidden'], error: ['i-alert', 'Not saved'], success: ['i-minus', 'Skipped'] };

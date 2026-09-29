@@ -38,7 +38,8 @@ export async function fixtureServer() {
       return;
     }
     if(pathname.startsWith('/files/')){res.writeHead(404,{'Content-Type':'text/html;charset=utf-8'});res.end('<!doctype html><title>Not found</title><p>Not found');return;}
-    const name=['/index.html','/frame.html','/empty.html','/files.html'].includes(pathname)?pathname:'/empty.html';
+    // 0.5.0: /research/<name>.html are the pages with citation tags and context blocks.
+    const name=['/index.html','/frame.html','/empty.html','/files.html'].includes(pathname)||/^\/research\/[a-z0-9-]+\.html$/.test(pathname)?pathname:'/empty.html';
     try {const body=await readFile(resolve(root,'tests/fixtures'+name));res.writeHead(200,{'Content-Type':'text/html;charset=utf-8','Cache-Control':'no-store'});res.end(body);}
     catch {res.writeHead(500);res.end('Fixture unavailable');}
   });

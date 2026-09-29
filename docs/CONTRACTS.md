@@ -639,9 +639,9 @@ Chrome shows several items from one extension under a "Link Meteor" submenu, so 
 - **Unticked links** show a dashed outline instead of a filled box.
 - **The selection rectangle** disappears on release.
 
-## Planned for 0.5.0 (draft)
+## Added in 0.5.0
 
-These contracts are for 0.5.0 "Research tools". They are a draft: building starts after the owner approves the plan and its previews, and details settled while building are recorded here as for 0.4.0. Everything below stays in this browser, adds no server, and never looks anything up online: citations and identifiers come only from what the pages showed.
+These contracts are for 0.5.0 "Research tools". They were written before building, and each area's "as built" part records what was settled while building. As before, [ACCEPTANCE.md](ACCEPTANCE.md) records what was tested. Everything below stays in this browser, adds no server, and never looks anything up online: citations and identifiers come only from what the pages showed.
 
 ### Link and collection data
 

@@ -69,7 +69,7 @@ try{
   assert.ok((await ui.locator('#import-folder-status').innerText()).endsWith(`Imports from ${importPath}.`));assert.equal(await ui.locator('#import-subfolders').isChecked(),true);
   await ui.locator('#import-read-folder').click();await until(()=>ui.locator('#import-plan').isVisible(),'Import: folder preview',10000);
   assert.equal(await ui.locator('#import-source').innerText(),`From the bookmark folder ${importPath} and its subfolders · 3 bookmarks`);
-  assert.deepEqual(await ui.evaluate(()=>[...document.querySelectorAll('#import-table tbody tr')].map(row=>[row.cells[1].textContent,row.cells[row.cells.length-1].textContent])),[['Heat and Health Lab',''],['Urban Canopy Group',''],['Heat and Health Lab','Repeats link 1']]);
+  assert.deepEqual(await ui.evaluate(()=>[...document.querySelectorAll('#import-table tbody tr')].map(row=>[row.cells[1].textContent,row.cells[row.cells.length-1].textContent])),[['Heat and Health Lab',''],['Urban Canopy Group',''],['Heat and Health Lab','Repeats row 1']]);
   assert.equal(await ui.locator('#import-destination option:checked').innerText(),'A new collection “Link Meteor import fixture”');
   await ui.locator('#import-commit').click();await until(async()=>(await ui.locator('#notice').innerText()).includes('Imported 2 links into “Link Meteor import fixture”.'),'Import: imported',10000);
   const importedState=await rpc(ui,{type:'state.get'});const importedHome=importedState.collections.find(c=>c.id===importedState.activeCollectionId);

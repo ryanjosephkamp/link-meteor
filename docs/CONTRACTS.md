@@ -915,6 +915,129 @@ The title is the link's own citation title when there is one, otherwise its anch
   - `import.undo {collectionId, batchId}` removes that batch and anything the import created, refused if the batch changed since;
   - `bookmarks.folderLinks {folderId, recursive}` returns `{links: [{title, url, path}]}`.
 
+#### Imports, as built
+
+**Reading** (`src/core/imports.js`, pure; it imports only limits from `model.js`):
+- Limits: `MAX_IMPORT_BYTES` (20 MB per file), `MAX_IMPORT_LINKS` (20,000 links per import) and `MAX_XLSX_PART` (150 MB for one workbook part once unpacked).
+- `decodeText(bytes)`: UTF-16 with a byte-order mark, else UTF-8 (a UTF-8 mark is dropped), else Windows-1252.
+- `parseDelimited(text, delimiter = ',', {onProgress?})`: as the contract says. A quote inside an unquoted field is text, and text after a closing quote joins the field. An unterminated quote runs to the end. `onProgress(rows)` is called every 10,000 rows.
+- `sniffDelimiter(text)`: tab, comma or semicolon, whichever the first line with text holds most of outside quotes; comma when none. A `.csv` file is read with it, so semicolon files from European spreadsheets work.
+- `readText(text, {kind, delimiter, onProgress})`: `{kind: 'table', rows, delimiter}` or `{kind: 'list', entries}`. `kind: 'text'` (`.txt` files and pasted text) is a tab-separated table when its first line with text holds a tab (cells copied from a spreadsheet), otherwise a list.
+- `parseList(text)`: `[{anchorText, href, line}]`, in reading order.
+  - Markdown links keep their label, with backslash escapes removed. A `<…>` address and a title are allowed.
+  - Bare addresses lose trailing `. , ; : ! ? * ' "`, curly quotes, `»`, `›` and `…`, and closing brackets they don't open.
+  - A line with a single bare address uses the words around it, without list markers, check boxes and separators, as its anchor text.
+- `readXlsx(bytes, {inflateRaw, parseXml, sheet = 0})`: `{sheets: [name], sheet, rows, numbers}`. It reads only the chosen sheet, whose part it finds through the package and workbook relationships (any namespace prefix, relative or absolute targets, part names in any case). Details:
+  - Rows with no text are left out, and `numbers` gives each kept row's number in the sheet.
+  - Cells are placed by their references.
+  - Shared and inline strings are joined from their runs, without phonetic guides, and Excel's `_xHHHH_` escapes are decoded.
+  - Numbers are as stored, so a date is its serial number. Booleans are `TRUE` or `FALSE`, and errors are as shown (`#DIV/0!`).
+  - A formula is its cached value, and empty without one.
+
+  It refuses, each with a reason:
+  - an older `.xls` or a password-protected workbook (both start with the OLE signature);
+  - encrypted ZIP entries;
+  - the large-file ZIP format;
+  - compression other than stored or deflate;
+  - a part over `MAX_XLSX_PART`;
+  - a missing workbook, a workbook without sheets, a chart sheet;
+  - XML that doesn't parse.
+- `readExportJson(text)`: a Link Meteor JSON export (an array of rows, or `{about, rows}`) as `{names, rows}` with the export's own column names: Anchor text, URL, Notes, Tags, Reading status, Starred, then its custom columns by `about.fields`. A backup is refused with where to restore it. Any other JSON is refused.
+- `detectHeader(rows)`: the first row with text names the columns when it holds no address and either a known column name (the names below, or one of Link Meteor's export columns) or text above a column whose later rows hold addresses.
+- `columnNames(rows, header)`: the header's cells, with blanks as `Column C` and repeats as `Notes (2)`. Without a header, the column letters.
+- `dataRows(rows, header)`: the rows with text, after the header row.
+- `guessMapping(names, rows, {fields, skip})`: `{url, anchorText, notes, tags, status, starred, fields: [{id, column}], fresh: [{column, name, use}], overflow}`. How it chooses:
+  - By name, lowercased with punctuation as spaces, most likely first:
+    - address: url, address, link, links, href, uri, web address, website, web site, webpage, web page, link url, page url, homepage;
+    - anchor text: anchor text, title, name, link text, text, label, anchor, page title, link title;
+    - notes: notes, note, comments, comment, description, annotation, annotations, remarks, summary;
+    - tags: tags, tag, keywords, keyword, labels, categories, category, topics;
+    - reading status: reading status, status, read status, reading;
+    - starred: starred, star, stars, favorite, favourite, favorites, favourites.
+  - A named address column holding no addresses gives way to the column with the most. Without a name, the column with the most addresses is the address, and the first column of words among `Column X` columns is the anchor text.
+  - The destination's own columns match by name, ignoring case.
+  - Every column left over is proposed as a new column (`fresh`), up to the collection's room for custom columns (`overflow` counts the rest). A proposal isn't chosen (`use: false`) when the column is empty, is one of Link Meteor's export-only columns (Accessible label, Original href, Source page URL, Source page title, Frame URL, Captured at, Capture batch ID, Occurrence ID, Context, DOI, arXiv ID, PubMed ID, ISBN, Imported from), or is in `skip` (a bookmarks source's Folder column). New names are cut to 60 characters and kept distinct from the destination's.
+- `importAddress(value)`: `{url}` or `{reason}`.
+  - The cell is trimmed and loses wrapping `<…>`, and `www.` gets `https://`.
+  - The URL parser's `href` is stored, so `https://Example.org` becomes `https://example.org/`.
+  - Only `http:` and `https:` with a host, and `mailto:` and `tel:` with a path, are links.
+- `readingStatus(value)`: `read` for read, done, finished or completed; `reading` for reading, in progress, started or currently reading; otherwise unread. `starredValue(value)`: yes, y, true, 1, x, starred, star, ✓, ✔, ★ or ⭐.
+- `planImport(rows, mapping, options)` (see the contract) returns `{links, newFields, skipped, counts, cut, preview, previewSkipped}`:
+  - Rows with no text are ignored, not skipped. The header is the first row with text.
+  - The checks run in this order: no address (`no-address`), not a web, email or phone address (`not-link`), a repeat of an earlier row with the same address and anchor text (`repeat`, with `of`, the earlier row's number), already saved (`saved`, with `skipSaved`), then the limit.
+  - Rows after the 20,000th link are one entry, `{row, reason: 'limit', rows}`.
+  - `counts` has `rows`, `links` and a count per reason. `preview` and `previewSkipped` describe the first `preview` rows (default 100) with their mapped values.
+  - Links:
+    - Anchor text has its spaces collapsed, and notes are trimmed.
+    - Tags are split at commas and semicolons, with repeats removed.
+    - `originalHref` is the address cell exactly as written, or `options.originals[row]`, the `href` attribute as written for HTML.
+    - A custom value over 2,000 characters is cut, ending in `…`, and counted in `cut`.
+    - Existing columns are keyed by id, and new ones by `new-1`, `new-2`… in `newFields: [{key, name}]`.
+  - `imported` is `<source>, <unit> <number>` (`labs-shortlist.csv, row 3`, `notes.md, line 4`, `Pasted links, link 2`), or `<source> › <folder path>` for bookmarks, cut to 300 characters. A workbook with several sheets adds the sheet: `labs.xlsx › Sources, row 3`.
+
+**The background** (`src/background/imports.js`, and `src/background/bookmarks.js`):
+- `import.commit {collectionId? | newCollection?, links, newFields?, skipSaved?}` => `{state, batchId, collectionId, count, skipped, fields}`.
+  - Exactly one destination. A new collection's name has its spaces collapsed and is cut to 120 characters. An existing destination becomes the active collection, as a new one does.
+  - `newFields` keys must look like column ids, and must be distinct. Each is added with `fields.add`, so the model's name rules and the 20-column limit apply.
+  - Every link is built again from what an import may set: anchor text, address, address as written, notes, tags, `imported` (required, at most 300 characters), status, star and custom values for the destination's columns or the new keys. It gets a new id, one new `batchId` and the import time as `capturedAt`. Empty source fields and the accessible label are empty, whatever the message held. The model then checks each link as for any append.
+  - With `skipSaved`, addresses the destination holds are dropped here too (`skipped`). Nothing left is refused ("Every link is already saved there").
+  - One state write, so a refusal or a failed write changes nothing. The Undo record is kept at session key `linkMeteorImports` (the latest 10): `{batchId, collectionId, createdCollection, fields, previousActive, count, digest, createdAt}`, where `digest` is a SHA-256 of the batch's links with sorted keys.
+- `import.undo {collectionId, batchId}` => `{state, count, collectionRemoved, fieldsRemoved}`.
+  - It removes the import's collection when the import created it. Otherwise it removes the batch (the list's own removal Undo is kept) and the columns the import created.
+  - If the import's collection is still the active one, the collection that was active before the import becomes active again.
+  - It is refused when:
+    - the record is gone (the browser restarted, or 10 newer imports);
+    - the collection no longer exists;
+    - the batch's links differ from what was written: count, notes, tags, status, star or any other field;
+    - a created collection holds other links, notes or tags;
+    - another link has a value in a created column.
+- `bookmarks.folderLinks {folderId, recursive = true}` => `{folder: {id, title}, links: [{title, url, path}], more}`.
+  - Needs bookmark access. Bookmarks of every kind are listed, up to 50,000; `more` says some were left out.
+  - `path` joins the folder names from the chosen folder down: `Research › Labs`.
+
+**The workbench** (`src/ui/workbench/imports.js`, `import-worker.js`):
+- *Import links* in the rail, before Backup and restore: *Choose a file…*, *Paste links* and *From a bookmark folder…*. The import view takes the place of Capture and the list in the main column (`.main.is-importing`); at compact widths choosing a source shows the main view.
+- **Files** are read by extension:
+  - `.csv` is delimited with the delimiter sniffed; `.tsv` and `.tab` are tab-separated;
+  - `.xlsx` and `.xlsm` are workbooks;
+  - `.txt` and `.text` are text, and `.md` and `.markdown` are lists;
+  - `.html` and `.htm` are HTML; `.json` is an export.
+
+  Without a known extension, the content decides: a ZIP is a workbook, `<` starts HTML, `{` or `[` starts JSON, anything else is text. `.xls`, `.xlsb`, `.ods` and `.numbers` are refused with how to save them. A file over 20 MB is refused before it is read. Any refusal closes the view and says "Nothing was imported."
+- **Delimited text and lists** are decoded and parsed in a module worker, which reports "Reading labs.csv: 20,000 rows so far…". The page parses by itself only if the worker can't start.
+- **HTML**, a page or a bookmarks file, is read with `DOMParser`. Each `<a href>` gives its text, else its `aria-label`, `title` or image `alt`.
+  - A relative address is resolved against the page's `<base href>`, or the address in a saved page's `<!-- saved from url=… -->` comment. Otherwise it stays as written, and the preview skips it.
+  - In a Netscape bookmarks file (Chrome, Firefox, Safari and Edge exports), each link also gets its folder path from the `<H3>` headings, and its `TAGS` and `<DD>` description. These fill the *Folder*, *Tags* and *Notes* columns when any link has them. Folder isn't chosen as a new column; it is in `imported`.
+- **Pasted text**:
+  - HTML copied from a web page is used when the clipboard held it and the text is unchanged since the paste, so links keep their anchor text.
+  - Otherwise, text holding `<a href=` is HTML, and anything else is `readText` with `kind: 'text'`.
+- **A bookmark folder:** the click asks `chrome.permissions.request({permissions: ['bookmarks']})` before anything is awaited. A decline closes the view and says so. Folders are listed with `bookmarks.folders` and searched as in *Save as bookmarks*. *Include subfolders* is on by default, and *Preview links* reads `bookmarks.folderLinks`. The source is `Bookmarks`, so `imported` is `Bookmarks › Research › Labs`.
+- **The mapping:**
+  - *First row is column names*, detected, for tables only.
+  - One select per part: Address (URL) (required; columns only), Anchor text, Notes, Tags, Reading status and Starred (each with "(none)"). Then the destination's own columns, then a new column per proposal, "Deadline (new column)", with "(skip this column)".
+  - Without a header, each option shows the column's first value: "Column B: https://…".
+  - Changing the header detection maps again. Changing the destination keeps the link's own parts and maps the custom columns again.
+- **The preview:**
+  - A table of the first 100 rows (Row, Line or Link; anchor text; address; then each mapped part and column). A skipped row is struck through and names its reason in words ("Repeats row 2"), in a column headed "Skipped because" for screen readers.
+  - *Show only skipped rows*, shown when rows are skipped, lists the first 100 of those.
+  - A note: "All 7 rows." or "Showing the first 100 of 60,000 rows."
+- **The destination** is *A new collection “labs-shortlist”* by default. It is named after the file without its extension, the folder's title or "Pasted links", with " (2)" when a collection has that name already. The existing collections follow. *Skip links already saved there* is on, and disabled for a new collection.
+- **The summary:**
+  - "Adds 42 links, marked Imported, and 1 new custom column."
+  - "Skips 4 rows: 2 have no address, 1 repeats an earlier row, 1 isn’t a web, email or phone address. You can undo the import."
+  - Lists count links rather than rows.
+  - Cut values are counted too. With nothing to add: "Nothing to add." and what to change.
+  - The button says "Import 42 links", and is disabled with nothing to add.
+- **After Import**, the view closes and the destination shows with the new rows marked as arrivals. The notice says "Imported 42 links into “labs-shortlist” and added 1 custom column." with Undo. Undo says "Import undone: removed 42 links, the collection “labs-shortlist” and 1 custom column.", or shows the refusal.
+- **Cancel and Escape** close the view with "Import canceled. Nothing was added." Focus returns to the source's control, or to the search field at compact widths. The preview is planned again whenever the saved state changes while it is open.
+- **Stable element IDs:**
+  - the rail: `#import-panel`, `#import-panel-title`, `#import-panel-help`, `#import-file`, `#import-paste`, `#import-bookmarks`;
+  - the view: `#import`, `#import-title`, `#import-source`, `#import-progress`, `#import-commit`, `#import-commit-label`, `#import-cancel`;
+  - pasting: `#import-paste-step`, `#import-text`, `#import-read-text`;
+  - a bookmark folder: `#import-folder-step`, `#import-folder-search`, `#import-folder`, `#import-folder-status`, `#import-subfolders`, `#import-read-folder`;
+  - the plan: `#import-plan`, `#import-sheet-row`, `#import-sheet`, `#import-header-row`, `#import-header`, `#import-map` (with `#import-map-url`, `#import-map-anchorText`, `#import-map-notes`, `#import-map-tags`, `#import-map-status`, `#import-map-starred`, `#import-map-field-N` and `#import-map-new-N`), `#import-map-help`, `#import-table`, `#import-table-note`, `#import-only-skipped`, `#import-destination`, `#import-skip-saved`, `#import-summary`, `#import-summary-main`, `#import-summary-skips`.
+- **Not in this release:** Excel dates show as their serial numbers, and a bare DOI or `example.org` without `www.` isn't read as an address.
+
 ### Theme fix
 
 Ember light's `danger` becomes `oklch(0.42 0.17 355)`, with `danger-wash` `oklch(0.967 0.018 355)` and `danger-line` `oklch(0.86 0.06 355)`, so the Remove buttons no longer look like Ember's orange links. `tests/themes.test.mjs` gains a check that `danger` and `accent-text` stay distinguishable in every theme and color-vision simulation. One pair is allowed, with its reason: Meteor light under the deuteranopia simulation. Meteor stays the 0.3.0 look value for value, and its Remove buttons carry a trash icon and the word Remove.

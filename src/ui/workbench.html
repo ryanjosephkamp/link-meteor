@@ -51,6 +51,8 @@
       <symbol id="i-globe" viewBox="0 0 20 20"><circle cx="10" cy="10" r="7.5"/><path d="M2.5 10h15M10 2.5c2.1 2.1 3.2 4.6 3.2 7.5s-1.1 5.4-3.2 7.5c-2.1-2.1-3.2-4.6-3.2-7.5s1.1-5.4 3.2-7.5Z"/></symbol>
       <symbol id="i-lock" viewBox="0 0 20 20"><rect x="4" y="8.5" width="12" height="8.5" rx="1.5"/><path d="M6.5 8.5V6.5a3.5 3.5 0 0 1 7 0v2"/></symbol>
       <symbol id="i-star" viewBox="0 0 20 20"><path d="M10 2.9 12.25 7.55 17.35 8.2 13.6 11.7 14.5 16.8 10 14.4 5.5 16.8 6.4 11.7 2.65 8.2 7.75 7.55Z"/></symbol>
+      <symbol id="i-clipboard" viewBox="0 0 20 20"><path d="M7.5 3.5h-2a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1v-12a1 1 0 0 0-1-1h-2"/><rect x="7.5" y="2.5" width="5" height="2.5" rx="1"/><path d="M7.5 9.5h5M7.5 12.5h5"/></symbol>
+      <symbol id="i-import" viewBox="0 0 20 20"><path d="M10 2.5v9M6.5 8 10 11.5 13.5 8M3.5 11.5v4a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1v-4"/></symbol>
     </defs>
   </svg>
 
@@ -150,6 +152,17 @@
           <label class="seg"><input type="radio" name="appearance" value="dark"><span>Dark</span></label>
         </div>
         <p id="appearance-help" class="help">The theme also colors the capture card on webpages and the toolbar icon. System follows your computer’s light or dark setting.</p>
+      </section>
+
+      <section id="import-panel" class="rail-section import-panel" aria-labelledby="import-panel-title">
+        <h2 id="import-panel-title" class="rail-title">Import links</h2>
+        <p id="import-panel-help" class="help">From a spreadsheet, a list, a web page or bookmarks file, pasted text or a bookmark folder. You see what will be added before anything is. Files are read in this browser and never uploaded.</p>
+        <div class="import-sources">
+          <input id="import-file" class="import-file sr-only" type="file" accept=".csv,.tsv,.tab,.xlsx,.xlsm,.txt,.text,.md,.markdown,.html,.htm,.json,text/csv,text/tab-separated-values,text/plain,text/markdown,text/html,application/json,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet">
+          <label for="import-file" class="btn import-choose"><svg class="icon" aria-hidden="true"><use href="#i-import"/></svg><span>Choose a file…</span></label>
+          <button id="import-paste" class="btn" type="button"><svg class="icon" aria-hidden="true"><use href="#i-clipboard"/></svg><span>Paste links</span></button>
+          <button id="import-bookmarks" class="btn" type="button"><svg class="icon" aria-hidden="true"><use href="#i-bookmark"/></svg><span>From a bookmark folder…</span></button>
+        </div>
       </section>
 
       <section id="backup-panel" class="rail-section backup" aria-labelledby="backup-title">
@@ -305,6 +318,50 @@
           <button id="arm" class="btn" type="button"><svg class="icon" aria-hidden="true"><use href="#i-region"/></svg><span>Select a region</span><span id="arm-keys" class="btn-keys" aria-hidden="true"></span></button>
         </div>
         <div id="capture-report" class="report" hidden></div>
+      </section>
+
+      <section id="import" class="import" aria-labelledby="import-title" hidden>
+        <h2 id="import-title" tabindex="-1">Import links</h2>
+        <p id="import-source" class="source-line"></p>
+        <div id="import-paste-step" class="import-step" hidden>
+          <label for="import-text">Links to import</label>
+          <textarea id="import-text" rows="7" spellcheck="false" autocomplete="off" aria-describedby="import-text-help"></textarea>
+          <p id="import-text-help" class="help">Addresses, Markdown links, HTML, or cells copied from a spreadsheet. Links copied from a web page keep their anchor text.</p>
+          <div class="import-actions"><button id="import-read-text" class="btn" type="button">Preview links</button></div>
+        </div>
+        <div id="import-folder-step" class="import-step" hidden>
+          <label>Find a folder <input id="import-folder-search" type="search" placeholder="Search folder names" autocomplete="off" spellcheck="false" aria-controls="import-folder" aria-describedby="import-folder-status"></label>
+          <label class="sr-only" for="import-folder">Bookmark folders</label>
+          <select id="import-folder" class="bookmark-folders" size="6" aria-describedby="import-folder-status"></select>
+          <p id="import-folder-status" class="help" aria-live="polite"></p>
+          <label class="name-check"><input id="import-subfolders" type="checkbox" checked><span>Include subfolders</span></label>
+          <div class="import-actions"><button id="import-read-folder" class="btn" type="button" disabled>Preview links</button></div>
+        </div>
+        <p id="import-progress" class="import-progress" role="status" hidden></p>
+        <div id="import-plan" class="import-plan" hidden>
+          <div class="import-options">
+            <label id="import-sheet-row" hidden>Sheet <select id="import-sheet"></select></label>
+            <label id="import-header-row" class="name-check"><input id="import-header" type="checkbox"><span>First row is column names</span></label>
+          </div>
+          <div id="import-map" class="map" role="group" aria-label="Which column fills each part of a link"></div>
+          <p id="import-map-help" class="help" hidden></p>
+          <div class="table-scroll" tabindex="0" role="region" aria-labelledby="import-table-caption">
+            <table id="import-table"><caption id="import-table-caption" class="sr-only">Rows to import, with the reason for each skipped row</caption><thead></thead><tbody></tbody></table>
+          </div>
+          <div class="import-table-foot">
+            <p id="import-table-note" class="help"></p>
+            <label class="name-check"><input id="import-only-skipped" type="checkbox"><span>Show only skipped rows</span></label>
+          </div>
+          <div class="import-row">
+            <label>Add to <select id="import-destination"></select></label>
+            <label class="name-check"><input id="import-skip-saved" type="checkbox" checked><span>Skip links already saved there</span></label>
+          </div>
+          <div id="import-summary" class="import-summary" aria-live="polite"><strong id="import-summary-main"></strong><span id="import-summary-skips" class="skips"></span></div>
+        </div>
+        <div class="import-actions">
+          <button id="import-commit" class="btn primary" type="button" hidden><svg class="icon" aria-hidden="true"><use href="#i-import"/></svg><span id="import-commit-label">Import links</span></button>
+          <button id="import-cancel" class="btn quiet" type="button">Cancel</button>
+        </div>
       </section>
 
       <section class="review" id="review" aria-labelledby="review-title">

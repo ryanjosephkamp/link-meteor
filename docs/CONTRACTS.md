@@ -682,7 +682,8 @@ New optional fields; absent means none, so a 0.4.0 state needs no migration, and
 The page script sets `context` on each candidate:
 - the link's nearest block ancestor: `p`, `li`, `dd`, `dt`, `td`, `th`, `blockquote`, `figcaption`, `caption`, `h1` to `h6` or `summary`; otherwise its parent;
 - that block's `textContent`, spaces collapsed, cut at word boundaries to at most 400 characters around the anchor text, with `…` where cut;
-- empty when the block holds only the link's own text, or when `saveContext` is off.
+- empty when the block holds only the link's own text, or when `saveContext` is off;
+- empty when the words around the link are not prose: fewer than 8 letters of plain text (outside links) in the window read, or more letters in other links' text than in plain text, as in a bare list of links or a line of citations.
 
 Regions and *Capture this page* set it. Saved tabs and imported links have none.
 

@@ -822,8 +822,9 @@ try {
   assert.equal(answer.ok, true);
   const {context: around, ...fields} = answer.data.link;
   assert.deepEqual(fields, {anchorText: 'Second text', accessibleLabel: '', url: fixture.base + '/same', originalHref: '/same', sourceUrl: fixture.base + '/index.html', sourceTitle: 'Meteor Research Lab — deterministic fixture', frameUrl: fixture.base + '/index.html'}, 'the right-clicked one of two links with that address, with its text collapsed');
-  // 0.5.0: its context, and the page's citation (none on this page). A shadow root's text isn't part of its host's block.
-  assert.deepEqual([around, answer.data.page], ['Then Second text, , and Email the lab.', null]);
+  // 0.5.0: its context, and the page's citation (none on this page). Its paragraph is mostly other
+  // links ("Then Second text, , and Email the lab."), with too few plain words to be context.
+  assert.deepEqual([around, answer.data.page], ['', null]);
   answer = await ask({type: 'content.contextLink', url: fixture.base + '/other'});
   assert.equal(answer.data.link.anchorText, 'Other link', 'another address: the first link with it');
   await rightClick('#outside');
@@ -921,6 +922,15 @@ try {
     '/r/hidden': 'Look at the visible label here.',
   };
   assert.deepEqual(Object.fromEntries(Object.keys(SHORT).map((path) => [path, contexts[path]])), SHORT);
+  // A list of links is not context: a bare run of links, or a line of citations with a few words
+  // between them, gives none, while a sentence that cites two sources keeps its words.
+  const lists = await context.newPage();
+  await load(lists, '/research/lists.html', {platform: 'MacIntel', trigger: 'letter', key: 'q'});
+  const listContexts = contextsOf((await lists.evaluate(() => globalThis.__linkMeteor.scan())).links);
+  assert.deepEqual(listContexts, {'/r/list-1': '', '/r/list-2': '', '/r/list-3': '', '/r/cite-1': '', '/r/cite-2': '', '/r/cite-3': '',
+    '/r/prose-1': 'Shade matters most in the afternoon, as the canopy study and a later survey both found across dozens of neighborhoods.',
+    '/r/prose-2': 'Shade matters most in the afternoon, as the canopy study and a later survey both found across dozens of neighborhoods.'});
+  await lists.close();
   // A long paragraph is cut on both sides at word boundaries, around the link, within 400 characters.
   const paragraph = await research.evaluate(() => document.getElementById('ctx-long').textContent.replace(/\s+/g, ' ').trim());
   const long = contexts['/r/comparison'], inner = long.slice(1, -1), at = paragraph.indexOf(inner);

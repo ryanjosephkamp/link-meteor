@@ -94,11 +94,12 @@
 
   /* Context snippets (0.5.0) ------------------------------------------------------------------- */
   // The words around a link: its nearest block's text, at most MAX_CONTEXT characters around the
-  // anchor text, cut at word boundaries with "…"; empty when the block holds only the link. Text is
+  // anchor text, cut at word boundaries with "…"; empty when the block holds only the link, or is
+  // mostly other links rather than prose (see contextOf). Text is
   // read from text nodes (textContent, not innerText, so 20,000 links stay fast), walking out from
   // the link on each side only as far as needed. Script and style text is skipped, and a space
   // separates words that block elements or line breaks keep apart on the page.
-  const MAX_CONTEXT=400,CONTEXT_BLOCKS='p,li,dd,dt,td,th,blockquote,figcaption,caption,h1,h2,h3,h4,h5,h6,summary',CONTEXT_VISITS=120;
+  const MIN_PROSE=8,MAX_CONTEXT=400,CONTEXT_BLOCKS='p,li,dd,dt,td,th,blockquote,figcaption,caption,h1,h2,h3,h4,h5,h6,summary',CONTEXT_VISITS=120;
   const BOXES=new Set('address article aside blockquote caption dd details div dl dt figcaption figure footer form h1 h2 h3 h4 h5 h6 header li main nav ol p pre section summary table td th tr ul'.split(' ')),SILENT=new Set(['script','style','noscript','template','title','desc']);
   // The box a node's text sits in: its nearest block-level element inside the block, or the block.
   function boxOf(element,block,boxes){
@@ -106,11 +107,12 @@
     for(box=element;box&&box!==block&&!BOXES.has(box.localName);box=box.parentElement);
     box=box||block;boxes.set(element,box);return box;
   }
-  // One side of the link: {text, more}, whitespace collapsed; more when the block holds more text.
+  // One side of the link: {text, more, prose, linked}, whitespace collapsed; more when the block holds
+  // more text; prose and linked count the letters outside and inside other links.
   function contextSide(block,anchor,forward,limit){
     const walker=anchor.ownerDocument.createTreeWalker(block,NodeFilter.SHOW_TEXT),boxes=new Map();
     let at=anchor;if(forward)while(at.lastChild)at=at.lastChild;walker.currentNode=at;
-    let text='',count=0,box=boxOf(anchor,block,boxes),visits=0,node;
+    let text='',count=0,box=boxOf(anchor,block,boxes),visits=0,node,prose=0,linked=0;
     const step=()=>forward?walker.nextNode():walker.previousNode();
     for(node=step();node&&visits<CONTEXT_VISITS&&count<=limit;node=step(),visits++){
       const parent=node.parentElement;
@@ -119,9 +121,10 @@
       const here=boxOf(parent,block,boxes),gap=here!==box||(forward?node.previousSibling:node.nextSibling)?.localName==='br';box=here;
       const piece=(forward?node.data.slice(0,limit*3):node.data.slice(-limit*3)).replace(/\s+/gu,' '),join=gap?' ':'';
       text=forward?text+join+piece:piece+join+text;count+=piece.length;
+      const letters=piece.replace(/\s/gu,'').length;if(parent.closest('a[href],a[xlink\\:href]'))linked+=letters;else prose+=letters;
     }
     text=text.replace(/\s+/gu,' ');
-    return {text:forward?text.trimEnd():text.trimStart(),more:!!node&&(count>limit||visits>=CONTEXT_VISITS)};
+    return {text:forward?text.trimEnd():text.trimStart(),more:!!node&&(count>limit||visits>=CONTEXT_VISITS),prose,linked};
   }
   // Cuts one side to at most `max` characters with "…", dropping a word the cut would split.
   function cutHead(text,more,max){
@@ -142,6 +145,10 @@
       const half=Math.floor(room/2),needs=side=>side.more?Infinity:side.text.length;
       let before=contextSide(block,anchor,false,half),after=contextSide(block,anchor,true,room-half);
       if(!before.text.trim()&&!after.text.trim())return '';
+      // Only prose is context: a list of links, where other links' names outweigh the plain words
+      // around this one, or fewer than 8 letters of plain words, gives none.
+      const prose=before.prose+after.prose,linked=before.linked+after.linked;
+      if(prose<MIN_PROSE||linked>prose)return '';
       if(needs(before)<half&&after.more)after=contextSide(block,anchor,true,room-needs(before));
       else if(needs(after)<room-half&&before.more)before=contextSide(block,anchor,false,room-needs(after));
       let left=Math.min(needs(before),half),right=room-left;

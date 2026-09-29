@@ -638,3 +638,164 @@ Chrome shows several items from one extension under a "Link Meteor" submenu, so 
 - **What's highlighted:** after a region selection is released, every selected link (up to 250), not only those under the last rectangle. Each box is redrawn from its link's current rectangles, including through same-origin frames, once per animation frame whenever the page or a scrolling box scrolls or the window resizes. So the highlights stay on their links.
 - **Unticked links** show a dashed outline instead of a filled box.
 - **The selection rectangle** disappears on release.
+
+## Planned for 0.5.0 (draft)
+
+These contracts are for 0.5.0 "Research tools". They are a draft: building starts after the owner approves the plan and its previews, and details settled while building are recorded here as for 0.4.0. Everything below stays in this browser, adds no server, and never looks anything up online: citations and identifiers come only from what the pages showed.
+
+### Link and collection data
+
+New optional fields; absent means none, so a 0.4.0 state needs no migration, and 0.4.0 keeps them when it writes.
+
+| Field | Where | Type and limits | Meaning |
+| --- | --- | --- | --- |
+| `context` | link | string, at most `MAX_CONTEXT` (400) characters | The words around the link on its page, as captured (see [Context snippets](#context-snippets)). Never edited. |
+| `status` | link | `'reading'` or `'read'` | Reading status. Absent means unread. |
+| `starred` | link | `true` | Starred. Absent means not starred. |
+| `imported` | link | string, at most 300 characters | Where an imported link came from, such as `labs-shortlist.csv, row 3` or `Bookmarks › Research › Labs`. Absent for captured links. |
+| `pages` | collection | `{[pageUrl]: PageCitation}`, at most 5,000 entries | Citation details read from pages Link Meteor had open (see [Page citations](#page-citations)), keyed by the page's address without its `#fragment`. |
+
+`PageCitation`: `{title, authors, date, journal, publisher, volume, issue, firstPage, lastPage, doi, pmid, arxiv, isbn, pdfUrl, readAt}`. `authors` is an array of at most 50 names, each as printed (at most 200 characters); every other field is a string (at most 300 characters; `date` at most 40, as printed); empty fields are left out.
+
+- A link's **own citation** is `pages[link.url]` (without its fragment), present when Link Meteor read that page, for example when its tab was saved as a link.
+- A link's **source citation** is `pages[link.sourceUrl]`: the page it was captured from.
+- Entries no link refers to are tolerated and left out of backups and exports.
+
+**Reducer actions:**
+- `links.status {collectionId?, ids, status: '' | 'reading' | 'read'}`: `''` clears the status (unread).
+- `links.star {collectionId?, ids, starred: boolean}`.
+- `links.append` accepts `pages: {[pageUrl]: PageCitation}` beside `links`, merged into the collection's `pages`; a newer reading replaces an older one for the same address.
+- The workbench keeps what `links.status` and `links.star` changed for Undo, as it does for `fields.fill`.
+
+**`queryLinks`** gains `status: 'any' | 'unread' | 'reading' | 'read'` and `starred: boolean`, and its search also matches `context` and `imported`.
+
+**Backup format 3.** `BACKUP_FORMAT_VERSION` becomes 3, so 0.4.0 refuses a 0.5.0 backup with its update message instead of dropping fields. `readBackup` accepts formats 1 to 3. A merge keeps local `status` and `starred` for links already present, and local page citations for addresses already present.
+
+### Settings: additive schema-v1 fields
+
+| Field | Type and default | Meaning |
+| --- | --- | --- |
+| `saveContext` | boolean, `true` | Save the words around each link when capturing. Off saves no `context`. |
+
+### Context snippets
+
+The page script sets `context` on each candidate:
+- the link's nearest block ancestor: `p`, `li`, `dd`, `dt`, `td`, `th`, `blockquote`, `figcaption`, `caption`, `h1` to `h6` or `summary`; otherwise its parent;
+- that block's `textContent`, spaces collapsed, cut at word boundaries to at most 400 characters around the anchor text, with `…` where cut;
+- empty when the block holds only the link's own text, or when `saveContext` is off.
+
+Regions and *Capture this page* set it. Saved tabs and imported links have none.
+
+### Page citations
+
+When capturing, the page script reads the top document's own citation tags, once per capture, and returns them as `page` beside `links` (`{links, inaccessibleFrames, warnings, page}`). It reads, in this order, the first that gives a title:
+1. Highwire Press tags, the ones Google Scholar indexes: `citation_title`, `citation_author` (one per author), `citation_publication_date` or `citation_date`, `citation_journal_title`, `citation_publisher`, `citation_volume`, `citation_issue`, `citation_firstpage`, `citation_lastpage`, `citation_doi`, `citation_pmid`, `citation_arxiv_id`, `citation_isbn` and `citation_pdf_url`;
+2. PRISM (`prism.publicationName`, `prism.volume`, `prism.number`, `prism.startingPage`, `prism.doi`);
+3. schema.org JSON-LD whose `@type` is `ScholarlyArticle`, `Article`, `Book` or `Report` (a DOI only from `identifier` or `sameAs`);
+4. Dublin Core (`DC.title`, `DC.creator`, `DC.date`, `DC.publisher`, `DC.identifier` when it is a DOI), in any case, as a last resort.
+
+A page with none of these has no page citation. **Save tabs as links** also reads each tab's citation tags when Link Meteor already has access to that site (all sites, or that site); it never asks for access to do so, and the report says how many tabs it read.
+
+### Identifiers (`src/core/identifiers.js`, pure)
+
+`identifiersOf(link, pages?)` returns `{doi?, arxiv?, pmid?, pmcid?, isbn?}`, found in `url` and `originalHref`, and in the link's own page citation's `doi`. They are derived each time, never stored.
+- **DOI:** Crossref's pattern (`10.` followed by 4 to 9 digits, `/` and a suffix of letters, digits and `-._;()/:`), from `doi.org/…`, `dx.doi.org/…`, `/doi/…` paths and `doi=` query values. Percent-encoding is decoded, trailing punctuation is trimmed, and DOIs compare ignoring case. An arXiv DOI (`10.48550/arXiv.<id>`) also gives the arXiv ID.
+- **arXiv:** new-style `YYMM.NNNN(N)` and old-style `archive/YYMMNNN`, with an optional `vN`, from `arxiv.org/abs/…` and `arxiv.org/pdf/…`.
+- **PubMed:** a PMID from `pubmed.ncbi.nlm.nih.gov/<id>/` and `ncbi.nlm.nih.gov/pubmed/<id>`; a PMCID `PMC<digits>` from `pmc.ncbi.nlm.nih.gov/articles/…` and the older `ncbi.nlm.nih.gov/pmc/articles/…`.
+- **ISBN:** ISBN-13 (978 or 979, weights 1 and 3) or ISBN-10 (weights 10 to 1, check digit 0 to 9 or X) with a valid check digit, from `/isbn/…` paths (Open Library, WorldCat) and `isbn=`, `ean=` or `vid=ISBN` values. Shop product codes are not read as ISBNs.
+
+### Reading status, star and Insights in the workbench
+
+- **Link details** open with a *Reading* row (Unread, Reading, Read, and a *Star* toggle), then *Context*, *Identifiers* (each with Copy) and *Cited from* (the source citation), above the existing facts.
+- **Rows** show a star, *Reading* or *Read*, and the identifier kind as badges.
+- **Selection:** *Mark as read*, *Mark as unread* and *Star* for the selected links, with Undo.
+- **View:** *Reading* (Any, Unread, Reading, Read) and *Starred only*, shown as chips like the other view options.
+- **Insights** (`src/core/insights.js`, pure; `insights(links, pages)`): a *Links* or *Insights* switch in the list heading shows, for the whole collection:
+  - totals: links, unique addresses, sites, pages captured from, links with an identifier, starred;
+  - top sites and file types, with counts;
+  - other sites or the same site;
+  - reading status;
+  - addresses saved more than once, and how many under different anchor text;
+  - captures over time, by week, for up to 26 weeks.
+
+  Choosing a site, file type, status or *Starred* shows those links in the list, as a view option.
+
+### Exports
+
+**New columns** for tables, CSV, TSV, Excel, HTML and JSON: `context` (Context), `status` (Reading status: Unread, Reading or Read), `starred` (Starred: Yes or empty), `doi` (DOI), `arxiv` (arXiv ID), `pmid` (PubMed ID), `isbn` (ISBN) and `imported` (Imported from). Identifier columns are derived per link.
+
+**Citation formats** in the Format list, under *Citations and notes*. Each writes one entry per row of the view or selection (grouped rows use their first occurrence) and never looks anything up:
+
+| Format | Extension | Entry |
+| --- | --- | --- |
+| `bibtex` | `.bib` | `@article` when the link's own citation has a journal, otherwise `@misc`, as Zotero writes web pages: `title`, `author`, `year`, `journal`, `volume`, `number`, `pages`, `doi`, `eprint` with `archivePrefix = {arXiv}` (as arXiv's own export does), `isbn`, `url`, `urldate`, `note` (the link's note) and `keywords` (its tags); no `howpublished`, so the address isn't printed twice. Keys are the first author's family name or the title's first word, plus the year, made unique with `a`, `b`… Escaping follows Zotero: `# $ % & _` get a backslash; `\ ~ ^ { }` and `< > |` become macros or escaped braces; `url` and `doi` stay raw. |
+| `ris` | `.ris` | `TY  - JOUR` when there is a journal, otherwise `ELEC`; `TI`, `AU` (one per author), `PY`, `DA`, `T2`, `VL`, `IS`, `SP`, `EP`, `DO`, `UR`, `Y2` (the capture date, as `YYYY/MM/DD/`), `N1` (the note), `KW` (one per tag) and `ER  - `. Each line is a two-letter tag, two spaces, a hyphen and a space; CRLF line endings. |
+| `csl` | `.json` | An array of CSL-JSON items with `id` and `type` (`article-journal` or `webpage`), `title`, `author` (split into family and given names when printed as "Family, Given", otherwise `literal`), `issued`, `container-title`, `volume`, `issue`, `page`, `DOI`, `PMID`, `PMCID`, `ISBN`, `URL`, `accessed` (`date-parts`), `note` and `keyword`. `container-title` is the journal, or for a web page the source site's name. |
+| `annotated` | `.md` | An annotated bibliography: the collection's name, then per link a citation line (authors, year, title, journal, DOI or address), its note, its context as a quote, and its tags. |
+| `obsidian` | `.md` | An Obsidian note: YAML front matter (`title`, `created`, `tags`, `source: Link Meteor`), then one list item per link, `[anchor text](url)`, with its note, custom columns as `name:: value` fields, and its context as an indented quote. |
+
+The title is the link's own citation title when there is one, otherwise its anchor text, accessible label or address, in that order. Authors, dates, journals and pages come only from the link's own citation. The Export panel says how many entries have a DOI or arXiv ID and how many have authors and a date, and shows the first entry.
+
+### Imports
+
+- **Sources:**
+  - a file, up to 20 MB: CSV, TSV, Excel (`.xlsx`, the first sheet or a chosen one), a text or Markdown list, an HTML page or browser bookmarks file, or a Link Meteor JSON export;
+  - pasted text: addresses, Markdown links or HTML;
+  - a Chrome bookmark folder, with or without its subfolders, through the optional `bookmarks` permission that 0.3.0 added.
+- **Parsing (`src/core/imports.js`, pure):**
+  - `parseDelimited(text, delimiter)`: RFC 4180 quoting, a leading byte-order mark ignored, CRLF or LF;
+  - `parseList(text)`: one link per Markdown link or bare `http(s)`, `mailto:` or `tel:` address;
+  - `readXlsx(bytes, {inflateRaw, parseXml})`: the workbook's sheets as rows of text, with shared and inline strings, numbers as written, and formulas as their cached values, never evaluated. The workbench supplies `DecompressionStream('deflate-raw')` (Chrome 103 and later) and `DOMParser`.
+  - HTML is read with `DOMParser` in the workbench: every `<a href>`, with its text and its folder path in a bookmarks file.
+- **Mapping:** `planImport(rows, mapping, {links, skipSaved})` returns `{links, newFields, skipped: [{row, reason}]}`.
+  - The mapping names the address column (required), and optionally anchor text, notes, tags, reading status, starred, and existing or new custom columns.
+  - *First row is column names* is detected and can be changed.
+  - Rows are skipped, each with its reason: no address; an address that isn't a web, email or phone address; a repeat of an earlier row (same address and anchor text); already saved, with *Skip links already saved there*. At most 20,000 links per import.
+- **Imported links:** `anchorText` as mapped, or empty; `url`; `originalHref` as written in the file; empty `sourceUrl`, `sourceTitle` and `frameUrl`; `capturedAt` the import time; one `batchId` per import; `imported`; and the mapped notes, tags, status, star and custom values. Rows and details show *Imported*.
+- **Messages (workbench only):**
+  - `import.commit {collectionId?, newCollection?, links, newFields}` adds the links as one batch, creating the collection and columns first, and returns `{state, batchId, collectionId}`;
+  - `import.undo {collectionId, batchId}` removes that batch and anything the import created, refused if the batch changed since;
+  - `bookmarks.folderLinks {folderId, recursive}` returns `{links: [{title, url, path}]}`.
+
+### Theme fix
+
+Ember light's `danger` becomes `oklch(0.42 0.17 355)`, with `danger-wash` `oklch(0.967 0.018 355)` and `danger-line` `oklch(0.86 0.06 355)`, so the Remove buttons no longer look like Ember's orange links. `tests/themes.test.mjs` gains a check that `danger` and `accent-text` stay distinguishable in every theme and color-vision simulation. One pair is allowed, with its reason: Meteor light under the deuteranopia simulation. Meteor stays the 0.3.0 look value for value, and its Remove buttons carry a trash icon and the word Remove.
+
+### Permissions and privacy
+
+**0.5.0 adds no permission.**
+- Imports from a bookmark folder use the optional `bookmarks` permission that 0.3.0 added, asked for in the click, as today.
+- *Save tabs as links* reads a tab's citation tags only with site access Link Meteor already has; it never asks for more.
+- Files to import are read in the browser and never uploaded.
+- Context snippets, page citations, reading status and stars are stored with the collections in this browser. They go into backups and exports only when you make them.
+
+`docs/PRIVACY.md`, `site/privacy.html` and `CHROMEWEBSTORE.md` say so in the foundation. The UI says "Saved in this browser" beside the new data, as for notes.
+
+### Automatic backups and settings sync: not in 0.5.0
+
+The plan recommends building these later. Here is what the browser allows, so the design can be decided with the facts.
+
+**Automatic backups to a folder you choose** (File System Access; no manifest permission):
+- A folder can be chosen only in a tab, with a click; the full view qualifies. Choosing one in the side panel is unreliable before Chrome 143.
+- The choice can be kept, but writing to it later needs the folder access to still be live:
+  - access lasts while one of Link Meteor's pages stays open, and for up to 16 hours after the last one closes;
+  - after a browser restart, access needs a click again, unless Chrome's "Allow on every visit" option was chosen (Chrome 122 and later). Whether that option is offered to extensions is untested.
+- The background worker can't ask for access, so it can't back up on a schedule by itself.
+- A workable design writes a backup at most once a day while the full view or the side panel is open. When access has lapsed, it shows "Backups paused: allow the folder again" with a one-click button, and it keeps the last N files by removing only files it named itself.
+
+**Automatic backups to the Downloads folder** instead need the optional `downloads` permission that 0.4.0 added:
+- Each backup shows Chrome's download bubble. Hiding it needs `downloads.ui`, which hides the download bubble for every download in the profile, so it isn't proposed.
+- With Chrome's "Ask where to save each file" on, every backup opens a Save dialog.
+
+**Settings sync through Chrome Sync** (`chrome.storage.sync`, part of the existing `storage` permission):
+- Sync works only between copies of Link Meteor with the same extension ID, for people signed in to Chrome with the Extensions sync option on.
+- A Developer-mode copy's ID comes from its folder's path. So **for Developer-mode installs, settings sync only between computers that load Link Meteor from exactly the same folder path**.
+- A fixed `key` in the manifest would give every copy the same ID. But a test copy loaded beside the everyday one would then replace it, and it's unconfirmed whether the Chrome Web Store keeps such a key. Store installs share one ID, so sync works for them.
+- Limits: 100 KB in all, 8 KB per item, 120 writes a minute.
+- When a second computer first syncs, Chrome replaces that computer's synced settings with the account's.
+- Settings would travel through Google's Chrome Sync. Collections never would.
+
+**Frames from other sites and closed components** (recommended for 0.6.0):
+- `chrome.dom.openOrClosedShadowRoot` works in the page script with no permission.
+- `scripting.executeScript` with `allFrames` reaches every frame Link Meteor has access to, and silently skips the rest.
+- Listing every frame, to say which were skipped, would need `webNavigation`, which Chrome describes as "Read your browsing history". The plan avoids it: frames that didn't answer are reported as a count.

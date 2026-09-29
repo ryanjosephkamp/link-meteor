@@ -736,6 +736,53 @@ A page with none of these has no page citation. **Save tabs as links** also read
 
 The title is the link's own citation title when there is one, otherwise its anchor text, accessible label or address, in that order. Authors, dates, journals and pages come only from the link's own citation. The Export panel says how many entries have a DOI or arXiv ID and how many have authors and a date, and shows the first entry.
 
+#### Exports, as built
+
+**Columns** (`src/core/export.js`):
+- `COLUMNS` gains, after Tags: `context` (Context), `status` (Reading status), `starred` (Starred), `doi` (DOI), `arxiv` (arXiv ID), `pmid` (PubMed ID), `isbn` (ISBN) and `imported` (Imported from). *Add a column…* lists them in that order.
+- Cells: `status` is `Unread`, `Reading` or `Read`; `starred` is `Yes` or empty; each identifier column is `identifiersOf(row, pages)`, found once per row; `context` and `imported` as stored. CSV and TSV put an apostrophe before formula-looking text, as for every column; workbook cells stay text and only the URL columns link.
+- `makeExport(rows, {format, columns, about, fields, pages})`: `pages` (default `{}`) is the collection's page citations; anything but an object is refused. Downloads and Copy table pass the collection's `pages`.
+- JSON rows keep `context`, `status`, `starred` and `imported` as stored. Identifiers are derived, so JSON doesn't add them.
+
+**Citation formats** (`src/core/cite.js`, pure; it imports only `identifiers.js`):
+- `CITE_FORMATS` is `['bibtex', 'ris', 'csl', 'annotated', 'obsidian']`. Extensions: `bib`, `ris`, `json`, `md`, `md`. Types: `application/x-bibtex`, `application/x-research-info-systems`, `application/vnd.citationstyles.csl+json` and `text/markdown`, each with `;charset=utf-8`.
+- `citations(rows, {format, pages, fields, collection, date})` returns the file. `citeFirst(rows, options)` returns the first entry exactly as the file writes it (for CSL-JSON, the first item on its own). `citeFacts(rows, pages)` returns `{entries, identified, authorsAndDate, pageTitles, addressTitles, notes, contexts}`. `dateParts(text)` returns `[year, month?, day?]`.
+- With a citation format, `makeExport` ignores `columns` and takes the collection's name and the export time from `about` (checked as usual). Without `about`, there is no name and no export time.
+- **Every entry:**
+  - The title is the link's own citation `title`, else its anchor text, accessible label or address, with spaces collapsed.
+  - Authors, date, journal, volume, issue and pages come only from the link's own citation, `pages[url without #fragment]`. The source page's citation is never used for the link.
+  - Dates as printed: year-first numbers (`2025-03-14`, `2025/03`, also inside other text), month names (`14 March 2025`, `March 14, 2025`, `2019 Aug 23`) and a lone year. Day-first or month-first numbers (`03/04/2025`) give only the year. The access date is the local calendar date of `capturedAt`.
+  - Names are split into family and given names only when printed with exactly one comma ("Okafor, Amara").
+  - Keys (BibTeX keys and CSL `id`s): the first author's family name (a name printed without a comma gives its last word), else the title's first word with a letter, skipping *a*, *an* and *the* (for a title that is the address, the site's first label); lowercase ASCII letters and digits, accents folded; then the year; `link` when nothing is left. Repeats get `a`, `b`… `z`, `aa`… in row order.
+- **BibTeX:**
+  - Fields in this order: `title, author, year, journal, volume, number, pages, doi, eprint, archivePrefix, isbn, url, urldate, note, keywords`. `@article` when the link's own citation has a journal, otherwise `@misc`.
+  - Layout: two spaces, the field name padded to 12, ` = {value}`, one field per line; a blank line between entries; a final newline; an empty file for no rows. Every value is on one line.
+  - Escaping as Zotero writes it: `# $ % & _` get a backslash; `\ ~ ^ < > |` become `{\textbackslash}`, `{\textasciitilde}`, `{\textasciicircum}`, `{\textless}`, `{\textgreater}` and `{\textbar}`; `{` and `}` become `\{\vphantom{\}}` and `\vphantom{\{}\}`, so braces stay balanced.
+  - `url` and `doi` stay raw, except that `{`, `}`, `\` and spaces are percent-encoded, so a brace in an address can't unbalance the entry.
+  - `author`: "Family, Given" as printed (a part containing the word "and" is braced); any other name is braced whole, `{Jun Watanabe}`, so readers keep it as one name. `pages` uses `--`. `eprint` is the arXiv ID with its version, if the address has one. `note` is the link's note; `keywords` its tags, joined with ", ".
+  - Not written: `month`, `publisher`, PubMed and PMC IDs (BibTeX has no standard field for them), and no braces to protect capital letters in titles.
+- **RIS:**
+  - Tags in this order: `TY, TI, AU…, PY, DA, T2, VL, IS, SP, EP, DO, UR, Y2, N1, KW…, ER`. `PY` is the year. `DA` is `YYYY/MM/DD/`, or `YYYY/MM//`, when the month is known. `Y2` is the access date as `YYYY/MM/DD/`. `T2` is the journal only. `EP` is written only with a different first page.
+  - Values are on one line and empty ones are left out. `ER  - ` ends every record, records are separated by a blank line, every line ends with CRLF, and no rows give an empty file.
+  - Not written: the PubMed, PMC, arXiv and ISBN IDs, which a web page record has no field for.
+- **CSL-JSON:**
+  - The array, indented by two spaces, with each date's parts on one line (`"date-parts": [[2025, 3, 14]]`), and a final newline; `[]` for no rows.
+  - Keys in this order: `id, type, title, author, issued, container-title, volume, issue, page, DOI, PMID, PMCID, ISBN, URL, accessed, note, keyword`. `issued` is `date-parts` when a year is found, otherwise `{literal}`. A web page's `container-title` is its site, the link's own host without `www.`, and none for `doi.org`. `page` uses a hyphen. `note` keeps its line breaks. `keyword` is the tags joined with ", ".
+- **Annotated bibliography:**
+  - `# <collection name>` (or `# Links`), then "An annotated bibliography of 16 links, exported from Link Meteor on 2026-09-29.", then a numbered list.
+  - Each item starts with its citation: `Authors; joined (2025). Title. *Journal*, 12(3), 45–52. <https://doi.org/…>`, or without authors `Title. (2025).`; the link is the DOI's `https://doi.org/` address when there is a DOI, otherwise the link's address. A title that is the address is written once, as the link.
+  - Then, indented under the number, each line of the note as its own paragraph, the context as a `>` quote, and `Tags: a, b`.
+- **Obsidian note:**
+  - Front matter: `title` (quoted), `created` (the export time, local, `YYYY-MM-DDTHH:mm`), `tags` and `source: Link Meteor`. `tags` lists every link's tags as Obsidian tags, quoted: spaces become hyphens, characters other than letters, digits, `_`, `-` and `/` are dropped, tags of digits only are left out, and the first spelling of each is kept; `tags: []` when there are none.
+  - One list item per link: `- [anchor text](address)` (the accessible label, then the citation title, then the address when there is no anchor text), then its tags as `#tag`. Indented two spaces under it: the note's lines, each filled custom column as `Name:: value` (the value raw and on one line; `::` in a name becomes `:`), and the context as a `>` quote. Link addresses percent-encode `< > ( ) [ ] \` and spaces.
+- **Markdown escaping**, in both Markdown formats: page text, notes and tags get a backslash before `` \ ` * _ [ ] < > # | ~ $ ``, `==` and `%%` are broken up, and a line never starts with a bare `-`, `+`, `=` or `1.`. So text reads as written and never becomes formatting, a link, an Obsidian tag, a highlight, a comment or math.
+
+**The Export panel:**
+- `#format` ends with `<optgroup label="Citations and notes">`: `bibtex` "BibTeX (.bib)", `ris` "RIS (.ris)", `csl` "CSL-JSON (.json)", `annotated` "Annotated bibliography (.md)" and `obsidian` "Obsidian note (.md)".
+- Choosing one hides `#columns-fieldset` and shows `#cite-block` (hidden while the view has no links): `#cite-facts` (list items, with each number in `<b>`), `#cite-first-label` ("First entry"; "First record" for RIS; "First list item" for the Obsidian note) and `#cite-first`, a `pre` with `role="region"` named by the label and `tabindex="0"`, so it scrolls from the keyboard; it is at most 190 px high.
+- The facts, for BibTeX, RIS, CSL-JSON and the annotated bibliography: "16 entries, one per link" ("one per unique address" or "one per unique address and anchor text" when grouped; "selected" is added with a selection), "5 with a DOI or arXiv ID", "2 with authors and a date, read from the pages themselves", and how titles are made: "14 use the anchor text as the title" (adding ", or the address when there is none"), "Titles are the anchor text" or "Every title comes from the page itself". For the Obsidian note: "16 list items, one per link", "3 with a note", "4 with the words around the link on its page" and "2 custom columns as name:: value fields, where filled in".
+- The download button reads "Download BibTeX file", "Download RIS file", "Download CSL-JSON file", "Download annotated bibliography" or "Download Obsidian note". The file name follows the usual pattern with the format's extension. The entries are the export's rows (`targetRows()`): the view or the selection, with grouped rows using their first occurrence.
+
 ### Imports
 
 - **Sources:**

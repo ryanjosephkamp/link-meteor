@@ -73,6 +73,8 @@ test('queryLinks filters by reading status and stars, and searches context and i
   assert.throws(() => ids({ status: 'done' }), /Invalid status/);
   assert.deepEqual(ids({ typeGroup: 'Web pages' }), ['a', 'b', 'c'], 'the file-type groups Insights shows');
   assert.deepEqual(ids({ typeGroup: 'PDF' }), []);
+  assert.deepEqual(ids({ site: 'DOI.org' }), ['a', 'b', 'c'], 'an exact site, ignoring case');
+  assert.deepEqual(ids({ site: 'org' }), [], 'not a part of a name');
 });
 
 test('backup format 3 keeps the new fields and only the page citations a link refers to', () => {

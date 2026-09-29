@@ -101,7 +101,7 @@ function siteList(data) {
   if (!data.topSites.length) return node('p', 'note', 'No links to websites yet.');
   const sites = data.topSites.slice(0, SITES_SHOWN);
   const note = data.sites > sites.length ? `The ${sites.length} sites with the most links, of ${plural(data.sites, 'site')}. Choose a site to show its links.` : 'Choose a site to show its links.';
-  return [bars(sites.map((site) => ({ label: site.host, count: site.count, choice: { domain: site.host } }))), node('p', 'note', note)];
+  return [bars(sites.map((site) => ({ label: site.host, count: site.count, choice: { site: site.host } }))), node('p', 'note', note)];
 }
 
 function typeList(data) {

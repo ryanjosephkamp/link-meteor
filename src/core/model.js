@@ -525,14 +525,14 @@ function hostname(value) {
 export function queryLinks(links, options = {}) {
   if (!Array.isArray(links)) throw new Error('links must be an array');
   object(options, 'options');
-  const { search = '', domain = '', fileType = '', relation = 'all', sort = 'page', direction = 'asc', dedupe = 'none', status = 'any', starred = false, typeGroup: group = '' } = options;
+  const { search = '', domain = '', fileType = '', relation = 'all', sort = 'page', direction = 'asc', dedupe = 'none', status = 'any', starred = false, typeGroup: group = '', site = '' } = options;
   if (!STATUS_FILTERS.has(status)) throw new Error(`Invalid status: ${status}`);
   if (typeof starred !== 'boolean') throw new Error('starred must be true or false');
   if (!SORTS.has(sort)) throw new Error(`Invalid sort: ${sort}`);
   if (!DEDUPES.has(dedupe)) throw new Error(`Invalid dedupe: ${dedupe}`);
   if (!RELATIONS.has(relation)) throw new Error(`Invalid relation: ${relation}`);
   if (!['asc', 'desc'].includes(direction)) throw new Error(`Invalid direction: ${direction}`);
-  for (const [key, value] of Object.entries({ search, domain, fileType, typeGroup: group })) string(value, key);
+  for (const [key, value] of Object.entries({ search, domain, fileType, typeGroup: group, site })) string(value, key);
   const term = search.toLowerCase();
   const hostTerm = domain.toLowerCase();
   const extension = fileType.toLowerCase().replace(/^\./, '');
@@ -543,6 +543,7 @@ export function queryLinks(links, options = {}) {
     if (status !== 'any' && (item.status || 'unread') !== status) return false;
     if (starred && item.starred !== true) return false;
     if (group && typeGroup(item) !== group) return false;
+    if (site && host !== site.toLowerCase()) return false;
     if (hostTerm && !host.includes(hostTerm)) return false;
     if (extension) {
       let path;

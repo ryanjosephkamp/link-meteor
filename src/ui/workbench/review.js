@@ -23,7 +23,7 @@ let shownBatch = '';
 
 export function queryOptions() {
   return { search: $('search').value, domain: $('domain').value, fileType: $('file-type').value,
-    relation: $('relation').value, status: $('status-filter').value, starred: $('starred-filter').checked, typeGroup: $('type-group').value,
+    relation: $('relation').value, status: $('status-filter').value, starred: $('starred-filter').checked, typeGroup: $('type-group').value, site: $('site-filter').value,
     sort: $('sort').value, direction: $('direction').value, dedupe: $('dedupe').value };
 }
 
@@ -140,16 +140,16 @@ export function renderEmpty(collection, result) {
 
 export function resetView() {
   $('search').value = ''; $('domain').value = ''; $('file-type').value = ''; $('relation').value = 'all';
-  $('status-filter').value = 'any'; $('starred-filter').checked = false; $('type-group').value = '';
+  $('status-filter').value = 'any'; $('starred-filter').checked = false; $('type-group').value = ''; $('site-filter').value = '';
   $('sort').value = 'page'; $('direction').value = 'asc'; $('dedupe').value = 'none';
   ui.batchFilter = ''; ui.directionTouched = false; ui.page = 0;
   renderLinks();
 }
 
 // Shows the links an Insights choice names: the search and filters are cleared (sorting and
-// grouping stay), then one view option is set: {domain}, {typeGroup}, {status} or {starred: true}.
+// grouping stay), then one view option is set: {site} (exact), {typeGroup}, {status} or {starred: true}.
 export function showOnly(choice) {
-  $('search').value = ''; $('domain').value = choice.domain || ''; $('file-type').value = ''; $('relation').value = 'all';
+  $('search').value = ''; $('domain').value = ''; $('site-filter').value = choice.site || ''; $('file-type').value = ''; $('relation').value = 'all';
   $('status-filter').value = choice.status || 'any'; $('starred-filter').checked = !!choice.starred; $('type-group').value = choice.typeGroup || '';
   ui.batchFilter = ''; ui.page = 0;
   renderLinks();
@@ -165,6 +165,7 @@ export function renderViewChips() {
   if ($('status-filter').value !== 'any') add(`Reading status: ${$('status-filter').selectedOptions[0].textContent}`, () => { $('status-filter').value = 'any'; });
   if ($('starred-filter').checked) add('Starred only', () => { $('starred-filter').checked = false; });
   if ($('type-group').value) add(`Type: ${$('type-group').value}`, () => { $('type-group').value = ''; });
+  if ($('site-filter').value) add(`Site: ${$('site-filter').value}`, () => { $('site-filter').value = ''; });
   if ($('dedupe').value !== 'none') add($('dedupe').value === 'url' ? 'Grouped by URL' : 'Grouped by URL + anchor text', () => { $('dedupe').value = 'none'; });
   if ($('sort').value !== 'page' || $('direction').value !== 'asc') add(`Sorted by ${$('sort').selectedOptions[0].textContent.toLowerCase()}, ${$('direction').value === 'asc' ? 'ascending' : 'descending'}`, () => { $('sort').value = 'page'; $('direction').value = 'asc'; ui.directionTouched = false; });
   const list = $('active-filters');

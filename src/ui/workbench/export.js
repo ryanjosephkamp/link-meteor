@@ -138,6 +138,7 @@ function filterDescriptions() {
   if ($('status-filter').value !== 'any') filters.push(`Reading status: ${$('status-filter').selectedOptions[0].textContent}`);
   if ($('starred-filter').checked) filters.push('Starred links only');
   if ($('type-group').value) filters.push(`Type: ${$('type-group').value}`);
+  if ($('site-filter').value) filters.push(`Site: ${$('site-filter').value}`);
   if (ui.selectedIds.size) filters.push('Selected links only');
   return filters;
 }

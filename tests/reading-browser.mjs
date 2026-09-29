@@ -328,7 +328,7 @@ try {
     assert.equal(await text('#result-count'), `${expectedIds.length} of ${LINKS.length} links`);
     await check();
   };
-  await choose(option('top-sites', 'data.example.com'), await expectIds({domain: 'data.example.com'}), 'Domain contains “data.example.com”', async () => assert.equal(await ui.locator('#domain').inputValue(), 'data.example.com'));
+  await choose(option('top-sites', 'data.example.com'), await expectIds({site: 'data.example.com'}), 'Site: data.example.com', async () => assert.equal(await ui.locator('#site-filter').inputValue(), 'data.example.com'));
   assert.equal((await visibleIds()).length, second.topSites.find((item) => item.host === 'data.example.com').count);
   await choose(option('file-types', 'PDF'), await expectIds({typeGroup: 'PDF'}), 'Type: PDF', async () => assert.equal(await ui.locator('#type-group').inputValue(), 'PDF'));
   assert.equal((await visibleIds()).length, second.fileTypes.find((type) => type.group === 'PDF').count);

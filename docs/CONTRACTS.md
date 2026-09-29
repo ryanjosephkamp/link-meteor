@@ -667,7 +667,7 @@ New optional fields; absent means none, so a 0.4.0 state needs no migration, and
 - `links.append` accepts `pages: {[pageUrl]: PageCitation}` beside `links`, merged into the collection's `pages`; a newer reading replaces an older one for the same address.
 - The workbench keeps what `links.status` and `links.star` changed for Undo, as it does for `fields.fill`.
 
-**`queryLinks`** gains `status: 'any' | 'unread' | 'reading' | 'read'`, `starred: boolean` and `typeGroup` (a file-type group as Insights shows it, from `typeGroup(link)` in `src/core/insights.js`), and its search also matches `context` and `imported`.
+**`queryLinks`** gains `status: 'any' | 'unread' | 'reading' | 'read'`, `starred: boolean` and `typeGroup` (a file-type group as Insights shows it, from `typeGroup(link)` in `src/core/insights.js`), `site` (one site's links exactly, for Insights; the Domain option still matches part of a name), and its search also matches `context` and `imported`.
 
 **Backup format 3.** `BACKUP_FORMAT_VERSION` becomes 3, so 0.4.0 refuses a 0.5.0 backup with its update message instead of dropping fields. `readBackup` accepts formats 1 to 3. A merge keeps local `status` and `starred` for links already present, and local page citations for addresses already present.
 

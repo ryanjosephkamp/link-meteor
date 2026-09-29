@@ -394,6 +394,13 @@
           <option value="html">HTML table (.html)</option>
           <option value="json">JSON with full provenance (.json)</option>
           <option value="text">URL list (.txt)</option>
+          <optgroup label="Citations and notes">
+            <option value="bibtex">BibTeX (.bib)</option>
+            <option value="ris">RIS (.ris)</option>
+            <option value="csl">CSL-JSON (.json)</option>
+            <option value="annotated">Annotated bibliography (.md)</option>
+            <option value="obsidian">Obsidian note (.md)</option>
+          </optgroup>
         </select></label>
         <p id="format-help" class="help"></p>
         <fieldset class="columns" id="columns-fieldset">
@@ -411,6 +418,11 @@
           </div>
           <p id="columns-help" class="help">Used by the Table copy and by CSV, TSV, Excel and HTML files.</p>
         </fieldset>
+        <div id="cite-block" class="cite-block" hidden>
+          <ul id="cite-facts" class="cite-facts" aria-label="What the file holds"></ul>
+          <p id="cite-first-label" class="help">First entry</p>
+          <pre id="cite-first" class="cite-preview" tabindex="0" role="region" aria-labelledby="cite-first-label"></pre>
+        </div>
         <label class="file-name">File name <input id="export-name" type="text" autocomplete="off" spellcheck="false" aria-describedby="export-name-help"></label>
         <p id="export-name-help" class="help">Type a name for this download, or leave it empty to use the pattern.</p>
         <details id="name-settings" class="name-settings">

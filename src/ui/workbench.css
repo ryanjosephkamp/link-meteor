@@ -674,3 +674,10 @@ label.backup-choose { display: inline-flex; cursor: pointer; }
 .occurrence-download { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; padding-top: 10px; border-top: 1px solid var(--line); }
 .occurrence-download .help { flex: 1 1 200px; min-width: 0; overflow-wrap: anywhere; }
 /* End of area: downloading files */
+/* 0.5.0 lane I: citation formats in the Export panel. What the entries hold, and the first entry. */
+.cite-block { display: grid; gap: 6px; min-width: 0; }
+.cite-facts { margin: 0; padding: 0 0 0 1.1em; display: grid; gap: 3px; font-size: var(--text-xs); color: var(--ink-2); }
+.cite-facts b { color: var(--ink); font-variant-numeric: tabular-nums; }
+.cite-preview { margin: 0; padding: 10px 12px; max-height: 190px; overflow: auto; border: 1px solid var(--line); border-radius: var(--r); background: var(--sunken); font: 400 var(--text-xs)/1.55 var(--mono); color: var(--ink-2); white-space: pre-wrap; overflow-wrap: anywhere; }
+@media (forced-colors: active) { .cite-preview { border: 1px solid CanvasText; } }
+/* End of area: citation formats */

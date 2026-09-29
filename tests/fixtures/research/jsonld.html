@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en"><meta charset="utf-8">
+<title>JSON-LD fixture</title>
+<meta name="DC.title" content="A Dublin Core title that JSON-LD outranks">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "ScholarlyArticle", "headline": broken</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {"@type": "WebSite", "@id": "#site", "name": "Meteor Fixture Journals"},
+    {"@type": "WebPage", "@id": "#page", "name": "Wind corridors — Meteor Fixture Journals", "isPartOf": {"@id": "#site"}},
+    {"@type": "Person", "@id": "#author-2", "givenName": "Priya", "familyName": "Raman"},
+    {
+      "@type": ["ScholarlyArticle"],
+      "@id": "#article",
+      "headline": "Wind corridors and night-time cooling",
+      "author": [{"@type": "Person", "name": "Eriksen, Mads"}, {"@id": "#author-2"}],
+      "datePublished": "2022-11-20",
+      "publisher": {"@type": "Organization", "name": "Meteor Fixture Press"},
+      "pageStart": "9",
+      "pageEnd": "27",
+      "identifier": [{"@type": "PropertyValue", "propertyID": "ISSN", "value": "1234-5678"}, {"@type": "PropertyValue", "propertyID": "DOI", "value": "10.5555/wind.2022.009"}],
+      "sameAs": "https://example.org/articles/wind",
+      "isPartOf": {"@type": "PublicationIssue", "issueNumber": "4", "isPartOf": {"@type": "PublicationVolume", "volumeNumber": "31", "isPartOf": {"@type": "Periodical", "name": "Synthetic Atmospheric Review"}}}
+    }
+  ]
+}
+</script>
+<style>body{font:16px/1.6 system-ui;margin:32px}</style>
+<h1>Wind corridors</h1>
+<p>Night-time readings from <a id="jsonld-link" href="/r/wind">the corridor sensors</a> show the effect.</p>
+</html>

@@ -11,9 +11,10 @@ const SCRIPT_PREFIX = 'meteor-hold-';
 const SCRIPT = {js: ['content/capture.js'], runAt: 'document_idle', persistAcrossSessions: true};
 // A saved change to any of these re-registers the page script and reconfigures open tabs.
 export const HOLD_FIELDS = ['holdScope', 'holdOrigins', 'holdExceptions', 'holdKey', 'holdTrigger'];
-// The page script also follows these (0.4.0): the card's theme and what a drag does. A change
-// reconfigures open tabs; the registration itself only changes with HOLD_FIELDS.
-export const CAPTURE_FIELDS = ['afterDrag', 'afterDragFormat', 'contentOnly', 'skipSaved'];
+// The page script also follows these (0.4.0): the card's theme and what a drag does, and (0.5.0)
+// whether to save the words around each link. A change reconfigures open tabs; the registration
+// itself only changes with HOLD_FIELDS.
+export const CAPTURE_FIELDS = ['afterDrag', 'afterDragFormat', 'contentOnly', 'skipSaved', 'saveContext'];
 const PAGE_FIELDS = [...HOLD_FIELDS, 'theme', 'appearance', ...CAPTURE_FIELDS];
 // What the page script needs besides the hold settings: the card theme and the capture settings.
 export const pageSettings = settings => ({card: cardTheme(settings.theme, settings.appearance), capture: Object.fromEntries(CAPTURE_FIELDS.map(key => [key, settings[key]]))});

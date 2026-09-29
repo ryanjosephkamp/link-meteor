@@ -75,7 +75,7 @@ test('hold-drag on chosen sites registers one script for the granted origins', a
   assert.deepEqual(configured, {tabId: 1, type: 'content.configure', holdKey: 'z', holdTrigger: 'letter', enabled: true});
   // 0.4.0: the card theme (both schemes) and the capture settings travel with it.
   assert.equal(card.theme, 'meteor'); assert.equal(card.appearance, 'system'); assert.equal(card.dark['--k-ground'], '#161d2d');
-  assert.deepEqual(capture, {afterDrag: 'card', afterDragFormat: 'tsv', contentOnly: false, skipSaved: false});
+  assert.deepEqual(capture, {afterDrag: 'card', afterDragFormat: 'tsv', contentOnly: false, skipSaved: false, saveContext: true});
   assert.ok(calls.inject.includes(1), 'an open tab of that site gets the script without a reload');
   await refused({type: 'hold.configure', origin: 'https://a.test/path', enabled: true, key: 'z'}, /ordinary website/);
 });

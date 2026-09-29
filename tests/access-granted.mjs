@@ -1,7 +1,9 @@
 // Access and capture (0.3.0) with real grants, for the lead's owner session. Run it in the profile
 // prepared with LINK_METEOR_GRANTS=all-sites node tests/prepare-grants.mjs (all sites, tab groups,
 // bookmarks, and a per-site grant for the fixture site), before tests/permission-browser.mjs.
-// It never shows a native prompt: every grant it uses already exists. Headless unless
+// It never shows a native prompt: every grant it uses already exists. 0.5.0: with all-sites access,
+// Save tabs as links reads each fixture tab's own citation tags into the collection's pages, without
+// asking (the fixture server serves tests/fixtures/research/). Headless unless
 // LINK_METEOR_HEADED=1; for a visible run, keep the pointer off the Chrome for Testing windows.
 //   LINK_METEOR_TEST_PROFILE=<all-sites profile> LINK_METEOR_FIXTURE_PORT=52481 node tests/access-granted.mjs
 // Writes access-granted-results.json to the evidence folder.
@@ -150,6 +152,31 @@ try {
   await until(async () => /37 links captured/.test(await ui.locator('#capture-report').innerText()), 'captured the never-visited origin');
   assert.deepEqual(await ui.evaluate(() => window.__requests), []);
   pass('Capture this page on a never-visited origin needs no prompt with all-sites access', {origin: second.base});
+
+  // 0.5.0: Save tabs as links reads each tab's citation tags where Link Meteor has access (here, all
+  // sites), keyed by the tab's own address, and says how many; a page without tags gives none.
+  const researchNames = ['highwire', 'prism', 'jsonld', 'dublin', 'none'];
+  const researchUrl = (name) => `${fixture.base}/research/${name}.html`;
+  const researchTabs = [];
+  for (const name of researchNames) { const tab = await context.newPage(); await tab.goto(researchUrl(name)); await tab.locator('h1').waitFor(); researchTabs.push(tab); }
+  await ui.bringToFront();
+  const listedTabs = (await rpc(ui, {type: 'tabs.list'})).tabs;
+  const researchIds = researchNames.map((name) => listedTabs.find((tab) => tab.url === researchUrl(name))?.id);
+  assert.ok(researchIds.every(Number.isInteger), `each research tab is listed with its address: ${JSON.stringify(listedTabs.map((tab) => tab.url))}`);
+  const citedCollection = (await rpc(ui, {type: 'state.mutate', action: {type: 'collection.create', name: 'Cited tabs'}})).activeCollectionId;
+  await ui.evaluate(() => { window.__requests = []; });
+  const {report: citedReport} = await rpc(ui, {type: 'capture.tabs', scope: 'selected', tabIds: researchIds});
+  assert.deepEqual([citedReport.saved, citedReport.citations], [5, {tabs: 5, read: 5, found: 4, needAccess: 0}]);
+  const citedPages = (await rpc(ui, {type: 'state.get'})).collections.find((c) => c.id === citedCollection).pages;
+  assert.deepEqual(Object.keys(citedPages).sort(), researchNames.slice(0, 4).map(researchUrl).sort(), 'one citation per tab with tags, under its own address');
+  const titleAndDoi = (name) => [citedPages[researchUrl(name)].title, citedPages[researchUrl(name)].doi];
+  assert.deepEqual(researchNames.slice(0, 4).map(titleAndDoi), [
+    ['Cooling cities: a review of street-level interventions', '10.5555/cool.2024.0312'], ['Soil moisture and shade in dense neighborhoods', '10.5555/shl.2023.045'],
+    ['Wind corridors and night-time cooling', '10.5555/wind.2022.009'], ['Rooftop gardens: a community report', '10.5555/roof.2021.7']]);
+  assert.deepEqual(citedPages[researchUrl('highwire')].authors, ['Okafor, Adaeze', 'Lindqvist, Tove', 'Ramírez-Soto, Julián']);
+  assert.deepEqual(await ui.evaluate(() => window.__requests), [], 'reading asks for nothing');
+  for (const tab of researchTabs) await tab.close();
+  pass('Save tabs as links with all-sites access reads each tab’s own citation tags (Highwire, PRISM, JSON-LD, Dublin Core) into the collection’s pages, without a prompt', {read: citedReport.citations.read, found: citedReport.citations.found});
 
   // A named tab group from the workbench.
   const named = (await rpc(ui, {type: 'state.mutate', action: {type: 'collection.create', name: 'Named group'}})).activeCollectionId;

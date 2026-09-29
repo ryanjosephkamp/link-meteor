@@ -178,9 +178,10 @@ https://ryanjosephkamp.github.io/link-meteor/
 
 | Version | Date | Changes | Status |
 |---------|------|---------|--------|
-| 0.3.0 | 2026-09-27 (packaged) | First submission: all-sites choice with exceptions and a Command or Ctrl hold key, a welcome card, more capture card actions, opening up to 500 links, export file names and formatted workbooks, existing bookmark folders, backup and restore. New permissions: optional `tabGroups`, and `unlimitedStorage`. ZIP SHA-256 `25463687d2f0a7b9e280de7d4f905753cb9b8cc57b359129937f8ea5e98302c7`. | Packaged, not yet submitted |
+| 0.4.0 | 2026-09-29 (packaged) | Seven themes with light and dark, and a themed toolbar icon; after-a-drag choices (show the card, copy right away, add right away); leaving out navigation links; card filters; marking and skipping links already saved; copy as rich links; saving tabs as links; custom columns; downloading the files behind links; highlights that follow their links while scrolling; more right-click and toolbar menu actions; Copy diagnostics. New permission: optional `downloads`. ZIP SHA-256 `68105db8e9dc47e1a222a2f668e5cbc22df315f8a24f09d83f57f036f6bc7036`. | Packaged, not yet submitted |
+| 0.3.0 | 2026-09-27 (released on GitHub) | All-sites choice with exceptions and a Command or Ctrl hold key, a welcome card, more capture card actions, opening up to 500 links, export file names and formatted workbooks, existing bookmark folders, backup and restore. New permissions: optional `tabGroups`, and `unlimitedStorage`. ZIP SHA-256 `25463687d2f0a7b9e280de7d4f905753cb9b8cc57b359129937f8ea5e98302c7`. | Released as a ZIP, not submitted |
 
-Versions 0.1.0 to 0.2.2 were distributed only as a ZIP for Load unpacked and were never submitted.
+Versions 0.1.0 to 0.3.0 were distributed only as a ZIP for Load unpacked and were never submitted.
 
 ## Review Notes
 

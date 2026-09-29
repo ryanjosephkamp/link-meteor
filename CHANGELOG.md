@@ -1,5 +1,68 @@
 # Changelog
 
+## 0.4.0 (2026-09-29)
+
+"Make it yours": themes and a card that works the way you do, plus five additions from the first hands-on check:
+- themes and appearance;
+- what happens after a drag;
+- saving tabs as links;
+- custom columns;
+- downloading the files behind links;
+- more right-click actions.
+
+### Extension
+
+- **Seven themes**, each light and dark: Meteor, Comet, Aurora, Ember, Nebula, Graphite and High contrast. **Appearance** chooses System, Light or Dark. The side panel, full view, capture card, selection highlight and toolbar icon all follow the theme. Meteor looks exactly as before.
+- **After a drag:** *Show the card*, as before; *Copy right away*, as a text and URL table, URLs, Markdown or rich links; or *Add right away*, with Undo in a small notice.
+- **Leave out navigation links.** Links in page-level menus, headers, footers and sidebars start unticked, and the card says how many, with *Include them*. A post's own title link still counts. *Capture this page* leaves them out too and offers *Include them*.
+- **Card filters:** All, Other sites, PDFs and Same site.
+- **Already saved.** Links the collection already has are marked *Saved* on the card. *Skip links already saved* leaves them out when adding.
+- **Copy as rich links**, on the card (shortcut L) and in the Export panel: HTML and plain text that paste into Google Docs, Word or Notion as clickable anchor text.
+- **Save tabs as links.** Besides capturing the links inside tabs, choose *The tabs themselves* to save this tab, picked tabs, or every tab in the window or all windows, one link each, with the tab's title. Pages that aren't web pages are skipped and counted.
+- **Custom columns.** Up to 20 per collection, named in the collection editor and filled in by hand, like notes. They appear in each link's details, in search, in every export and in backups. *Fill for selected links* sets one value on many links, with Undo. A backup merge joins columns with the same name.
+- **Download the files behind links**: PDFs, images, documents and other files. Use the card's *Download N files* (shortcut F), the Export panel's *Download files*, *Download* in a link's details, or *Download linked file* in the right-click menu.
+  - Files are saved in `Downloads/Link Meteor/<collection>/`, named after their anchor text.
+  - Downloads run three at a time. Link Meteor asks first above 10 files, and *Cancel* stops what hasn't finished.
+  - A link that gives a web page instead of a file, often a sign-in page, is reported as such, and a failed download says why.
+- **Highlights stay on their links** while the page scrolls, and unticked links are outlined.
+- **More right-click actions**, under Chrome's *Link Meteor* submenu:
+  - on a link: *Add link to "collection"*, *Copy link text + URL*, *Download linked file* (for file links) and *Select a region*;
+  - on selected text: *Capture links in the selection*;
+  - on the page: *Select a region*, *Capture this page* and *Save this tab as a link*;
+  - on the toolbar icon: *Save this tab as a link*, *Save all tabs in this window as links* and *Open the full view*.
+- **Copy diagnostics**, in About and help, copies versions, settings, permission choices and counts for a bug report, never addresses, site names, titles, notes, tags or collection names.
+- **Backups** use format 2, which adds the new settings and custom columns. 0.4.0 restores 0.3.0 backups; 0.3.0 can't restore a 0.4.0 backup.
+- **Fix:** *Capture links in the selection* and hold-key drag no longer depend on Chrome's collapsed-selection flag, which Chrome 116 reports wrongly inside shadow roots.
+
+### Permissions
+
+- **Optional `downloads`.** Asked the first time you download files, in the full view. Chrome describes it as "Manage your downloads". Link Meteor uses it only to save the files you choose and follow those downloads; it never reads, opens, changes or removes your other downloads.
+- The right-click and toolbar menus use the `contextMenus` permission that 0.3.0 already had.
+
+### Website
+
+- A theme menu with every palette in light and dark. Links from the extension open the site in your theme.
+- The download is now 0.4.0.
+- The privacy page describes the downloads permission and the new menus.
+- The guide, home and install pages cover the new features.
+
+### Download
+
+`link-meteor-0.4.0.zip`, 570,447 bytes, SHA-256 `68105db8e9dc47e1a222a2f668e5cbc22df315f8a24f09d83f57f036f6bc7036`. To update from 0.3.0, replace the contents of the same folder, then reload Link Meteor at `chrome://extensions`. Your collections stay with that folder.
+
+### Known issues
+
+- Ember light's red Remove buttons are close in color to its orange links. They also carry a trash icon and the word Remove. This will be adjusted in the next release.
+- Removing all-sites access can also remove access to sites you allowed one at a time. That is Chrome's behavior, as in 0.3.0.
+- Tested so far:
+  - automated checks without grants in Chrome for Testing 151 on macOS, Windows and Linux;
+  - the checks that need Allow clicks, on macOS;
+  - the checks that need no grants on Chrome for Testing 116, except the toolbar button, which the test tool can't press there;
+  - the owner's hands-on check in everyday Chrome on macOS.
+
+  The right-click menus can't be opened by automated Chrome, so their automated checks are simulations; the hands-on check covered them. Screen readers are not yet tested. See [testing and compatibility](docs/ACCEPTANCE.md).
+- The site's videos and product screenshots still show 0.2.2.
+
 ## 0.3.0 (2026-09-27)
 
 A feature release. The main additions:

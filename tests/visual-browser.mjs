@@ -18,8 +18,12 @@ const contrast=(page,pairs)=>page.evaluate(pairs=>{const canvas=document.createE
   const bg=el=>{for(let n=el;n;n=n.parentElement){const c=getComputedStyle(n).backgroundColor;if(c&&!/rgba\(0, 0, 0, 0\)|transparent/.test(c)&&!/\/ 0\)$/.test(c))return c;}return getComputedStyle(document.body).backgroundColor;};
   return pairs.map(([name,selector])=>{const el=document.querySelector(selector);if(!el)return {name,missing:true};const a=lum(rgb(getComputedStyle(el).color)),b=lum(rgb(bg(el)));return {name,ratio:Math.round(((Math.max(a,b)+.05)/(Math.min(a,b)+.05))*100)/100};});},pairs);
 // 0.4.0 toolbar icon: record what the service worker passes to chrome.action.setIcon (and still set it).
-await worker.evaluate(()=>{globalThis.__iconCalls=[];const set=chrome.action.setIcon.bind(chrome.action);chrome.action.setIcon=details=>{globalThis.__iconCalls.push(details.imageData?{imageData:Object.fromEntries(Object.entries(details.imageData).map(([size,image])=>[size,{width:image.width,height:image.height,data:[...image.data]}]))}:{path:details.path});return set(details);};});
-const iconCalls=()=>worker.evaluate(()=>globalThis.__iconCalls);
+// On Chrome 116, Playwright's view of the service worker has no extension APIs (the extension's own pages do),
+// so the toolbar icon can't be recorded there; the rest of the suite still runs, and the results say so.
+const workerApis=await worker.evaluate(()=>typeof chrome.action?.setIcon==='function');
+if(workerApis)await worker.evaluate(()=>{globalThis.__iconCalls=[];const set=chrome.action.setIcon.bind(chrome.action);chrome.action.setIcon=details=>{globalThis.__iconCalls.push(details.imageData?{imageData:Object.fromEntries(Object.entries(details.imageData).map(([size,image])=>[size,{width:image.width,height:image.height,data:[...image.data]}]))}:{path:details.path});return set(details);};});
+else result.limits.push('Toolbar icon not checked: in this Chrome version the test tool cannot reach the service worker\'s extension APIs.');
+const iconCalls=()=>workerApis?worker.evaluate(()=>globalThis.__iconCalls):Promise.resolve([]);
 // Rasterizes CSS colors in the page, as sRGB bytes.
 const rasterize=(page,colors)=>page.evaluate(colors=>{const canvas=document.createElement('canvas');canvas.width=canvas.height=1;const ctx=canvas.getContext('2d',{willReadFrequently:true});return colors.map(color=>{ctx.clearRect(0,0,1,1);ctx.fillStyle=color;ctx.fillRect(0,0,1,1);return [...ctx.getImageData(0,0,1,1).data].slice(0,3);});},colors);
 try{
@@ -72,16 +76,18 @@ try{
   await ui.setViewportSize({width:320,height:900});const links=await overflow(ui);await ui.locator('#collection-switch').click();const settings=await overflow(ui);await ui.locator('#rail-done').click();
   assert.equal(links,false,`${theme} ${scheme}: overflow at 320`);assert.equal(settings,false,`${theme} ${scheme}: settings overflow at 320`);
   await ui.setViewportSize({width:390,height:844});await ui.evaluate(()=>{scrollTo(0,0);document.getElementById('notice').hidden=true;});const screenshot=`panel-theme-${theme}-${scheme}.png`;await shot(ui,screenshot);
-  if(changed){await until(async()=>(await iconCalls()).length>callsBefore,`${theme} toolbar icon`);icons[theme]=(await iconCalls()).at(-1);}
+  if(changed&&workerApis){await until(async()=>(await iconCalls()).length>callsBefore,`${theme} toolbar icon`);icons[theme]=(await iconCalls()).at(-1);}
   themeResults.push({theme,scheme,horizontalOverflowAt320:{links,settings},screenshot,contrast:measured});
  }
  // Back to Meteor: the manifest's own icons. Every other theme: the mark drawn at 16 and 32 px, tile and head in the theme's colors.
+ const iconChecks=[];
+ if(!workerApis)await rpc(ui,{type:'state.mutate',action:{type:'settings.update',patch:{theme:'meteor',appearance:'system',afterDrag:'card'}}});
+ else{
  const callsBeforeMeteor=(await iconCalls()).length;await rpc(ui,{type:'state.mutate',action:{type:'settings.update',patch:{theme:'meteor',appearance:'system',afterDrag:'card'}}});
  await until(async()=>(await iconCalls()).length>callsBeforeMeteor,'Meteor toolbar icon');icons.meteor=(await iconCalls()).at(-1);
  const manifestIcons=await ui.evaluate(()=>chrome.runtime.getManifest().action.default_icon);assert.deepEqual(icons.meteor,{path:manifestIcons},'Meteor sets the packaged icons');
  const pixel=(image,x,y)=>image.data.slice((y*image.width+x)*4,(y*image.width+x)*4+4);
  const near=(a,b)=>a.every((v,i)=>Math.abs(v-b[i])<=3);
- const iconChecks=[];
  for(const theme of THEME_IDS.filter(theme=>theme!=='meteor')){
   const call=icons[theme];assert.ok(call?.imageData,`${theme} sets drawn icons`);assert.deepEqual(Object.keys(call.imageData).sort(),['16','32']);
   const [head,tile]=await rasterize(ui,[THEMES[theme].highlight,THEMES[theme].light['mark-tile']]);
@@ -99,6 +105,7 @@ try{
  const strip=await context.newPage();await strip.setViewportSize({width:760,height:160});
  await strip.setContent(`<body style="margin:0;padding:12px;background:#dfe3ea;display:flex;gap:14px;align-items:flex-end;font:12px system-ui">${THEME_IDS.map(theme=>`<figure style="margin:0;display:grid;gap:4px;justify-items:center"><img src="${iconUrls[theme][0]}" alt="" style="width:64px;height:64px;image-rendering:pixelated"><img src="${iconUrls[theme][1]}" alt="" style="width:32px;height:32px;image-rendering:pixelated"><figcaption>${THEMES[theme].name}</figcaption></figure>`).join('')}</body>`);
  await strip.evaluate(()=>Promise.all([...document.images].map(image=>image.decode())));await shot(strip,'toolbar-icons.png');await strip.close();
+ }
 
  // The theme picker and System, Light or Dark work from the keyboard, with a visible focus ring.
  await ui.setViewportSize({width:1440,height:1000});await ui.locator('input[name="theme"][value="meteor"]').focus();await ui.keyboard.press('ArrowRight');
@@ -128,7 +135,7 @@ try{
  await boot.close();
  await rpc(ui,{type:'state.mutate',action:{type:'settings.update',patch:{theme:'meteor',appearance:'system',afterDrag:'card',afterDragFormat:'tsv',contentOnly:false,skipSaved:false}}});
  await until(async()=>await ui.evaluate(()=>document.documentElement.dataset.theme==='meteor'&&!document.getElementById('after-drag-format').checkVisibility()),'Back to Meteor and Show the card');
- result.checks.push({themes:{switchedThrough:'settings.update',results:themeResults},toolbarIcon:{meteor:icons.meteor,drawn:iconChecks,screenshot:'toolbar-icons.png'},appearanceKeyboard:{arrowKeySavesTheme:true,focusRing:pickerFocus.ring,arrowKeySavesAppearance:true},afterDrag:{choicesSaved:true,copyFormatOnlyForCopy:true},firstFrame});
+ result.checks.push({themes:{switchedThrough:'settings.update',results:themeResults},toolbarIcon:workerApis?{meteor:icons.meteor,drawn:iconChecks,screenshot:'toolbar-icons.png'}:'not checked in this Chrome version (see limits)',appearanceKeyboard:{arrowKeySavesTheme:true,focusRing:pickerFocus.ring,arrowKeySavesAppearance:true},afterDrag:{choicesSaved:true,copyFormatOnlyForCopy:true},firstFrame});
  // 0.3.0 states that are hard to hold still: the stronger confirmation comes from a real 150-link target (nothing opens); the
  // all-sites note and the opening progress line are shown with sample text in their real elements, with their real styles.
  await rpc(ui,{type:'state.mutate',action:{type:'collection.create',name:'Opening check'}});

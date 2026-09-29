@@ -350,7 +350,19 @@ try {
 
   // 12. Copy as rich links: the same rows as the other copies, as exact HTML and plain text.
   await context.grantPermissions(['clipboard-read', 'clipboard-write']);
-  const clipboard = () => ui.evaluate(async () => {
+  // On another Chrome (LINK_METEOR_CHROME_PATH), such as 116, whose headless clipboard can't be read with
+  // navigator.clipboard.read() even after plain text, the text is read directly and the HTML counts as unread
+  // (types: null); clipboardIs then compares the text only. Never on the default Chrome for Testing.
+  let htmlUnread = 0;
+  const clipboard = async () => {
+    try { return await readClipboard(); } catch (error) {
+      if (!process.env.LINK_METEOR_CHROME_PATH || !/No valid data on clipboard/.test(error.message)) throw error;
+      htmlUnread++;
+      return {types: null, html: null, text: (await ui.evaluate(() => navigator.clipboard.readText())).replace(/\r\n/g, '\n')};
+    }
+  };
+  const clipboardIs = async (want) => { const copied = await clipboard(); if (copied.types) assert.deepEqual(copied, want); else assert.equal(copied.text, want.text); return copied; };
+  const readClipboard = () => ui.evaluate(async () => {
     const [item] = await navigator.clipboard.read();
     // Windows stores clipboard text with CRLF line endings; compare the content, not the platform's newlines.
     const read = async (type) => item.types.includes(type) ? (await (await item.getType(type)).text()).replace(/\r\n/g, '\n') : null;
@@ -363,22 +375,21 @@ try {
   await ui.locator('#copy-rich').click();
   assert.equal(await notice('Copied'), `Copied ${rows.length} links as rich links. Paste into Google Docs, Word or Notion to keep them clickable.`);
   const expected = richLinks(rows);
-  const copied = await clipboard();
-  assert.deepEqual(copied, {types: ['text/html', 'text/plain'], html: expected.html, text: expected.text});
+  await clipboardIs({types: ['text/html', 'text/plain'], html: expected.html, text: expected.text});
   assert.ok(expected.html.startsWith('<ul><li><a href="') && expected.text.split('\n').length === rows.length);
   // A selection narrows it, exactly as for the other copies.
   await clearNotice();
   await ui.locator('.row-select').nth(0).check(); await ui.locator('.row-select').nth(1).check();
   await ui.locator('#copy-rich').click();
   assert.equal(await notice('Copied'), 'Copied 2 links as rich links. Paste into Google Docs, Word or Notion to keep them clickable.');
-  assert.deepEqual(await clipboard(), {types: ['text/html', 'text/plain'], ...richLinks(rows.slice(0, 2))});
+  await clipboardIs({types: ['text/html', 'text/plain'], ...richLinks(rows.slice(0, 2))});
   await ui.locator('#clear-selection').click();
   // Chrome refusing the HTML falls back to the plain text, and says so.
   await clearNotice();
   await ui.evaluate(() => { navigator.clipboard.write = () => Promise.reject(new DOMException('Refused for this check', 'NotAllowedError')); });
   await ui.locator('#copy-rich').click();
   assert.equal(await notice('Copied'), `Copied ${rows.length} links as plain text, each with its URL, because Chrome didn't accept rich links here. They won't paste as clickable links.`);
-  assert.deepEqual(await clipboard(), {types: ['text/plain'], html: null, text: expected.text});
+  await clipboardIs({types: ['text/plain'], html: null, text: expected.text});
   await ui.evaluate(() => { delete navigator.clipboard.write; });
   check('Copy as rich links puts the exact HTML and plain text on the clipboard for the rows in view or the selection, and falls back to plain text with a clear status', {links: rows.length, htmlBytes: expected.html.length});
 
@@ -720,6 +731,7 @@ try {
 
   assert.deepEqual(errors, [], 'no page errors');
   check('No page errors or console errors');
+  if (htmlUnread) result.limits.push(`This Chrome's headless clipboard can't be read with navigator.clipboard.read(): ${htmlUnread} clipboard reads checked the plain text only, not the HTML or the types.`);
   result.result = 'PASS';
 } catch (error) {
   result.result = 'FAIL'; result.error = error.stack; result.pageErrors = errors; console.error(error); process.exitCode = 1;

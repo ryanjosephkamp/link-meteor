@@ -1,0 +1,16 @@
+Google Chrome for Testing 116.0.5845.96 (mac-arm64), from https://storage.googleapis.com/chrome-for-testing-public/116.0.5845.96/mac-arm64/chrome-mac-arm64.zip
+Playwright 1.62.1
+
+Probes (scripts in probes/), headless with --headless=new:
+
+clip-probe.mjs, on a local page with clipboard permissions granted:
+116 {"version":"116.0.5845.96","writeText":"ok","readText":"plain one","readAfterText":"ERROR page.evaluate: DOMException: No valid data on clipboard.","writeRich":"ok","readTextAfterRich":"A (https://a.example/)","readAfterRich":"ERROR page.evaluate: DOMException: No valid data on clipboard."}
+current {"version":"151.0.7922.34","writeText":"ok","readText":"plain one","readAfterText":["text/plain"],"writeRich":"ok","readTextAfterRich":"A (https://a.example/)","readAfterRich":{"types":["text/plain","text/html"],"html":"<a href=\"https://a.example/\">A</a>"}}
+
+clip-paste.mjs, a rich copy (HTML and text, as Link Meteor writes it), then a paste into an editable area:
+116 116.0.5845.96 pasted into the page: x<a href="https://a.example/">A</a>
+current 151.0.7922.34 pasted into the page: x<a href="https://a.example/">A</a>
+
+worker-probe.mjs, the extension loaded in a fresh profile:
+Playwright's service-worker context on 116: chrome has only csi and loadTimes (no action, contextMenus or downloads); OffscreenCanvas is a function.
+The extension's own page on 116: chrome has action, clipboard, commands, contextMenus, extension, i18n, management, permissions, runtime, scripting, sidePanel, storage, tabs and windows.

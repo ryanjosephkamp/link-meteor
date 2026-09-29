@@ -17,6 +17,7 @@ import {cardTheme} from '../src/core/themes.js';
 const evidence = resolve(root, process.env.LINK_METEOR_EVIDENCE_DIR || '.scratch/evidence-access-capture');
 const source = await readFile(resolve(root, 'src/content/capture.js'), 'utf8');
 const result = {started: new Date().toISOString(), kind: 'simulation: real page script, stub chrome object, real input events in Chrome for Testing', checks: []};
+let htmlUnread = 0;
 const pass = (name, data = {}) => { result.checks.push({name, ...data}); console.log('PASS', name, Object.keys(data).length ? JSON.stringify(data) : ''); };
 
 // The stub answers like the background would, and records every message.
@@ -363,7 +364,17 @@ try {
   const cardWait = (fn, arg) => page.waitForFunction(([source, arg]) => { const root = document.getElementById('link-meteor-overlay')?.shadowRoot; return !!root && new Function('root', 'arg', `return (${source})(root, arg)`)(root, arg); }, [fn.toString(), arg]);
   const rowState = () => inCard((root) => [...root.querySelectorAll('.preview li')].map((li) => ({text: li.querySelector('.t').textContent, on: li.querySelector('input').checked, saved: !li.querySelector('.tag').hidden})));
   const ticked = async () => (await rowState()).filter((row) => row.on).map((row) => row.text);
-  const clipboard = () => page.evaluate(async () => { const [item] = await navigator.clipboard.read(); const read = async (type) => item.types.includes(type) ? (await (await item.getType(type)).text()).replace(/\r\n/g, '\n') : ''; return {types: item.types, html: await read('text/html'), text: await read('text/plain')}; }); // Windows keeps CRLF on the clipboard
+  const readClipboard = () => page.evaluate(async () => { const [item] = await navigator.clipboard.read(); const read = async (type) => item.types.includes(type) ? (await (await item.getType(type)).text()).replace(/\r\n/g, '\n') : ''; return {types: item.types, html: await read('text/html'), text: await read('text/plain')}; }); // Windows keeps CRLF on the clipboard
+  // On another Chrome (LINK_METEOR_CHROME_PATH), such as 116, whose headless clipboard can't be read with
+  // navigator.clipboard.read() even after plain text, the text is read directly and the HTML counts as unread
+  // (types: null). Never on the default Chrome for Testing.
+  const clipboard = async () => {
+    try { return await readClipboard(); } catch (error) {
+      if (!process.env.LINK_METEOR_CHROME_PATH || !/No valid data on clipboard/.test(error.message)) throw error;
+      htmlUnread++;
+      return {types: null, html: null, text: (await page.evaluate(() => navigator.clipboard.readText())).replace(/\r\n/g, '\n')};
+    }
+  };
   const noticeShown = () => inCard((root) => !!root && !root.querySelector('.notice').hidden);
   // A page with links in every kind of page chrome, including an open shadow root and a same-origin frame.
   async function landmarks() {
@@ -477,8 +488,8 @@ try {
   await statusMatches(page, /^Copied 16 links as rich links\. Paste into Google Docs, Word or Notion/);
   assert.equal((await sent(page, 'capture.copy')).at(-1).format, 'rich');
   let copied = await clipboard();
-  assert.ok(copied.types.includes('text/html') && copied.types.includes('text/plain'), JSON.stringify(copied.types));
-  assert.match(copied.html, new RegExp(`<a href="${fixture.base}/papers/one\\.pdf">Paper one</a>`));
+  if (copied.types) assert.ok(copied.types.includes('text/html') && copied.types.includes('text/plain'), JSON.stringify(copied.types));
+  if (copied.types) assert.match(copied.html, new RegExp(`<a href="${fixture.base}/papers/one\\.pdf">Paper one</a>`));
   assert.match(copied.text, new RegExp(`^Home \\(${fixture.base}/home\\)\\n`));
   await page.evaluate(() => navigator.clipboard.writeText('reset'));
   const clearStatus = () => inCard((root) => { root.querySelector('.status').textContent = ''; });
@@ -487,7 +498,8 @@ try {
   await shadow.getByRole('menuitem', {name: /^Copy as rich links/}).click();
   await page.waitForFunction(() => window.__stub.sent.filter((m) => m.type === 'capture.copy' && m.format === 'rich').length === 2);
   await statusMatches(page, /^Copied 16 links as rich links/);
-  assert.match((await clipboard()).html, /Other article<\/a>/);
+  copied = await clipboard();
+  if (copied.types) assert.match(copied.html, /Other article<\/a>/);
   // Where the async clipboard is unavailable (a plain-HTTP page), a copy event still carries both types.
   await page.evaluate(() => { window.__write = navigator.clipboard.write; navigator.clipboard.write = () => Promise.reject(new Error('unavailable')); return navigator.clipboard.writeText('reset'); });
   await clearStatus();
@@ -495,7 +507,8 @@ try {
   await page.waitForFunction(() => window.__stub.sent.filter((m) => m.type === 'capture.copy' && m.format === 'rich').length === 3);
   await statusMatches(page, /^Copied 16 links as rich links/);
   copied = await clipboard();
-  assert.match(copied.html, /Paper two<\/a>/); assert.match(copied.text, /^Home \(/);
+  if (copied.types) assert.match(copied.html, /Paper two<\/a>/);
+  assert.match(copied.text, /^Home \(/);
   await page.evaluate(() => { navigator.clipboard.write = window.__write; });
   pass('Copy as rich links (More menu and L) puts HTML and plain text on the clipboard, also through the copy-event fallback', {types: copied.types});
 
@@ -543,7 +556,7 @@ try {
     await cardWait((root, as) => root.querySelector('.notice-text').textContent.includes(as), as);
     assert.equal(await cardText('.notice-text'), `Copied 6 links ${as}. Left out 10 navigation links.`);
     assert.equal((await sent(page, 'capture.copy')).at(-1).format, format);
-    if (format === 'rich') assert.match((await clipboard()).html, /<a href="[^"]+\/papers\/one\.pdf">Paper one<\/a>/);
+    if (format === 'rich') { const copiedRich = await clipboard(); if (copiedRich.types) assert.match(copiedRich.html, /<a href="[^"]+\/papers\/one\.pdf">Paper one<\/a>/); }
     if (format === 'markdown') { await shadow.getByRole('button', {name: 'Close notice', exact: true}).click(); assert.equal(await card(page).count(), 0); }
     else { await page.keyboard.press('Escape'); assert.equal(await card(page).count(), 0, 'Escape closes the notice'); }
   }
@@ -876,6 +889,7 @@ try {
   pass('content.notice after Copy link text + URL puts the two columns on the clipboard (also through the text-area fallback) and offers only Close');
   await menuPage.close();
 
+  if (htmlUnread) result.limits = [`This Chrome's headless clipboard can't be read with navigator.clipboard.read(): ${htmlUnread} clipboard reads checked the plain text only, not the HTML.`];
   result.result = 'PASS';
 } catch (error) {
   result.result = 'FAIL'; result.error = error.stack; console.error(error); process.exitCode = 1;

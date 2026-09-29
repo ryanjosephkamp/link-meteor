@@ -1,6 +1,7 @@
 // Export: format, columns (including custom columns), what an export covers, downloads and
-// clipboard copies, including rich links.
-import { COLUMNS, makeExport, richLinks } from '../../core/export.js';
+// clipboard copies, including rich links, and the citation formats' facts and first entry.
+import { COLUMNS, CITE_FORMATS, makeExport, richLinks } from '../../core/export.js';
+import { citeFacts, citeFirst } from '../../core/cite.js';
 import { MAX_CUSTOM_FIELDS } from '../../core/model.js';
 import { $, node, icon, count, plural } from './helpers.js';
 import { ui, action, show, currentCollection, DEFAULT_COLUMNS } from './state.js';
@@ -20,7 +21,14 @@ const FORMAT_HELP = {
   html: 'A plain HTML table using your columns. Page text is escaped.',
   json: 'Every field for every link, including all grouped occurrences, after an about block that records when and how the file was exported. Columns do not apply.',
   text: 'One URL per line, exactly as captured. Columns do not apply.',
+  bibtex: 'One entry per link, for Zotero, BibDesk, LaTeX and other reference managers. Built only from what the pages showed; nothing is looked up online.',
+  ris: 'One record per link, for Zotero, EndNote, Mendeley and other reference managers. Built only from what the pages showed; nothing is looked up online.',
+  csl: 'One CSL-JSON item per link, for Zotero, Pandoc and other citation tools. Built only from what the pages showed; nothing is looked up online.',
+  annotated: 'A Markdown bibliography: a citation for each link, with its note, the words around it on its page, and its tags. Nothing is looked up online.',
+  obsidian: 'A Markdown note for an Obsidian vault: properties first, then a list item for each link with its note, custom columns as name:: value fields, and the words around it on its page.',
 };
+const DOWNLOAD_LABELS = { xlsx: 'Excel file', csv: 'CSV file', tsv: 'TSV file', markdown: 'Markdown file', html: 'HTML file', json: 'JSON file', text: 'URL list',
+  bibtex: 'BibTeX file', ris: 'RIS file', csl: 'CSL-JSON file', annotated: 'annotated bibliography', obsidian: 'Obsidian note' };
 
 // The Add a column menu's last choice, which names and adds a custom column.
 const NEW_COLUMN = 'new-custom-column';
@@ -95,11 +103,12 @@ export function renderExportTarget() {
   if (selected) notes.push('Only selected links that match the current filters are used.');
   else if (filtered) notes.push(`Filtered from ${plural(collection.links.length, 'link')}. Every matching link is used, across all pages.`);
   else if (rows.length) notes.push('Every link in the collection, across all pages.');
-  if (grouped && rows.length) notes.push('Grouped rows use their first link for tables, text, Markdown and rich links. JSON keeps every occurrence and source.');
+  if (grouped && rows.length) notes.push('Grouped rows use their first link for tables, text, Markdown, citations and rich links. JSON keeps every occurrence and source.');
   $('export-scope').textContent = notes.join(' ');
   const format = $('format').value;
-  $('download-label').textContent = `Download ${{ xlsx: 'Excel file', csv: 'CSV file', tsv: 'TSV file', markdown: 'Markdown file', html: 'HTML file', json: 'JSON file', text: 'URL list' }[format]}`;
+  $('download-label').textContent = `Download ${DOWNLOAD_LABELS[format]}`;
   renderNames();
+  renderCite(rows, format);
   $('format-help').textContent = (FORMAT_HELP[format] || '') + (format === 'json' && fieldsOf(collection).length ? ' Custom columns are in each link’s fields, and the about block names them.' : '');
   $('columns-help').textContent = ['markdown', 'json', 'text'].includes(format)
     ? 'Columns apply to the Table copy and to CSV, TSV, Excel and HTML files. This format ignores them.'
@@ -130,6 +139,41 @@ function filterDescriptions() {
   return filters;
 }
 
+/* Citations and notes (0.5.0) ----------------------------------------------------------------- */
+// For a citation format, the columns step aside for what the entries hold and the first entry.
+function renderCite(rows, format) {
+  const cite = CITE_FORMATS.includes(format);
+  $('columns-fieldset').hidden = cite;
+  $('cite-block').hidden = !cite || !rows.length;
+  if (!cite || !rows.length) return;
+  const collection = currentCollection();
+  const pages = collection.pages || {};
+  const facts = citeFacts(rows, pages);
+  const dedupe = $('dedupe').value;
+  const each = ui.selectedIds.size ? 'selected ' : '';
+  const per = dedupe === 'url' ? `one per unique ${each}address` : dedupe === 'none' ? `one per ${each}link` : `one per unique ${each}address and anchor text`;
+  const item = (n, text) => { const line = node('li'); if (n !== null) line.append(node('b', '', count(n)), ' '); line.append(text); return line; };
+  const lines = [];
+  if (format === 'obsidian') {
+    lines.push(item(facts.entries, `${facts.entries === 1 ? 'list item' : 'list items'}, ${per}`),
+      item(facts.notes, 'with a note'), item(facts.contexts, 'with the words around the link on its page'));
+    const fields = fieldsOf(collection).length;
+    if (fields) lines.push(item(null, `${plural(fields, 'custom column')} as name:: value fields, where filled in`));
+  } else {
+    lines.push(item(facts.entries, `${facts.entries === 1 ? 'entry' : 'entries'}, ${per}`),
+      item(facts.identified, 'with a DOI or arXiv ID'),
+      item(facts.authorsAndDate, 'with authors and a date, read from the pages themselves'));
+    const rest = facts.entries - facts.pageTitles;
+    if (!facts.pageTitles) lines.push(item(null, facts.addressTitles ? 'Titles are the anchor text, or the address when a link has none' : 'Titles are the anchor text'));
+    else if (rest) lines.push(item(rest, `${rest === 1 ? 'uses' : 'use'} the anchor text as the title${facts.addressTitles ? ', or the address when there is none' : ''}`));
+    else lines.push(item(null, 'Every title comes from the page itself'));
+  }
+  $('cite-facts').replaceChildren(...lines);
+  $('cite-first-label').textContent = format === 'obsidian' ? 'First list item' : format === 'ris' ? 'First record' : 'First entry';
+  const first = citeFirst(rows, { format, pages, fields: fieldsOf(collection), collection: collection.name });
+  if ($('cite-first').textContent !== first) $('cite-first').textContent = first;
+}
+
 export function exportAbout(rows, date) {
   return { exportedAt: date, collection: currentCollection().name, count: rows.length, view: viewDescription(),
     filters: filterDescriptions(), columns: [...ui.columns], version: chrome.runtime.getManifest().version };
@@ -139,7 +183,7 @@ export async function download() {
   const rows = requiredRows();
   const date = new Date();
   const name = exportName(date);
-  const result = makeExport(rows, { format: $('format').value, columns: ui.columns, about: exportAbout(rows, date), fields: fieldsOf() });
+  const result = makeExport(rows, { format: $('format').value, columns: ui.columns, about: exportAbout(rows, date), fields: fieldsOf(), pages: currentCollection().pages || {} });
   const blob = new Blob([result.data], { type: result.mime });
   const href = URL.createObjectURL(blob);
   const link = document.createElement('a'); link.href = href; link.download = name;
@@ -151,7 +195,7 @@ export async function download() {
 
 export async function copy(format, columns) {
   const rows = requiredRows();
-  const result = makeExport(rows, { format, columns, fields: fieldsOf() });
+  const result = makeExport(rows, { format, columns, fields: fieldsOf(), pages: currentCollection().pages || {} });
   await navigator.clipboard.writeText(result.data);
   const n = rows.length;
   show(format === 'text' ? `Copied ${plural(n, 'URL')}, one per line.`

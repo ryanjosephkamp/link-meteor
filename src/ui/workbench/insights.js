@@ -91,7 +91,7 @@ function bars(items) {
     const bar = node('span', 'bar'); bar.setAttribute('aria-hidden', 'true');
     const fill = node('i'); fill.style.width = `${(item.count / max) * 100}%`; bar.append(fill);
     row.append(node('span', 'label', item.label), ' ', node('span', 'num', count(item.count)), node('span', 'sr-only', item.count === 1 ? ' link' : ' links'), bar);
-    if (item.title) row.title = item.title;
+    row.title = item.title || item.label;
     const li = node('li'); li.append(row); list.append(li);
   }
   return list;

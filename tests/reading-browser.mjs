@@ -81,10 +81,15 @@ try {
   const collection = async () => { const state = await rpc(ui, {type: 'state.get'}); return state.collections.find((item) => item.id === state.activeCollectionId); };
   const statusOf = async () => Object.fromEntries((await collection()).links.map((link) => [link.id, [link.status || '', !!link.starred]]));
   const row = (i) => ui.locator('.link-row').nth(i);
-  // Opens or closes a row's details and waits until the page has handled it, so the next render keeps it.
+  // Opens or closes a row's details and waits until the page has handled it, so the next render keeps it. A render
+  // between the click and the details' toggle event (a storage reload, say) redraws the row as it was, so it tries again.
   const toggle = async (i, open) => {
-    await row(i).locator('.row-details summary').click();
-    await until(() => row(i).locator('.row-details').evaluate((item, open) => item.open === open && !!item.querySelector('.occurrence') === open, open), `details ${open ? 'open' : 'closed'}`);
+    const done = () => row(i).locator('.row-details').evaluate((item, open) => item.open === open && !!item.querySelector('.occurrence') === open, open);
+    for (let attempt = 0; attempt < 3 && !(await done()); attempt++) {
+      await row(i).locator('.row-details summary').click();
+      try { await until(done, 'details', 1500); } catch { /* tried again */ }
+    }
+    assert.ok(await done(), `details ${open ? 'open' : 'closed'}`);
   };
   const shot = async (name, options = {}) => { await ui.evaluate(() => { for (const id of ['notice', 'error']) document.getElementById(id).hidden = true; }); await ui.screenshot({path: resolve(evidence, name), animations: 'disabled', ...options}); result.screenshots.push(name); };
 

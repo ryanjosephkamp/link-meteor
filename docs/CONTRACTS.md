@@ -720,6 +720,55 @@ A page with none of these has no page citation. **Save tabs as links** also read
 
   Choosing a site, file type, status or *Starred* shows those links in the list, as a view option.
 
+#### Reading status, star and Insights, as built
+
+**Link details.** Each occurrence (`.occurrence`) opens with `.occ-new`, full width above `.facts` at every size:
+- `.reading` (a group labeled "Reading status and star for <label>"):
+  - `.status-seg`, a radio group labeled "Reading status": radios named `status-<link id>` with values `''` (Unread), `reading` and `read`, marked `data-link-field="status:<value>"`;
+  - `.star-btn`, a toggle with `aria-pressed`, reading "Star" or "Starred" (`data-link-field="star"`).
+
+  A change sends `links.status` or `links.star` for that link at once. The notice says "Marked “the canopy study” as read." or "Starred “the canopy study”.", with Undo. Keyboard focus stays on the control when the list is drawn again.
+- Then, only when the link has them, labeled groups (`.occ-block`, label `.occ-label`):
+  - *Context*: `blockquote.context` with the anchor text in a `mark` (its first exact match, else ignoring case), and `.context-meta`: "The words around the link on “<source title or host>”, as captured. Saved in this browser."
+  - *Identifiers*: `ul.idents`, one `.ident` per kind in `IDENTIFIER_LABELS` order: the label, the value and *Copy* (labeled "Copy DOI 10.5555/…"; the notice says "Copied the DOI."). A DOI's value is a link to `https://doi.org/<doi>` (`target="_blank"`, `rel="noopener noreferrer"`), opened only when clicked; other values are text.
+  - *Cited from*: `.cited` with `.cited-title` ("Untitled page" without one), `.cited-line` (authors, the first three and "and N more authors" past four; the journal, else the publisher, with vol., no. and pp.; the date as printed; DOI, arXiv, PubMed and ISBN; joined by " · ") and `.cited-note` ("From the source page’s own citation tags, read when you captured it. Saved in this browser; nothing was looked up online."). It shows `pages[pageKey(link.sourceUrl)]`; for a saved tab that is the tab's own page.
+  - *Imported from*: `.imported-from`, the link's `imported` text.
+
+**Row badges**, in order after the anchor text: `×N`, `.badge.star` (a star icon and "Starred"), `.badge.status` ("Reading" or "Read"), EMAIL or PHONE, the file type, one `.badge.badge-id` per identifier kind (DOI, arXiv, PubMed, PMC, ISBN) and `.badge.imported`. The new badges are written in sentence case and shown in capitals. A grouped row shows the star when any occurrence is starred, a status only when every occurrence has it, its first occurrence's identifiers, and Imported when any occurrence was imported.
+
+**Selection.** `#reading-actions` (a group in the list toolbar, after the selection count) shows while links in the view are selected: `#mark-read`, `#mark-unread` and `#star-selected` (`#star-selected-label` reads "Unstar" when every selected link is starred, otherwise "Star").
+- They act on the selected links in the view, as Remove does, and send one action for the links whose value changes. When none changes, nothing is sent and the notice says "The selected link is already read." or "All 3 selected links are already read."
+- Notices: "Marked 3 links as read.", "Starred 3 links.", "Unstarred 3 links.", each with Undo. Undo sends one action per distinct earlier value, as Fill does, and says "Put back the earlier reading status of 2 links." or "Put back the earlier stars of 2 links."
+
+**View options.**
+- In `#filter-panel`: `#status-filter` (Reading: `any`, `unread`, `reading`, `read`) and `#starred-filter` (Starred only). `#type-group` is a hidden input holding the type group chosen in Insights.
+- They pass `status`, `starred` and `typeGroup` to `queryLinks`.
+- Chips: "Reading status: Read", "Starred only" and "Type: PDF". Reset view and *Clear search and filters* clear them.
+- An export's About filters list them: "Reading status: Read", "Starred links only", "Type: PDF".
+
+**Insights** (`src/ui/workbench/insights.js`):
+- **The switch.** `#view-switch` (a group labeled "Show links or insights", with `#show-links` and `#show-insights`, each with `aria-pressed`) stands in for the list heading. `#review-title` stays for screen readers ("Links" or "Insights"), and it shows only while the collection is empty; then the switch hides and the list shows.
+- **The view.** Insights adds `.is-insights` to `#review`, which hides everything but the heading and `#insights`, and `#result-count` reads "For the whole collection". "/" shows the list and focuses its search.
+- **The cards** (`.insight`; headings `#insight-top-sites`, `#insight-file-types`, `#insight-other-sites-or-the-same-site`, `#insight-reading`, `#insight-saved-more-than-once`, `#insight-captures-over-time-by-week`), all from `insights(links, {pages, limit: 12})`:
+  - totals (`.totals`): links, unique addresses, sites, pages captured from, with an identifier, and starred;
+  - top sites: the 8 with the most links, with a note when there are more;
+  - file types;
+  - other sites or the same site: a split bar, and a legend with counts and percentages of all links, adding "Email, phone or no source page" when there are any;
+  - reading: Unread, Reading and Read;
+  - saved more than once: the top 5 addresses, and "N addresses were saved more than once; M of them under different anchor text.";
+  - captures over time, by week: one column per week, drawn to scale against the busiest week (an empty week has no column), an axis with the first week, "Peak: N links, week of <date>" and the last week, a note that weeks run Monday to Sunday in UTC (and how many links fall outside them), and a list of every week for screen readers.
+
+  Bars are drawn to scale against the largest in their card.
+- **Choices** are buttons (`.bar-row`, and the starred total), described by `#insights-choose-help`. Rows with a count of 0 aren't buttons.
+  - A site sets Domain to its host. Domain matches hosts that contain it, as always, so choosing `example.org` also shows `journal.example.org`.
+  - A file type sets `#type-group`, a status sets Reading, and Starred sets Starred only.
+  - Choosing clears the search and the other filters (sorting and grouping stay), shows the list and focuses `#show-links`.
+- **Drawing.** The cards are drawn when Insights opens, and again only when the collection's `updatedAt` or link count changes while it's shown. Keyboard focus stays on the same choice across a redraw. A capture's *Show only these links* shows the list.
+
+**Stable element IDs:** `#view-switch`, `#show-links`, `#show-insights`, `#insights`, `#insights-choose-help`, `#reading-actions`, `#mark-read`, `#mark-unread`, `#star-selected`, `#star-selected-label`, `#status-filter`, `#starred-filter`, `#type-group`.
+
+**Tests:** `tests/reading-browser.mjs` (no grants) covers these from the keyboard, Undo, the view options against `queryLinks`, Insights against `insights()`, 320 px and contrast in light and dark. `tests/visual-browser.mjs` measures the new badges, details and Insights in every theme and scheme, at 320 px, with screenshots.
+
 ### Exports
 
 **New columns** for tables, CSV, TSV, Excel, HTML and JSON: `context` (Context), `status` (Reading status: Unread, Reading or Read), `starred` (Starred: Yes or empty), `doi` (DOI), `arxiv` (arXiv ID), `pmid` (PubMed ID), `isbn` (ISBN) and `imported` (Imported from). Identifier columns are derived per link.

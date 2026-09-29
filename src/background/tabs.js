@@ -25,7 +25,7 @@ async function windowTabs(focusedOnly) {
 // Whether Link Meteor already has access to pages of this address's site: all sites, or that site.
 function siteAccess(url, known) {
   const origin = new URL(url).origin;
-  if (!known.has(origin)) known.set(origin, chrome.permissions.contains({origins: [`${origin}/*`]}).catch(() => false));
+  if (!known.has(origin)) known.set(origin, Promise.resolve().then(() => chrome.permissions.contains({origins: [`${origin}/*`]})).catch(() => false));
   return known.get(origin);
 }
 function within(promise, ms) {

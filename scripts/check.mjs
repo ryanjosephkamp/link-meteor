@@ -46,6 +46,7 @@ const suites = [
   { name: 'exports-browser', command: [node, 'tests/exports-browser.mjs'], profile: true },
   { name: 'backup-browser', command: [node, 'tests/backup-browser.mjs'] },
   { name: 'downloads-browser', command: [node, 'tests/downloads-browser.mjs'], profile: true },
+  { name: 'imports-browser', command: [node, 'tests/imports-browser.mjs'], profile: true },
   { name: 'audit-overlay', command: [node, 'tests/audit-overlay.mjs'], profile: true },
   { name: 'audit-actions', command: [node, 'tests/audit-actions.mjs'], profile: true },
   { name: 'audit-regressions', command: [node, 'tests/audit-regressions.mjs'], profile: true },

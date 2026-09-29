@@ -356,8 +356,7 @@ function renderSource() {
     const shown = view.names.slice(0, SHOWN_COLUMNS).join(', ');
     parts.push(`columns: ${view.names.length > SHOWN_COLUMNS ? `${shown} and ${count(view.names.length - SHOWN_COLUMNS)} more` : shown}`);
   } else {
-    parts.push(plural(rows, source.kind === 'folder' || table.bookmarks ? 'bookmark' : 'link'));
-    if (table.folders) parts.push(`in ${plural(table.folders, 'folder')}`);
+    parts.push(`${plural(rows, source.kind === 'folder' || table.bookmarks ? 'bookmark' : 'link')}${table.folders ? ` in ${plural(table.folders, 'folder')}` : ''}`);
     if (source.more) parts.push('the first 50,000');
   }
   line.append(` · ${parts.join(' · ')}`);

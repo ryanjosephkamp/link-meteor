@@ -761,7 +761,7 @@ Files: `content/capture.js`, `background/citations.js` (new), `background/card.j
 
 ### Identifiers (`src/core/identifiers.js`, pure)
 
-`identifiersOf(link, pages?)` returns `{doi?, arxiv?, pmid?, pmcid?, isbn?}`, found in `url` and `originalHref`, and in the link's own page citation's `doi`. They are derived each time, never stored.
+`identifiersOf(link, pages?)` returns `{doi?, arxiv?, pmid?, pmcid?, isbn?}`, found in `url` and `originalHref`, and in the citation the link uses (its own page's, or since release candidate 2 one borrowed from a page about the same work: see `citationFor` below). They are derived each time, never stored.
 - **DOI:** Crossref's pattern (`10.` followed by 4 to 9 digits, `/` and a suffix of letters, digits and `-._;()/:`), from `doi.org/…`, `dx.doi.org/…`, `/doi/…` paths and `doi=` query values. Percent-encoding is decoded, trailing punctuation is trimmed, and DOIs compare ignoring case. An arXiv DOI (`10.48550/arXiv.<id>`) also gives the arXiv ID.
 - **arXiv:** new-style `YYMM.NNNN(N)` and old-style `archive/YYMMNNN`, with an optional `vN`, from `arxiv.org/abs/…` and `arxiv.org/pdf/…`.
 - **PubMed:** a PMID from `pubmed.ncbi.nlm.nih.gov/<id>/` and `ncbi.nlm.nih.gov/pubmed/<id>`; a PMCID `PMC<digits>` from `pmc.ncbi.nlm.nih.gov/articles/…` and the older `ncbi.nlm.nih.gov/pmc/articles/…`.
@@ -840,13 +840,13 @@ Files: `content/capture.js`, `background/citations.js` (new), `background/card.j
 
 | Format | Extension | Entry |
 | --- | --- | --- |
-| `bibtex` | `.bib` | `@article` when the link's own citation has a journal, otherwise `@misc`, as Zotero writes web pages: `title`, `author`, `year`, `journal`, `volume`, `number`, `pages`, `doi`, `eprint` with `archivePrefix = {arXiv}` (as arXiv's own export does), `isbn`, `url`, `urldate`, `note` (the link's note) and `keywords` (its tags); no `howpublished`, so the address isn't printed twice. Keys are the first author's family name or the title's first word, plus the year, made unique with `a`, `b`… Escaping follows Zotero: `# $ % & _` get a backslash; `\ ~ ^ { }` and `< > |` become macros or escaped braces; `url` and `doi` stay raw. |
-| `ris` | `.ris` | `TY  - JOUR` when there is a journal, otherwise `ELEC`; `TI`, `AU` (one per author), `PY`, `DA`, `T2`, `VL`, `IS`, `SP`, `EP`, `DO`, `UR`, `Y2` (the capture date, as `YYYY/MM/DD/`), `N1` (the note), `KW` (one per tag) and `ER  - `. Each line is a two-letter tag, two spaces, a hyphen and a space; CRLF line endings. |
-| `csl` | `.json` | An array of CSL-JSON items with `id` and `type` (`article-journal` or `webpage`), `title`, `author` (split into family and given names when printed as "Family, Given", otherwise `literal`), `issued`, `container-title`, `volume`, `issue`, `page`, `DOI`, `PMID`, `PMCID`, `ISBN`, `URL`, `accessed` (`date-parts`), `note` and `keyword`. `container-title` is the journal, or for a web page the source site's name. |
+| `bibtex` | `.bib` | `@article` when the link's citation has a journal, otherwise `@misc`, as Zotero writes web pages: `title`, `author`, `year`, `howpublished` (only for an arXiv preprint: `arXiv preprint arXiv:<id>`), `journal`, `volume`, `number`, `pages`, `doi`, `eprint` with `archivePrefix = {arXiv}` (as arXiv's own export does), `isbn`, `url`, `urldate`, `note` (the link's note) and `keywords` (its tags). Otherwise no `howpublished`, so the address isn't printed twice. Keys are the first author's family name or the title's first word, plus the year, made unique with `a`, `b`… Escaping follows Zotero: `# $ % & _` get a backslash; `\ ~ ^ { }` and `< > |` become macros or escaped braces; `url` and `doi` stay raw. |
+| `ris` | `.ris` | `TY  - JOUR` when there is a journal, `UNPB` for an arXiv preprint, otherwise `ELEC`; `TI`, `AU` (one per author), `PY`, `DA`, `T2`, `PB` and `AN` (a preprint's `arXiv` and `arXiv:<id>`), `VL`, `IS`, `SP`, `EP`, `SN` (the ISBN), `DO`, `UR`, `Y2` (the capture date, as `YYYY/MM/DD/`), `N1` (the note), `KW` (one per tag) and `ER  - `. Each line is a two-letter tag, two spaces, a hyphen and a space; CRLF line endings. |
+| `csl` | `.json` | An array of CSL-JSON items with `id` and `type` (`article-journal`, `article` for an arXiv preprint, or `webpage`), `title`, `author` (split into family and given names when printed as "Family, Given", otherwise `literal`), `issued`, `container-title`, `publisher` and `number` (a preprint's `arXiv` and `arXiv:<id>`), `volume`, `issue`, `page`, `DOI`, `PMID`, `PMCID`, `ISBN`, `URL`, `accessed` (`date-parts`), `note` and `keyword`. `container-title` is the journal, or for a web page the source site's name; a preprint has none. |
 | `annotated` | `.md` | An annotated bibliography: the collection's name, then per link a citation line (authors, year, title, journal, DOI or address), its note, its context as a quote, and its tags. |
 | `obsidian` | `.md` | An Obsidian note: YAML front matter (`title`, `created`, `tags`, `source: Link Meteor`), then one list item per link, `[anchor text](url)`, with its note, custom columns as `name:: value` fields, and its context as an indented quote. |
 
-The title is the link's own citation title when there is one, otherwise its anchor text, accessible label or address, in that order. Authors, dates, journals and pages come only from the link's own citation. The Export panel says how many entries have a DOI or arXiv ID and how many have authors and a date, and shows the first entry.
+The title is the title of the citation the link uses when there is one, otherwise its anchor text, accessible label or address, in that order. Authors, dates, journals and pages come only from that citation: the link's own page's, or since release candidate 2 one borrowed from a saved page about the same work. The Export panel says how many entries have a DOI or arXiv ID and how many have authors and a date, and shows the first entry.
 
 #### Exports, as built
 
@@ -861,32 +861,34 @@ The title is the link's own citation title when there is one, otherwise its anch
 - `citations(rows, {format, pages, fields, collection, date})` returns the file. `citeFirst(rows, options)` returns the first entry exactly as the file writes it (for CSL-JSON, the first item on its own). `citeFacts(rows, pages)` returns `{entries, identified, authorsAndDate, pageTitles, addressTitles, notes, contexts}`. `dateParts(text)` returns `[year, month?, day?]`.
 - With a citation format, `makeExport` ignores `columns` and takes the collection's name and the export time from `about` (checked as usual). Without `about`, there is no name and no export time.
 - **Every entry:**
-  - The title is the link's own citation `title`, else its anchor text, accessible label or address, with spaces collapsed.
-  - Authors, date, journal, volume, issue and pages come only from the link's own citation, `pages[url without #fragment]`. The source page's citation is never used for the link.
+  - The title is the `title` of the citation the link uses, else its anchor text, accessible label or address, with spaces collapsed.
+  - Authors, date, journal, volume, issue and pages come only from the citation the link uses: its own, `pages[url without #fragment]`, or (release candidate 2) one borrowed with `citationFor`. The source page's citation is never used for the link just because the link was captured there.
+  - (Release candidate 2) An arXiv entry with no date takes the year and month of its ID (`arxivDate`), and one without a journal is an arXiv preprint in every format.
   - Dates as printed: year-first numbers (`2025-03-14`, `2025/03`, also inside other text), month names (`14 March 2025`, `March 14, 2025`, `2019 Aug 23`) and a lone year. Day-first or month-first numbers (`03/04/2025`) give only the year. The access date is the local calendar date of `capturedAt`.
   - Names are split into family and given names only when printed with exactly one comma ("Okafor, Amara").
   - Keys (BibTeX keys and CSL `id`s): the first author's family name (a name printed without a comma gives its last word), else the title's first word with a letter, skipping *a*, *an* and *the* (for a title that is the address, the site's first label); lowercase ASCII letters and digits, accents folded; then the year; `link` when nothing is left. Repeats get `a`, `b`… `z`, `aa`… in row order.
 - **BibTeX:**
-  - Fields in this order: `title, author, year, journal, volume, number, pages, doi, eprint, archivePrefix, isbn, url, urldate, note, keywords`. `@article` when the link's own citation has a journal, otherwise `@misc`.
+  - Fields in this order: `title, author, year, howpublished, journal, volume, number, pages, doi, eprint, archivePrefix, isbn, url, urldate, note, keywords`. `@article` when the link's own citation has a journal, otherwise `@misc`.
   - Layout: two spaces, the field name padded to 12, ` = {value}`, one field per line; a blank line between entries; a final newline; an empty file for no rows. Every value is on one line.
   - Escaping as Zotero writes it: `# $ % & _` get a backslash; `\ ~ ^ < > |` become `{\textbackslash}`, `{\textasciitilde}`, `{\textasciicircum}`, `{\textless}`, `{\textgreater}` and `{\textbar}`; `{` and `}` become `\{\vphantom{\}}` and `\vphantom{\{}\}`, so braces stay balanced.
   - `url` and `doi` stay raw, except that `{`, `}`, `\` and spaces are percent-encoded, so a brace in an address can't unbalance the entry.
   - `author`: "Family, Given" as printed (a part containing the word "and" is braced); any other name is braced whole, `{Jun Watanabe}`, so readers keep it as one name. `pages` uses `--`. `eprint` is the arXiv ID with its version, if the address has one. `note` is the link's note; `keywords` its tags, joined with ", ".
-  - Not written: `month`, `publisher`, PubMed and PMC IDs (BibTeX has no standard field for them), and no braces to protect capital letters in titles.
+  - Titles (release candidate 2): a word with a capital letter after its first character (an acronym, `3D`, `COVID-19`, `iPhone`) is braced, `{DNA}`, so classic styles keep it as written. Other capitals stay free.
+  - Not written: `month`, `publisher`, and PubMed and PMC IDs (BibTeX has no standard field for them).
 - **RIS:**
-  - Tags in this order: `TY, TI, AU…, PY, DA, T2, VL, IS, SP, EP, DO, UR, Y2, N1, KW…, ER`. `PY` is the year. `DA` is `YYYY/MM/DD/`, or `YYYY/MM//`, when the month is known. `Y2` is the access date as `YYYY/MM/DD/`. `T2` is the journal only. `EP` is written only with a different first page.
+  - Tags in this order: `TY, TI, AU…, PY, DA, T2, PB, AN, VL, IS, SP, EP, SN, DO, UR, Y2, N1, KW…, ER`. `PY` is the year. `DA` is `YYYY/MM/DD/`, or `YYYY/MM//`, when the month is known. `Y2` is the access date as `YYYY/MM/DD/`. `T2` is the journal only. `EP` is written only with a different first page.
   - Values are on one line and empty ones are left out. `ER  - ` ends every record, records are separated by a blank line, every line ends with CRLF, and no rows give an empty file.
-  - Not written: the PubMed, PMC, arXiv and ISBN IDs, which a web page record has no field for.
+  - Not written: the PubMed and PMC IDs, which RIS has no standard tag for. An arXiv ID is written only for a preprint, as `AN  - arXiv:<id>`.
 - **CSL-JSON:**
   - The array, indented by two spaces, with each date's parts on one line (`"date-parts": [[2025, 3, 14]]`), and a final newline; `[]` for no rows.
-  - Keys in this order: `id, type, title, author, issued, container-title, volume, issue, page, DOI, PMID, PMCID, ISBN, URL, accessed, note, keyword`. `issued` is `date-parts` when a year is found, otherwise `{literal}`. A web page's `container-title` is its site, the link's own host without `www.`, and none for `doi.org`. `page` uses a hyphen. `note` keeps its line breaks. `keyword` is the tags joined with ", ".
+  - Keys in this order: `id, type, title, author, issued, container-title, publisher, number, volume, issue, page, DOI, PMID, PMCID, ISBN, URL, accessed, note, keyword`. `issued` is `date-parts` when a year is found, otherwise `{literal}`. A web page's `container-title` is its site, the link's own host without `www.`, and none for `doi.org`. `page` uses a hyphen. `note` keeps its line breaks. `keyword` is the tags joined with ", ".
 - **Annotated bibliography:**
   - `# <collection name>` (or `# Links`), then "An annotated bibliography of 16 links, exported from Link Meteor on 2026-09-29.", then a numbered list.
-  - Each item starts with its citation: `Authors; joined (2025). Title. *Journal*, 12(3), 45–52. <https://doi.org/…>`, or without authors `Title. (2025).`; the link is the DOI's `https://doi.org/` address when there is a DOI, otherwise the link's address. A title that is the address is written once, as the link.
+  - Each item starts with its citation: `Authors; joined (2025). Title. *Journal*, 12(3), 45–52. <https://doi.org/…>`, or without authors `Title. (2025).`; a preprint has `arXiv preprint arXiv:<id>.` in place of the journal; the link is the DOI's `https://doi.org/` address when there is a DOI, otherwise the link's address. A title that is the address is written once, as the link.
   - Then, indented under the number, each line of the note as its own paragraph, the context as a `>` quote, and `Tags: a, b`.
 - **Obsidian note:**
   - Front matter: `title` (quoted), `created` (the export time, local, `YYYY-MM-DDTHH:mm`), `tags` and `source: Link Meteor`. `tags` lists every link's tags as Obsidian tags, quoted: spaces become hyphens, characters other than letters, digits, `_`, `-` and `/` are dropped, tags of digits only are left out, and the first spelling of each is kept; `tags: []` when there are none.
-  - One list item per link: `- [anchor text](address)` (the accessible label, then the citation title, then the address when there is no anchor text), then its tags as `#tag`. Indented two spaces under it: the note's lines, each filled custom column as `Name:: value` (the value raw and on one line; `::` in a name becomes `:`), and the context as a `>` quote. Link addresses percent-encode `< > ( ) [ ] \` and spaces.
+  - One list item per link: `- [anchor text](address)` (the accessible label, then the citation title, then the address when there is no anchor text), then its tags as `#tag`. Indented two spaces under it: the note's lines, `Preprint:: arXiv:<id>` for an arXiv preprint (release candidate 2), each filled custom column as `Name:: value` (the value raw and on one line; `::` in a name becomes `:`), and the context as a `>` quote. Link addresses percent-encode `< > ( ) [ ] \` and spaces.
 - **Markdown escaping**, in both Markdown formats: page text, notes and tags get a backslash before `` \ ` * _ [ ] < > # | ~ $ ``, `==` and `%%` are broken up, and a line never starts with a bare `-`, `+`, `=` or `1.`. So text reads as written and never becomes formatting, a link, an Obsidian tag, a highlight, a comment or math.
 
 **The Export panel:**
@@ -1081,3 +1083,90 @@ The plan recommends building these later. Here is what the browser allows, so th
 - `chrome.dom.openOrClosedShadowRoot` works in the page script with no permission.
 - `scripting.executeScript` with `allFrames` reaches every frame Link Meteor has access to, and silently skips the rest.
 - Listing every frame, to say which were skipped, would need `webNavigation`, which Chrome describes as "Read your browsing history". The plan avoids it: frames that didn't answer are reported as a count.
+
+## Added in 0.5.0 release candidate 2
+
+After the owner's hands-on check of release candidate 1. It adds no permission and no network access.
+
+### The citation a link uses (`src/core/identifiers.js`)
+
+- `citationFor(link, pages?, ids?)` returns `{key, citation, reason}` or `null`:
+  - `reason: 'own'`: the link's own page, `pages[url without #fragment]`;
+  - otherwise a saved page about the same work, in this order: `'pdf'` (its `pdfUrl`, from `citation_pdf_url`, is the link's address without its fragment), `'doi'` (the same DOI, ignoring case) and `'arxiv'` (the same arXiv ID, ignoring the version).
+- A page's DOI and arXiv ID come from its tags, or from its own address (a saved `arxiv.org/abs/…` tab without tags still matches). When several pages match, the newest `readAt` wins. The index is built once per `pages` object.
+- `identifiersOf`, every citation format, `citeFacts`, the export columns, Insights and a link's details all use it.
+- **Backups** keep a page citation when a link uses it this way, besides the link's own address and source page.
+- **In a link's details**, a *Citation* block shows the citation the link uses when that isn't its source page's. Its note says where it came from, for example "From the citation tags of “SplatFields: …”, which names this link as its PDF. Citation exports use it."
+- `arxivDate(id)` returns `[year, month]` from an arXiv ID's first four digits, the year and month of first submission: `2409.11211` gives `[2024, 9]`, `hep-th/9901001` gives `[1999, 1]` (old-style years 91 to 99 are 1990s). Otherwise `[]`.
+
+### Citation formats
+
+- An arXiv preprint is an entry with an arXiv ID and no journal:
+  - BibTeX: `@misc` with `howpublished = {arXiv preprint arXiv:<id>}`, besides `eprint` and `archivePrefix`;
+  - RIS: `TY  - UNPB`, `PB  - arXiv` and `AN  - arXiv:<id>`;
+  - CSL-JSON: `type: "article"`, `publisher: "arXiv"`, `number: "arXiv:<id>"`, and no `container-title`;
+  - the annotated bibliography: `arXiv preprint arXiv:<id>.` after the title;
+  - the Obsidian note: a `Preprint:: arXiv:<id>` field.
+- **BibTeX titles** brace each word with a capital after its first character. A word is letters and digits, joined by `-`, `'` or `’`.
+- **RIS** writes the ISBN as `SN`.
+
+### Moving and copying links
+
+**The model** (`src/core/model.js`, pure):
+- `transferLinks(state, {fromCollectionId, ids, mode: 'move' | 'copy', toCollectionId? | newCollection?}, {newId?})` returns `{state, record, moved, skipped, fields, name}`.
+  - It moves or copies the chosen links, in their order, to the end of an existing collection or a new one (named with collapsed spaces, at most `MAX_COLLECTION_NAME`, 120).
+  - A new collection is not opened: the open collection stays open.
+  - Everything travels: notes, tags, context, status, star, capture details, `imported`, and custom column values. A value goes to the destination's column of the same name (ignoring case), or to a column created there. When the destination has no room, it refuses and nothing changes.
+  - The page citations the links use (own address, source page, borrowed) are copied where the destination has none for that page.
+  - A link whose address the destination already holds is skipped and stays where it is. When every chosen link is already there, it refuses.
+  - A move keeps each link's id; a copy gives new ids (`newId`).
+  - An earlier removal's Undo snapshot is kept.
+  - `record` is `{mode, fromCollectionId, toCollectionId, createdCollection, fields, ids, positions, fieldMap, pages}`: the created column ids, the ids the destination received, a move's original positions, the column mapping, and the page citations it added.
+- `revertTransfer(state, record)` removes the received links and what the transfer created, and for a move puts each link back at its old position with its values in the source's columns.
+  - It removes: the new collection, or the created columns and the added page citations that no remaining link uses.
+  - It refuses when a received link is gone, the new collection has other content, or other links have values in the created columns.
+
+**Messages** (workbench only, `src/background/transfer.js`):
+- `links.transfer {fromCollectionId, ids, mode, toCollectionId? | newCollection?}` saves `transferLinks` in one write and returns `{state, transferId, mode, moved, skipped, fields, collectionId, name, createdCollection}`. A failed write changes nothing.
+- `links.transferUndo {transferId}` checks that the received links are exactly as the transfer wrote them (a SHA-256 fingerprint of their canonical JSON), then saves `revertTransfer`. It returns `{state, mode, count, collectionRemoved, fieldsRemoved}`, and refuses with what to do instead.
+- Session key `linkMeteorTransfers`: the last 10 transfers' records with `transferId`, `digest` and `createdAt`. It lives until the browser closes.
+
+**The workbench** (`src/ui/workbench/move.js`):
+- `#move-selected` "Move to…" and `#copy-selected` "Copy to…" show in the list toolbar while links in the view are selected.
+- In each link's details, `.occurrence-move` holds "Move to…", named "Move <label> to another collection".
+- `#move-panel` (a form) holds:
+  - `#move-title` ("Move 3 selected links to another collection", or "Move “label” to another collection");
+  - `#move-to`: every other collection with its link count, then "New collection…";
+  - `#move-new-row` / `#move-new`, shown for a new collection;
+  - `#move-help`, which says beforehand how many links go, how many are already there and stay, and which columns it adds, or what is missing;
+  - `#move-apply` ("Move 2 links", disabled while something is missing) and `#move-cancel`.
+- Escape or Cancel closes the panel and returns focus to the button that opened it. The panel closes when the links it names are gone.
+- A move clears the moved links from the selection. The notice says, for example, "Moved 2 links to “Thesis”. 1 link was already there and stayed here. Added 1 column there." Its Undo sends `links.transferUndo`.
+
+### Closing the side panel from the toolbar
+
+- On each toolbar click, the background opens the side panel in that window, as before, then sends `{type: 'panel.toggle', windowId}` to Link Meteor's pages.
+- A side panel already open in that window closes: with `chrome.sidePanel.close({windowId})` where Chrome has it (Chrome 151 does), otherwise, or when that fails, with `window.close()`.
+- The full view in a tab ignores the message (`chrome.tabs.getCurrent()` finds its tab). A panel opened by this click isn't listening yet, so it stays open.
+
+### The last backup
+
+- `backup.made {}` records when the workbench handed a backup file to Chrome's download: local key `linkMeteorLastBackup`, `{at: ISO time}`. It records nothing about the file, and Chrome doesn't report whether the person kept it.
+- `backup.status` now returns `{undo, lastBackup}`; `lastBackup` is that time, or `null`.
+- In Backup and restore:
+  - `#backup-remove-note` says "Removing Link Meteor from Chrome deletes everything it saved. A backup file keeps it.";
+  - `#backup-last` says "Last backup: never" or "Last backup: <local date and time>", with the exact time as its title.
+- Chrome's own "Remove Link Meteor?" dialog can't be changed by an extension. `chrome.runtime.setUninstallURL` would open a website after removal, when the data is already gone, so it isn't used.
+
+### PDFs and files on the computer
+
+- `inject(tab)` refuses before injecting:
+  - for a tab whose address ends in `.pdf`: "Link Meteor can’t read the links inside a PDF yet. To save one link, right-click it and choose Link Meteor, then Add link.";
+  - for a `file:` page: "Link Meteor can’t capture from files on your computer. …", with the same advice.
+- For other web pages, it first reads `document.contentType` (a named function, `documentType`) and refuses a PDF the same way. Chrome's PDF viewer shows a PDF, and no extension can read that.
+- *Capture this page* and the capture report use the same words, in place of "Choose an ordinary HTTP or HTTPS webpage".
+- Reading the links inside PDFs is planned for 0.6.0.
+
+### The Star button
+
+The Star toggle in a link's details keeps the label "Star". `aria-pressed` and the pressed look say whether it's starred, so screen readers don't announce the state twice. The selection's Star or Unstar button is unchanged.

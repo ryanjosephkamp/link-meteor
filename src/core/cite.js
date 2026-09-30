@@ -1,7 +1,7 @@
 // Citation formats (0.5.0): BibTeX, RIS, CSL-JSON, an annotated bibliography and an Obsidian note,
 // one entry per row. Pure, and never looks anything up: output depends only on the rows, the
 // collection's page citations, its name and custom columns, and the export time given.
-import { identifiersOf } from './identifiers.js';
+import { identifiersOf, citationFor, arxivDate } from './identifiers.js';
 
 export const CITE_FORMATS = Object.freeze(['bibtex', 'ris', 'csl', 'annotated', 'obsidian']);
 export const CITE_MIMES = Object.freeze({
@@ -12,10 +12,6 @@ export const CITE_MIMES = Object.freeze({
 /* Shared helpers ------------------------------------------------------------------------------ */
 function oneLine(value) { return String(value ?? '').replace(/\s+/gu, ' ').trim(); }
 function pad(n) { return String(n).padStart(2, '0'); }
-// A page's address without its fragment, as the collection's page citations are keyed.
-function pageKey(value) {
-  try { const url = new URL(value); url.hash = ''; return ['http:', 'https:'].includes(url.protocol) ? url.href : ''; } catch { return ''; }
-}
 function siteName(value) {
   try { const url = new URL(value); return ['http:', 'https:'].includes(url.protocol) ? url.hostname.toLowerCase().replace(/^www\./, '') : ''; } catch { return ''; }
 }
@@ -62,23 +58,28 @@ function personName(name) {
   return family && given ? { family, given } : null;
 }
 
-// What every format needs from one row. Titles come from the link's own page citation, then its
-// anchor text, accessible label or address; authors, dates, journals and pages only from its own
-// citation.
+// What every format needs from one row. Titles come from the citation the link uses (its own
+// page's, or one borrowed from a saved page about the same work: see citationFor), then its anchor
+// text, accessible label or address; authors, dates, journals and pages only from that citation.
+// An arXiv entry without a date takes the year and month of its ID, and one without a journal is
+// an arXiv preprint.
 function entryOf(row, pages) {
-  const own = pages[pageKey(row.url)] || {};
+  const own = citationFor(row, pages)?.citation || {};
   const anchor = oneLine(row.anchorText) || oneLine(row.accessibleLabel);
   const url = String(row.url ?? '');
   const title = oneLine(own.title) || anchor || url;
   const date = oneLine(own.date);
-  const [year, month, day] = dateParts(date);
+  const ids = identifiersOf(row, pages);
+  let [year, month, day] = dateParts(date);
+  if (!year && ids.arxiv) [year, month] = arxivDate(ids.arxiv);
+  const journal = oneLine(own.journal);
   const firstPage = oneLine(own.firstPage);
   const lastPage = firstPage && oneLine(own.lastPage) !== firstPage ? oneLine(own.lastPage) : '';
   return {
     row, url, title, fromPage: !!oneLine(own.title), fromAddress: !oneLine(own.title) && !anchor, anchor, date, year, month, day,
     authors: (Array.isArray(own.authors) ? own.authors : []).map(oneLine).filter(Boolean),
-    journal: oneLine(own.journal), volume: oneLine(own.volume), issue: oneLine(own.issue), firstPage, lastPage,
-    ids: identifiersOf(row, pages), accessed: localDate(row.capturedAt),
+    journal, volume: oneLine(own.volume), issue: oneLine(own.issue), firstPage, lastPage, preprint: !journal && !!ids.arxiv,
+    ids, accessed: localDate(row.capturedAt),
     note: String(row.notes ?? '').trim(), tags: (Array.isArray(row.tags) ? row.tags : []).map(oneLine).filter(Boolean), context: oneLine(row.context),
   };
 }
@@ -118,7 +119,22 @@ function citeKeys(entries) {
 // \vphantom, so every field keeps balanced braces. url and doi stay raw.
 const TEX = { '|': '{\\textbar}', '<': '{\\textless}', '>': '{\\textgreater}', '~': '{\\textasciitilde}', '^': '{\\textasciicircum}',
   '\\': '{\\textbackslash}', '{': '\\{\\vphantom{\\}}', '}': '\\vphantom{\\{}\\}' };
-function tex(value) { return oneLine(value).replace(/[|<>~^\\{}]/g, (c) => TEX[c]).replace(/[#$%&_]/g, '\\$&'); }
+function escapeTex(text) { return text.replace(/[|<>~^\\{}]/g, (c) => TEX[c]).replace(/[#$%&_]/g, '\\$&'); }
+function tex(value) { return escapeTex(oneLine(value)); }
+// Classic BibTeX styles lowercase titles, so a word with a capital after its first character (an
+// acronym, 3D, COVID-19, iPhone) is braced to keep it as written. Other capitals stay free, as
+// braces around every capital would show in some reference managers.
+const WORD = /[\p{L}\p{N}]+(?:[-'’][\p{L}\p{N}]+)*/gu;
+function texTitle(value) {
+  const text = oneLine(value);
+  let out = '', at = 0;
+  for (const match of text.matchAll(WORD)) {
+    const word = match[0];
+    out += escapeTex(text.slice(at, match.index)) + (/\p{Lu}/u.test(word.slice(1)) ? `{${word}}` : word);
+    at = match.index + word.length;
+  }
+  return out + escapeTex(text.slice(at));
+}
 // A raw field can't hold a brace or backslash without unbalancing the entry: those are percent-encoded.
 function raw(value) { return oneLine(value).replace(/[{}\\\s]/g, (c) => `%${c.charCodeAt(0).toString(16).toUpperCase().padStart(2, '0')}`); }
 function bibName(name) {
@@ -130,8 +146,8 @@ function bibName(name) {
 function bibtexEntry(entry, key) {
   const { ids } = entry;
   const fields = [
-    ['title', tex(entry.title)], ['author', entry.authors.map(bibName).join(' and ')], ['year', entry.year ? String(entry.year) : ''],
-    ['journal', tex(entry.journal)], ['volume', tex(entry.volume)], ['number', tex(entry.issue)], ['pages', tex(pageRange(entry, '--'))],
+    ['title', texTitle(entry.title)], ['author', entry.authors.map(bibName).join(' and ')], ['year', entry.year ? String(entry.year) : ''],
+    ['howpublished', entry.preprint ? `arXiv preprint arXiv:${tex(ids.arxiv)}` : ''], ['journal', tex(entry.journal)], ['volume', tex(entry.volume)], ['number', tex(entry.issue)], ['pages', tex(pageRange(entry, '--'))],
     ['doi', raw(ids.doi)], ['eprint', tex(ids.arxiv)], ['archivePrefix', ids.arxiv ? 'arXiv' : ''], ['isbn', tex(ids.isbn)],
     ['url', raw(entry.url)], ['urldate', isoDate(entry.accessed)], ['note', tex(entry.note)], ['keywords', tex(entry.tags.join(', '))],
   ].filter(([, value]) => value);
@@ -143,9 +159,10 @@ function risDate([year, month, day]) { return year && month ? `${year}/${pad(mon
 function risRecord(entry) {
   const { ids } = entry;
   const lines = [
-    ['TY', entry.journal ? 'JOUR' : 'ELEC'], ['TI', entry.title], ...entry.authors.map((name) => ['AU', name]),
+    ['TY', entry.journal ? 'JOUR' : entry.preprint ? 'UNPB' : 'ELEC'], ['TI', entry.title], ...entry.authors.map((name) => ['AU', name]),
     ['PY', entry.year ? String(entry.year) : ''], ['DA', risDate([entry.year, entry.month, entry.day])], ['T2', entry.journal],
-    ['VL', entry.volume], ['IS', entry.issue], ['SP', entry.firstPage], ['EP', entry.lastPage], ['DO', ids.doi], ['UR', entry.url],
+    ['PB', entry.preprint ? 'arXiv' : ''], ['AN', entry.preprint ? `arXiv:${ids.arxiv}` : ''],
+    ['VL', entry.volume], ['IS', entry.issue], ['SP', entry.firstPage], ['EP', entry.lastPage], ['SN', ids.isbn], ['DO', ids.doi], ['UR', entry.url],
     ['Y2', entry.accessed.length ? `${entry.accessed[0]}/${pad(entry.accessed[1])}/${pad(entry.accessed[2])}/` : ''], ['N1', entry.note],
     ...entry.tags.map((tag) => ['KW', tag]),
   ];
@@ -161,13 +178,15 @@ function cslJson(value) {
 }
 function cslItem(entry, key) {
   const { ids } = entry;
-  const item = { id: key, type: entry.journal ? 'article-journal' : 'webpage', title: entry.title };
+  // An arXiv preprint is an "article" with arXiv as its publisher and its ID as its number, as Zotero writes one.
+  const item = { id: key, type: entry.journal ? 'article-journal' : entry.preprint ? 'article' : 'webpage', title: entry.title };
   if (entry.authors.length) item.author = entry.authors.map((name) => { const person = personName(name); return person ? { family: person.family, given: person.given } : { literal: name }; });
   if (entry.year) item.issued = { 'date-parts': [[entry.year, entry.month, entry.day].filter(Boolean)] };
   else if (entry.date) item.issued = { literal: entry.date };
   const site = siteName(entry.url);
   const values = {
-    'container-title': entry.journal || (RESOLVERS.test(site) ? '' : site), volume: entry.volume, issue: entry.issue, page: pageRange(entry, '-'),
+    'container-title': entry.journal || (entry.preprint || RESOLVERS.test(site) ? '' : site), publisher: entry.preprint ? 'arXiv' : '',
+    number: entry.preprint ? `arXiv:${ids.arxiv}` : '', volume: entry.volume, issue: entry.issue, page: pageRange(entry, '-'),
     DOI: ids.doi, PMID: ids.pmid, PMCID: ids.pmcid, ISBN: ids.isbn, URL: entry.url,
   };
   for (const [name, value] of Object.entries(values)) if (value) item[name] = value;
@@ -196,7 +215,8 @@ function citationLine(entry) {
   const year = entry.year ? `(${entry.year})` : '';
   const lead = entry.authors.length ? `${mdText(entry.authors.join('; '))}${year ? ` ${year}` : ''}. ${title}` : `${title}${year ? ` ${year}.` : ''}`;
   const numbers = [entry.volume && mdText(entry.volume) + (entry.issue ? `(${mdText(entry.issue)})` : ''), !entry.volume && entry.issue && `(${mdText(entry.issue)})`, entry.firstPage && mdText(pageRange(entry, '–'))].filter(Boolean);
-  const source = entry.journal ? ` *${mdText(entry.journal)}*${numbers.length ? `, ${numbers.join(', ')}` : ''}.` : '';
+  const source = entry.journal ? ` *${mdText(entry.journal)}*${numbers.length ? `, ${numbers.join(', ')}` : ''}.`
+    : entry.preprint ? ` arXiv preprint arXiv:${entry.ids.arxiv}.` : ''; // an arXiv ID is only letters, digits and . / -
   return `${lead}${source} ${link}`;
 }
 function annotatedEntry(entry, index) {
@@ -217,6 +237,7 @@ function obsidianItem(entry, fields) {
   const tags = [...new Set(entry.tags.map(obsidianTag).filter(Boolean))];
   const lines = [`- [${mdText(entry.anchor || entry.title)}](${linkUrl(entry.url)})${tags.map((tag) => ` #${tag}`).join('')}`];
   for (const line of noteLines(entry.note)) lines.push(`  ${mdText(line)}`);
+  if (entry.preprint) lines.push(`  Preprint:: arXiv:${entry.ids.arxiv}`);
   for (const field of fields) {
     const value = oneLine(entry.row.fields?.[field.id]);
     if (value) lines.push(`  ${fieldName(field.name)}:: ${value}`);

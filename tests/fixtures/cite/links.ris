@@ -36,8 +36,12 @@ UR  - https://journal.example.org/articles/43
 Y2  - 2026/09/25/
 ER  - 
 
-TY  - ELEC
+TY  - UNPB
 TI  - Attention Is All You Need
+PY  - 2017
+DA  - 2017/06//
+PB  - arXiv
+AN  - arXiv:1706.03762v5
 UR  - https://arxiv.org/abs/1706.03762v5
 Y2  - 2026/09/25/
 ER  - 
@@ -56,6 +60,7 @@ ER  -
 
 TY  - ELEC
 TI  - Urban Climates
+SN  - 9780306406157
 UR  - https://openlibrary.org/isbn/9780306406157
 Y2  - 2026/09/25/
 ER  - 

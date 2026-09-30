@@ -784,7 +784,7 @@ try {
   assert.doesNotMatch(ris, /[^\r]\n/, 'RIS lines end with CRLF');
   assert.equal((ris.match(/^TY {2}- /gm) || []).length, citeRows.length); assert.equal((ris.match(/^ER {2}- \r$/gm) || []).length, citeRows.length);
   const csl = JSON.parse(citeFiles.csl.bytes.toString('utf8'));
-  assert.ok(Array.isArray(csl) && csl.length === citeRows.length && csl.every((item) => item.id && ['article-journal', 'webpage'].includes(item.type)));
+  assert.ok(Array.isArray(csl) && csl.length === citeRows.length && csl.every((item) => item.id && ['article-journal', 'article', 'webpage'].includes(item.type)));
   assert.equal(new Set(csl.map((item) => item.id)).size, csl.length);
   assert.match(citeFiles.obsidian.bytes.toString('utf8'), /\n {2}Principal investigator:: Dr\. Okafor\n {2}Deadline:: =March 1\n/);
   check('Citations and notes: BibTeX, RIS, CSL-JSON, the annotated bibliography and the Obsidian note each download under the usual name with their own extension, equal src/core/cite.js output for the same rows, and are valid for their readers; the columns step aside for what the entries hold and the first entry', {files: Object.fromEntries(Object.entries(citeFiles).map(([format, got]) => [format, got.name]))});

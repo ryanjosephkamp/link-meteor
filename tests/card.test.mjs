@@ -241,7 +241,7 @@ test('0.5.0: the card and Capture this page keep each link’s context and the p
   const scannedLink = collection(home).links.find((l) => l.batchId === report.batchId);
   assert.equal(scannedLink.context, 'Words around Link 8.');
   assert.equal(collection(home).pages['https://a.test/page'].title, 'Scanned page');
-  assert.deepEqual(scripted.filter((spec) => spec.func).map((spec) => spec.args), [[{context: true}]]);
+  assert.deepEqual(scripted.filter((spec) => spec.func && spec.func.name !== 'documentType').map((spec) => spec.args), [[{context: true}]]);
 
   // With saveContext off, no context is kept, whatever the page sent; citations still are.
   await ok({type: 'state.mutate', action: {type: 'settings.update', patch: {saveContext: false}}}, WORKBENCH);
@@ -251,7 +251,7 @@ test('0.5.0: the card and Capture this page keep each link’s context and the p
   scripted.length = 0;
   const offRun = await ok({type: 'capture.run', tabIds: [1]}, WORKBENCH);
   assert.equal('context' in collection(home).links.find((l) => l.batchId === offRun.report.batchId), false);
-  assert.deepEqual(scripted.filter((spec) => spec.func).map((spec) => spec.args), [[{context: false}]], 'the page is told not to read context');
+  assert.deepEqual(scripted.filter((spec) => spec.func && spec.func.name !== 'documentType').map((spec) => spec.args), [[{context: false}]], 'the page is told not to read context');
   await ok({type: 'state.mutate', action: {type: 'settings.update', patch: {saveContext: true}}}, WORKBENCH);
   scans.delete(1);
 });

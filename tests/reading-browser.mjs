@@ -145,7 +145,7 @@ try {
   await ui.keyboard.press('Space');
   await until(async () => (await statusOf()).r2[1] === true, 'Space stars it');
   await ui.waitForTimeout(300);
-  assert.deepEqual([await row(1).locator('.star-btn').getAttribute('aria-pressed'), await row(1).locator('.star-btn').innerText(), (await focused()).field], ['true', 'Starred', 'star']);
+  assert.deepEqual([await row(1).locator('.star-btn').getAttribute('aria-pressed'), await row(1).locator('.star-btn').innerText(), (await focused()).field], ['true', 'Star', 'star'], 'the label stays Star; pressed says it is starred');
   assert.equal(await notice(), 'Starred “the canopy study”.');
   await ui.locator('#notice button', {hasText: 'Undo'}).click();
   await until(async () => (await statusOf()).r2[1] === false, 'Undo removes the star');

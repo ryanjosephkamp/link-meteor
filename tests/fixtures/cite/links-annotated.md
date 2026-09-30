@@ -18,7 +18,7 @@ An annotated bibliography of 13 links, exported from Link Meteor on 2026-09-29.
 
 3. Okafor, Amara (2025). Green roofs & street canyons. *Journal of Example Climate*, e1024. <https://journal.example.org/articles/43>
 
-4. Attention Is All You Need. <https://arxiv.org/abs/1706.03762v5>
+4. Attention Is All You Need. (2017). arXiv preprint arXiv:1706.03762v5. <https://arxiv.org/abs/1706.03762v5>
 
    > Transformers, introduced in Attention Is All You Need, replaced recurrence.
 

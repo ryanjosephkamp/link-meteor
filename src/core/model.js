@@ -2,6 +2,7 @@
 import { fileNamePart } from './export.js';
 import { THEME_IDS } from './themes.js';
 import { typeGroup } from './insights.js';
+import { citationFor } from './identifiers.js';
 
 const LINK_STRINGS = ['id', 'anchorText', 'accessibleLabel', 'url', 'originalHref', 'sourceUrl', 'sourceTitle', 'frameUrl', 'capturedAt', 'batchId', 'notes'];
 const SORTS = new Set(['page', 'anchor', 'url', 'domain', 'newest']);
@@ -518,6 +519,130 @@ export function reduceState(input, action) {
   }
 }
 
+// The page citations links refer to: each link's own address, its source page, and the saved page
+// whose citation it borrows (identifiers.js, citationFor).
+function usedPages(links, pages) {
+  const used = new Set();
+  for (const item of links) for (const key of [pageKey(item.url), pageKey(item.sourceUrl), citationFor(item, pages)?.key]) if (key && pages[key]) used.add(key);
+  return used;
+}
+
+/* Moving and copying links to another collection (0.5.0 RC2) ------------------------------------
+   transferLinks(state, {fromCollectionId, ids, mode, toCollectionId? | newCollection?}) moves or
+   copies the chosen links, in their order, to the end of an existing collection or a new one.
+   Everything travels: notes, tags, context, reading status, star, capture details, custom column
+   values (a column the destination lacks is created there, matched by name otherwise) and the page
+   citations the links use. A link whose address the destination already holds is skipped and stays
+   where it is. A move keeps each link's id; a copy gets new ids. The open collection stays open.
+   Returns {state, record, moved, skipped, fields, name}; record is what revertTransfer needs. */
+export const MAX_COLLECTION_NAME = 120;
+export function transferLinks(input, request, { newId = id } = {}) {
+  const state = validState(migrateState(input));
+  object(request, 'transfer');
+  const { mode } = request;
+  if (mode !== 'move' && mode !== 'copy') throw new Error('Choose whether to move or copy the links.');
+  const source = state.collections.find(item => item.id === request.fromCollectionId);
+  if (!source) throw new Error('The collection these links are in no longer exists.');
+  const ids = new Set(stringList(request.ids, 'ids'));
+  const chosen = source.links.filter(item => ids.has(item.id));
+  if (!chosen.length) throw new Error('None of the chosen links are in this collection any more.');
+  const hasTo = typeof request.toCollectionId === 'string' && request.toCollectionId !== '';
+  const name = typeof request.newCollection === 'string' ? request.newCollection.replace(/\s+/gu, ' ').trim() : '';
+  if (hasTo === !!name) throw new Error('Choose one destination: a collection here, or a new one.');
+  if (name.length > MAX_COLLECTION_NAME) throw new Error(`A collection name can be at most ${MAX_COLLECTION_NAME} characters.`);
+  let next = state, toId = request.toCollectionId;
+  if (name) {
+    next = reduceState(next, { type: 'collection.create', name });
+    toId = next.activeCollectionId;
+    next = { ...next, activeCollectionId: state.activeCollectionId };
+  } else if (toId === source.id) throw new Error('Choose a different collection: these links are already in this one.');
+  else if (!state.collections.some(item => item.id === toId)) throw new Error('The chosen collection no longer exists. Choose another destination.');
+  const destination = () => next.collections.find(item => item.id === toId);
+  const held = new Set(destination().links.map(item => item.url));
+  const going = chosen.filter(item => !held.has(item.url)), skipped = chosen.length - going.length;
+  const where = name || destination().name;
+  if (!going.length) throw new Error(chosen.length === 1 ? `That link is already in “${where}”, so nothing was ${mode === 'move' ? 'moved' : 'copied'}.` : `All ${chosen.length.toLocaleString('en-US')} links are already in “${where}”, so nothing was ${mode === 'move' ? 'moved' : 'copied'}.`);
+  // Custom columns with values on the links that go: the destination's column of the same name, or a new one.
+  const fieldMap = [], created = [];
+  for (const field of fieldDefs(source.fields).filter(field => going.some(item => item.fields?.[field.id]))) {
+    const there = fieldDefs(destination().fields);
+    const match = there.find(item => item.name.toLowerCase() === field.name.toLowerCase());
+    if (match) { fieldMap.push([field.id, match.id]); continue; }
+    if (there.length >= MAX_CUSTOM_FIELDS) throw new Error(`“${where}” has no room for the column “${field.name}”: a collection can have at most ${MAX_CUSTOM_FIELDS} custom columns. Nothing was ${mode === 'move' ? 'moved' : 'copied'}.`);
+    next = reduceState(next, { type: 'fields.add', collectionId: toId, name: field.name });
+    const added = destination().fields.at(-1).id;
+    fieldMap.push([field.id, added]); created.push(added);
+  }
+  const columns = new Map(fieldMap);
+  const arriving = going.map(item => {
+    const { fields: values, ...rest } = item;
+    const mapped = {};
+    for (const [key, text] of Object.entries(values || {})) if (columns.has(key) && text) mapped[columns.get(key)] = text;
+    const moved = Object.keys(mapped).length ? { ...rest, fields: mapped } : rest;
+    return mode === 'move' ? moved : { ...moved, id: newId() };
+  });
+  // Page citations the links use, where the destination has none for that page yet.
+  const sourcePages = pagesMap(source.pages), destinationPages = pagesMap(destination().pages);
+  const pages = {};
+  for (const key of usedPages(going, sourcePages)) if (!destinationPages[key]) pages[key] = sourcePages[key];
+  const goingIds = new Set(going.map(item => item.id)), positions = [];
+  if (mode === 'move') {
+    const from = next.collections.findIndex(item => item.id === source.id);
+    source.links.forEach((item, i) => { if (goingIds.has(item.id)) positions.push(i); });
+    next = replaceCollection(next, from, { ...next.collections[from], links: next.collections[from].links.filter(item => !goingIds.has(item.id)) });
+  }
+  const before = destination().links.length;
+  next = reduceState(next, { type: 'links.append', collectionId: toId, links: arriving, pages });
+  if (destination().links.length - before !== arriving.length) throw new Error('Some of these links could not be added there, so nothing was changed.');
+  const record = { mode, fromCollectionId: source.id, toCollectionId: toId, createdCollection: !!name, fields: created,
+    ids: arriving.map(item => item.id), positions, fieldMap, pages: Object.keys(pages) };
+  return { state: next, record, moved: going.length, skipped, fields: created.length, name: where };
+}
+
+// Undoes a transfer while the links it added are still in their destination: removes them (and the
+// collection, columns and page citations the transfer added, unless other links there now use a
+// citation) and, for a move, puts each back in its old place in
+// the source collection with its values in the source's columns. The caller checks that the added
+// links are unchanged; here anything else that would lose data refuses.
+export function revertTransfer(input, record) {
+  const state = validState(migrateState(input));
+  object(record, 'transfer record');
+  const destination = state.collections.find(item => item.id === record.toCollectionId);
+  if (!destination) throw new Error('The collection these links went to no longer exists, so there is nothing to undo.');
+  const byId = new Map(destination.links.map(item => [item.id, item]));
+  const arrived = stringList(record.ids, 'transfer ids').map(key => byId.get(key));
+  if (arrived.some(item => !item)) throw new Error('Some of these links were removed or moved since, so Undo is no longer possible.');
+  const arrivedIds = new Set(record.ids), others = destination.links.filter(item => !arrivedIds.has(item.id));
+  if (record.createdCollection && (others.length || destination.notes || destination.tags.length)) throw new Error('The new collection changed since, so Undo is no longer possible. Move the links back instead.');
+  if (others.some(item => record.fields.some(fieldId => item.fields?.[fieldId]))) throw new Error('Other links now have values in the columns this added, so Undo is no longer possible. Move the links back instead.');
+  let next;
+  if (record.createdCollection) next = reduceState(state, { type: 'collection.delete', id: destination.id });
+  else {
+    next = { ...reduceState(state, { type: 'links.remove', collectionId: destination.id, ids: record.ids }), undo: state.undo };
+    for (const fieldId of record.fields) next = reduceState(next, { type: 'fields.remove', collectionId: destination.id, fieldId });
+    const at = next.collections.findIndex(item => item.id === destination.id), home = next.collections[at];
+    const pages = pagesMap(home.pages), stillUsed = usedPages(home.links, pages);
+    const kept = Object.fromEntries(Object.entries(pages).filter(([key]) => !(record.pages || []).includes(key) || stillUsed.has(key)));
+    if (Object.keys(kept).length !== Object.keys(pages).length) next = replaceCollection(next, at, withPages(home, kept));
+  }
+  if (record.mode === 'move') {
+    const from = next.collections.findIndex(item => item.id === record.fromCollectionId);
+    if (from < 0) throw new Error('The collection these links came from no longer exists, so Undo is no longer possible.');
+    const source = next.collections[from];
+    const back = new Map(record.fieldMap.map(([sourceId, destinationId]) => [destinationId, sourceId]));
+    const known = new Set(fieldDefs(source.fields).map(field => field.id));
+    const links = [...source.links];
+    arrived.forEach((item, i) => {
+      const { fields: values, ...rest } = item;
+      const mapped = {};
+      for (const [key, text] of Object.entries(values || {})) if (back.has(key) && known.has(back.get(key))) mapped[back.get(key)] = text;
+      links.splice(Math.min(record.positions[i] ?? links.length, links.length), 0, Object.keys(mapped).length ? { ...rest, fields: mapped } : rest);
+    });
+    next = replaceCollection(next, from, { ...source, links });
+  }
+  return validState(next);
+}
+
 function hostname(value) {
   try { return new URL(value).hostname.toLowerCase(); } catch { return ''; }
 }
@@ -612,9 +737,9 @@ function backupCollection(value, index, collectionIds, linkIds) {
     linkIds.add(checked.id);
     return checked;
   });
-  // Page citations are kept only for pages a link refers to: its own address or its source page.
-  const used = new Set(kept.links.flatMap(item => [pageKey(item.url), pageKey(item.sourceUrl)]));
-  const pages = Object.fromEntries(Object.entries(pagesMap(value.pages)).filter(([url]) => used.has(url)));
+  // Page citations are kept only for pages a link refers to (usedPages).
+  const all = pagesMap(value.pages), used = usedPages(kept.links, all);
+  const pages = Object.fromEntries(Object.entries(all).filter(([url]) => used.has(url)));
   if (Object.keys(pages).length) kept.pages = pages;
   return kept;
 }

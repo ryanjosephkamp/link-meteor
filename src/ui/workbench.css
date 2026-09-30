@@ -552,6 +552,8 @@ kbd, .shortcut-keys kbd, .btn-keys kbd { display: inline-grid; place-items: cent
 .backup { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
 .backup .rail-title { margin-bottom: 0; }
 .backup-actions { display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px; }
+.backup-last { margin: 0; color: var(--ink-2); font-size: var(--text-sm); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.backup-last.is-never { color: var(--ink); font-weight: 600; }
 .backup-actions .btn { justify-content: flex-start; width: 100%; }
 label.backup-choose { display: inline-flex; cursor: pointer; }
 /* The file input stays focusable but visually hidden; the shared input sizing would widen it. */
@@ -673,6 +675,7 @@ label.backup-choose { display: inline-flex; cursor: pointer; }
 .downloads-result ul { display: grid; gap: 4px; margin: 0; padding-left: 18px; color: var(--ink-2); font-size: var(--text-xs); }
 .occurrence-download { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; padding-top: 10px; border-top: 1px solid var(--line); }
 .occurrence-download .help { flex: 1 1 200px; min-width: 0; overflow-wrap: anywhere; }
+.occurrence-move { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; padding-top: 10px; border-top: 1px solid var(--line); }
 /* End of area: downloading files */
 /* 0.5.0 lane I: citation formats in the Export panel. What the entries hold, and the first entry. */
 .cite-block { display: grid; gap: 6px; min-width: 0; }

@@ -1,7 +1,7 @@
 // Identifiers read from addresses (0.5.0): DOI, arXiv, PubMed, PMC and ISBN. Derived, never stored.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { identifiersOf, doiIn, isbnValid } from '../src/core/identifiers.js';
+import { identifiersOf, doiIn, isbnValid, citationFor, arxivDate } from '../src/core/identifiers.js';
 
 const of = (url, extra = {}, pages) => identifiersOf({ url, originalHref: '', ...extra }, pages);
 
@@ -53,4 +53,32 @@ test('the original href and the link\'s own page citation also count', () => {
   assert.equal(of('https://journal.example.org/articles/42', { originalHref: 'https://doi.org/10.5555/abc' }).doi, '10.5555/abc');
   const pages = { 'https://journal.example.org/articles/42': { title: 'A paper', doi: '10.5555/own', pmid: '123456', isbn: '978-0-306-40615-7' } };
   assert.deepEqual(of('https://journal.example.org/articles/42#results', {}, pages), { doi: '10.5555/own', pmid: '123456', isbn: '9780306406157' });
+});
+
+// 0.5.0 RC2: the citation a link uses, and dates from arXiv IDs.
+test('citationFor: the link\'s own page, else a page that names it as its PDF, shares its DOI or its arXiv ID', () => {
+  const pages = {
+    'https://arxiv.org/abs/2409.11211': { title: 'SplatFields', pdfUrl: 'https://arxiv.org/pdf/2409.11211', readAt: '2026-09-30T10:00:00.000Z' },
+    'https://journal.example/a/42': { title: 'Cooling', doi: '10.5555/Cool.1', pmid: '31452104' },
+    'https://doi.org/10.5555/other.2': { title: 'By its address' },
+  };
+  const of = (url) => citationFor({ url }, pages);
+  assert.deepEqual(of('https://arxiv.org/abs/2409.11211#x'), { key: 'https://arxiv.org/abs/2409.11211', citation: pages['https://arxiv.org/abs/2409.11211'], reason: 'own' });
+  assert.equal(of('https://arxiv.org/pdf/2409.11211').reason, 'pdf');
+  assert.equal(of('https://arxiv.org/pdf/2409.11211v3').reason, 'arxiv', 'another version of the same paper');
+  assert.equal(of('https://journal.example/doi/pdf/10.5555/cool.1').reason, 'doi');
+  assert.equal(of('https://publisher.example/x?doi=10.5555/other.2').citation.title, 'By its address');
+  assert.equal(of('https://arxiv.org/pdf/2501.00001'), null);
+  assert.equal(citationFor({ url: 'https://arxiv.org/pdf/2409.11211' }, undefined), null);
+  // identifiersOf takes what the borrowed citation adds.
+  assert.deepEqual(identifiersOf({ url: 'https://journal.example/doi/pdf/10.5555/cool.1' }, pages), { doi: '10.5555/cool.1', pmid: '31452104' });
+});
+
+test('arxivDate: the year and month an ID was first submitted', () => {
+  assert.deepEqual(arxivDate('2409.11211'), [2024, 9]);
+  assert.deepEqual(arxivDate('0704.0001v2'), [2007, 4]);
+  assert.deepEqual(arxivDate('hep-th/9901001'), [1999, 1]);
+  assert.deepEqual(arxivDate('math.GT/0309136'), [2003, 9]);
+  assert.deepEqual(arxivDate('2413.00001'), [], 'no thirteenth month');
+  assert.deepEqual(arxivDate(''), []);
 });

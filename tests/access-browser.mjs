@@ -623,6 +623,33 @@ try {
   await until(async () => (await state()).settings.welcomeSeen === true, 'answered after the upgrade');
   pass('A state saved by 0.2.2 shows the welcome card once, with the saved hold key');
 
+  /* 6b. 0.5.0 RC2: a second toolbar press closes the side panel it opened, with Chrome's own close
+     where Chrome has one and otherwise the panel's own window.close(). The full view stays open. */
+  const panelUrl = browser.extensionUrl();
+  const sidePanels = async () => (await pages()).filter((t) => t.url === panelUrl && t.targetId !== uiTarget);
+  const panelOpens = async () => {
+    assert.equal(await browser.clickAction(fixture.base), 'clicked');
+    const [opened] = await until(async () => { const found = await sidePanels(); return found.length === 1 && found; }, 'the side panel opens');
+    const session = await browser.attach(opened.targetId);
+    await until(() => js(session, `!!document.getElementById('collection-heading')`).catch(() => false), 'the side panel loaded');
+    await sleep(500); // it listens once it knows it is the side panel, and its window
+    return session;
+  };
+  if ((await sidePanels()).length) { await browser.clickAction(fixture.base); await until(async () => !(await sidePanels()).length, 'no side panel to start'); }
+  let panel = await panelOpens();
+  const chromeClose = await js(panel, `typeof chrome.sidePanel?.close === 'function'`);
+  assert.equal(await js(panel, `chrome.tabs.getCurrent().then((tab) => tab === undefined)`), true, 'it is the side panel, not a tab');
+  assert.equal(await browser.clickAction(fixture.base), 'clicked');
+  await until(async () => !(await sidePanels()).length, 'the second press closes it');
+  assert.equal(await js(ui, `!!document.getElementById('collection-heading')`), true, 'the full view in its window stays open');
+  panel = await panelOpens();
+  await js(panel, `(() => { chrome.sidePanel.close = () => Promise.reject(new Error('unavailable here')); return true; })()`);
+  assert.equal(await js(panel, `String(chrome.sidePanel.close).includes('unavailable here')`), true, 'Chrome’s close is replaced for this check');
+  assert.equal(await browser.clickAction(fixture.base), 'clicked');
+  await until(async () => !(await sidePanels()).length, 'without Chrome’s close, the panel closes itself');
+  assert.equal(await js(ui, `!!document.getElementById('collection-heading')`), true);
+  pass('A second toolbar press closes the side panel: with Chrome’s own close, and without it by the panel itself; the full view stays open', {chromeClose});
+
   /* 7. After Link Meteor restarts in place (reinstalled from its folder, as an update does), region
      selection still works on a page that was already open, without reloading it. The test does not
      use chrome.runtime.reload(): in Chrome for Testing that unloads a command-line extension for good. */

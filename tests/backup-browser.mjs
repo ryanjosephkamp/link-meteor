@@ -118,6 +118,10 @@ try {
   await rpc(A.ui, {type: 'state.mutate', action: {type: 'settings.update', patch: {holdKey: 'q', holdExceptions: ['https://maps.example'], welcomeSeen: true, exportPrefix: 'link-meteor-research', exportTimestamp: false, exportTimestampFormat: 'date'}}});
   await A.ui.waitForTimeout(300);
   const savedA = await state(A.ui);
+  // 0.5.0 RC2: the date of the last backup, and what removing Link Meteor does.
+  await until(async () => (await A.ui.locator('#backup-last').innerText()) === 'Last backup: never', 'no backup yet');
+  assert.equal(await A.ui.locator('#backup-remove-note').innerText(), 'Removing Link Meteor from Chrome deletes everything it saved. A backup file keeps it.');
+  const handedOver = Date.now();
   requests.length = 0;
   const [download] = await Promise.all([A.ui.waitForEvent('download'), A.ui.locator('#backup-download').click()]);
   const fileName = download.suggestedFilename();
@@ -136,6 +140,12 @@ try {
   assert.equal(backup.state.settings.exportPrefix, 'link-meteor-research');
   const outbound = requests.filter((url) => !/^(chrome-extension|blob|data):/.test(url));
   assert.deepEqual(outbound, [], 'backing up sends nothing anywhere');
+  await until(async () => /^Last backup: (?!never)/.test(await A.ui.locator('#backup-last').innerText()), 'the backup date shows');
+  const lastStored = (await A.ui.evaluate(() => chrome.storage.local.get('linkMeteorLastBackup'))).linkMeteorLastBackup;
+  assert.deepEqual(Object.keys(lastStored), ['at'], 'only the time is kept');
+  assert.ok(Date.parse(lastStored.at) >= handedOver - 1000 && Date.parse(lastStored.at) <= Date.now(), 'the time of this backup');
+  assert.equal(await A.ui.locator('#backup-last').getAttribute('title'), lastStored.at);
+  check('The Backup panel says what removing Link Meteor deletes, and shows Last backup: never, then the time of the backup just made', {lastBackup: await A.ui.locator('#backup-last').innerText()});
   check('Download a backup: every collection, link, note, tag and setting, read back by readBackup in Node', {fileName, bytes: backupText.length, requestsDuringBackup: requests.length, outbound: 0});
 
   // Files for the preview, refusal and large-restore checks, built with the model in Node.
@@ -224,7 +234,7 @@ try {
   await noticeIncludes(B.ui, 'Restore undone.');
   assert.deepEqual(await state(B.ui), S0, 'Undo puts the previous state back exactly');
   assert.equal(await B.ui.locator('#restore-status').isVisible(), false);
-  assert.deepEqual(await rpc(B.ui, {type: 'backup.status'}), {undo: null});
+  assert.deepEqual(await rpc(B.ui, {type: 'backup.status'}), {undo: null, lastBackup: null});
   assert.equal('linkMeteorRestoreUndo' in await stored(B.ui), false, 'Undo frees the snapshot');
   check('Undo after the page is closed and reopened puts the previous state back and clears the snapshot');
 
@@ -283,7 +293,7 @@ try {
   const fileFocus = await B.ui.evaluate(() => ({id: document.activeElement?.id, outline: getComputedStyle(document.querySelector('label[for=backup-file]')).outlineStyle}));
   assert.deepEqual(fileFocus, {id: 'backup-file', outline: 'solid'}, 'the file control is reachable by keyboard with a visible focus ring');
   assert.deepEqual(await unlabeled(B.ui), []);
-  const pairs = [['backup help', '#backup-help'], ['storage help', '#storage-help'], ['preview source', '.restore-source span:nth-child(2)'], ['mode note', '.restore-mode-note'], ['mode line', '.restore-mode li'],
+  const pairs = [['backup help', '#backup-help'], ['removal note', '#backup-remove-note'], ['last backup', '#backup-last'], ['storage help', '#storage-help'], ['preview source', '.restore-source span:nth-child(2)'], ['mode note', '.restore-mode-note'], ['mode line', '.restore-mode li'],
     ['access warning', '.restore-access'], ['restore choose', 'label[for=backup-file]'], ['replace button', '#restore-replace'], ['select all label', '#select-all-label']];
   const light = await contrast(B.ui, pairs);
   await resize(B.ui, 320, 900);

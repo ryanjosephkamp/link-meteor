@@ -151,7 +151,7 @@ test('Undo puts the previous state back only while the saved state is the one th
   assert.deepEqual(saved(), fresh);
   assert.equal(RESTORE_UNDO_KEY in local, false, 'Undo clears the snapshot');
   assert.deepEqual(messages, [{ type: 'state.changed' }]);
-  assert.deepEqual(await call('backup.status'), { undo: null });
+  assert.deepEqual(await call('backup.status'), { undo: null, lastBackup: null });
   await assert.rejects(call('backup.undo'), /no restore to undo/);
 });
 
@@ -196,7 +196,7 @@ test('the background dropping hold-drag access it no longer has does not block U
 
 test('status reports the last restore without its saved state, and discarding frees the snapshot', async () => {
   reset();
-  assert.deepEqual(await call('backup.status'), { undo: null });
+  assert.deepEqual(await call('backup.status'), { undo: null, lastBackup: null });
   await call('backup.restore', { backup: backupText, mode: 'merge' });
   const status = await call('backup.status');
   assert.deepEqual(Object.keys(status.undo).sort(), ['createdAt', 'summary']);
@@ -206,7 +206,7 @@ test('status reports the last restore without its saved state, and discarding fr
   assert.deepEqual(await call('backup.discardUndo'), {});
   assert.equal(RESTORE_UNDO_KEY in local, false);
   assert.deepEqual(saved(), state, 'discarding keeps the restored data');
-  assert.deepEqual(await call('backup.status'), { undo: null });
+  assert.deepEqual(await call('backup.status'), { undo: null, lastBackup: null });
   await assert.rejects(call('backup.undo'), /no restore to undo/);
 });
 
@@ -240,4 +240,17 @@ test('restores wait their turn in the state queue with other writes', async () =
   assert.deepEqual(restored.state.collections[0].links.map((x) => x.id), ['first', 'a1', 'a2']);
   assert.deepEqual(created.collections.map((c) => c.name), ['My research', 'Admin', 'Queued after']);
   assert.deepEqual(local[RESTORE_UNDO_KEY].before.collections[0].links.map((x) => x.id), ['first']);
+});
+
+test('0.5.0 RC2: backup.made records when a backup was handed to Chrome, and status reports it', async () => {
+  reset();
+  assert.equal((await call('backup.status')).lastBackup, null);
+  const before = Date.now();
+  const {lastBackup} = await call('backup.made');
+  assert.ok(Date.parse(lastBackup) >= before - 1000 && Date.parse(lastBackup) <= Date.now());
+  assert.deepEqual(local.linkMeteorLastBackup, {at: lastBackup}, 'only the time, nothing about the file');
+  assert.equal((await call('backup.status')).lastBackup, lastBackup);
+  local.linkMeteorLastBackup = {at: 'not a time'};
+  assert.equal((await call('backup.status')).lastBackup, null, 'a damaged value reads as never');
+  delete local.linkMeteorLastBackup;
 });

@@ -11,6 +11,7 @@ import { bindImports } from './workbench/imports.js';
 import { bindOpen } from './workbench/open.js';
 import { bindSettings, loadShortcut, renderShortcut } from './workbench/settings.js';
 import { bootTheme } from './workbench/appearance.js';
+import { closeOnToolbarClick } from './workbench/panel.js';
 
 function bindEvents() {
   bindViews();
@@ -30,6 +31,7 @@ async function init() {
   bindEvents(); renderColumns();
   loadShortcut();
   hideOpenFullInTab();
+  closeOnToolbarClick();
   showVersion();
   await reloadState();
   await startInventory();

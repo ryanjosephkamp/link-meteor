@@ -168,6 +168,8 @@
       <section id="backup-panel" class="rail-section backup" aria-labelledby="backup-title">
         <h2 id="backup-title" class="rail-title">Backup and restore</h2>
         <p id="backup-help" class="help">One file with every collection, link, note, tag and setting. It is saved to your downloads and goes nowhere else.</p>
+        <p id="backup-remove-note" class="help">Removing Link Meteor from Chrome deletes everything it saved. A backup file keeps it.</p>
+        <p id="backup-last" class="backup-last is-never" aria-live="polite">Last backup: never</p>
         <div class="backup-actions">
           <button id="backup-download" class="btn" type="button"><svg class="icon" aria-hidden="true"><use href="#i-download"/></svg><span>Download a backup</span></button>
           <input id="backup-file" class="backup-file sr-only" type="file" accept=".json,application/json">
@@ -410,6 +412,8 @@
             <button id="remove-view" class="btn quiet small danger" type="button" disabled>Remove all in this view</button>
             <button id="undo" class="btn quiet small" type="button" disabled><svg class="icon" aria-hidden="true"><use href="#i-undo"/></svg>Undo</button>
             <button id="fill-fields" class="btn quiet small" type="button" aria-expanded="false" aria-controls="fill-panel" hidden>Fill for selected links</button>
+            <button id="move-selected" class="btn quiet small" type="button" aria-expanded="false" aria-controls="move-panel" hidden><svg class="icon" aria-hidden="true"><use href="#i-folders"/></svg>Move to…</button>
+            <button id="copy-selected" class="btn quiet small" type="button" aria-expanded="false" aria-controls="move-panel" hidden><svg class="icon" aria-hidden="true"><use href="#i-copy"/></svg>Copy to…</button>
           </div>
           <form id="fill-panel" class="fill-panel" aria-labelledby="fill-title" hidden>
             <p id="fill-title" class="fill-title"></p>
@@ -417,6 +421,13 @@
             <label>Value <input id="fill-value" autocomplete="off" aria-describedby="fill-help"></label>
             <p id="fill-help" class="help" aria-live="polite"></p>
             <div class="confirm-actions"><button id="fill-apply" class="btn primary small" type="submit">Fill</button><button id="fill-cancel" class="btn quiet small" type="button">Cancel</button></div>
+          </form>
+          <form id="move-panel" class="fill-panel move-panel" aria-labelledby="move-title" hidden>
+            <p id="move-title" class="fill-title"></p>
+            <label>To <select id="move-to"></select></label>
+            <label id="move-new-row" hidden>Name <input id="move-new" autocomplete="off" maxlength="200" aria-describedby="move-help"></label>
+            <p id="move-help" class="help" aria-live="polite"></p>
+            <div class="confirm-actions"><button id="move-apply" class="btn primary small" type="submit">Move</button><button id="move-cancel" class="btn quiet small" type="button">Cancel</button></div>
           </form>
           <div id="remove-view-confirm" class="confirm danger-confirm toolbar-confirm" role="group" aria-labelledby="remove-view-confirm-text" hidden>
             <p id="remove-view-confirm-text"></p>

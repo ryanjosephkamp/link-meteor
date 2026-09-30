@@ -1,8 +1,9 @@
 import {serial, readState, mutate, onStateWritten} from './background/store.js';
-import {ordinaryUrl} from './background/urls.js';
+import {ordinaryUrl, captureRefusal, PDF_REFUSAL, FILE_REFUSAL} from './background/urls.js';
 import {workbenchMessages as bookmarkMessages} from './background/bookmarks.js';
 import {workbenchMessages as backupMessages} from './background/backup.js';
 import {workbenchMessages as importMessages} from './background/imports.js';
+import {workbenchMessages as transferMessages} from './background/transfer.js';
 import {workbenchMessages as diagnosticsMessages} from './background/diagnostics.js';
 import {workbenchMessages as holdMessages, grantedSettings, followHoldWrites, requestSync} from './background/hold.js';
 import {openUrls, cancelOpen} from './background/open.js';
@@ -17,7 +18,7 @@ const LAST_TARGET_KEY = 'linkMeteorTarget';
 
 // Workbench-only messages answered by area modules. A type may be claimed by one module only.
 const AREA_MESSAGES = new Map();
-for (const table of [bookmarkMessages, backupMessages, holdMessages, diagnosticsMessages, downloadMessages, importMessages]) {
+for (const table of [bookmarkMessages, backupMessages, holdMessages, diagnosticsMessages, downloadMessages, importMessages, transferMessages]) {
   for (const [type, handler] of Object.entries(table)) {
     if (AREA_MESSAGES.has(type)) throw new Error(`Duplicate Link Meteor message handler: ${type}`);
     AREA_MESSAGES.set(type, handler);
@@ -55,7 +56,10 @@ async function inventory(callerTabId) {
 
 async function inject(tab) {
   if (tab.incognito) throw new Error('Incognito collection is not enabled in this release.');
-  if (tab.url && !ordinaryUrl(tab.url)) throw new Error('Chrome does not allow link capture on this page. Choose an ordinary HTTP or HTTPS webpage.');
+  if (tab.url && (!ordinaryUrl(tab.url) || captureRefusal(tab.url) === PDF_REFUSAL)) throw new Error(captureRefusal(tab.url));
+  // A PDF whose address doesn't say so: Chrome's viewer shows it, and no extension can read that.
+  const [probe] = await chrome.scripting.executeScript({target:{tabId:tab.id},func:function documentType() { return document.contentType; }});
+  if (probe?.result === 'application/pdf') throw new Error(PDF_REFUSAL);
   await chrome.scripting.executeScript({target:{tabId:tab.id},files:['content/capture.js']});
 }
 
@@ -86,8 +90,9 @@ async function captureTabs(tabIds,callerTabId) {
     try {
       tab = await chrome.tabs.get(tabId);
       if (tab.incognito || (tab.url && !ordinaryUrl(tab.url))) {
+        const refusal = !tab.incognito && captureRefusal(tab.url);
         results.push({tabId,title:tab.title || 'Restricted page',url:tab.url || '',status:'unsupported',count:0,leftOut:0,skipped:0,
-          warning:'Browser-internal pages, the Chrome Web Store, and incognito pages cannot be captured.',error:''});
+          warning:[PDF_REFUSAL,FILE_REFUSAL].includes(refusal) ? refusal : 'Browser-internal pages, the Chrome Web Store, and incognito pages cannot be captured.',error:''});
         continue;
       }
       await inject(tab);
@@ -158,6 +163,9 @@ chrome.runtime.onMessage.addListener((message,sender,reply) => {
 chrome.action.onClicked.addListener(tab => {
   rememberTarget(tab).catch(() => {});
   chrome.sidePanel.open({windowId:tab.windowId}).catch(() => chrome.tabs.create({url:WORKBENCH}));
+  // A second click closes the panel: a side panel already open in this window closes itself when
+  // told (ui/workbench/panel.js). Opening it again is harmless, and a closed one hears nothing.
+  chrome.runtime.sendMessage({type:'panel.toggle',windowId:tab.windowId}).catch(() => {});
 });
 chrome.commands.onCommand.addListener((command, tab) => {
   if (command === 'select-region') arm(tab?.id).catch(error => reportActivationError(error));

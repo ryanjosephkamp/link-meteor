@@ -43,11 +43,12 @@ test('BibTeX: @article only with a journal, Zotero escaping, raw url and doi, ba
   for (const entry of entries) {
     assert.ok(balanced(entry), `balanced braces:\n${entry}`);
     assert.match(entry, /^@(misc|article)\{[a-z0-9]+,\n( {2}[A-Za-z]+ *= \{.*\},\n)* {2}[A-Za-z]+ *= \{.*\}\n\}$/, entry);
-    assert.doesNotMatch(entry, /howpublished|= \{\}/, 'no howpublished and no empty fields');
+    assert.doesNotMatch(entry, /= \{\}/, 'no empty fields');
+    assert.equal(/howpublished/.test(entry), /archivePrefix/.test(entry) && !/journal/.test(entry), 'howpublished only on arXiv preprints');
   }
   const keys = entries.map((entry) => /^@\w+\{([^,]+),/.exec(entry)[1]);
   assert.equal(new Set(keys).size, keys.length, 'keys are unique');
-  assert.deepEqual(keys, ['surface', 'okafor2025', 'okafor2025a', 'attention', 'heat', 'full', 'urban', 'heata', 'surfacea', 'download', 'coolstreets', 'organization', 'write']);
+  assert.deepEqual(keys, ['surface', 'okafor2025', 'okafor2025a', 'attention2017', 'heat', 'full', 'urban', 'heata', 'surfacea', 'download', 'coolstreets', 'organization', 'write']);
   assert.deepEqual(entries.map((entry) => entry.slice(1, entry.indexOf('{'))), ['misc', 'article', 'article', 'misc', 'misc', 'misc', 'misc', 'misc', 'misc', 'misc', 'misc', 'misc', 'misc']);
   // Escaping, exactly as Zotero writes it.
   assert.equal(one('bibtex', { anchorText: '# $ % & _ \\ ~ ^ { } < > |', url: 'https://example.org/' }).split('\n')[1],
@@ -75,7 +76,7 @@ test('RIS: CRLF only, two-letter tags with two spaces and a hyphen, ER on every 
   assert.equal(records.length, LINKS.length);
   for (const record of records) {
     const lines = record.replace(/\r\n$/, '').split('\r\n');
-    assert.match(lines[0], /^TY {2}- (JOUR|ELEC)$/);
+    assert.match(lines[0], /^TY {2}- (JOUR|ELEC|UNPB)$/);
     assert.equal(lines.at(-1), 'ER  - ');
     for (const line of lines) assert.match(line, /^[A-Z][A-Z0-9] {2}- /, line);
     assert.ok(lines.slice(0, -1).every((line) => line.length > 6), 'no empty values');
@@ -92,10 +93,10 @@ test('CSL-JSON: an array of items with id and type, names split only when printe
   const items = JSON.parse(citations(LINKS, options('csl')));
   assert.ok(Array.isArray(items));
   assert.equal(items.length, LINKS.length);
-  const known = new Set(['id', 'type', 'title', 'author', 'issued', 'container-title', 'volume', 'issue', 'page', 'DOI', 'PMID', 'PMCID', 'ISBN', 'URL', 'accessed', 'note', 'keyword']);
+  const known = new Set(['id', 'type', 'title', 'author', 'issued', 'container-title', 'publisher', 'number', 'volume', 'issue', 'page', 'DOI', 'PMID', 'PMCID', 'ISBN', 'URL', 'accessed', 'note', 'keyword']);
   for (const item of items) {
     assert.equal(typeof item.id, 'string'); assert.ok(item.id);
-    assert.ok(['article-journal', 'webpage'].includes(item.type));
+    assert.ok(['article-journal', 'article', 'webpage'].includes(item.type));
     assert.ok(Object.keys(item).every((key) => known.has(key)), Object.keys(item).join());
     assert.ok(Object.values(item).every((value) => value !== '' && value !== null), 'empty fields are left out');
     for (const name of item.author || []) assert.ok((Object.keys(name).join() === 'family,given' && name.family && name.given) || Object.keys(name).join() === 'literal');
@@ -164,4 +165,73 @@ test('dates as pages print them', () => {
     ['Published online: 2024-11-02', [2024, 11, 2]], ['03/04/2025', [2025]], ['Spring 2024', [2024]], ['2025-02-30', [2025, 2]], ['2025-13-01', [2025]],
     ['May 2025', [2025, 5]], ['n.d.', []], ['', []], ['12345', []]];
   for (const [text, parts] of cases) assert.deepEqual(dateParts(text), parts, text);
+});
+
+/* 0.5.0 RC2 ------------------------------------------------------------------------------------- */
+const paper = (url, extra = {}) => ({ anchorText: '[PDF] arxiv.org', url, ...extra });
+const ABSTRACT = 'https://arxiv.org/abs/2409.11211';
+const ABSTRACT_PAGE = { [ABSTRACT]: { title: 'SplatFields: Neural Gaussian Splats for Sparse 3D and 4D Reconstruction', authors: ['Mihajlovic, Marko', 'Prokudin, Sergey'],
+  date: '2024/09/17', pdfUrl: 'https://arxiv.org/pdf/2409.11211', arxiv: '2409.11211', readAt: '2026-09-30T10:00:00.000Z' } };
+
+test('BibTeX titles brace words with a capital after the first letter, and nothing else', () => {
+  const title = (text) => /title {8}= \{(.*)\},/.exec(one('bibtex', { anchorText: text, url: 'https://example.org/' }))[1];
+  assert.equal(title('SplatFields: Neural Gaussian Splats for Sparse 3D and 4D Reconstruction'), '{SplatFields}: Neural Gaussian Splats for Sparse {3D} and {4D} Reconstruction');
+  assert.equal(title('DNA repair in COVID-19 and the iPhone era'), '{DNA} repair in {COVID-19} and the {iPhone} era');
+  assert.equal(title('X-ray Crystallography: A Primer'), 'X-ray Crystallography: A Primer', 'a capital only at the start stays free');
+  assert.equal(title('Über die ÄRA'), 'Über die {ÄRA}', 'letters beyond ASCII count too');
+  assert.equal(title('R&D for {GPU} #1'), 'R\\&D for \\{\\vphantom{\\}}{GPU}\\vphantom{\\{}\\} \\#1', 'escaping still applies around braced words');
+  for (const text of ['A {B} C', 'ABC{DEF}', 'x}{Y']) assert.ok(balanced(title(text)), text);
+});
+
+test('RIS writes an ISBN as SN', () => {
+  assert.match(one('ris', { anchorText: 'A book', url: 'https://books.example/isbn/9780306406157' }), /\r\nSN {2}- 9780306406157\r\n/);
+  assert.doesNotMatch(one('ris', { anchorText: 'No book', url: 'https://example.org/' }), /\r\nSN {2}- /);
+});
+
+test('a link borrows the citation of a saved page about the same work', () => {
+  // The page names the link as its PDF: the title, authors and date come from it.
+  const viaPdf = citations([paper('https://arxiv.org/pdf/2409.11211')], { format: 'bibtex', pages: ABSTRACT_PAGE });
+  assert.match(viaPdf, /title {8}= \{\{SplatFields\}: Neural/);
+  assert.match(viaPdf, /author {7}= \{Mihajlovic, Marko and Prokudin, Sergey\}/);
+  assert.match(viaPdf, /year {9}= \{2024\}/);
+  // The same arXiv ID, with a different version.
+  assert.match(citations([paper('https://arxiv.org/pdf/2409.11211v1')], { format: 'ris', pages: ABSTRACT_PAGE }), /\r\nAU {2}- Mihajlovic, Marko\r\n/);
+  // The same DOI, in the link's address and the page's tags, in any case.
+  const article = { 'https://journal.example/articles/42': { title: 'Cooling cities', authors: ['Okafor, Amara'], date: '2025-03-14', journal: 'J. Example', doi: '10.5555/COOL.2025.0007' } };
+  const viaDoi = JSON.parse(citations([paper('https://journal.example/doi/pdf/10.5555/cool.2025.0007')], { format: 'csl', pages: article }))[0];
+  assert.deepEqual([viaDoi.title, viaDoi['container-title'], viaDoi.type], ['Cooling cities', 'J. Example', 'article-journal']);
+  // A page's own address is enough: a saved arXiv abstract tab without tags for its ID.
+  const bare = { [ABSTRACT]: { title: 'SplatFields', authors: ['Mihajlovic, Marko'] } };
+  assert.match(citations([paper('https://arxiv.org/pdf/2409.11211')], { format: 'bibtex', pages: bare }), /author {7}= \{Mihajlovic, Marko\}/);
+  // The link's own page always wins, and an unrelated page lends nothing.
+  const own = { ...ABSTRACT_PAGE, 'https://arxiv.org/pdf/2409.11211': { title: 'Its own title' } };
+  assert.match(citations([paper('https://arxiv.org/pdf/2409.11211')], { format: 'bibtex', pages: own }), /title {8}= \{Its own title\}/);
+  const unrelated = citations([paper('https://arxiv.org/pdf/2501.00001')], { format: 'bibtex', pages: ABSTRACT_PAGE });
+  assert.doesNotMatch(unrelated, /author|SplatFields/);
+  // When two pages match, the newest reading wins.
+  const two = { ...ABSTRACT_PAGE, 'https://mirror.example/2409.11211': { title: 'Newer reading', arxiv: '2409.11211v2', readAt: '2026-09-30T11:00:00.000Z' } };
+  assert.match(citations([paper('https://arxiv.org/abs/2409.11211v2')], { format: 'bibtex', pages: two }), /title {8}= \{Newer reading\}/);
+  // The Export panel's counts follow the borrowed citation.
+  assert.equal(citeFacts([paper('https://arxiv.org/pdf/2409.11211')], ABSTRACT_PAGE).authorsAndDate, 1);
+});
+
+test('arXiv preprints: a year and month from the ID when nothing else dates them, marked in every format', () => {
+  const row = [paper('https://arxiv.org/abs/2409.11211')];
+  const bib = citations(row, { format: 'bibtex' });
+  assert.match(bib, /^@misc\{/);
+  assert.match(bib, /year {9}= \{2024\},\n {2}howpublished = \{arXiv preprint arXiv:2409\.11211\},/);
+  const ris = citations(row, { format: 'ris' });
+  assert.match(ris, /^TY {2}- UNPB\r\n/);
+  assert.match(ris, /\r\nPY {2}- 2024\r\nDA {2}- 2024\/09\/\/\r\nPB {2}- arXiv\r\nAN {2}- arXiv:2409\.11211\r\n/);
+  const [item] = JSON.parse(citations(row, { format: 'csl' }));
+  assert.deepEqual([item.type, item.publisher, item.number, item.issued, 'container-title' in item], ['article', 'arXiv', 'arXiv:2409.11211', { 'date-parts': [[2024, 9]] }, false]);
+  assert.match(citations(row, { format: 'annotated' }), /\n1\. \\\[PDF\\\] arxiv\.org\. \(2024\)\. arXiv preprint arXiv:2409\.11211\. <https:\/\/arxiv\.org\/abs\/2409\.11211>\n/);
+  assert.match(citations(row, { format: 'obsidian' }), /\n {2}Preprint:: arXiv:2409\.11211\n/);
+  // An older-style ID; a date from the page wins; a journal makes it an article, not a preprint.
+  assert.match(citations([paper('https://arxiv.org/abs/hep-th/9901001')], { format: 'bibtex' }), /year {9}= \{1999\}/);
+  assert.match(citations([paper('https://arxiv.org/pdf/2409.11211')], { format: 'ris', pages: ABSTRACT_PAGE }), /\r\nDA {2}- 2024\/09\/17\/\r\n/);
+  const published = { [ABSTRACT]: { ...ABSTRACT_PAGE[ABSTRACT], journal: 'ECCV 2024' } };
+  const article = citations([paper('https://arxiv.org/pdf/2409.11211')], { format: 'bibtex', pages: published });
+  assert.match(article, /^@article\{/);
+  assert.doesNotMatch(article, /howpublished/);
 });

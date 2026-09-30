@@ -59,10 +59,14 @@
     }
   },
   {
-    "id": "attention",
-    "type": "webpage",
+    "id": "attention2017",
+    "type": "article",
     "title": "Attention Is All You Need",
-    "container-title": "arxiv.org",
+    "issued": {
+      "date-parts": [[2017, 6]]
+    },
+    "publisher": "arXiv",
+    "number": "arXiv:1706.03762v5",
     "URL": "https://arxiv.org/abs/1706.03762v5",
     "accessed": {
       "date-parts": [[2026, 9, 25]]

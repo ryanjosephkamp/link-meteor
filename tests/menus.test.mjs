@@ -44,6 +44,7 @@ globalThis.chrome = {
       const tab = tabs.find((t) => t.id === spec.target.tabId);
       if (!web(tab.url)) throw new Error('Cannot access contents of the page.');
       if (spec.files) { calls.inject.push(tab.id); pages.get(tab.id).loaded = true; return []; }
+      if (spec.func?.name === 'documentType') return [{result: tab.contentType || 'text/html'}];
       if (spec.func?.name === 'readCitationTags') {
         reads.push(spec);
         if (tags.get(tab.id) === 'throw') throw new Error('Frame with ID 0 was removed.');
@@ -401,4 +402,31 @@ test('0.5.0: the citations sentence, in every case', async () => {
   assert.equal(say({tabs: 45, read: 12, needAccess: 33}), 'Read citation details from 12 of 45 tabs; the others need site access.');
   assert.equal(say({tabs: 2, read: 1, needAccess: 1}), 'Read citation details from 1 of 2 tabs; the other needs site access.');
   assert.equal(say({tabs: 1200, read: 1000, needAccess: 0}), 'Read citation details from 1,000 of 1,200 tabs; the others didn’t answer.');
+});
+
+test('0.5.0 RC2: on a PDF or a file on the computer, Select a region and Capture this page say what works instead', async () => {
+  const {PDF_REFUSAL, FILE_REFUSAL} = await import('../src/background/urls.js');
+  const extra = [
+    {id: 7, windowId: 3, url: 'https://pdfs.test/view?id=9', title: 'Paper', contentType: 'application/pdf'},
+    {id: 8, windowId: 3, url: 'file:///Users/me/paper.pdf', title: 'paper.pdf'},
+    {id: 9, windowId: 3, url: 'file:///Users/me/notes.html', title: 'notes.html'},
+    {id: 10, windowId: 3, url: 'https://pdfs.test/paper.PDF', title: 'Paper 2'},
+  ];
+  tabs.push(...extra);
+  for (const tab of extra) pages.set(tab.id, {loaded: false, links: [], selection: [], notices: [], citation: null});
+  try {
+    for (const [tab, expected] of [[extra[0], PDF_REFUSAL], [extra[1], PDF_REFUSAL], [extra[2], FILE_REFUSAL], [extra[3], PDF_REFUSAL]]) {
+      reset(); calls.arm.length = 0;
+      await click('meteor-region', tab);
+      assert.equal(session.linkMeteorActivationError, expected, tab.url);
+      await click('meteor-page', tab);
+      const [result] = session.linkMeteorCaptureReport.report.results;
+      assert.equal(result.warning || result.error, expected, tab.url);
+      assert.deepEqual([calls.inject, calls.arm], [[], []], 'the page script is neither injected nor armed');
+    }
+    assert.match(PDF_REFUSAL, /right-click it and choose Link Meteor, then Add link/);
+  } finally {
+    tabs.splice(tabs.length - extra.length);
+    for (const tab of extra) pages.delete(tab.id);
+  }
 });

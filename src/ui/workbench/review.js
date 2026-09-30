@@ -2,7 +2,7 @@
 // Custom column fields and Fill for selected links come from fields.js; the Insights view from
 // insights.js. Reading status and stars (0.5.0) are set here, in details and for the selection.
 import { queryLinks, pageKey } from '../../core/model.js';
-import { identifiersOf, IDENTIFIER_LABELS } from '../../core/identifiers.js';
+import { identifiersOf, citationFor, IDENTIFIER_LABELS } from '../../core/identifiers.js';
 import { $, node, icon, button, count, plural, quoted, labelFor, tags, DOCUMENT_TYPES, fileType, appendTextLink, renderUrl, hostOf, formatTime, shortcutKeys, kbdGroup, safeUrl } from './helpers.js';
 import { ui, action, request, mutate, show, currentCollection } from './state.js';
 import { render, onEscape } from './rendering.js';
@@ -11,6 +11,7 @@ import { syncReportAction } from './capture.js';
 import { fieldInputs, hasFieldValues, appendFieldValues, renderFill, bindFill } from './fields.js';
 import { linkDownload } from './downloads.js';
 import { renderInsights, insightsShown, setInsights, bindInsights } from './insights.js';
+import { renderMove, bindMove, detailMove } from './move.js';
 
 const PAGE_SIZE = 100;
 const DETAIL_PAGE_SIZE = 100;
@@ -65,6 +66,7 @@ export function renderLinks() {
   $('remove-view').disabled = !viewIds;
   syncViewRemoval(collection);
   renderFill(collection);
+  renderMove(collection);
   $('select-all').checked = !!pageIds.length && pageIds.every((id) => ui.selectedIds.has(id));
   $('select-all').indeterminate = pageIds.some((id) => ui.selectedIds.has(id)) && !$('select-all').checked;
   $('select-all').disabled = !pageIds.length;
@@ -342,7 +344,8 @@ export function renderOccurrence(link, grouped) {
   time.title = link.capturedAt;
   fact(facts, 'Capture batch', link.batchId, { exact: true, empty: 'Unknown' });
   fact(facts, 'Occurrence ID', link.id, { exact: true });
-  item.append(renderResearch(link), facts, linkDownload(link));
+  const move = node('div', 'occurrence-move'); move.append(detailMove(link));
+  item.append(renderResearch(link), facts, linkDownload(link), move);
 
   const form = document.createElement('form'); form.className = 'occurrence-form';
   const draft = ui.linkDrafts.get(link.id);
@@ -362,8 +365,9 @@ export function renderOccurrence(link, grouped) {
 
 /* Research details (0.5.0) ------------------------------------------------------------ */
 // Above a link's facts: its reading status and star, then only the parts it has: the words around
-// it on its page, identifiers in its address, the citation its source page carried, and where an
-// imported link came from.
+// it on its page, identifiers in its address, the citation its source page carried, the citation
+// the link itself uses when that's another page's (its own page's, or one borrowed from a page
+// about the same work: citationFor), and where an imported link came from.
 function renderResearch(link) {
   const pages = currentCollection()?.pages || {};
   const block = node('div', 'occ-new');
@@ -373,6 +377,8 @@ function renderResearch(link) {
   if (Object.keys(ids).length) block.append(occBlock('Identifiers', identifierList(ids)));
   const cited = pages[pageKey(link.sourceUrl)];
   if (cited) block.append(occBlock('Cited from', citation(cited)));
+  const used = citationFor(link, pages);
+  if (used && used.key !== pageKey(link.sourceUrl)) block.append(occBlock('Citation', citation(used.citation, usedNote(used))));
   if (link.imported) block.append(occBlock('Imported from', node('p', 'imported-from', link.imported)));
   return block;
 }
@@ -397,7 +403,8 @@ function readingControls(link) {
   }
   const star = node('button', 'star-btn'); star.type = 'button';
   star.setAttribute('aria-pressed', String(!!link.starred)); star.dataset.linkId = link.id; star.dataset.linkField = 'star';
-  star.append(icon('i-star'), link.starred ? 'Starred' : 'Star');
+  // A fixed label: the pressed look and aria-pressed say whether it's starred, so it isn't announced twice.
+  star.append(icon('i-star'), 'Star');
   star.addEventListener('click', () => action(() => setReading('starred', [link.id], !link.starred, quoted(labelFor(link)))));
   group.append(seg, star);
   return group;
@@ -436,9 +443,18 @@ function identifierList(ids) {
   return list;
 }
 
-// The citation read from the source page's own tags: title, then authors, journal, date and
-// identifiers on one line, and a note that nothing was looked up.
-function citation(page) {
+// Where a citation that isn't the source page's comes from, for its note.
+const BORROWED = { pdf: 'which names this link as its PDF', doi: 'which has the same DOI', arxiv: 'which has the same arXiv ID' };
+function usedNote({ key, citation: page, reason }) {
+  if (reason === 'own') return 'From this page’s own citation tags, read when Link Meteor had it open. Citation exports use it. Saved in this browser; nothing was looked up online.';
+  const name = page.title ? `“${page.title}”` : hostOf(key) || 'a saved page';
+  return `From the citation tags of ${name}, ${BORROWED[reason]}. Citation exports use it. Saved in this browser; nothing was looked up online.`;
+}
+
+// A citation read from a page's own tags: title, then authors, journal, date and identifiers on
+// one line, and a note that nothing was looked up.
+const SOURCE_NOTE = 'From the source page’s own citation tags, read when you captured it. Saved in this browser; nothing was looked up online.';
+function citation(page, note = SOURCE_NOTE) {
   const box = node('div', 'cited');
   box.append(node('span', 'cited-title', page.title || 'Untitled page'));
   const authors = page.authors || [];
@@ -447,7 +463,7 @@ function citation(page) {
     page.firstPage && (page.lastPage ? `pp. ${page.firstPage}–${page.lastPage}` : `p. ${page.firstPage}`)].filter(Boolean).join(', ');
   const line = [named, venue, page.date, page.doi && `DOI ${page.doi}`, page.arxiv && `arXiv ${page.arxiv}`, page.pmid && `PubMed ${page.pmid}`, page.isbn && `ISBN ${page.isbn}`].filter(Boolean).join(' · ');
   if (line) box.append(node('span', 'cited-line', line));
-  box.append(node('span', 'cited-note', 'From the source page’s own citation tags, read when you captured it. Saved in this browser; nothing was looked up online.'));
+  box.append(node('span', 'cited-note', note));
   return box;
 }
 
@@ -601,5 +617,6 @@ export function bindReview() {
     return true;
   });
   bindFill();
+  bindMove();
   bindInsights();
 }

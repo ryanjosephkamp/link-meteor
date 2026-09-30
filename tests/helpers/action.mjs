@@ -61,9 +61,14 @@ export async function launchWithAction({extension = resolve(root, process.env.LI
     }
   });
   const exited = new Promise((done) => chrome.once('exit', done));
-  // One DevTools protocol command; sessionId targets an attached page.
+  // One DevTools protocol command; sessionId targets an attached page. A reply that never comes
+  // (a target closing at the wrong moment) fails after 90 s, naming the command, instead of
+  // holding a suite until the check's time limit.
   const send = (method, params = {}, sessionId) => new Promise((ok, no) => {
-    const id = nextId++; pending.set(id, {ok, no});
+    const id = nextId++;
+    const what = method === 'Runtime.evaluate' ? `${method} ${String(params.expression).slice(0, 120)}` : method;
+    const timer = setTimeout(() => { pending.delete(id); no(new Error(`Chrome did not answer ${what} within 90 s`)); }, 90000);
+    pending.set(id, {ok: (value) => { clearTimeout(timer); ok(value); }, no: (error) => { clearTimeout(timer); no(error); }});
     out.write(JSON.stringify({id, method, params, ...(sessionId ? {sessionId} : {})}) + '\0');
   });
   const close = async () => {

@@ -1,0 +1,11 @@
+PASS A page opened as the browser starts gets hold-drag within seconds, without a reload {"attempts":1,"seconds":0}
+PASS All-sites scope: one registered script covers http and https; the switch shows it on {"registered":1}
+PASS Hold-drag works on a second origin with no per-site grant and no prompt {"origin":"http://localhost:52478"}
+PASS Modifier trigger on a real page: Meta-drag selects; a plain Meta-click opens the link as usual 
+PASS Never on these sites: off at once in the open tab, off after a reload, and back on without a reload 
+PASS This site, in all-sites scope, is the Never on this site toggle 
+PASS Capture this page on a never-visited origin needs no prompt with all-sites access {"origin":"http://127.0.0.1:52488"}
+PASS Save tabs as links with all-sites access reads each tab’s own citation tags (Highwire, PRISM, JSON-LD, Dublin Core) into the collection’s pages, without a prompt {"read":5,"found":4}
+PASS Open as a tab group names the group after the collection when tab groups are allowed 
+PASS Card: Open as a tab group is named after the destination; Bookmark this selection saves a folder 
+PASS The switch turns all-sites off (offering to remove Chrome’s grant) and on again 

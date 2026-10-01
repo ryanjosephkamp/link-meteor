@@ -1,0 +1,189 @@
+{
+  "started": "2026-10-01T16:55:47.525Z",
+  "browser": "Chrome for Testing, headless, fresh temporary profile, real unpacked extension, no optional grants",
+  "checks": [
+    {
+      "name": "Nothing opens a tab at install",
+      "pages": [
+        "about:blank"
+      ]
+    },
+    {
+      "name": "Welcome card on a fresh profile; keyboard order Allow, Later, Close at 320 px; Choose sites later sets welcomeSeen",
+      "order": [
+        "welcome-allow",
+        "welcome-later",
+        "welcome-close"
+      ]
+    },
+    {
+      "name": "Allow requests http and https in the click; a (simulated) decline says so plainly and sets welcomeSeen"
+    },
+    {
+      "name": "Close sets welcomeSeen"
+    },
+    {
+      "name": "Settings: the all-sites switch shows the true state; the trigger offers a letter or the modifier only; the Never list lists and removes; each permission has a reason",
+      "triggers": [
+        [
+          "letter",
+          "A letter key"
+        ],
+        [
+          "modifier",
+          "Command"
+        ]
+      ],
+      "reasons": {
+        "allSites": "Hold-key drag and Capture this page then work on every website without asking site by site. Link Meteor reads a page’s links only when you capture or drag, and keeps them in this browser.",
+        "site": "Hold the key below and drag to select links, without opening Link Meteor first. Chrome asks for access to this site only.",
+        "tabGroups": "A tab group is named after the collection when Chrome lets Link Meteor manage tab groups. Chrome asks the first time you choose one."
+      }
+    },
+    {
+      "name": "Capture this page: no prompt after a toolbar press; on a new site whose address Chrome hides, a denied result says why and offers all sites (a decline changes nothing); a toolbar press there allows it"
+    },
+    {
+      "name": "Card destination picker saves the ticked links to the chosen collection",
+      "saved": 4
+    },
+    {
+      "name": "Card copy formats: table, URLs (U) and Markdown (K)"
+    },
+    {
+      "name": "Card Open 3 in tabs opens the unique ticked web links at once",
+      "opened": [
+        "/appendix",
+        "/papers/attention.pdf",
+        "/papers/geometry.pdf"
+      ]
+    },
+    {
+      "name": "Card Download this selection (D) saves a workbook named after the chosen collection",
+      "file": "Card-target_2026-10-01_1255.xlsx"
+    },
+    {
+      "name": "Card Bookmark this selection without access explains it and offers the full view"
+    },
+    {
+      "name": "Card Review opens the full view at that capture, in its collection, once"
+    },
+    {
+      "name": "Card with 30 links confirms first, then opens all 30 in batches"
+    },
+    {
+      "name": "A theme or appearance change restyles a card already open on the page, without a reload (content.configure from the background)"
+    },
+    {
+      "name": "Add right away saves at once and says so; Undo (capture.undoAdd) removes exactly that add; Show links then adds again from the card"
+    },
+    {
+      "name": "Already saved: the card asks capture.saved and marks the 5 saved rows; Skip saved starts from the setting; Make this the default saves it (capture.preference)",
+      "marked": [
+        "Attention in small systems [Saved]",
+        "Geometry, “frames” & 雪 [Saved]",
+        "Download PDF [Saved]",
+        "No anchor text (labeled “Open illustrated appendix”) [Saved]",
+        "Visible label [Saved]",
+        "Atlas notebook — field edition",
+        "Open-sky telescope",
+        "OBS-42",
+        "OBS-43"
+      ]
+    },
+    {
+      "name": "Copy as rich links (L) puts the background’s HTML and plain text on the clipboard; the payload escapes anchor text and URLs",
+      "types": [
+        "text/plain",
+        "text/html"
+      ]
+    },
+    {
+      "name": "Skip saved: the card’s Add skips the 5 links already saved and says “Added 4 links …; 5 were already saved”"
+    },
+    {
+      "name": "Capture this page with content links only leaves out 5 links in header (shadow root), nav, aside (frame) and footer, reports them, and Include them adds them once",
+      "captured": 37,
+      "leftOut": 5
+    },
+    {
+      "name": "Capture this page saves each link’s context and the page’s citation tags (Highwire, DOI read as a DOI) under the page’s address",
+      "links": 14
+    },
+    {
+      "name": "Save tabs as links’ reader runs through Chrome’s executeScript as a stand-alone function and reads the same citation tags"
+    },
+    {
+      "name": "A region saved from the card keeps each link’s context and the page’s citation tags",
+      "links": 12
+    },
+    {
+      "name": "Save the words around each link (After a drag): on by default; off, Capture this page keeps no context but still reads the page’s citation"
+    },
+    {
+      "name": "Save tabs as links (capture.tabs): three fixture tabs become three links with their titles and addresses, in one batch; a tab Chrome hides is reported, not saved; without site access no citation tags are read (This page’s tab, with the toolbar’s temporary access, is)",
+      "saved": 3,
+      "hidden": true
+    },
+    {
+      "name": "The tabs themselves with This page: the button says Save this tab as a link, saves the current tab, and fits at 320 px"
+    },
+    {
+      "name": "Pick tabs: three tabs chosen, the button says Save 3 tabs as links, and the report says Saved 3 tabs as links and that reading citation details needs site access (tab access: simulated accept)"
+    },
+    {
+      "name": "Save all tabs in this window without tab access: the full view opens with The tabs themselves and This window, says why, and asks in the save click (simulated decline)"
+    },
+    {
+      "name": "Workbench: 20 links open without a confirmation"
+    },
+    {
+      "name": "Workbench: a tab group without tab-group access (simulated decline) opens unnamed, with a note",
+      "groupedTabs": 20
+    },
+    {
+      "name": "Workbench: 45 links confirm inline (Open 45 tabs, new window, tab group, Cancel); a new window opens all 45",
+      "buttons": [
+        [
+          "open-confirm-yes",
+          "Open 45 tabs"
+        ],
+        [
+          "open-confirm-window",
+          "Open in a new window"
+        ],
+        [
+          "open-confirm-group",
+          "Open as a tab group"
+        ],
+        [
+          "open-confirm-no",
+          "Cancel"
+        ]
+      ]
+    },
+    {
+      "name": "Workbench: 150 links use stronger wording, open in batches with progress, and Cancel stops before the next batch",
+      "openedBeforeStop": 10
+    },
+    {
+      "name": "Workbench: 520 links are refused before anything opens, in the page and in the background"
+    },
+    {
+      "name": "A state saved by 0.2.2 shows the welcome card once, with the saved hold key"
+    },
+    {
+      "name": "A second toolbar press closes the side panel: with Chrome’s own close, and without it by the panel itself; the full view stays open",
+      "chromeClose": true
+    },
+    {
+      "name": "The side panel’s Full view button is labeled, opens the full view in a tab and closes the panel",
+      "panelWidth": 360
+    },
+    {
+      "name": "After Link Meteor restarts in place, region selection works on the same unreloaded page and its script answers messages"
+    }
+  ],
+  "result": "PASS",
+  "finished": "2026-10-01T16:56:36.707Z"
+}

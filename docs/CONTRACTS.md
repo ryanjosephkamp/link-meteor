@@ -858,7 +858,7 @@ The title is the title of the citation the link uses when there is one, otherwis
 
 **Citation formats** (`src/core/cite.js`, pure; it imports only `identifiers.js`):
 - `CITE_FORMATS` is `['bibtex', 'ris', 'csl', 'annotated', 'obsidian']`. Extensions: `bib`, `ris`, `json`, `md`, `md`. Types: `application/x-bibtex`, `application/x-research-info-systems`, `application/vnd.citationstyles.csl+json` and `text/markdown`, each with `;charset=utf-8`.
-- `citations(rows, {format, pages, fields, collection, date})` returns the file. `citeFirst(rows, options)` returns the first entry exactly as the file writes it (for CSL-JSON, the first item on its own). `citeFacts(rows, pages)` returns `{entries, identified, authorsAndDate, pageTitles, addressTitles, notes, contexts}`. `dateParts(text)` returns `[year, month?, day?]`.
+- `citations(rows, {format, pages, fields, collection, date})` returns the file. `citeFirst(rows, options)` returns the first entry exactly as the file writes it (for CSL-JSON, the first item on its own). `citeFacts(rows, pages)` returns `{entries, identified, unauthored, authorsAndDate, pageTitles, addressTitles, notes, contexts}`; `unauthored` (release candidate 3) counts entries with a DOI or arXiv ID and no authors. `dateParts(text)` returns `[year, month?, day?]`.
 - With a citation format, `makeExport` ignores `columns` and takes the collection's name and the export time from `about` (checked as usual). Without `about`, there is no name and no export time.
 - **Every entry:**
   - The title is the `title` of the citation the link uses, else its anchor text, accessible label or address, with spaces collapsed.
@@ -1160,13 +1160,38 @@ After the owner's hands-on check of release candidate 1. It adds no permission a
 
 ### PDFs and files on the computer
 
-- `inject(tab)` refuses before injecting:
+- `inject(tab)`, used for capturing a page or a region, refuses before injecting:
   - for a tab whose address ends in `.pdf`: "Link Meteor can’t read the links inside a PDF yet. To save one link, right-click it and choose Link Meteor, then Add link.";
   - for a `file:` page: "Link Meteor can’t capture from files on your computer. …", with the same advice.
 - For other web pages, it first reads `document.contentType` (a named function, `documentType`) and refuses a PDF the same way. Chrome's PDF viewer shows a PDF, and no extension can read that.
 - *Capture this page* and the capture report use the same words, in place of "Choose an ordinary HTTP or HTTPS webpage".
 - Reading the links inside PDFs is planned for 0.6.0.
+- The right-click menu is not gated this way: see release candidate 3 below.
 
 ### The Star button
 
 The Star toggle in a link's details keeps the label "Star". `aria-pressed` and the pressed look say whether it's starred, so screen readers don't announce the state twice. The selection's Star or Unstar button is unchanged.
+
+## Added in 0.5.0 release candidate 3
+
+After the owner's hands-on check of release candidate 2. It adds no permission and no network access.
+
+### The right-click menu on PDFs and files
+
+Release candidate 2's capture gate also stopped *Add link* on PDFs, which had worked before. Now:
+- The menus load the page script with `injectScript(tab)`, which has no PDF or file gate. In a PDF's tab the script can show a notice, though it can read no links. `inject(tab)` keeps the gate for *Select a region*, *Capture this page* and the shortcut.
+- *Add link* and *Copy link text + URL*: when the page can't be asked at all (no script can load there), the link is kept with the address Chrome gave, as when the page can't find it.
+  - Add link then saves it and opens the full view at it, since the page can't show the notice.
+  - Copy link reports that the page couldn't copy.
+- A link saved from a local file has that file's address as its source page, where Chrome shows it to Link Meteor.
+
+### The full view and the side panel
+
+- The side panel's `#open-full` is a labeled button, "Full view" (`aria-label` "Open the full view in a tab"). It stays hidden in the full view itself.
+- In a panel narrower than 480 px, the header's buttons take their own row under the collection's name.
+- Clicking it opens the full view (`ui.open`), then closes the side panel it is in (`closeIfSidePanel()` in `src/ui/workbench/panel.js`).
+- *Open the full view* in the toolbar icon's menu opens it, then sends `{type: 'panel.close', windowId}`. The side panel in that window closes, as for `panel.toggle`.
+
+### Papers with no authors yet
+
+For BibTeX, RIS, CSL-JSON and the annotated bibliography, `#cite-facts` gains a line when `unauthored` is above zero: "2 with a DOI or arXiv ID but no authors yet. Capture from the paper’s own page (on arXiv, its abstract page) or save that page as a tab, and its authors and date fill in". Nothing is looked up online, so authors come only from a saved page about the paper.

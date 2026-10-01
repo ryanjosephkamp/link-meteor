@@ -1,0 +1,95 @@
+{
+  "started": "2026-09-30T20:20:25.890Z",
+  "profile": "check-move-browser-2026-09-30T20-17-33-309Z",
+  "browser": "Chrome for Testing via Playwright, headless, fresh profile, real unpacked extension, no optional grants",
+  "checks": [
+    {
+      "name": "A link to a PDF shows the citation it borrows from the saved page that names it as its PDF, and says so"
+    },
+    {
+      "name": "Move to…: the panel says what happens; everything travels, a repeat stays, a column is matched and one created, the borrowed citation goes too; Undo puts both collections back exactly",
+      "moved": 2,
+      "skipped": 1
+    },
+    {
+      "name": "Copy to… a new collection: a name is required; copies get new ids and columns, the source and the open collection stay; Undo removes the new collection"
+    },
+    {
+      "name": "Move to… in a link’s details moves that link; Escape closes the panel and returns focus"
+    },
+    {
+      "name": "At 320 px nothing overflows with the panel open"
+    },
+    {
+      "name": "Text contrast is at least 4.5:1 in light and dark for the buttons and the panel",
+      "measured": 14,
+      "lowest": 6.02
+    }
+  ],
+  "screenshots": [
+    "move-panel-320.png",
+    "move-panel-side-panel.png",
+    "move-panel-light.png",
+    "move-panel-dark.png"
+  ],
+  "contrast": [
+    {
+      "name": "light Move to…",
+      "ratio": 9.37
+    },
+    {
+      "name": "light Copy to…",
+      "ratio": 9.97
+    },
+    {
+      "name": "light panel title",
+      "ratio": 16.48
+    },
+    {
+      "name": "light destination label",
+      "ratio": 10.41
+    },
+    {
+      "name": "light help",
+      "ratio": 6.02
+    },
+    {
+      "name": "light Move",
+      "ratio": 13.41
+    },
+    {
+      "name": "light Cancel",
+      "ratio": 10.41
+    },
+    {
+      "name": "dark Move to…",
+      "ratio": 12.61
+    },
+    {
+      "name": "dark Copy to…",
+      "ratio": 12.16
+    },
+    {
+      "name": "dark panel title",
+      "ratio": 15.41
+    },
+    {
+      "name": "dark destination label",
+      "ratio": 11.49
+    },
+    {
+      "name": "dark help",
+      "ratio": 7.36
+    },
+    {
+      "name": "dark Move",
+      "ratio": 13.41
+    },
+    {
+      "name": "dark Cancel",
+      "ratio": 11.49
+    }
+  ],
+  "result": "PASS",
+  "finished": "2026-09-30T20:20:28.679Z"
+}

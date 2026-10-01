@@ -1,7 +1,9 @@
 import {serial, readState, mutate, onStateWritten} from './background/store.js';
-import {ordinaryUrl} from './background/urls.js';
+import {ordinaryUrl, captureRefusal, PDF_REFUSAL, FILE_REFUSAL} from './background/urls.js';
 import {workbenchMessages as bookmarkMessages} from './background/bookmarks.js';
 import {workbenchMessages as backupMessages} from './background/backup.js';
+import {workbenchMessages as importMessages} from './background/imports.js';
+import {workbenchMessages as transferMessages} from './background/transfer.js';
 import {workbenchMessages as diagnosticsMessages} from './background/diagnostics.js';
 import {workbenchMessages as holdMessages, grantedSettings, followHoldWrites, requestSync} from './background/hold.js';
 import {openUrls, cancelOpen} from './background/open.js';
@@ -9,13 +11,14 @@ import {WORKBENCH, occurrences, commitCapture, openWorkbench, pageMessages, appe
 import {syncIcon, followThemeWrites} from './background/theme.js';
 import {createMenus, menuClicked, followMenuWrites, syncMenuTitle, MENU} from './background/menus.js';
 import {tabsMessage} from './background/tabs.js';
+import {citationPages} from './background/citations.js';
 import {workbenchMessages as downloadMessages, pageMessages as downloadPageMessages, cancelDownloads, downloadMenuItem, downloadFromMenu, DOWNLOAD_MENU_ID} from './background/downloads.js';
 
 const LAST_TARGET_KEY = 'linkMeteorTarget';
 
 // Workbench-only messages answered by area modules. A type may be claimed by one module only.
 const AREA_MESSAGES = new Map();
-for (const table of [bookmarkMessages, backupMessages, holdMessages, diagnosticsMessages, downloadMessages]) {
+for (const table of [bookmarkMessages, backupMessages, holdMessages, diagnosticsMessages, downloadMessages, importMessages, transferMessages]) {
   for (const [type, handler] of Object.entries(table)) {
     if (AREA_MESSAGES.has(type)) throw new Error(`Duplicate Link Meteor message handler: ${type}`);
     AREA_MESSAGES.set(type, handler);
@@ -51,10 +54,21 @@ async function inventory(callerTabId) {
   return {tabs,currentWindowId:current?.id,targetTabId:target?.id};
 }
 
+// The page script, wherever Chrome lets it load. The right-click menu uses this directly: Add link
+// and Copy link work on a PDF and on a file too, where the script can show a notice but read no links.
+async function injectScript(tab) {
+  if (tab.incognito) throw new Error('Incognito collection is not enabled in this release.');
+  await chrome.scripting.executeScript({target:{tabId:tab.id},files:['content/capture.js']});
+}
+
+// For capturing a page or a region: only where there are links the script can read.
 async function inject(tab) {
   if (tab.incognito) throw new Error('Incognito collection is not enabled in this release.');
-  if (tab.url && !ordinaryUrl(tab.url)) throw new Error('Chrome does not allow link capture on this page. Choose an ordinary HTTP or HTTPS webpage.');
-  await chrome.scripting.executeScript({target:{tabId:tab.id},files:['content/capture.js']});
+  if (tab.url && (!ordinaryUrl(tab.url) || captureRefusal(tab.url) === PDF_REFUSAL)) throw new Error(captureRefusal(tab.url));
+  // A PDF whose address doesn't say so: Chrome's viewer shows it, and no extension can read that.
+  const [probe] = await chrome.scripting.executeScript({target:{tabId:tab.id},func:function documentType() { return document.contentType; }});
+  if (probe?.result === 'application/pdf') throw new Error(PDF_REFUSAL);
+  await injectScript(tab);
 }
 
 async function arm(tabId, callerTabId) {
@@ -70,10 +84,11 @@ async function arm(tabId, callerTabId) {
 
 // With contentOnly, links the page marks as page chrome (navigation, headers, footers, sidebars)
 // are left out, counted per page and kept for the workbench's Include them. With skipSaved, links
-// the collection already holds are skipped and counted.
+// the collection already holds are skipped and counted. 0.5.0: each link keeps the words around it
+// (unless saveContext is off), and each page its own citation tags, keyed by its address.
 async function captureTabs(tabIds,callerTabId) {
   const stateBefore = await serial(readState);
-  const collectionId = stateBefore.activeCollectionId, contentOnly = stateBefore.settings.contentOnly === true;
+  const collectionId = stateBefore.activeCollectionId, contentOnly = stateBefore.settings.contentOnly === true, context = stateBefore.settings.saveContext !== false;
   const ids = Array.isArray(tabIds) && tabIds.length ? [...new Set(tabIds)] : [(await resolveTarget(undefined,callerTabId)).id];
   if (ids.length > 100 || ids.some(id => !Number.isInteger(id))) throw new Error('Choose at most 100 tabs per capture. You can append another batch.');
   const batchId = crypto.randomUUID(), results = [], leftOutLinks = [];
@@ -83,19 +98,21 @@ async function captureTabs(tabIds,callerTabId) {
     try {
       tab = await chrome.tabs.get(tabId);
       if (tab.incognito || (tab.url && !ordinaryUrl(tab.url))) {
+        const refusal = !tab.incognito && captureRefusal(tab.url);
         results.push({tabId,title:tab.title || 'Restricted page',url:tab.url || '',status:'unsupported',count:0,leftOut:0,skipped:0,
-          warning:'Browser-internal pages, the Chrome Web Store, and incognito pages cannot be captured.',error:''});
+          warning:[PDF_REFUSAL,FILE_REFUSAL].includes(refusal) ? refusal : 'Browser-internal pages, the Chrome Web Store, and incognito pages cannot be captured.',error:''});
         continue;
       }
       await inject(tab);
-      const [{result}] = await chrome.scripting.executeScript({target:{tabId},func:() => globalThis.__linkMeteor.scan()});
+      const [{result}] = await chrome.scripting.executeScript({target:{tabId},func:options => globalThis.__linkMeteor.scan(options),args:[{context}]});
       const after = await chrome.tabs.get(tabId);
       if (tab.url && after.url !== tab.url) throw new Error('The tab navigated during capture; retry on the new page.');
       const found = occurrences(result.links, tab, batchId);
       const pageChrome = found.map((_, i) => contentOnly && result.links[i]?.pageChrome === true);
       const links = found.filter((_, i) => !pageChrome[i]), leftOut = found.filter((_, i) => pageChrome[i]);
       let count = 0, skipped = 0;
-      if (links.length) ({state, count, skipped} = await appendLinks(links,{collectionId,missing:'The active collection was deleted during the capture, so nothing was saved from this page.'}));
+      const pages = citationPages(result.page, tab.url || found[0]?.sourceUrl);
+      if (links.length) ({state, count, skipped} = await appendLinks(links,{collectionId,pages,missing:'The active collection was deleted during the capture, so nothing was saved from this page.'}));
       leftOutLinks.push(...leftOut.slice(0,Math.max(0,LEFT_OUT_LIMIT - leftOutLinks.length)));
       leftOutTotal += leftOut.length;
       capturedCount += count;
@@ -154,6 +171,9 @@ chrome.runtime.onMessage.addListener((message,sender,reply) => {
 chrome.action.onClicked.addListener(tab => {
   rememberTarget(tab).catch(() => {});
   chrome.sidePanel.open({windowId:tab.windowId}).catch(() => chrome.tabs.create({url:WORKBENCH}));
+  // A second click closes the panel: a side panel already open in this window closes itself when
+  // told (ui/workbench/panel.js). Opening it again is harmless, and a closed one hears nothing.
+  chrome.runtime.sendMessage({type:'panel.toggle',windowId:tab.windowId}).catch(() => {});
 });
 chrome.commands.onCommand.addListener((command, tab) => {
   if (command === 'select-region') arm(tab?.id).catch(error => reportActivationError(error));
@@ -161,7 +181,7 @@ chrome.commands.onCommand.addListener((command, tab) => {
 // The right-click and toolbar menus (background/menus.js); Download linked file is background/downloads.js's.
 chrome.contextMenus.onClicked.addListener((info,tab) => info.menuItemId === DOWNLOAD_MENU_ID
   ? downloadFromMenu(info,tab).catch(error => reportActivationError(error))
-  : menuClicked(info,tab,{arm,captureTabs,inject,reportError:reportActivationError}));
+  : menuClicked(info,tab,{arm,captureTabs,inject:injectScript,reportError:reportActivationError}));
 async function reportActivationError(error) {
   await chrome.storage.session.set({linkMeteorActivationError:String(error.message || error)});
   await chrome.tabs.create({url:WORKBENCH});

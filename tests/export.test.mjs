@@ -364,3 +364,42 @@ test('custom columns export as field:<id>, headed by their names, in every forma
   assert.deepEqual(json.rows, rows);
   assert.equal('fields' in JSON.parse(makeExport(rows, { format: 'json', about }).data).about, false);
 });
+
+test('research columns (0.5.0): context, reading status, star, identifiers from the address or the page itself, imported', () => {
+  const keys = ['context', 'status', 'starred', 'doi', 'arxiv', 'pmid', 'isbn', 'imported'];
+  assert.deepEqual(COLUMNS.slice(-8).map(column => [column.key, column.label]), [['context', 'Context'], ['status', 'Reading status'], ['starred', 'Starred'],
+    ['doi', 'DOI'], ['arxiv', 'arXiv ID'], ['pmid', 'PubMed ID'], ['isbn', 'ISBN'], ['imported', 'Imported from']]);
+  const links = [
+    { anchorText: 'Paper', url: 'https://doi.org/10.5555/uhi.2024.0142', context: '=HYPERLINK("https://evil.example") says the page', status: 'read', starred: true },
+    { anchorText: 'Own page', url: 'https://journal.example.org/articles/42#results', status: 'reading', imported: '+labs.csv, row 3' },
+    { anchorText: 'Preprint', url: 'https://arxiv.org/pdf/2401.12345v2', originalHref: '/pdf/2401.12345v2' },
+    { anchorText: 'Abstract', url: 'https://pubmed.ncbi.nlm.nih.gov/31452104/' },
+    { anchorText: 'Book', url: 'https://openlibrary.org/isbn/9780306406157', starred: false },
+    { anchorText: 'Mail', url: 'mailto:lab@example.edu' },
+  ];
+  const pages = { 'https://journal.example.org/articles/42': { title: 'Cooling cities', doi: '10.5555/cool.2025.0007', pmid: '123456' } };
+  const csv = makeExport(links, { format: 'csv', columns: ['anchorText', ...keys], pages }).data;
+  assert.equal(csv, [
+    'Anchor text,Context,Reading status,Starred,DOI,arXiv ID,PubMed ID,ISBN,Imported from',
+    `Paper,"'=HYPERLINK(""https://evil.example"") says the page",Read,Yes,10.5555/uhi.2024.0142,,,,`,
+    `Own page,,Reading,,10.5555/cool.2025.0007,,123456,,"'+labs.csv, row 3"`,
+    'Preprint,,Unread,,,2401.12345v2,,,',
+    'Abstract,,Unread,,,,31452104,,',
+    'Book,,Unread,,,,,9780306406157,',
+    'Mail,,Unread,,,,,,', ''].join('\r\n'), 'formula protection covers the new columns; status defaults to Unread');
+  assert.match(makeExport(links, { format: 'csv', columns: ['doi'] }).data, /^DOI\r\n10\.5555\/uhi\.2024\.0142\r\n\r\n/, 'without pages, only addresses give identifiers');
+  assert.match(makeExport(links, { format: 'tsv', columns: keys, pages }).data.split('\r\n')[1], /^"'=HYPERLINK\(""https:\/\/evil\.example""\) says the page"\tRead\tYes\t10\.5555/);
+  assert.match(makeExport(links, { format: 'html', columns: ['status', 'starred', 'arxiv'], pages }).data, /<th scope="col">Reading status<\/th><th scope="col">Starred<\/th><th scope="col">arXiv ID<\/th>.*<td>Unread<\/td><td><\/td><td>2401\.12345v2<\/td>/);
+  // The formatted workbook: text cells, no formulas, no links in the new columns, and About names them.
+  const about = { exportedAt: new Date(Date.UTC(2026, 8, 29, 12)), collection: 'Research', columns: ['url', ...keys] };
+  const parts = members(makeExport(links, { format: 'xlsx', columns: ['url', ...keys], about, pages }).data);
+  const sheet = parts.get('xl/worksheets/sheet1.xml');
+  assert.doesNotMatch(sheet, /<f[ >]/);
+  assert.match(sheet, /<c r="B2" [^>]*t="inlineStr"><is><t[^>]*>=HYPERLINK\(&quot;https:\/\/evil\.example&quot;\) says the page<\/t>/);
+  assert.ok([...sheet.match(/<hyperlinks>(.*?)<\/hyperlinks>/s)[1].matchAll(/ref="([A-Z]+)\d+"/g)].every(([, column]) => column === 'A'), 'only the URL column links');
+  assert.match(parts.get('xl/worksheets/sheet2.xml'), /URL, Context, Reading status, Starred, DOI, arXiv ID, PubMed ID, ISBN, Imported from/);
+  // JSON keeps the stored fields as they are, and derives nothing.
+  const json = JSON.parse(makeExport(links, { format: 'json', columns: keys, about, pages }).data);
+  assert.deepEqual(json.rows, links);
+  assert.throws(() => makeExport(links, { format: 'csv', columns: keys, pages: 'x' }), /pages must be an object/);
+});

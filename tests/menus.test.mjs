@@ -2,7 +2,9 @@
 // APIs simulated in Node: the items and their order, the title that follows the active collection,
 // every item's click handler (the saved fields, the collection chosen, the page's notice and its
 // Undo), and capture.tabs. The page script is a stand-in that answers content.contextLink,
-// content.selectionLinks and content.notice. API mocks, not Chrome itself.
+// content.selectionLinks and content.notice. 0.5.0: menu saves keep the page's citation and each
+// link's context, and Save tabs as links reads citation tags only where a (simulated) site grant
+// already exists. API mocks, not Chrome itself.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createState} from '../src/core/model.js';
@@ -10,6 +12,8 @@ import {createState} from '../src/core/model.js';
 const event = () => ({listeners: [], addListener(fn) { this.listeners.push(fn); }});
 const local = {linkMeteorState: createState()}, session = {};
 const granted = new Set();
+// Simulated site grants for permissions.contains: origin patterns, or 'all' for all sites.
+const sites = new Set();
 const menus = {items: [], updates: [], removals: 0};
 const calls = {inject: [], arm: [], created: [], messages: []};
 const tabs = [
@@ -21,8 +25,10 @@ const tabs = [
   {id: 6, windowId: 1, url: 'https://a.test/other', title: 'Another page'},
 ];
 // What each tab's page script answers: its links (content.contextLink finds by address), the
-// selection's links, and the notices it was asked to show. A tab only answers once the script loaded.
-const pages = new Map(tabs.map((tab) => [tab.id, {loaded: false, links: [], selection: [], notices: []}]));
+// selection's links, the page's citation, and the notices it was asked to show. A tab only answers
+// once the script loaded. tags: what readCitationTags finds in each tab ('throw' for no answer).
+const pages = new Map(tabs.map((tab) => [tab.id, {loaded: false, links: [], selection: [], notices: [], citation: null}]));
+const tags = new Map(), reads = [];
 const web = (url) => /^https?:/.test(url);
 
 globalThis.chrome = {
@@ -32,12 +38,18 @@ globalThis.chrome = {
     session: {async get(key) { return {[key]: structuredClone(session[key])}; }, async set(value) { Object.assign(session, structuredClone(value)); }, async remove(key) { delete session[key]; }},
   },
   runtime: {getURL: (path) => 'chrome-extension://meteor/' + path, sendMessage: async () => {}, onMessage: event(), onInstalled: event(), onStartup: event()},
-  permissions: {async contains({permissions = [], origins = []}) { return !origins.length && permissions.every((p) => granted.has(p)); }, onAdded: event(), onRemoved: event()},
+  permissions: {async contains({permissions = [], origins = []}) { return origins.every((o) => sites.has('all') || sites.has(o)) && permissions.every((p) => granted.has(p)); }, onAdded: event(), onRemoved: event()},
   scripting: {
     async executeScript(spec) {
       const tab = tabs.find((t) => t.id === spec.target.tabId);
       if (!web(tab.url)) throw new Error('Cannot access contents of the page.');
       if (spec.files) { calls.inject.push(tab.id); pages.get(tab.id).loaded = true; return []; }
+      if (spec.func?.name === 'documentType') return [{result: tab.contentType || 'text/html'}];
+      if (spec.func?.name === 'readCitationTags') {
+        reads.push(spec);
+        if (tags.get(tab.id) === 'throw') throw new Error('Frame with ID 0 was removed.');
+        return [{result: tags.get(tab.id) ?? null}];
+      }
       calls.arm.push(tab.id);
       return [{result: {links: [{anchorText: 'Scanned', url: 'https://a.test/scanned', originalHref: '/scanned', frameUrl: tab.url}], warnings: []}}];
     },
@@ -51,8 +63,8 @@ globalThis.chrome = {
       calls.messages.push({tabId, options, ...message});
       const page = pages.get(tabId);
       if (!page?.loaded) throw new Error('Could not establish connection. Receiving end does not exist.');
-      if (message.type === 'content.contextLink') return {ok: true, data: {link: page.links.find((link) => link.url === message.url) || null}};
-      if (message.type === 'content.selectionLinks') return {ok: true, data: {links: page.selection, warnings: []}};
+      if (message.type === 'content.contextLink') return {ok: true, data: {link: page.links.find((link) => link.url === message.url) || null, page: page.citation}};
+      if (message.type === 'content.selectionLinks') return {ok: true, data: {links: page.selection, warnings: [], page: page.citation}};
       if (message.type === 'content.notice') { page.notices.push(message); return {ok: true, data: {}}; }
       return {ok: false, error: 'Unexpected ' + message.type};
     },
@@ -265,7 +277,8 @@ test('Save all tabs in this window: web pages of that window only, repeated addr
   await click('meteor-save-window', tabs[0]);
   const added = active().links.slice(before);
   assert.deepEqual(added.map((l) => [l.anchorText, l.url]), [['Thesis sources page', tabs[0].url], ['B', 'https://b.test/'], ['Another page', 'https://a.test/other']]);
-  assert.equal(lastNotice().text, 'Saved 3 tabs as links in “Thesis sources”; 1 skipped: not a web page; 1 skipped: a repeated address.');
+  // The right-clicked tab is read with the temporary access the click gives; the others need site access.
+  assert.equal(lastNotice().text, 'Saved 3 tabs as links in “Thesis sources”; 1 skipped: not a web page; 1 skipped: a repeated address. Read citation details from 1 of 3 tabs; the others need site access.');
   const report = session.linkMeteorCaptureReport.report;
   assert.deepEqual({kind: report.kind, saved: report.saved, skipped: report.skipped, repeated: report.repeated, unsupported: report.unsupported, capturedCount: report.capturedCount}, {kind: 'tabs', saved: 3, skipped: 1, repeated: 1, unsupported: 1, capturedCount: 3});
   assert.deepEqual(report.results.map((r) => [r.tabId, r.status, r.count, r.skipped]), [[1, 'success', 1, 0], [2, 'success', 1, 0], [3, 'unsupported', 0, 0], [4, 'success', 0, 1], [6, 'success', 1, 0]]);
@@ -307,11 +320,132 @@ test('capture.tabs: scopes, a chosen collection, Skip saved, hidden and closed t
   assert.equal(mixed.report.results[1].error, 'Chrome hides this tab’s address from Link Meteor.');
   tabs.pop();
   const {tabsSummary} = await import('../src/background/tabs.js');
-  assert.equal(tabsSummary(mixed.report, {name: 'X'}), 'Saved 1 tab as a link in “X”; 1 skipped: address hidden by Chrome; 1 skipped: closed before saving.');
+  assert.equal(tabsSummary(mixed.report, {name: 'X'}), 'Saved 1 tab as a link in “X”; 1 skipped: address hidden by Chrome; 1 skipped: closed before saving. Read no citation details; the tab needs site access.');
   assert.equal(tabsSummary({saved: 0, skipped: 3, repeated: 1, unsupported: 2, results: []}), 'No tabs were saved; 2 skipped: not web pages; 2 skipped: already saved; 1 skipped: a repeated address.');
   await refused({type: 'capture.tabs', scope: 'selected'}, /Select at least one tab/);
   await refused({type: 'capture.tabs', scope: 'somewhere'}, /'current', 'selected', 'window' or 'all'/);
   await refused({type: 'capture.tabs', scope: 'selected', tabIds: ['2']}, /at most 20,000 tabs/);
   await refused({type: 'capture.tabs', scope: 'selected', tabIds: [2], collectionId: 'gone'}, /no longer exists/);
   await refused({type: 'capture.tabs', scope: 'selected', tabIds: [2]}, /workbench/, PAGE);
+});
+
+test('0.5.0: Add link and Capture links in the selection keep each link’s context and the page’s citation', async () => {
+  reset();
+  pages.get(1).citation = {title: 'Thesis sources, annotated', authors: ['Okafor, Adaeze'], doi: 'doi:10.5555/menu.1'};
+  pages.get(1).links = [link('Cited paper', 'https://a.test/cited', {context: 'As shown in Cited paper, shade helps.'})];
+  await click('meteor-add-link', tabs[0], {linkUrl: 'https://a.test/cited'});
+  const added = active().links.at(-1);
+  assert.equal(added.context, 'As shown in Cited paper, shade helps.');
+  const {readAt, ...cited} = active().pages['https://a.test/page'];
+  assert.deepEqual(cited, {title: 'Thesis sources, annotated', authors: ['Okafor, Adaeze'], doi: '10.5555/menu.1'});
+  pages.get(1).citation = {title: 'Thesis sources, second reading'};
+  pages.get(1).selection = [link('One', 'https://a.test/s1', {context: 'Before One after.'}), link('Two', 'https://a.test/s2')];
+  await click('meteor-selection', tabs[0]);
+  assert.deepEqual(active().links.slice(-2).map((l) => l.context), ['Before One after.', undefined]);
+  assert.equal(active().pages['https://a.test/page'].title, 'Thesis sources, second reading');
+  pages.get(1).citation = null; pages.get(1).selection = [];
+});
+
+test('0.5.0: Save tabs as links reads citation tags only where Link Meteor already has access to the site, and says how many', async () => {
+  reset(); reads.length = 0;
+  const home = active().id;
+  // No access anywhere: nothing is read, and nothing asks.
+  let {report} = await ok({type: 'capture.tabs', scope: 'selected', tabIds: [1, 2, 6]});
+  assert.deepEqual(report.citations, {tabs: 3, read: 0, found: 0, needAccess: 3});
+  assert.equal(reads.length, 0, 'no tab is read without access');
+  const {tabsSummary} = await import('../src/background/tabs.js');
+  assert.match(tabsSummary(report), /\. Read no citation details; the tabs need site access\.$/);
+
+  // A simulated grant for a.test only: its two tabs are read (one answers, one doesn't), b.test isn't.
+  sites.add('https://a.test/*');
+  tags.set(1, {title: 'Thesis sources page', authors: ['Lindqvist, Tove'], date: '2024'});
+  tags.set(6, 'throw');
+  ({report} = await ok({type: 'capture.tabs', scope: 'selected', tabIds: [1, 2, 6]}));
+  assert.deepEqual(report.citations, {tabs: 3, read: 1, found: 1, needAccess: 1});
+  assert.deepEqual(reads.map((spec) => [spec.target, spec.injectImmediately]), [[{tabId: 1}, true], [{tabId: 6}, true]], 'only the granted site’s tabs, top frame, without waiting for the page to finish loading');
+  assert.equal(tabsSummary(report), 'Saved 3 tabs as links. Read citation details from 1 of 3 tabs; the others need site access or didn’t answer.');
+  const {readAt, ...own} = collection(home).pages['https://a.test/page'];
+  assert.deepEqual(own, {title: 'Thesis sources page', authors: ['Lindqvist, Tove'], date: '2024'}, 'each saved link has its own citation, under its own address');
+  assert.equal(collection(home).pages['https://a.test/other'], undefined);
+
+  // All sites: every tab is read; a discarded tab is not, and says so.
+  sites.add('all'); tags.delete(6); reads.length = 0;
+  ({report} = await ok({type: 'capture.tabs', scope: 'selected', tabIds: [1, 2]}));
+  assert.deepEqual(report.citations, {tabs: 2, read: 2, found: 1, needAccess: 0});
+  assert.match(tabsSummary(report), / Read citation details from all 2 tabs\.$/);
+  tabs[1].discarded = true;
+  ({report} = await ok({type: 'capture.tabs', scope: 'selected', tabIds: [1, 2]}));
+  assert.deepEqual(report.citations, {tabs: 2, read: 1, found: 1, needAccess: 0});
+  assert.match(tabsSummary(report), / Read citation details from 1 of 2 tabs; the other didn’t answer\.$/);
+  delete tabs[1].discarded;
+
+  // One tab from the menu: the notice mentions its citation details only when it had some.
+  await click('meteor-save-tab', tabs[0]);
+  assert.equal(lastNotice().text, 'Saved this tab as a link in “Thesis sources”. Read its citation details.');
+  tags.delete(1);
+  await click('meteor-save-tab', tabs[0]);
+  assert.equal(lastNotice().text, 'Saved this tab as a link in “Thesis sources”.');
+  sites.clear(); tags.clear();
+});
+
+test('0.5.0: the citations sentence, in every case', async () => {
+  const {citationsPart} = await import('../src/background/tabs.js');
+  const say = (citations) => citationsPart({citations});
+  assert.equal(say({tabs: 0, read: 0, needAccess: 0}), '');
+  assert.equal(citationsPart({}), '', 'a report from 0.4.0 has none');
+  assert.equal(say({tabs: 1, read: 1, needAccess: 0}), 'Read the tab’s citation details.');
+  assert.equal(say({tabs: 45, read: 45, needAccess: 0}), 'Read citation details from all 45 tabs.');
+  assert.equal(say({tabs: 1, read: 0, needAccess: 1}), 'Read no citation details; the tab needs site access.');
+  assert.equal(say({tabs: 1, read: 0, needAccess: 0}), 'Read no citation details; the tab didn’t answer.');
+  assert.equal(say({tabs: 3, read: 0, needAccess: 3}), 'Read no citation details; the tabs need site access.');
+  assert.equal(say({tabs: 3, read: 0, needAccess: 2}), 'Read no citation details; the tabs need site access or didn’t answer.');
+  assert.equal(say({tabs: 45, read: 12, needAccess: 33}), 'Read citation details from 12 of 45 tabs; the others need site access.');
+  assert.equal(say({tabs: 2, read: 1, needAccess: 1}), 'Read citation details from 1 of 2 tabs; the other needs site access.');
+  assert.equal(say({tabs: 1200, read: 1000, needAccess: 0}), 'Read citation details from 1,000 of 1,200 tabs; the others didn’t answer.');
+});
+
+test('0.5.0 RC2 and RC3: on a PDF or a file on the computer, Select a region and Capture this page say what works instead, and Add link works', async () => {
+  const {PDF_REFUSAL, FILE_REFUSAL} = await import('../src/background/urls.js');
+  const extra = [
+    {id: 7, windowId: 3, url: 'https://pdfs.test/view?id=9', title: 'Paper', contentType: 'application/pdf'},
+    {id: 8, windowId: 3, url: 'file:///Users/me/paper.pdf', title: 'paper.pdf'},
+    {id: 9, windowId: 3, url: 'file:///Users/me/notes.html', title: 'notes.html'},
+    {id: 10, windowId: 3, url: 'https://pdfs.test/paper.PDF', title: 'Paper 2'},
+  ];
+  tabs.push(...extra);
+  for (const tab of extra) pages.set(tab.id, {loaded: false, links: [], selection: [], notices: [], citation: null});
+  try {
+    for (const [tab, expected] of [[extra[0], PDF_REFUSAL], [extra[1], PDF_REFUSAL], [extra[2], FILE_REFUSAL], [extra[3], PDF_REFUSAL]]) {
+      reset(); calls.arm.length = 0;
+      await click('meteor-region', tab);
+      assert.equal(session.linkMeteorActivationError, expected, tab.url);
+      await click('meteor-page', tab);
+      const [result] = session.linkMeteorCaptureReport.report.results;
+      assert.equal(result.warning || result.error, expected, tab.url);
+      assert.deepEqual([calls.inject, calls.arm], [[], []], 'the page script is neither injected nor armed');
+    }
+    assert.match(PDF_REFUSAL, /right-click it and choose Link Meteor, then Add link/);
+    // 0.5.0 RC3: and Add link does work there. Where the page script can load (a PDF on the web), the
+    // link is saved with its address and the page says so; where it can't (here, the files), the
+    // link is still saved and the full view opens at it.
+    for (const [tab, scripted] of [[extra[0], true], [extra[3], true], [extra[1], false], [extra[2], false]]) {
+      reset();
+      const before = active().links.length, linkUrl = `https://cited.test/paper-${tab.id}`;
+      await click('meteor-add-link', tab, {linkUrl});
+      const saved = active().links.at(-1);
+      assert.equal(active().links.length, before + 1, tab.url);
+      assert.deepEqual([saved.anchorText, saved.url, saved.sourceUrl], ['', linkUrl, tab.url]);
+      assert.equal(session.linkMeteorActivationError, undefined, 'no refusal');
+      if (scripted) {
+        assert.deepEqual(calls.inject, [tab.id], 'the page script loads for the notice');
+        assert.equal(lastNotice(tab.id).text, 'Added 1 link to “Thesis sources”. Link Meteor couldn’t read its text on this page, so it was saved with its address only.');
+      } else {
+        assert.equal(calls.created.at(-1).url, 'chrome-extension://meteor/ui/workbench.html', 'the full view shows what was saved');
+        assert.equal(session.linkMeteorOpenIntent.batchId, saved.batchId);
+      }
+    }
+  } finally {
+    tabs.splice(tabs.length - extra.length);
+    for (const tab of extra) pages.delete(tab.id);
+  }
 });

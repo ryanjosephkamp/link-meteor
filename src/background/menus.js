@@ -1,11 +1,13 @@
 // Link Meteor's right-click and toolbar menus (0.4.0). Chrome shows several items from one
 // extension under a "Link Meteor" submenu, so titles don't repeat the name. Saving from a menu goes
 // to the active collection and shows the page's notice, with Undo and Show links. Download linked
-// file belongs to downloads.js. The contract is in docs/CONTRACTS.md ("Menus").
+// file belongs to downloads.js. 0.5.0: saves keep each link's context and the page's citation.
+// The contract is in docs/CONTRACTS.md ("Menus").
 import {makeExport} from '../core/export.js';
 import {serial, readState} from './store.js';
 import {WORKBENCH, OPEN_INTENT_KEY, occurrences, appendLinks, rememberAdd, openWorkbench} from './card.js';
 import {saveTabs, tabsSummary} from './tabs.js';
+import {citationPages} from './citations.js';
 
 export const MENU = {addLink: 'meteor-add-link', copyLink: 'meteor-copy-link', selection: 'meteor-selection', region: 'meteor-region',
   page: 'meteor-page', saveTab: 'meteor-save-tab', saveWindow: 'meteor-save-window', fullView: 'meteor-full-view'};
@@ -78,20 +80,24 @@ async function tell(tab, notice, {inject}) {
   }
 }
 
-// The right-clicked link's captured fields. Chrome gives a menu click only the link's address, so the
-// page names the link under the last right-click, or the first link with that address. When neither
-// is found (inside another site's frame, say), only the address is kept: text is never invented.
+// The right-clicked link's captured fields, and the page's citation tags. Chrome gives a menu click
+// only the link's address, so the page names the link under the last right-click, or the first link
+// with that address. When neither is found (inside another site's frame, say), only the address is
+// kept: text is never invented.
+// The same goes for a page that can't be asked at all, such as a PDF in Chrome's viewer.
 async function clickedLink(info, tab, inject) {
-  const {link} = await askPage(tab, {type: 'content.contextLink', url: info.linkUrl}, inject);
-  if (link) return {link, read: true};
-  return {link: {anchorText: '', accessibleLabel: '', url: info.linkUrl, originalHref: '', frameUrl: info.frameUrl || tab.url || ''}, read: false};
+  let link = null, page = null;
+  try { ({link, page} = await askPage(tab, {type: 'content.contextLink', url: info.linkUrl}, inject)); } catch { /* the address Chrome gave is kept */ }
+  if (link) return {link, page, read: true};
+  return {link: {anchorText: '', accessibleLabel: '', url: info.linkUrl, originalHref: '', frameUrl: info.frameUrl || tab.url || ''}, page, read: false};
 }
 
-// Saves page links to the active collection, remembers the add for the notice's Undo, and says so there.
-async function addLinks(tab, candidates, deps, note = '') {
+// Saves page links to the active collection, with the page's citation (page), remembers the add
+// for the notice's Undo, and says so there.
+async function addLinks(tab, candidates, deps, note = '', page = null) {
   if (!candidates.length) return tell(tab, {text: 'No links in the selection, so nothing was added.'}, deps);
-  const batchId = crypto.randomUUID();
-  const added = await appendLinks(occurrences(candidates, tab, batchId), {missing: MISSING});
+  const batchId = crypto.randomUUID(), links = occurrences(candidates, tab, batchId);
+  const added = await appendLinks(links, {missing: MISSING, pages: citationPages(page, tab.url || links[0]?.sourceUrl)});
   const where = `“${added.name}”`, skipped = added.skipped;
   if (!added.count) return tell(tab, {text: `Nothing was added: ${plural(skipped, 'link')} ${skipped === 1 ? 'was' : 'were'} already in ${where}.`}, deps);
   await rememberAdd({tabId: tab.id, collectionId: added.collectionId, batchId, count: added.count});
@@ -101,16 +107,16 @@ async function addLinks(tab, candidates, deps, note = '') {
 
 // Save this tab, or every tab in its window, as links, with the notice in that tab.
 async function saveFromMenu(tab, tabIds, deps, single = false) {
-  const {report, collectionId, name} = await saveTabs(tabIds);
+  const {report, collectionId, name} = await saveTabs(tabIds, {tryTabIds: [tab.id]});
   if (report.saved) await rememberAdd({tabId: tab.id, collectionId, batchId: report.batchId, count: report.saved});
   return tell(tab, {text: tabsSummary(report, {name, single}), ...(report.saved ? {added: {collectionId, batchId: report.batchId, name}} : {})}, deps);
 }
 
 const handlers = {
   [MENU.addLink]: async (info, tab, deps) => {
-    const {link, read} = await clickedLink(info, tab, deps.inject);
+    const {link, page, read} = await clickedLink(info, tab, deps.inject);
     if (!SCHEMES.includes(protocol(link.url))) return tell(tab, {text: 'Link Meteor saves only web, email and phone links, so this link wasn’t added.'}, deps);
-    return addLinks(tab, [link], deps, read ? '' : UNREAD);
+    return addLinks(tab, [link], deps, read ? '' : UNREAD, page);
   },
   // Two tab-separated columns with a header, like the card's Copy text + URL.
   [MENU.copyLink]: async (info, tab, deps) => {
@@ -119,7 +125,7 @@ const handlers = {
     const copy = makeExport([link], {format: 'tsv', columns: ['anchorText', 'url']}).data;
     return tell(tab, {copy, text: read ? 'Copied anchor text and URL as two spreadsheet columns.' : 'Copied the URL. Link Meteor couldn’t read this link’s text on this page, so its text column is empty.'}, deps);
   },
-  [MENU.selection]: async (info, tab, deps) => addLinks(tab, (await askPage(tab, {type: 'content.selectionLinks'}, deps.inject)).links, deps),
+  [MENU.selection]: async (info, tab, deps) => { const {links, page} = await askPage(tab, {type: 'content.selectionLinks'}, deps.inject); return addLinks(tab, links, deps, '', page); },
   [MENU.region]: (info, tab, {arm}) => arm(tab.id),
   [MENU.page]: async (info, tab, {captureTabs}) => { await captureTabs([tab.id]); await openWorkbench(); },
   [MENU.saveTab]: (info, tab, deps) => saveFromMenu(tab, [tab.id], deps, true),
@@ -132,7 +138,11 @@ const handlers = {
     await chrome.storage.session.set({[OPEN_INTENT_KEY]: {view: 'links', batchId: '', what: 'tabs', scope: 'window', createdAt: new Date().toISOString()}}).catch(() => {});
     await chrome.tabs.create({url: WORKBENCH, windowId: tab.windowId});
   },
-  [MENU.fullView]: () => openWorkbench(),
+  // The full view replaces the side panel in that window (ui/workbench/panel.js closes it).
+  [MENU.fullView]: async (info, tab) => {
+    await openWorkbench();
+    if (tab?.windowId !== undefined) chrome.runtime.sendMessage({type: 'panel.close', windowId: tab.windowId}).catch(() => {});
+  },
 };
 
 // contextMenus.onClicked: runs this module's items and leaves other areas' items to them. `deps`

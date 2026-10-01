@@ -52,7 +52,7 @@ Current-page activation uses user-triggered access. Multi-tab capture and persis
 
 The website explains installation, features, privacy, limitations and usage, offers a synthetic practice page and a development ZIP, and remains useful and accessible without tracking or external media services. Branding, code, copy and assets are independently created; similar functionality does not establish name or trademark clearance.
 
-Link Meteor is intended for the Chrome Web Store in a later release. Color themes arrived in 0.4.0; later releases may add imports and local research aids, such as context snippets and citation exports.
+Link Meteor is intended for the Chrome Web Store in a later release. Color themes arrived in 0.4.0, and imports, context snippets and citation exports in 0.5.0; a later release may read the links inside PDFs.
 
 Anything that contacts other sites, such as looking up a destination's details, would only ever be opt-in, per request. Firefox, Safari and mobile versions and AI integrations are not planned for now. Future capabilities must preserve originals and require explicit user choices about any new data destinations or costs. Existing structured exports do not imply a remote AI service. Until Store publication, ZIP plus Load unpacked is the supported installation route.
 

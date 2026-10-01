@@ -5,6 +5,8 @@ import {migrateState, planRestore} from '../core/model.js';
 import {serial, readState, writeState} from './store.js';
 
 export const RESTORE_UNDO_KEY = 'linkMeteorRestoreUndo';
+// When the workbench last handed Chrome a backup file (0.5.0 RC2), shown in Backup and restore.
+export const LAST_BACKUP_KEY = 'linkMeteorLastBackup';
 
 // Settings the background narrows on its own after a write, when Chrome no longer grants a site
 // or all-sites access. That upkeep does not count as a change that blocks Undo.
@@ -91,8 +93,18 @@ export function undoRestore() {
 export function restoreStatus() {
   return serial(async () => {
     const snapshot = await readSnapshot();
-    return {undo: snapshot ? {createdAt: snapshot.createdAt, summary: snapshot.summary} : null};
+    const last = (await chrome.storage.local.get(LAST_BACKUP_KEY))[LAST_BACKUP_KEY];
+    const lastBackup = typeof last?.at === 'string' && !Number.isNaN(Date.parse(last.at)) ? last.at : null;
+    return {undo: snapshot ? {createdAt: snapshot.createdAt, summary: snapshot.summary} : null, lastBackup};
   });
+}
+
+// The workbench made a backup file and handed it to Chrome's download. Chrome doesn't say whether
+// the person kept it, so this records the time of the hand-over, and nothing about the file.
+export async function backupMade() {
+  const at = new Date().toISOString();
+  await chrome.storage.local.set({[LAST_BACKUP_KEY]: {at}});
+  return {lastBackup: at};
 }
 
 export function discardRestoreUndo() {
@@ -107,5 +119,6 @@ export const workbenchMessages = {
   'backup.restore': (message) => restore(message),
   'backup.undo': () => undoRestore(),
   'backup.status': () => restoreStatus(),
+  'backup.made': () => backupMade(),
   'backup.discardUndo': () => discardRestoreUndo(),
 };

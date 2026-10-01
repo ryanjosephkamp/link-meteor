@@ -1,4 +1,6 @@
 import { writeXlsx, hyperlinkTarget, MAX_HYPERLINKS } from './xlsx.js';
+import { identifiersOf } from './identifiers.js';
+import { CITE_FORMATS, CITE_MIMES, citations } from './cite.js';
 
 export const COLUMNS = [
   { key: 'anchorText', label: 'Anchor text' }, { key: 'url', label: 'URL' },
@@ -7,21 +9,37 @@ export const COLUMNS = [
   { key: 'frameUrl', label: 'Frame URL' }, { key: 'capturedAt', label: 'Captured at' },
   { key: 'batchId', label: 'Capture batch ID' }, { key: 'id', label: 'Occurrence ID' },
   { key: 'notes', label: 'Notes' }, { key: 'tags', label: 'Tags' },
+  // Research columns (0.5.0). Identifiers are derived per link, never stored.
+  { key: 'context', label: 'Context' }, { key: 'status', label: 'Reading status' }, { key: 'starred', label: 'Starred' },
+  { key: 'doi', label: 'DOI' }, { key: 'arxiv', label: 'arXiv ID' }, { key: 'pmid', label: 'PubMed ID' }, { key: 'isbn', label: 'ISBN' },
+  { key: 'imported', label: 'Imported from' },
 ];
 
 const LABELS = new Map(COLUMNS.map(column => [column.key, column.label]));
-const FORMATS = new Set(['csv', 'tsv', 'text', 'markdown', 'html', 'json', 'xlsx']);
+const FORMATS = new Set(['csv', 'tsv', 'text', 'markdown', 'html', 'json', 'xlsx', ...CITE_FORMATS]);
 // The file extension each format downloads as.
-export const FORMAT_EXTENSIONS = Object.freeze({ csv: 'csv', tsv: 'tsv', text: 'txt', markdown: 'md', html: 'html', json: 'json', xlsx: 'xlsx' });
+export const FORMAT_EXTENSIONS = Object.freeze({ csv: 'csv', tsv: 'tsv', text: 'txt', markdown: 'md', html: 'html', json: 'json', xlsx: 'xlsx',
+  bibtex: 'bib', ris: 'ris', csl: 'json', annotated: 'md', obsidian: 'md' });
+export { CITE_FORMATS };
 // Columns whose web and mail addresses are clickable in a formatted workbook.
 const URL_COLUMNS = new Set(['url', 'originalHref', 'sourceUrl', 'frameUrl']);
+const IDENTIFIER_COLUMNS = new Set(['doi', 'arxiv', 'pmid', 'isbn']);
+const STATUS_LABELS = { reading: 'Reading', read: 'Read' };
 
 // Custom columns (0.4.0) are export keys `field:<id>`, headed by the column's name.
 const FIELD_KEY = 'field:';
-// The column headings for the export in progress: set by makeExport, which runs synchronously.
-let labels = LABELS;
+// The column headings and page citations for the export in progress: set by makeExport, which
+// runs synchronously. Identifiers are found once per row.
+let labels = LABELS, exportPages = {}, identifiers = new WeakMap();
+function identifiersFor(row) {
+  if (!identifiers.has(row)) identifiers.set(row, identifiersOf(row, exportPages));
+  return identifiers.get(row);
+}
 function cell(row, key) {
   if (key.startsWith(FIELD_KEY)) return String(row.fields?.[key.slice(FIELD_KEY.length)] ?? '');
+  if (IDENTIFIER_COLUMNS.has(key)) return identifiersFor(row)[key] || '';
+  if (key === 'status') return STATUS_LABELS[row.status] || 'Unread';
+  if (key === 'starred') return row.starred === true ? 'Yes' : '';
   const value = row[key];
   return key === 'tags' ? (Array.isArray(value) ? value.join(', ') : '') : String(value ?? '');
 }
@@ -177,15 +195,25 @@ function formattedXlsx(rows, columns, headers, about) {
 // collection, count, view, filters, columns, version}), XLSX is formatted and gains an About
 // sheet, and JSON becomes {about, rows}; the other formats are unchanged.
 // `fields` lists the collection's custom columns [{id, name}], so `field:<id>` columns can be exported.
-export function makeExport(rows, { format, columns = ['anchorText', 'url'], about, fields = [] } = {}) {
+// `pages` is the collection's page citations (0.5.0), for the identifier columns and citations.
+// Citation formats (src/core/cite.js) ignore columns; they take the collection's name and the
+// export time from about, when given.
+export function makeExport(rows, { format, columns = ['anchorText', 'url'], about, fields = [], pages = {} } = {}) {
   if (!Array.isArray(rows)) throw new Error('rows must be an array');
   if (!FORMATS.has(format)) throw new Error(`Unsupported export format: ${format}`);
   if (!Array.isArray(columns) || columns.length === 0) throw new Error('Export columns must be a nonempty array');
   if (!Array.isArray(fields)) throw new Error('Export fields must be an array');
+  if (!pages || typeof pages !== 'object' || Array.isArray(pages)) throw new Error('Export pages must be an object');
   labels = new Map([...LABELS, ...fields.map(field => [FIELD_KEY + field.id, String(field.name)])]);
+  exportPages = pages; identifiers = new WeakMap();
   for (const key of columns) if (!labels.has(key)) throw new Error(`Unsupported export column: ${key}`);
   if (new Set(columns).size !== columns.length) throw new Error('Export columns must be unique');
   const headers = columns.map(key => labels.get(key));
+  if (CITE_FORMATS.includes(format)) {
+    const block = about === undefined ? null : aboutBlock(about, rows, columns);
+    const data = citations(rows, { format, pages, fields, collection: block?.collection ?? '', date: block?.exportedAt });
+    return { data, mime: CITE_MIMES[format], extension: FORMAT_EXTENSIONS[format] };
+  }
   if (about !== undefined) {
     const block = aboutBlock(about, rows, columns);
     if (format === 'json') return { data: JSON.stringify({ about: aboutJson(block, fields), rows }, null, 2), mime: 'application/json;charset=utf-8', extension: 'json' };

@@ -4,9 +4,15 @@ Link Meteor processes captured links locally in Chrome. It has no account, remot
 
 ## What is stored
 
-Named collections contain visible anchor text, separately labeled accessible text, destination URLs, original hrefs, source page URLs/titles, frame URLs, capture times/batch IDs and your notes/tags. These are stored in `chrome.storage.local` in the current browser profile. Collection data is not placed in Chrome Sync by this extension. Chrome's profile backup or operating-system backup behavior is separate.
+Named collections contain visible anchor text, separately labeled accessible text, destination URLs, original hrefs, source page URLs/titles, frame URLs, capture times/batch IDs and your notes/tags. From 0.5.0 they can also hold:
+- the words around each link on its page (a context snippet of at most 400 characters), unless you turn that off;
+- citation details that pages you capture from, or tabs you save as links, publish about themselves in their own citation tags (title, authors, date, journal, DOI and similar), read from the page Link Meteor already has open;
+- your reading status and stars;
+- for imported links, the name of the file or bookmark folder they came from.
 
-The current invoking tab and latest capture report are kept in session storage so separate views can show the same result. The session report can be dismissed. With "Leave out navigation links", the latest *Capture this page*'s left-out links (at most 5,000) wait there too, so *Include them* can add them; and the page card's 20 most recent adds are listed there, so Undo can take one back. Files the card or the right-click menu could not download yet, because Chrome had not given download access, wait there for up to 10 minutes, until the full view shows them once with Chrome's question. Session storage is cleared when Chrome closes. Settings persist locally:
+These are stored in `chrome.storage.local` in the current browser profile. Collection data is not placed in Chrome Sync by this extension. Chrome's profile backup or operating-system backup behavior is separate.
+
+The current invoking tab and latest capture report are kept in session storage so separate views can show the same result. The session report can be dismissed. With "Leave out navigation links", the latest *Capture this page*'s left-out links (at most 5,000) wait there too, so *Include them* can add them; and the page card's 20 most recent adds are listed there, so Undo can take one back. The 10 most recent imports, and the 10 most recent moves and copies between collections, are listed there too, so Undo can reverse one; they name which links went where, not what the links say. Files the card or the right-click menu could not download yet, because Chrome had not given download access, wait there for up to 10 minutes, until the full view shows them once with Chrome's question. Session storage is cleared when Chrome closes. Settings persist locally:
 
 - the hold key (a letter, or Command/Ctrl);
 - the sites where hold-key drag runs or never runs;
@@ -14,7 +20,8 @@ The current invoking tab and latest capture report are kept in session storage s
 - your answer to the welcome card;
 - your export file-name preferences;
 - your theme, and whether it is light, dark or follows the system;
-- what releasing a drag does, and the two capture defaults (leave out navigation links, skip links already saved).
+- what releasing a drag does, and the two capture defaults (leave out navigation links, skip links already saved);
+- whether to save the words around each link.
 
 The side panel and full view also keep the last theme and light or dark choice in their own page storage, so they open in it without a flash.
 
@@ -22,7 +29,7 @@ With all-sites access, the hold-key script is registered on every HTTP(S) site e
 
 Deleting a collection removes it from the saved state. Link removal keeps one undo snapshot until superseded or cleared by collection operations. Uninstalling the extension normally removes its extension storage. Back up or export anything you wish to retain before removing it.
 
-**Backing up** downloads one file with every collection, link, note, tag and setting to your browser's download destination; nothing is uploaded. It does not include the removal undo snapshot.
+**Backing up** downloads one file with every collection, link, note, tag and setting to your browser's download destination; nothing is uploaded. It does not include the removal undo snapshot. Link Meteor keeps the time of your last backup in local storage, to show it in Backup and restore; it keeps nothing about the file itself.
 
 **Restoring** reads a file you choose and shows a preview before anything changes, then merges or replaces. The file is treated as untrusted: links are checked and unknown fields are dropped. After a restore, the previous state is kept once in local storage so the restore can be undone. That copy is kept until the next restore, until you discard it, or until anything else changes. There is no cloud recovery.
 
@@ -50,6 +57,10 @@ Downloading a file visits its address with your browser's usual cookies, exactly
 ## Actions that move data
 
 Copying places the chosen content on the operating-system clipboard. Downloads write your export to the browser's download destination. Bookmarks create browser bookmarks, in a new folder or one you choose; **Chrome may synchronize those bookmarks according to your own browser settings**. Backups are files you download and keep. Opening selected URLs navigates normal tabs and makes ordinary requests to those destinations: up to 500 per action, with a confirmation above 20. These operations happen only at your request and are separate from local collection storage.
+
+**Importing** reads a file you choose (CSV, TSV, Excel, a text or Markdown list, an HTML or bookmarks file, or a Link Meteor JSON export), pasted text, or a Chrome bookmark folder you choose. Files are read in the browser and never uploaded; nothing is added until you confirm the preview, and an import can be undone. Reading a bookmark folder uses the optional bookmarks access, asked for in that click.
+
+**Citation details and identifiers are never looked up online.** DOIs, arXiv, PubMed and PMC IDs and ISBNs are read from each link's own address; titles, authors and dates come only from the citation tags of pages Link Meteor already has open. Citation exports (BibTeX, RIS, CSL-JSON, an annotated bibliography, an Obsidian note) are built from that and from your notes and tags, and are downloaded or copied only when you ask.
 
 A private admin URL can contain sensitive information even without page content. Link Meteor preserves the original rather than silently modifying it, so review exports before sharing. Captured labels are treated as data, escaped in HTML/Markdown and protected against formula interpretation in spreadsheet exports.
 

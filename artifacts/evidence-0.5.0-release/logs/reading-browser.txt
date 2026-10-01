@@ -1,0 +1,12 @@
+PASS Rows show a star, Reading or Read, the identifier kind and Imported; grouped rows combine them {"rows":12}
+PASS Reading is a radio group and Star a toggle, both from the keyboard; each change saves at once, keeps focus and has Undo 
+PASS Details show the context with the anchor text marked, the DOI with Copy and a doi.org link, and the source page’s citation 
+PASS Identifiers show for arXiv, PubMed, ISBN and PMC; Imported from shows for imported links; parts a link lacks are left out 
+PASS Mark as read, Mark as unread, and Star or Unstar work on the selection; Undo sends one action per earlier value 
+PASS Reading (Any, Unread, Reading, Read) and Starred only filter the list as queryLinks does, shown as chips that remove them 
+PASS Insights totals, top sites, file types, other or same site, reading, repeats and weekly captures match insights() on the same links {"total":12,"weeks":4}
+PASS Insights are drawn again when the collection changes, and not for other changes 
+PASS Choosing a site, a file type, a reading status or Starred shows exactly those links, as a view option with its chip 
+PASS "/" in Insights searches the list; an empty collection has no Insights switch and shows the title 
+PASS At 320 px nothing overflows: details full width above the facts, the selection actions, the view options and Insights 
+PASS Text contrast is at least 4.5:1 in light and dark for the badges, details, switch, selection actions, view options and Insights {"measured":64,"lowest":5.42}

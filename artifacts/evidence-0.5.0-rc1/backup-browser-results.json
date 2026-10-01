@@ -1,0 +1,351 @@
+{
+  "started": "2026-09-29T19:49:56.259Z",
+  "browser": "Chrome for Testing through Playwright, headless, unpacked extension",
+  "profiles": [
+    {
+      "profile": ".scratch/backup-a-2026-09-29T19-49-56-258Z",
+      "extension": "dist"
+    },
+    {
+      "profile": ".scratch/backup-b-2026-09-29T19-49-56-258Z",
+      "extension": "dist"
+    },
+    {
+      "profile": ".scratch/backup-c-2026-09-29T19-49-56-258Z",
+      "extension": "dist"
+    },
+    {
+      "profile": ".scratch/backup-d-no-unlimited-2026-09-29T19-49-56-258Z",
+      "extension": ".scratch/dist-no-unlimited-storage-2026-09-29T19-49-56-258Z"
+    },
+    {
+      "profile": ".scratch/backup-e-columns-2026-09-29T19-49-56-258Z",
+      "extension": "dist"
+    },
+    {
+      "profile": ".scratch/backup-f-columns-2026-09-29T19-49-56-258Z",
+      "extension": "dist"
+    }
+  ],
+  "checks": [
+    {
+      "name": "Download a backup: every collection, link, note, tag and setting, read back by readBackup in Node",
+      "status": "pass",
+      "fileName": "link-meteor-backup_2026-09-29_1549.json",
+      "bytes": 3195,
+      "requestsDuringBackup": 0,
+      "outbound": 0
+    },
+    {
+      "name": "Restore preview: date, version, counts, what merge adds and skips, what replace removes, settings changes; Cancel and Escape change nothing",
+      "status": "pass",
+      "previewLines": 32
+    },
+    {
+      "name": "Preview names the hold-drag sites and all-sites access that Chrome does not grant (checked with chrome.permissions.contains)",
+      "status": "pass",
+      "sites": [
+        "a.example",
+        "b.example"
+      ]
+    },
+    {
+      "name": "Invalid files show the reader's plain message and change nothing",
+      "status": "pass",
+      "files": [
+        "not-json.json",
+        "not-a-backup.json",
+        "newer-format.json",
+        "bad-url.json",
+        "oversized.json"
+      ]
+    },
+    {
+      "name": "Merge saves planRestore's merge through backup.restore, reloads the view and says what changed; no duplicate My research",
+      "status": "pass"
+    },
+    {
+      "name": "Undo after the page is closed and reopened puts the previous state back and clears the snapshot",
+      "status": "pass"
+    },
+    {
+      "name": "Merging the same file twice adds nothing the second time",
+      "status": "pass"
+    },
+    {
+      "name": "Undo refuses and says why once anything has changed; Discard Undo frees the snapshot",
+      "status": "pass"
+    },
+    {
+      "name": "Replace saves the backup exactly through backup.restore, and Undo brings back what it replaced",
+      "status": "pass"
+    },
+    {
+      "name": "On a single page the page checkbox reads “Select all”",
+      "status": "pass"
+    },
+    {
+      "name": "Backup panel and preview: no overflow at 1440 and 320 px, labeled controls, keyboard focus, text contrast at least 4.5:1 in light and dark",
+      "status": "pass",
+      "contrast": [
+        {
+          "name": "backup help",
+          "ratio": 5.42
+        },
+        {
+          "name": "storage help",
+          "ratio": 5.42
+        },
+        {
+          "name": "preview source",
+          "ratio": 10.41
+        },
+        {
+          "name": "mode note",
+          "ratio": 10.41
+        },
+        {
+          "name": "mode line",
+          "ratio": 10.41
+        },
+        {
+          "name": "access warning",
+          "ratio": 5.7
+        },
+        {
+          "name": "restore choose",
+          "ratio": 14.98
+        },
+        {
+          "name": "replace button",
+          "ratio": 5.57
+        },
+        {
+          "name": "select all label",
+          "ratio": 9.97
+        },
+        {
+          "name": "dark backup help",
+          "ratio": 7.78
+        },
+        {
+          "name": "dark storage help",
+          "ratio": 7.78
+        },
+        {
+          "name": "dark preview source",
+          "ratio": 11.49
+        },
+        {
+          "name": "dark mode note",
+          "ratio": 11.49
+        },
+        {
+          "name": "dark mode line",
+          "ratio": 11.49
+        },
+        {
+          "name": "dark access warning",
+          "ratio": 10.7
+        },
+        {
+          "name": "dark restore choose",
+          "ratio": 15.41
+        },
+        {
+          "name": "dark replace button",
+          "ratio": 8.37
+        },
+        {
+          "name": "dark select all label",
+          "ratio": 12.16
+        }
+      ]
+    },
+    {
+      "name": "A 20,000-link restore succeeds with unlimitedStorage and the list still renders 100 rows per page",
+      "status": "pass",
+      "previewMs": 309,
+      "replaceMs": 882,
+      "bytesInUse": 13013916
+    },
+    {
+      "name": "Review, editor and restore-status controls: text contrast at least 4.5:1 in light and dark, labeled, no overflow at 320 px",
+      "status": "pass",
+      "contrast": [
+        {
+          "name": "restore status",
+          "ratio": 15.2
+        },
+        {
+          "name": "restore status help",
+          "ratio": 9.6
+        },
+        {
+          "name": "undo restore",
+          "ratio": 14.98
+        },
+        {
+          "name": "discard undo",
+          "ratio": 9.6
+        },
+        {
+          "name": "select all N",
+          "ratio": 9.97
+        },
+        {
+          "name": "remove all in view",
+          "ratio": 5.34
+        },
+        {
+          "name": "empty this collection",
+          "ratio": 5.57
+        },
+        {
+          "name": "page checkbox label",
+          "ratio": 9.97
+        },
+        {
+          "name": "dark restore status",
+          "ratio": 13.68
+        },
+        {
+          "name": "dark restore status help",
+          "ratio": 10.19
+        },
+        {
+          "name": "dark undo restore",
+          "ratio": 15.41
+        },
+        {
+          "name": "dark discard undo",
+          "ratio": 10.19
+        },
+        {
+          "name": "dark select all N",
+          "ratio": 12.16
+        },
+        {
+          "name": "dark remove all in view",
+          "ratio": 8.86
+        },
+        {
+          "name": "dark empty this collection",
+          "ratio": 8.37
+        },
+        {
+          "name": "dark page checkbox label",
+          "ratio": 12.16
+        }
+      ]
+    },
+    {
+      "name": "“Select all N” is always visible with more than one page; the extended suite's page-selection steps still pass",
+      "status": "pass"
+    },
+    {
+      "name": "“Remove all in this view” confirms with the count, removes every occurrence in the filtered view, and Undo restores them in place; Escape closes it",
+      "status": "pass"
+    },
+    {
+      "name": "“Empty this collection” confirms, removes every link, keeps the collection, and Undo restores them; Escape closes it",
+      "status": "pass",
+      "emptyMs": 638,
+      "undoMs": 759
+    },
+    {
+      "name": "After the large restore, later removals block its Undo, which says why",
+      "status": "pass"
+    },
+    {
+      "name": "Diagnostic: without unlimitedStorage the 20,000-link restore exceeds Chrome's 10 MB storage and fails; the state and the earlier snapshot stay unchanged",
+      "status": "pass",
+      "variant": ".scratch/dist-no-unlimited-storage-2026-09-29T19-49-56-258Z"
+    },
+    {
+      "name": "A backup keeps each collection's custom columns and every value, read back by readBackup in Node; the file landed under .scratch/",
+      "status": "pass",
+      "columns": [
+        [],
+        [
+          "Principal investigator",
+          "Deadline"
+        ],
+        [
+          "Extra"
+        ]
+      ]
+    },
+    {
+      "name": "The restore preview says how many custom columns a merge adds and how many can't fit; readable in light and dark, no overflow at 320 px",
+      "status": "pass",
+      "contrast": [
+        {
+          "scheme": "light",
+          "name": "added columns line",
+          "ratio": 10.41
+        },
+        {
+          "scheme": "light",
+          "name": "columns that do not fit",
+          "ratio": 5.7
+        },
+        {
+          "scheme": "dark",
+          "name": "added columns line",
+          "ratio": 11.49
+        },
+        {
+          "scheme": "dark",
+          "name": "columns that do not fit",
+          "ratio": 10.7
+        }
+      ]
+    },
+    {
+      "name": "Merging a backup with custom columns joins a same-named column (ignoring case), adds the other while there is room, leaves out one that can't fit, shows the values in link details and search, and Undo reverses it",
+      "status": "pass",
+      "labs": [
+        "principal INVESTIGATOR",
+        "Deadline"
+      ]
+    },
+    {
+      "name": "No page errors or console errors in any profile",
+      "status": "pass"
+    }
+  ],
+  "timings": {
+    "previewMs": 309,
+    "replaceMs": 882,
+    "bytesInUseAfterRestore": 13013916,
+    "emptyMs": 638,
+    "emptyUndoMs": 759
+  },
+  "screenshots": [
+    "backup-preview-desktop.png",
+    "backup-preview-320.png",
+    "backup-preview-320-dark.png",
+    "review-controls-desktop.png",
+    "review-controls-dark.png",
+    "review-controls-320.png",
+    "remove-view-confirm-320.png",
+    "remove-view-confirm-desktop.png",
+    "empty-confirm-320.png",
+    "empty-collection-undo.png",
+    "backup-columns-preview-320-light.png",
+    "backup-columns-preview-320-dark.png"
+  ],
+  "limits": [
+    "Headless Chrome for Testing on one Mac with synthetic data and no optional grants; not native Allow/Deny, everyday Chrome or other systems.",
+    "Timings are one synthetic measurement on this machine, not a performance claim.",
+    "Hold-drag access after a restore depends on Chrome grants and the background upkeep; here no site is granted, so the preview lists every hold-drag site."
+  ],
+  "largeBackup": {
+    "links": 20000,
+    "fileBytes": 13012920,
+    "stateJsonBytes": 13012796
+  },
+  "result": "PASS",
+  "finished": "2026-09-29T19:50:23.687Z"
+}

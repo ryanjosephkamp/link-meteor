@@ -114,7 +114,7 @@ test('diagnostics.get never includes addresses, origins, titles, notes, tags or 
     assert.equal(report.version, '0.4.0');
     assert.deepEqual(report.browser, {userAgent: navigator.userAgent, brands: [{brand: 'Chromium', version: '151'}, {brand: 'Google Chrome', version: '151'}], mobile: false, platform: 'macOS', os: 'mac', arch: 'arm64', language: 'en-US', uiLanguage: 'en-GB'});
     assert.deepEqual(report.settings, {holdKey: 'z', holdOrigins: 2, holdTrigger: 'modifier', holdScope: 'sites', holdExceptions: 1, welcomeSeen: true, exportPrefix: 'Zephyr-internal-memo'.length,
-      exportTimestamp: true, exportTimestampFormat: 'datetime', theme: 'aurora', appearance: 'dark', afterDrag: 'copy', afterDragFormat: 'rich', contentOnly: true, skipSaved: true, otherFields: 0});
+      exportTimestamp: true, exportTimestampFormat: 'datetime', theme: 'aurora', appearance: 'dark', afterDrag: 'copy', afterDragFormat: 'rich', contentOnly: true, skipSaved: true, saveContext: true, otherFields: 0});
     assert.deepEqual(report.permissions, {tabs: true, bookmarks: false, tabGroups: true, downloads: true, allSites: true, siteOriginCount: 1});
     // Saved scope is 'sites' while the registration is for all sites, so they don't match.
     assert.deepEqual(report.scripts, {count: 1, scope: 'all', matchCount: 2, excludeCount: 1, matchesSettings: false});

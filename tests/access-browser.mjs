@@ -1,6 +1,8 @@
 // Access and capture (0.3.0), and the capture card's 0.4.0 messages end to end (already saved, Skip
 // saved, Undo after adding right away, the rich copy payload, content links only on Capture this
-// page), and saving tabs as links (0.4.0 release candidate 2), on the loaded extension, with no optional grants: Chrome for Testing,
+// page), and saving tabs as links (0.4.0 release candidate 2), and 0.5.0's context snippets and page
+// citations (Capture this page, a region, saveContext off, and Save tabs as links without site
+// access), on the loaded extension, with no optional grants: Chrome for Testing,
 // headless, in a fresh temporary profile under .scratch/ (deleted afterwards), the real unpacked
 // build, and Chrome's own toolbar action through tests/helpers/action.mjs for temporary page
 // access. The workbench in its own window stands in for the side panel. Native permission prompts
@@ -384,6 +386,71 @@ try {
   await setCapture({contentOnly: false});
   pass('Capture this page with content links only leaves out 5 links in header (shadow root), nav, aside (frame) and footer, reports them, and Include them adds them once', {captured: 37, leftOut: 5});
 
+  /* 4b2. 0.5.0: context snippets and page citations through the real background. */
+  const researchUrl = `${fixture.base}/research/highwire.html`;
+  const RESEARCH_CONTEXT = {'/r/canopy': 'Across forty mid-sized cities, the canopy study found that shaded blocks stayed cooler in the afternoon.',
+    '/r/data': 'Dataset: urban heat records (2019 to 2023)', '/r/quote': 'As one planner put it, trees are infrastructure, not decoration.', '/r/only': undefined};
+  const RESEARCH_CITATION = {title: 'Cooling cities: a review of street-level interventions', authors: ['Okafor, Adaeze', 'Lindqvist, Tove', 'Ramírez-Soto, Julián'], date: '2024/03/15',
+    journal: 'Journal of Synthetic Urban Climate', publisher: 'Meteor Fixture Press', volume: '12', issue: '3', firstPage: '201', lastPage: '219',
+    doi: '10.5555/cool.2024.0312', pmid: '31234567', isbn: '978-0-262-03384-8', pdfUrl: `${fixture.base}/research/cooling.pdf`};
+  const researchIn = async (id, batchId) => {
+    const home = (await state()).collections.find((c) => c.id === id), batch = home.links.filter((l) => !batchId || l.batchId === batchId);
+    const {readAt, ...citation} = home.pages?.[researchUrl] || {};
+    return {citation, readAt, contexts: Object.fromEntries(batch.map((l) => [new URL(l.url).pathname, l.context])), count: batch.length};
+  };
+  const pickContexts = (contexts) => Object.fromEntries(Object.keys(RESEARCH_CONTEXT).map((path) => [path, contexts[path]]));
+  const lastReport = () => js(ui, `chrome.storage.session.get('linkMeteorCaptureReport').then((v) => v.linkMeteorCaptureReport.report)`);
+  await browser.navigate(page, researchUrl); await sleep(1200);
+  assert.equal(await browser.clickAction(researchUrl), 'clicked');
+  const researchPages = (await rpc({type: 'state.mutate', action: {type: 'collection.create', name: 'Research pages'}})).activeCollectionId;
+  await until(async () => /Cooling cities/.test(await text('scope-preview')), 'the research page is the current page');
+  await click('capture');
+  await until(async () => (await lastReport()).results?.[0]?.url === researchUrl, 'the research page captured');
+  const byPage = await researchIn(researchPages);
+  assert.equal(byPage.count, 14);
+  assert.deepEqual(byPage.citation, RESEARCH_CITATION, 'the page’s own citation tags, keyed by its address');
+  assert.ok(Date.parse(byPage.readAt) > 0);
+  assert.deepEqual(pickContexts(byPage.contexts), RESEARCH_CONTEXT);
+  assert.equal(byPage.contexts['/r/comparison'].length <= 400 && byPage.contexts['/r/comparison'].startsWith('…'), true);
+  pass('Capture this page saves each link’s context and the page’s citation tags (Highwire, DOI read as a DOI) under the page’s address', {links: byPage.count});
+  // The function Save tabs as links runs, through Chrome's real executeScript, on this page (readable
+  // after the toolbar press): the same citation as the page script's, before the background tidies it.
+  const tabRead = await js(ui, `import(chrome.runtime.getURL('background/citations.js')).then(({readCitationTags}) => chrome.scripting.executeScript({target: {tabId: ${pageTab}}, func: readCitationTags, injectImmediately: true})).then(([answer]) => answer.result)`);
+  assert.deepEqual(tabRead, {...RESEARCH_CITATION, doi: 'doi:10.5555/cool.2024.0312'}, 'as printed; the background reads the DOI from it');
+  pass('Save tabs as links’ reader runs through Chrome’s executeScript as a stand-alone function and reads the same citation tags');
+
+  // A region from the card: the ticked links keep their context, and the page's citation goes with them.
+  const researchCard = (await rpc({type: 'state.mutate', action: {type: 'collection.create', name: 'Research card'}})).activeCollectionId;
+  await rpc({type: 'capture.arm', tabId: pageTab});
+  await until(() => js(page, `!!document.getElementById('link-meteor-overlay')`), 'overlay on the research page');
+  const blocks = await js(page, `(() => { scrollTo(0, 0); const b = document.getElementById('blocks').getBoundingClientRect(); return {x: b.x, y: b.y, w: b.width, h: b.height}; })()`);
+  await drag(page, {x: blocks.x + 4, y: blocks.y + 4}, {x: blocks.x + blocks.w - 4, y: blocks.y + blocks.h - 4});
+  await until(async () => (await cardValue(`.querySelector('.count')?.textContent`)) === '12 links selected', 'twelve links in the blocks');
+  await js(page, card(`.querySelector('button.add').click()`));
+  await until(async () => /^Saved 12 links to “Research card”/.test(await cardValue(`.querySelector('.status').textContent`)), 'region saved');
+  await key(page, 'Escape');
+  const byCard = await researchIn(researchCard);
+  assert.deepEqual([byCard.count, byCard.citation], [12, RESEARCH_CITATION]);
+  assert.deepEqual(pickContexts(byCard.contexts), RESEARCH_CONTEXT);
+  pass('A region saved from the card keeps each link’s context and the page’s citation tags', {links: byCard.count});
+
+  // Save the words around each link: a checkbox under After a drag; off, captures keep no context.
+  assert.equal(await js(ui, `document.querySelector('label:has(#save-context)').textContent.trim()`), 'Save the words around each link');
+  assert.match(await text('save-context-help'), /400 characters of the text around it on its page\. Saved in this browser\.$/);
+  assert.equal(await js(ui, `document.getElementById('save-context').checked`), true, 'on by default');
+  await js(ui, `document.getElementById('save-context').click(); true`);
+  await until(async () => (await state()).settings.saveContext === false, 'saveContext off');
+  const reportBefore = (await lastReport()).batchId;
+  await click('capture');
+  await until(async () => (await lastReport()).batchId !== reportBefore, 'captured again with saveContext off');
+  const withoutContext = await researchIn(researchCard, (await lastReport()).batchId);
+  assert.deepEqual([withoutContext.count, Object.values(withoutContext.contexts).filter((value) => value !== undefined)], [14, []], 'no link keeps context');
+  assert.equal(withoutContext.citation.title, RESEARCH_CITATION.title, 'the page’s citation is still read');
+  await js(ui, `document.getElementById('save-context').click(); true`);
+  await until(async () => (await state()).settings.saveContext === true && await js(ui, `document.getElementById('save-context').checked`), 'saveContext on again');
+  pass('Save the words around each link (After a drag): on by default; off, Capture this page keeps no context but still reads the page’s citation');
+  await browser.navigate(page, `${fixture.base}/index.html`); await sleep(800);
+
   /* 4c. Save tabs as links (release candidate 2): three fixture tabs, each made readable by a toolbar
      press on it (this profile has no tabs permission), saved with their own titles and addresses. */
   const tabsBefore = await pages();
@@ -408,7 +475,10 @@ try {
   assert.deepEqual(savedTabs.map(fields), tabPaths.map((path) => ({anchorText: tabTitles[path], accessibleLabel: '', url: fixture.base + path, originalHref: fixture.base + path, sourceUrl: fixture.base + path, sourceTitle: tabTitles[path], frameUrl: ''})));
   assert.deepEqual([...new Set(savedTabs.map((link) => link.batchId))], [tabsReport.batchId], 'one batch for the save');
   if (hiddenTab) assert.deepEqual([tabsReport.results.at(-1).status, tabsReport.results.at(-1).error], ['denied', 'Chrome hides this tab’s address from Link Meteor.']);
-  pass('Save tabs as links (capture.tabs): three fixture tabs become three links with their titles and addresses, in one batch; a tab Chrome hides is reported, not saved', {saved: savedTabs.length, hidden: !!hiddenTab});
+  // 0.5.0: a toolbar press is not site access, so no tab's citation tags are read, and nothing asks.
+  assert.deepEqual(tabsReport.citations, {tabs: 3, read: 0, found: 0, needAccess: 3});
+  assert.equal((await state()).collections.find((c) => c.id === labTabs).pages, undefined, 'no citation without site access');
+  pass('Save tabs as links (capture.tabs): three fixture tabs become three links with their titles and addresses, in one batch; a tab Chrome hides is reported, not saved; without site access no citation tags are read (This page’s tab, with the toolbar’s temporary access, is)', {saved: savedTabs.length, hidden: !!hiddenTab});
 
   // The workbench: The tabs themselves, with This page.
   await js(ui, `document.querySelector('input[name="capture-what"][value="tabs"]').click(); true`);
@@ -418,7 +488,9 @@ try {
   const targetUrl = inventoryNow.tabs.find((tab) => tab.id === inventoryNow.targetTabId)?.url;
   await click('capture');
   await until(async () => /^Saved 1 tab as a link/.test(await text('capture-report')), 'this tab saved');
-  assert.match(await text('notice'), /^Saved 1 tab as a link\./);
+  // This page's tab is the one the toolbar press gave temporary access to, so its citation tags are read.
+  assert.match(await text('notice'), /^Saved 1 tab as a link\. Read the tab’s citation details\.$/);
+  assert.match(await text('capture-report'), /Read the tab’s citation details\./);
   const thisTab = (await state()).collections.find((c) => c.id === labTabs).links.at(-1);
   assert.equal(thisTab.anchorText, tabTitles[new URL(thisTab.url).pathname + new URL(thisTab.url).search]);
   if (targetUrl) assert.equal(thisTab.url, targetUrl);
@@ -440,10 +512,11 @@ try {
   await shot(ui, 'access-tabs-pick-three.png');
   await click('capture');
   await until(async () => /^Saved 3 tabs as links/.test(await text('capture-report')), 'three tabs saved from the workbench');
-  assert.match(await text('notice'), /^Saved 3 tabs as links\./);
+  assert.match(await text('notice'), /^Saved 3 tabs as links\. Read no citation details; the tabs need site access\.$/);
+  assert.match(await text('capture-report'), /Read no citation details; the tabs need site access\./);
   assert.ok((await js(ui, 'window.__requests')).every((request) => JSON.stringify(request) === '{"permissions":["tabs"]}'), 'only tab access is asked for, never a site');
   assert.deepEqual((await state()).collections.find((c) => c.id === labTabs).links.slice(-3).map((link) => link.anchorText), tabPaths.map((path) => tabTitles[path]));
-  pass('Pick tabs: three tabs chosen, the button says Save 3 tabs as links, and the report says Saved 3 tabs as links (tab access: simulated accept)');
+  pass('Pick tabs: three tabs chosen, the button says Save 3 tabs as links, and the report says Saved 3 tabs as links and that reading citation details needs site access (tab access: simulated accept)');
 
   // Save all tabs in this window from the toolbar menu, without tab access: the menu leaves this open
   // intent and opens the full view, which has the choice ready, says why, and asks in the save click.
@@ -549,6 +622,46 @@ try {
   await click('welcome-later');
   await until(async () => (await state()).settings.welcomeSeen === true, 'answered after the upgrade');
   pass('A state saved by 0.2.2 shows the welcome card once, with the saved hold key');
+
+  /* 6b. 0.5.0 RC2: a second toolbar press closes the side panel it opened, with Chrome's own close
+     where Chrome has one and otherwise the panel's own window.close(). The full view stays open. */
+  const panelUrl = browser.extensionUrl();
+  const sidePanels = async () => (await pages()).filter((t) => t.url === panelUrl && t.targetId !== uiTarget);
+  const panelOpens = async () => {
+    assert.equal(await browser.clickAction(fixture.base), 'clicked');
+    const [opened] = await until(async () => { const found = await sidePanels(); return found.length === 1 && found; }, 'the side panel opens');
+    const session = await browser.attach(opened.targetId);
+    await until(() => js(session, `!!document.getElementById('collection-heading')`).catch(() => false), 'the side panel loaded');
+    await sleep(500); // it listens once it knows it is the side panel, and its window
+    return {id: session, targetId: opened.targetId};
+  };
+  if ((await sidePanels()).length) { await browser.clickAction(fixture.base); await until(async () => !(await sidePanels()).length, 'no side panel to start'); }
+  let panel = await panelOpens();
+  const chromeClose = await js(panel.id, `typeof chrome.sidePanel?.close === 'function'`);
+  assert.equal(await js(panel.id, `chrome.tabs.getCurrent().then((tab) => tab === undefined)`), true, 'it is the side panel, not a tab');
+  assert.equal(await browser.clickAction(fixture.base), 'clicked');
+  await until(async () => !(await sidePanels()).length, 'the second press closes it');
+  assert.equal(await js(ui, `!!document.getElementById('collection-heading')`), true, 'the full view in its window stays open');
+  panel = await panelOpens();
+  await js(panel.id, `(() => { chrome.sidePanel.close = () => Promise.reject(new Error('unavailable here')); return true; })()`);
+  assert.equal(await js(panel.id, `String(chrome.sidePanel.close).includes('unavailable here')`), true, 'Chrome’s close is replaced for this check');
+  assert.equal(await browser.clickAction(fixture.base), 'clicked');
+  await until(async () => !(await sidePanels()).length, 'without Chrome’s close, the panel closes itself');
+  assert.equal(await js(ui, `!!document.getElementById('collection-heading')`), true);
+  pass('A second toolbar press closes the side panel: with Chrome’s own close, and without it by the panel itself; the full view stays open', {chromeClose});
+
+  /* 6c. 0.5.0 RC3: the side panel's Full view button is labeled, opens the full view in a tab, and
+     the panel then closes. The full view itself has no such button. */
+  panel = await panelOpens();
+  const fullButton = JSON.parse(await js(panel.id, `(() => { const b = document.getElementById('open-full'); return JSON.stringify({text: b.innerText.trim(), label: b.getAttribute('aria-label'), shown: b.getClientRects().length > 0, width: innerWidth, overflow: document.documentElement.scrollWidth > innerWidth}); })()`));
+  assert.deepEqual({text: fullButton.text, label: fullButton.label, shown: fullButton.shown, overflow: fullButton.overflow}, {text: 'Full view', label: 'Open the full view in a tab', shown: true, overflow: false});
+  assert.equal(await js(ui, `document.getElementById('open-full').hidden`), true, 'the full view has no Full view button');
+  const beforeFull = await pages();
+  await js(panel.id, `document.getElementById('open-full').click(); true`);
+  await until(async () => (await newPages(beforeFull)).filter((t) => t.url === panelUrl).length === 1, 'the full view opens in a tab');
+  await until(async () => !(await pages()).some((t) => t.targetId === panel.targetId), 'the side panel closes once the full view is open');
+  await closeOpened(beforeFull);
+  pass('The side panel’s Full view button is labeled, opens the full view in a tab and closes the panel', {panelWidth: fullButton.width});
 
   /* 7. After Link Meteor restarts in place (reinstalled from its folder, as an update does), region
      selection still works on a page that was already open, without reloading it. The test does not

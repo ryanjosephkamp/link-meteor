@@ -14,6 +14,11 @@
 // read by openpyxl, HTML, Markdown and JSON; names shown as text everywhere; 320 px layout and
 // contrast in light and dark. Downloads land in a folder under .scratch/, checked for each file.
 //
+// 0.5.0 citations and notes: BibTeX, RIS, CSL-JSON, the annotated bibliography and the Obsidian
+// note downloaded from the Export panel, each equal to src/core/cite.js output for the same rows
+// (every occurrence, grouped, and a selection) and valid for its readers; what the entries hold and
+// the first entry; the research columns in a CSV; and the new parts at 320 px, in light and dark.
+//
 // Bookmark prompts are never shown: a page-level stand-in for chrome.permissions.request records
 // each request and answers it. Where the folder picker is exercised, the page's own messages to
 // the background are also stood in for (an API mock, labeled as such in the results); the real
@@ -35,6 +40,8 @@ process.env.TMPDIR = process.env.TMP = process.env.TEMP = downloadsTemp;
 const {launch, rpc, until, evidence, root, scratch} = await import('./helpers/browser.mjs');
 const {exportFileName, fileNamePart, FORMAT_EXTENSIONS, richLinks, makeExport} = await import('../src/core/export.js');
 const {queryLinks, MAX_CUSTOM_FIELDS} = await import('../src/core/model.js');
+const {citeFirst, citeFacts} = await import('../src/core/cite.js');
+const CITE = await import('./fixtures/cite-links.mjs');
 const {readPackagedMembers} = await import('../scripts/verify-package.mjs');
 
 const run = promisify(execFile);
@@ -728,6 +735,124 @@ try {
   assert.deepEqual(unlabeled15, []);
   await ui.screenshot({path: resolve(evidence, 'lane-columns-desktop.png'), fullPage: true, animations: 'disabled'});
   check('Custom column controls: no horizontal overflow at 320 px in the links and export views, every control labeled, measured text contrast at least 4.5:1 in light and dark', {contrast: measured15});
+
+  // 16. Citations and notes (0.5.0), in a collection with page citations, custom columns and research fields.
+  await ui.reload(); await ui.locator('#collection-heading').waitFor();
+  await ui.setViewportSize({width: 1440, height: 1000}); await ui.emulateMedia({colorScheme: 'light', reducedMotion: 'reduce'});
+  await rpc(ui, {type: 'state.mutate', action: {type: 'collection.create', name: CITE.COLLECTION}});
+  for (const field of CITE.FIELDS) await rpc(ui, {type: 'state.mutate', action: {type: 'fields.add', name: field.name}});
+  const addedFields = (await active()).fields;
+  const citeFieldIds = Object.fromEntries(CITE.FIELDS.map((field, i) => [field.id, addedFields[i].id]));
+  // One address saved twice, so grouping has something to group; custom values under this collection's column IDs.
+  const {status: _status, starred: _starred, fields: _fields, ...firstLink} = CITE.LINKS[0];
+  const citeLinks = [...CITE.LINKS, {...firstLink, id: 'cite-repeat', anchorText: 'The canopy paper again', notes: '', tags: [], context: ''}]
+    .map(({fields: values, ...rest}) => (values ? {...rest, fields: Object.fromEntries(Object.entries(values).map(([key, value]) => [citeFieldIds[key], value]))} : rest));
+  await rpc(ui, {type: 'state.mutate', action: {type: 'links.append', links: citeLinks, pages: CITE.PAGES}});
+  await until(async () => (await ui.locator('.link-row').count()) === citeLinks.length, 'Citation links shown');
+  const citeCollection = await active();
+  const citeRows = queryLinks(citeCollection.links).rows;
+  const citeOptions = {pages: citeCollection.pages, fields: citeCollection.fields};
+  assert.deepEqual(citeCollection.pages, CITE.PAGES, 'page citations saved as given');
+  const citeFormats = {bibtex: ['BibTeX file', 'bib', 'First entry'], ris: ['RIS file', 'ris', 'First record'], csl: ['CSL-JSON file', 'json', 'First entry'], annotated: ['annotated bibliography', 'md', 'First entry'], obsidian: ['Obsidian note', 'md', 'First list item']};
+  assert.deepEqual(await ui.locator('#format optgroup').evaluate((group) => [group.label, ...[...group.children].map((option) => `${option.value}: ${option.textContent}`)]),
+    ['Citations and notes', 'bibtex: BibTeX (.bib)', 'ris: RIS (.ris)', 'csl: CSL-JSON (.json)', 'annotated: Annotated bibliography (.md)', 'obsidian: Obsidian note (.md)']);
+  const expectedCite = (format, rows, got) => new Set([got.before, got.after].map((date) => makeExport(rows, {format, about: {exportedAt: date, collection: CITE.COLLECTION}, ...citeOptions}).data));
+  const facts = () => ui.locator('#cite-facts li').allInnerTexts();
+  const citeFiles = {};
+  for (const [format, [label, extension, firstLabel]] of Object.entries(citeFormats)) {
+    await ui.locator('#format').selectOption(format);
+    assert.deepEqual([await ui.locator('#columns-fieldset').isHidden(), await ui.locator('#cite-block').isVisible()], [true, true], `${format}: the columns step aside`);
+    assert.equal(await ui.locator('#download-label').innerText(), `Download ${label}`);
+    assert.equal(await ui.locator('#cite-first-label').innerText(), firstLabel);
+    assert.match(await ui.locator('#format-help').innerText(), format === 'obsidian' ? /^A Markdown note for an Obsidian vault/ : /nothing is looked up online\.$|Nothing is looked up online\.$/);
+    assert.equal(await ui.locator('#cite-first').textContent(), citeFirst(citeRows, {format, ...citeOptions, collection: CITE.COLLECTION}), `${format}: the first entry`);
+    const got = await download(`citations-${format}.${extension}`);
+    assert.match(got.name, new RegExp(`^Urban-heat-islands-thesis-sources_\\d{4}-\\d\\d-\\d\\d_\\d{4}\\.${extension}$`));
+    assert.equal(got.line, got.name);
+    assert.ok(expectedCite(format, citeRows, got).has(got.bytes.toString('utf8')), `${format}: the download equals src/core/cite.js output for the same rows`);
+    citeFiles[format] = got;
+  }
+  await ui.locator('#format').selectOption('bibtex');
+  const citeLines = await facts();
+  assert.deepEqual([citeLines[0], citeLines[1], citeLines[2], citeLines[4]], ['14 entries, one per link', '4 with a DOI or arXiv ID', '2 with authors and a date, read from the pages themselves', '11 use the anchor text as the title, or the address when there is none']);
+  // 0.5.0 RC3: papers no saved page describes have no authors; the panel says how to get them.
+  const unauthored = citeFacts(citeRows, citeOptions.pages).unauthored;
+  assert.ok(unauthored > 0, 'the seeded collection has papers no saved page describes');
+  assert.equal(citeLines[3], `${unauthored} with a DOI or arXiv ID but no authors yet. Capture from the paper’s own page (on arXiv, its abstract page) or save that page as a tab, and its authors and date fill in`);
+  assert.equal(citeLines.length, 5);
+  await ui.locator('#format').selectOption('obsidian');
+  assert.deepEqual(await facts(), ['14 list items, one per link', '2 with a note', '2 with the words around the link on its page', '2 custom columns as name:: value fields, where filled in']);
+  // Valid for their readers: balanced braces in every BibTeX entry, ER and CRLF in RIS, a CSL-JSON array.
+  const bib = citeFiles.bibtex.bytes.toString('utf8');
+  for (const entry of bib.trim().split(/\n\n(?=@)/)) { let depth = 0; for (const char of entry) { depth += char === '{' ? 1 : char === '}' ? -1 : 0; assert.ok(depth >= 0, entry); } assert.equal(depth, 0, entry); }
+  assert.equal((bib.match(/^@(misc|article)\{/gm) || []).length, citeRows.length);
+  const ris = citeFiles.ris.bytes.toString('utf8');
+  assert.doesNotMatch(ris, /[^\r]\n/, 'RIS lines end with CRLF');
+  assert.equal((ris.match(/^TY {2}- /gm) || []).length, citeRows.length); assert.equal((ris.match(/^ER {2}- \r$/gm) || []).length, citeRows.length);
+  const csl = JSON.parse(citeFiles.csl.bytes.toString('utf8'));
+  assert.ok(Array.isArray(csl) && csl.length === citeRows.length && csl.every((item) => item.id && ['article-journal', 'article', 'webpage'].includes(item.type)));
+  assert.equal(new Set(csl.map((item) => item.id)).size, csl.length);
+  assert.match(citeFiles.obsidian.bytes.toString('utf8'), /\n {2}Principal investigator:: Dr\. Okafor\n {2}Deadline:: =March 1\n/);
+  check('Citations and notes: BibTeX, RIS, CSL-JSON, the annotated bibliography and the Obsidian note each download under the usual name with their own extension, equal src/core/cite.js output for the same rows, and are valid for their readers; the columns step aside for what the entries hold and the first entry', {files: Object.fromEntries(Object.entries(citeFiles).map(([format, got]) => [format, got.name]))});
+
+  // Grouped rows use their first occurrence; a selection narrows the entries.
+  await ui.locator('#filters-toggle').click();
+  await ui.locator('#dedupe').selectOption('url');
+  await ui.locator('#format').selectOption('bibtex');
+  const groupedRows = queryLinks(citeCollection.links, {dedupe: 'url'}).rows;
+  assert.equal(groupedRows.length, citeRows.length - 1);
+  assert.equal((await facts())[0], `${groupedRows.length} entries, one per unique address`);
+  got = await download('citations-grouped.bib');
+  assert.ok(expectedCite('bibtex', groupedRows, got).has(got.bytes.toString('utf8')), 'grouped: one entry per address, from its first occurrence');
+  await ui.locator('.row-select').nth(0).check(); await ui.locator('.row-select').nth(3).check();
+  await ui.locator('#format').selectOption('ris');
+  assert.equal((await facts())[0], '2 entries, one per unique selected address');
+  got = await download('citations-selected.ris');
+  assert.ok(expectedCite('ris', [groupedRows[0], groupedRows[3]], got).has(got.bytes.toString('utf8')), 'selected rows only');
+  await ui.locator('#clear-selection').click();
+  await ui.locator('#dedupe').selectOption('none');
+  await ui.locator('#filters-toggle').click();
+  check('Grouped rows give one entry per address from the first occurrence, and a selection narrows the entries; the facts say so', {grouped: groupedRows.length});
+
+  // The research columns in a CSV, chosen in Add a column.
+  await ui.locator('#format').selectOption('csv');
+  assert.equal(await ui.locator('#columns-fieldset').isVisible(), true);
+  assert.equal(await ui.locator('#cite-block').isHidden(), true);
+  const researchColumns = ['context', 'status', 'starred', 'doi', 'arxiv', 'pmid', 'isbn', 'imported'];
+  for (const key of researchColumns) await ui.locator('#add-column').selectOption(key);
+  assert.deepEqual(await ui.locator('#columns .name').allInnerTexts(), ['Anchor text', 'URL', 'Context', 'Reading status', 'Starred', 'DOI', 'arXiv ID', 'PubMed ID', 'ISBN', 'Imported from']);
+  got = await download('research-columns.csv');
+  assert.equal(got.bytes.toString('utf8'), makeExport(citeRows, {format: 'csv', columns: ['anchorText', 'url', ...researchColumns], ...citeOptions}).data);
+  assert.match(got.bytes.toString('utf8'), /\r\nSurface temperature and tree canopy in 40 mid-sized cities,https:\/\/doi\.org\/10\.5555\/uhi\.2024\.0142,"Across forty mid-sized cities, the canopy study found that blocks with more than 30% tree cover stayed cooler\.",Read,Yes,10\.5555\/uhi\.2024\.0142,,,,\r\n/);
+  await ui.locator('#reset-columns').click();
+  check('The research columns (context, reading status, starred, DOI, arXiv ID, PubMed ID, ISBN, imported from) are offered in Add a column and export as src/core/export.js writes them');
+
+  // Layout, focus and contrast of the citation parts at 320 px, in light and dark.
+  await ui.locator('#format').selectOption('bibtex');
+  const citePairs = [['format list', '#format'], ['format help', '#format-help'], ['entry facts', '.cite-facts li'], ['entry fact number', '.cite-facts b'], ['first entry label', '#cite-first-label'], ['first entry', '#cite-first']];
+  const citeMeasured = [];
+  for (const scheme of ['light', 'dark']) {
+    await ui.emulateMedia({colorScheme: scheme, reducedMotion: 'reduce'});
+    await ui.setViewportSize({width: 320, height: 900});
+    await ui.locator('#dock-export').click();
+    await clearNotice(); await ui.waitForTimeout(200);
+    assert.equal(await overflow(), false, `citation choices overflow at 320 ${scheme}`);
+    const box = await ui.locator('#cite-first').boundingBox();
+    assert.ok(box && box.x >= 0 && box.x + box.width <= 320, 'the first entry fits the width');
+    await ui.locator('#download-title').scrollIntoViewIfNeeded();
+    await ui.screenshot({path: resolve(evidence, `lane-cite-320-${scheme}.png`), animations: 'disabled'});
+    for (const entry of await contrast(citePairs)) { assert.ok(!entry.missing, `${entry.name} missing`); assert.ok(entry.ratio >= 4.5, `${scheme} ${entry.name} contrast ${entry.ratio}`); citeMeasured.push({scheme, ...entry}); }
+    await ui.locator('#export-done').click();
+  }
+  await ui.emulateMedia({colorScheme: 'light', reducedMotion: 'reduce'});
+  await ui.setViewportSize({width: 1440, height: 1000});
+  // The first entry scrolls, so it takes keyboard focus, with a visible ring, and is named by its label.
+  await ui.locator('#format').focus(); await ui.keyboard.press('Tab');
+  assert.equal(await ui.evaluate(() => document.activeElement?.id), 'cite-first', 'Tab reaches the first entry after the format list');
+  assert.notEqual(await ui.evaluate(() => getComputedStyle(document.activeElement).outlineStyle), 'none');
+  assert.equal(await ui.getByRole('region', {name: 'First entry'}).count(), 1);
+  await ui.locator('#export-panel').screenshot({path: resolve(evidence, 'lane-cite-desktop.png'), animations: 'disabled'});
+  check('Citation choices: no horizontal overflow at 320 px, the first entry is keyboard-focusable and named, and measured text contrast is at least 4.5:1 in light and dark', {contrast: citeMeasured});
 
   assert.deepEqual(errors, [], 'no page errors');
   check('No page errors or console errors');

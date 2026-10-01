@@ -1,0 +1,139 @@
+{
+  "started": "2026-09-29T19:41:12.519Z",
+  "browser": "Installed Chrome for Testing via Playwright; real unpacked extension",
+  "checks": [
+    {
+      "name": "Loaded actual extension and initialized state",
+      "status": "pass"
+    },
+    {
+      "name": "Collection created through UI",
+      "status": "pass"
+    },
+    {
+      "name": "37 faithful occurrences including duplicates, empty anchor, shadow root, frame provenance and explicit partial coverage",
+      "status": "pass"
+    },
+    {
+      "name": "Current page resolves the invoking page from full workbench",
+      "status": "pass"
+    },
+    {
+      "name": "Region Escape leaves collection unchanged",
+      "status": "pass"
+    },
+    {
+      "name": "Regional quick-copy reports successful two-column clipboard write",
+      "status": "pass"
+    },
+    {
+      "name": "Real rectangle pointer drag highlights and saves exactly 5 links without navigating",
+      "status": "pass"
+    },
+    {
+      "name": "Add-another-region does not duplicate an already saved region",
+      "status": "pass"
+    },
+    {
+      "name": "Positive-area 1px overlap of a wrapped line captures the actual anchor",
+      "status": "pass"
+    },
+    {
+      "name": "Nested wheel scrolling extends the selection and retains earlier matches",
+      "status": "pass",
+      "selectedCount": 6
+    },
+    {
+      "name": "Page scrolling during a drag retains selected links",
+      "status": "pass"
+    },
+    {
+      "name": "Regional geometry includes an accessible same-origin frame",
+      "status": "pass"
+    },
+    {
+      "name": "Loaded dynamic links captured on next scan",
+      "status": "pass"
+    },
+    {
+      "name": "Recipientless mail links retained while malformed destinations are skipped with an explicit count",
+      "status": "pass"
+    },
+    {
+      "name": "Collection notes and tags saved through UI",
+      "status": "pass"
+    }
+  ],
+  "limitations": [
+    "Optional grants established separately through product UI in an isolated automated profile; not native Allow/Deny evidence.",
+    "Not acceptance in the everyday Chrome profile or other operating systems."
+  ],
+  "initialGrants": {
+    "origins": [
+      "http://127.0.0.1:52478/*",
+      "http://127.0.0.1:52488/*"
+    ],
+    "permissions": [
+      "activeTab",
+      "bookmarks",
+      "clipboardWrite",
+      "contextMenus",
+      "downloads",
+      "storage",
+      "tabs",
+      "unlimitedStorage",
+      "scripting",
+      "sidePanel"
+    ]
+  },
+  "failureUI": "Link Meteor\nCollections\n2\nMy research\n0\nBrowser acceptance\n53\nNew collection name\nSite access\nAllow on all sites\n\nHold-key drag and Capture this page then work on every website without asking site by site. Link Meteor reads a page’s links only when you capture or drag, and keeps them in this browser.\n\nThis site\n\nCurrent site unavailable\n\nHold-key drag on this site\n\nHold the key below and drag to select links, without opening Link Meteor first. Chrome asks for access to this site only.\n\nHold to drag\nHold\nA letter key\nCommand\nHold key\nSave key\n\nHold Z and drag to select links. Typing in a text field never starts a selection.\n\nNever on these sites\n0\n\nNo sites yet. Turn on Never on this site while you are on one.\n\nRegion shortcut\n⌥\n⇧\nL\nChange\nregion shortcut in Chrome settings\nAfter a drag\nShow the card\nCopy right away\nAdd right away\n\nThe capture card lists the links, so you choose what to add or copy.\n\nLeave out navigation links\n\nLinks in menus, headers, footers and sidebars are left unticked, and the card says how many.\n\nSkip links already saved\n\nAdding leaves out links whose address the collection already has.\n\nSave the words around each link\n\nEach captured link keeps up to 400 characters of the text around it on its page. Saved in this browser.\n\nAppearance\nMeteor\nComet\nAurora\nEmber\nNebula\nGraphite\nHigh contrast\n\nMeteor: Lime on slate. The original.\n\nSystem\nLight\nDark\n\nThe theme also colors the capture card on webpages and the toolbar icon. System follows your computer’s light or dark setting.\n\nImport links\n\nFrom a spreadsheet, a list, a web page or bookmarks file, pasted text or a bookmark folder. You see what will be added before anything is. Files are read in this browser and never uploaded.\n\nChoose a file…\nPaste links\nFrom a bookmark folder…\nBackup and restore\n\nOne file with every collection, link, note, tag and setting. It is saved to your downloads and goes nowhere else.\n\nDownload a backup\nRestore from a backup…\n\nLink Meteor can use more than Chrome's usual 10 MB of local storage, so large collections and a restore's Undo fit. It all stays in this browser.\n\nAbout and help\nv0.5.0\n\nSaved only in this browser. No account, servers or tracking.\n\nUse Link Meteor on every site?\n\nWith access to all sites, you can hold Z and drag across links on any webpage, and Capture this page works without asking site by site. Chrome asks you once.\n\nLink Meteor reads a page’s links only when you capture or drag, and keeps what you save in this browser. You can list sites where it never runs, or turn this off, under Site access.\n\nAllow on all sites (recommended)\nChoose sites later\nBrowser acceptance\n\n53 links from 2 pages\n\nName\nNotes\nTags\nSeparate tags with commas.\nSave details\nClose\nEmpty this collection\nDelete collection\nCustom columns\n0 of 20\n\nYour own columns for this collection, such as a deadline or a contact. Fill them in each link’s details. Search, exports and backups include them.\n\nNew column\nAdd column\n\nUp to 60 characters.\n\nCapture\nThis page\nPick tabs\nThis window\nAll windows\nLinks in the pages\nThe tabs themselves\n\nOpen a webpage, then open Link Meteor from it to capture that page.\n\nCapture this page\nSelect a region\n⌥\n⇧\nL\nPrevious capture · 3 links captured\nfrom Empty fixture · Sep 29, 2026, 3:41 PM\nEmpty fixture\n3 links\n2 malformed link destinations were excluded.\nShow only these links\nLinks\nLinks\nInsights\n\n10 of 53 links\n\nSearch links\nView\nSelect all\nRemove\nRemove all in this view\nUndo\nAnchor text\nURL\nSource page\nAttention in small systems\nPDF\nhttp://127.0.0.1:52478/papers/attention.pdf\nMeteor Research Lab — deterministic fixture\n127.0.0.1:52478\nSource details and notes for Attention in small systems\nGeometry, “frames” & 雪\nPDF\nhttp://127.0.0.1:52478/papers/geometry.pdf?edition=2\nMeteor Research Lab — deterministic fixture\n127.0.0.1:52478\nSource details and notes for Geometry, “frames” & 雪\nDownload PDF\nPDF\nhttp://127.0.0.1:52478/papers/attention.pdf\nMeteor Research Lab — deterministic fixture\n127.0.0.1:52478\nSource details and notes for Download PDF\nNo anchor text\nAccessible label: Open illustrated appendix\nhttp://127.0.0.1:52478/appendix\nMeteor Research Lab — deterministic fixture\n127.0.0.1:52478\nSource details and notes for Open illustrated appendix\nVisible label\nhttp://127.0.0.1:52478/visible\nMeteor Research Lab — deterministic fixture\n127.0.0.1:52478\nSource details and notes for Visible label\nAttention in small systems\nPDF\nhttp://127.0.0.1:52478/papers/attention.pdf\nMeteor Research Lab — deterministic fixture\n127.0.0.1:52478\nSource details and notes for Attention in small systems\nGeometry, “frames” & 雪\nPDF\nhttp://127.0.0.1:52478/papers/geometry.pdf?edition=2\nMeteor Research Lab — deterministic fixture\n127.0.0.1:52478\nSource details and notes for Geometry, “frames” & 雪\nDownload PDF\nPDF\nhttp://127.0.0.1:52478/papers/attention.pdf\nMeteor Research Lab — deterministic fixture\n127.0.0.1:52478\nSource details and notes for Download PDF\nNo anchor text\nAccessible label: Open illustrated appendix\nhttp://127.0.0.1:52478/appendix\nMeteor Research Lab — deterministic fixture\n127.0.0.1:52478\nSource details and notes for Open illustrated appendix\nVisible label\nhttp://127.0.0.1:52478/visible\nMeteor Research Lab — deterministic fixture\n127.0.0.1:52478\nSource details and notes for Visible label\nExport\n\nAll 10 links in this view\n\nFiltered from 53 links. Every matching link is used, across all pages.\n\nCopy to clipboard\nTable\nAnchor text · URL\nURLs\nOne per line\nMarkdown\n[text](URL)\nRich links\nClickable anchor text\nDownload a file\nFormat\nExcel workbook (.xlsx)\nCSV (.csv)\nTSV (.tsv)\nMarkdown links (.md)\nHTML table (.html)\nJSON with full provenance (.json)\nURL list (.txt)\nBibTeX (.bib)\nRIS (.ris)\nCSL-JSON (.json)\nAnnotated bibliography (.md)\nObsidian note (.md)\n\nEvery cell is stored as text, so nothing is reinterpreted as a formula, number or date. Web and email addresses are clickable, and a second sheet, About, records when and how the file was exported.\n\nColumns, in order\nAnchor text\nURL\nAdd export column\nAdd a column…\nAccessible label\nOriginal href\nSource page URL\nSource page title\nFrame URL\nCaptured at\nCapture batch ID\nOccurrence ID\nNotes\nTags\nContext\nReading status\nStarred\nDOI\narXiv ID\nPubMed ID\nISBN\nImported from\nNew custom column…\n\nColumns apply to the Table copy and to CSV, TSV, Excel and HTML files.\n\nFile name\n\nType a name for this download, or leave it empty to use the pattern.\n\nFile name pattern\nDownload Excel file\n\nSaves as Browser-acceptance_2026-09-29_1541.xlsx\n\nDownload files\nDownload 2 files\n\nSaves the file behind each file link to Link Meteor › Browser-acceptance in your downloads folder, named after its anchor text, 3 at a time. The other 2 links aren’t file links. You can download any link from its details.\n\nSave as bookmarks\nNew folder\nExisting folder\nFolder name\nSkip links already in that folder\nBookmark 4 web links\n\nCreates a new folder in Other bookmarks. Web links only. Chrome may sync bookmarks according to your browser settings.\n\nOpen in tabs\nOpen 4 web links\nOr open in\na new window\na tab group\n\nOpens up to 500 web links in background tabs, a few at a time. Link Meteor asks first above 20.\n\nA tab group is named after the collection when Chrome lets Link Meteor manage tab groups. Chrome asks the first time you choose one.\n\nCollection details saved.",
+  "failureSession": {
+    "linkMeteorCaptureReport": {
+      "createdAt": "2026-09-29T19:41:15.674Z",
+      "report": {
+        "batchId": "86e7fa46-546d-4e29-b667-4117eb56a638",
+        "capturedCount": 3,
+        "results": [
+          {
+            "count": 3,
+            "error": "",
+            "leftOut": 0,
+            "skipped": 0,
+            "status": "success",
+            "tabId": 1346108262,
+            "title": "Empty fixture",
+            "url": "http://127.0.0.1:52478/empty.html",
+            "warning": "2 malformed link destinations were excluded."
+          }
+        ]
+      }
+    },
+    "linkMeteorRecentAdds": [
+      {
+        "batchId": "47990e84-a6fa-48a6-b327-ff3e9381e74a",
+        "collectionId": "lm-mun30p3o-2-h5tg8qn6",
+        "count": 5,
+        "tabId": 1346108260
+      },
+      {
+        "batchId": "758a958b-b8f5-49d7-9097-2ca48a0a07e4",
+        "collectionId": "lm-mun30p3o-2-h5tg8qn6",
+        "count": 1,
+        "tabId": 1346108260
+      },
+      {
+        "batchId": "c381d709-6be6-4753-a45a-f556728f341a",
+        "collectionId": "lm-mun30p3o-2-h5tg8qn6",
+        "count": 6,
+        "tabId": 1346108260
+      }
+    ],
+    "linkMeteorTarget": {
+      "tabId": 1346108262,
+      "windowId": 1346108259
+    }
+  },
+  "result": "FAIL",
+  "error": "Error: Search occurrences (timed out)\n    at until (file:///<repo>/tests/helpers/browser.mjs:110:9)\n    at async file:///<repo>/tests/browser.mjs:85:66",
+  "finished": "2026-09-29T19:41:21.009Z"
+}

@@ -1,20 +1,103 @@
 # Testing and compatibility
 
-The current development build is **0.4.0**, "Make it yours". It adds:
-- seven color themes in light and dark, with a themed capture card and toolbar icon;
-- choices for what happens after a drag: show the card, copy right away, or add right away with Undo;
-- leaving out navigation links, card filters, and marking or skipping links already saved;
-- copy as rich links;
-- saving tabs as links;
-- custom columns;
-- downloading the files behind links, with the optional `downloads` permission;
-- highlights that follow their links while the page scrolls;
-- more right-click actions, and a menu on the toolbar icon;
-- Copy diagnostics.
+The current development build is **0.5.0**, "Research tools". It adds:
+- the words around each link on its page, as context;
+- page citations, read from the tags pages publish about themselves, and identifiers read from addresses;
+- citations borrowed from a saved page about the same work;
+- reading status, stars and Insights;
+- citation exports (BibTeX, RIS, CSL-JSON, an annotated bibliography and an Obsidian note) and new export columns;
+- importing links from files, pasted text and bookmark folders;
+- moving and copying links between collections;
+- the toolbar icon closing the side panel, a labeled Full view button and the last backup's date.
 
-Its automated checks passed on September 29, 2026, as release candidate 3. They ran in Chrome for Testing on macOS, both without optional grants and after the project owner clicked Allow on every native prompt. The checks without grants also passed on Windows and Linux, and in Chrome for Testing 116, except the toolbar-button checks, which can't run there. The owner checked release candidates 1 and 2 by hand in everyday Chrome, and everything worked. This is evidence for those workflows and environments, not universal browser/site compatibility.
+Its automated checks passed on October 1, 2026, as release candidate 3. They ran in Chrome for Testing on macOS, both without optional grants and after the project owner clicked Allow on every native prompt. The checks without grants also passed on Windows and Linux, and in Chrome for Testing 116, except the toolbar-button checks, which can't run there. The owner checked release candidates 1 and 2 by hand in everyday Chrome; what they found is fixed in release candidate 3. This is evidence for those workflows and environments, not universal browser/site compatibility.
 
-## Current build (0.4.0)
+## Current build (0.5.0)
+
+- Package: [`artifacts/link-meteor-0.5.0.zip`](../artifacts/link-meteor-0.5.0.zip), 801611 bytes.
+- SHA-256: `57020852b82b26d8d0562707bddeb00ef4ffcd5875264c23ba0e6da875ff589f`.
+- Product source: `src/` as tested at `91e851b6d2d8b8e9bcd7cd0348da1be2a66a88ea` (release candidate 3), unchanged when packaged at `83e76e09f5a20df1e7286a56b526e6908226e72f`.
+- [Per-file receipt](../artifacts/link-meteor-0.5.0.sha256.json): 57 package members, each matching `src/`. The ZIP's contents are also byte-identical to the release candidate 3 copy.
+- Evidence: [`artifacts/evidence-0.5.0-rc3/`](../artifacts/evidence-0.5.0-rc3/README.md), with its [Chrome 116 run](../artifacts/evidence-0.5.0-rc3/chrome-116/README.md). Earlier stages:
+  - [release candidate 2](../artifacts/evidence-0.5.0-rc2/README.md), built from the owner's first hands-on check;
+  - [release candidate 1](../artifacts/evidence-0.5.0-rc1/README.md), whose first granted run found that link lists gave context made of neighbors' titles.
+
+  The package and site checks are in [`artifacts/evidence-0.5.0-release/`](../artifacts/evidence-0.5.0-release/README.md).
+
+**Release candidate 3** changes three things from release candidate 2, the one the owner checked by hand:
+- *Add link* works on PDFs and local files again. Release candidate 2's message there told people to use it, while its gate stopped it.
+- The side panel's Full view button is labeled, and the panel closes when the full view opens.
+- The Export panel says how many papers have no authors yet, and how to fill them in.
+
+### Checks without optional grants
+
+Headless Chrome for Testing 151, fresh task-owned profiles.
+
+| Check | Result | What it establishes and its limits |
+| --- | --- | --- |
+| `npm test` | 235/235 | Model, migration, backup format 3, research data, identifiers, the citation a link uses, every citation format against golden files, imports, moving and copying with Undo, Insights counts, themes, file links, the menus in simulation (including Add link on PDFs), the toolbar close, diagnostics privacy, opening limits, storage and races. Now that the ZIP exists, this includes the check that its members match `src/`. [Output](../artifacts/evidence-0.5.0-release/node-tests.txt). |
+| `tests/access-browser.mjs` | 36/36 | The welcome card, Site access, opening tiers, the capture card through Chrome's real toolbar action, context and page citations through the real background, saving tabs as links, a second toolbar press closing the side panel (with Chrome's own close and without it), and the Full view button opening the full view and closing the panel. [Results](../artifacts/evidence-0.5.0-rc3/access-browser-results.json). |
+| `tests/access-content.mjs` | 50/50, simulation | The page script with real input and a stubbed `chrome` object, including every kind of context block and citation tag. [Results](../artifacts/evidence-0.5.0-rc3/access-content-results.json). |
+| `tests/exports-browser.mjs` | 28/28 | File names and the formatted workbook (openpyxl), rich links, Copy diagnostics, custom columns, every citation format downloaded and compared with the export code, the research columns, and the Export panel's counts. [Results](../artifacts/evidence-0.5.0-rc3/exports-browser-results.json). |
+| `tests/backup-browser.mjs` | 23/23 | Backup and restore, a synthetic 20,000-link restore, custom columns in a merge, and the last backup's date. [Results](../artifacts/evidence-0.5.0-rc3/backup-browser-results.json). |
+| `tests/reading-browser.mjs` | 12/12 | Reading status and stars from the keyboard with Undo, the view options, Insights against the counting code, 320 px and contrast. [Results](../artifacts/evidence-0.5.0-rc3/reading-browser-results.json). |
+| `tests/imports-browser.mjs` | 12/12 | Files through the file chooser, pasted links and a bookmark folder (Chrome's prompt stubbed), the mapping, skipped rows, Undo, 320 px and contrast. [Results](../artifacts/evidence-0.5.0-rc3/imports-browser-results.json). |
+| `tests/move-browser.mjs` | 6/6 | Move to… and Copy to…: the panel's preview, everything that travels, columns matched or created, the borrowed citation, Undo for both collections, a link's details, 320 px and contrast. [Results](../artifacts/evidence-0.5.0-rc3/move-browser-results.json). |
+| `tests/downloads-browser.mjs` | 9/9 | Downloads with Chrome's prompt stubbed. Nothing downloads. [Results](../artifacts/evidence-0.5.0-rc3/downloads-browser-results.json). |
+| `tests/capture-page-access.mjs` | Pass | *Capture this page* after the tab moves to a new site. [Results](../artifacts/evidence-0.5.0-rc3/capture-page-access.json). |
+| `tests/audit-overlay.mjs`, `audit-actions.mjs`, `audit-regressions.mjs` | 4, 9 and 7 checks, pass | Earlier fixes still hold. [Overlay](../artifacts/evidence-0.5.0-rc3/audit-overlay.json), [actions](../artifacts/evidence-0.5.0-rc3/audit-actions.json), [regressions](../artifacts/evidence-0.5.0-rc3/audit-regressions.json). |
+| `tests/visual-browser.mjs` | 15 checks, pass | Widths from 320 px, labels, focus and measured contrast, for every theme in light and dark, including link details and Insights. [Results](../artifacts/evidence-0.5.0-rc3/visual-results.json). |
+| `tests/site-check.mjs` | Pass | See the [release evidence](../artifacts/evidence-0.5.0-release/README.md). |
+
+**On Windows and Linux**, and on macOS again, GitHub's runners ran the same checks on release candidate 3 (workflow run 36895608399). All passed.
+
+### Allow clicks and granted suites
+
+The owner clicked Allow on every native prompt in visible Chrome for Testing windows, and each request came from the product itself with an active user gesture:
+- **Per-site profile, 5 prompts:** tabs, the fixture site, bookmarks, downloads, and a newly visited site through *Capture this page*.
+- **All-sites profile, 5 prompts:** tabs, the fixture site, all sites from the welcome card, tab groups and bookmarks.
+
+The suites then ran with the owner's pointer parked away from the test windows. All passed on the first run.
+
+| Check | Result | What it establishes and its limits |
+| --- | --- | --- |
+| `tests/browser.mjs` | 27/27 | Capture, clipboard, collections, filtering, Undo, exports and restart persistence. [Results](../artifacts/evidence-0.5.0-rc3/browser-results.json). |
+| `tests/extended-browser.mjs` | 10/10 | 5,037 captured links with bounded rendering, bookmark folders with Chrome's real bookmark API, importing a real bookmark folder with Undo, and the opening caps. [Results](../artifacts/evidence-0.5.0-rc3/extended-browser-results.json). |
+| `tests/site-browser.mjs` | Pass | All eight practice answer keys. [Results](../artifacts/evidence-0.5.0-rc3/site-browser-results.json). |
+| `tests/audit-granted-regressions.mjs` | 4/4 | [Results](../artifacts/evidence-0.5.0-rc3/granted-regressions.json). |
+| `tests/verify-downloads.py` | Pass | The downloaded files, read with openpyxl, not Microsoft Excel. [Results](../artifacts/evidence-0.5.0-rc3/workbook-results.json). |
+| `tests/downloads-granted.mjs` | 6/6 | With the owner's downloads grant, Chrome saved and named every file itself, inside the profile's test folder and none in the Downloads folder of the person running it. [Results](../artifacts/evidence-0.5.0-rc3/downloads-granted-results.json). |
+| `tests/access-granted.mjs` | 11/11 | Hold-drag on every site, Command-drag, exceptions, capture on a never-visited site, named tab groups, the card's bookmark folder, and citation tags read from saved tabs. [Results](../artifacts/evidence-0.5.0-rc3/access-granted-results.json). |
+| `tests/permission-browser.mjs` | 10/10, run last | Removing a site's access and all-sites access. [Results](../artifacts/evidence-0.5.0-rc3/permission-browser-results.json). |
+
+The right-click menus can't be opened by automated Chrome, so their handlers are tested in simulation (`tests/menus.test.mjs` and `access-content`). For release candidate 3, probes also loaded the page script into a PDF on the web and a local PDF, as the menu does, and showed its notice there.
+
+### Chrome 116
+
+The manifest declares Chrome 116 as the oldest supported version. The checks that need no grants ran on Chrome for Testing 116.0.5845.96 for macOS, with release candidate 3, and [every suite that can run there passed](../artifacts/evidence-0.5.0-rc3/chrome-116/README.md):
+- `access-content` 50/50 and `exports-browser` 28/28, with plain-text clipboard reads, because Chrome 116's headless clipboard can't be read the usual way;
+- `backup-browser` 23/23 and `downloads-browser` 9/9;
+- `reading-browser` 12/12, `imports-browser` 12/12 and `move-browser` 6/6, on their first run on Chrome 116;
+- the three audits, `visual-browser` (15 checks), the unit tests and the site.
+
+The first run failed `visual-browser` for a test reason: Chrome 116 keeps finished transitions in `document.getAnimations()`, and the suite waited for that list to be empty. It now waits only for transitions still running.
+
+**Couldn't run:** `capture-page-access`, and `access-browser` after its first 5 checks. They press Chrome's toolbar button through DevTools commands that Chrome 116 doesn't have. So the second toolbar click that closes the side panel was not checked on Chrome 116. Chrome 116 has no `chrome.sidePanel.close`; there the panel closes itself with `window.close()`, a path checked on Chrome 151 by replacing Chrome's own close. The granted suites were not run on 116.
+
+### Hands-on use (0.5.0)
+
+The project owner checked two release candidates by hand in everyday Google Chrome on macOS. These are human observations, kept separate from the automated results.
+
+| Walkthrough | What it covered | Result |
+| --- | --- | --- |
+| Release candidate 1, September 30, 2026 | The 0.5.0 features on real pages, with the handback's checklist: context and citations on article pages, saving tabs as links, reading status and stars, Insights, citation exports, imports and Ember light. | No failures. Six observations, which release candidate 2 answers: moving links between collections; the toolbar icon closing the panel; a warning about removal; fuller citations for a link to a PDF; capturing inside PDFs (planned for 0.6.0); and DOIs for open PDFs. |
+| Release candidate 2, October 1, 2026 | The new parts: the last backup's date, the toolbar icon, Move to… and Copy to…, an arXiv paper's citation, the message on PDFs, and the Star label. | Three findings, which release candidate 3 answers. Nothing could be saved from a PDF: *Add link* was stopped by release candidate 2's own gate. A saved PDF tab exported without authors, as designed; capturing *View PDF* from the abstract page gave every author. The side panel stayed open beside the full view. Everything else worked. |
+
+Release candidate 3 differs from the checked copy in the three changes above, which its automated checks cover. Windows, Linux, Brave and Edge were not part of these walkthroughs.
+
+## Earlier build (0.4.0)
+
+0.4.0, "Make it yours", added themes, after-a-drag choices, saving tabs as links, custom columns, downloading the files behind links, more right-click actions and Copy diagnostics. Its automated checks passed on September 29, 2026, as release candidate 3.
 
 - Package: [`artifacts/link-meteor-0.4.0.zip`](../artifacts/link-meteor-0.4.0.zip), 570447 bytes.
 - SHA-256: `68105db8e9dc47e1a222a2f668e5cbc22df315f8a24f09d83f57f036f6bc7036`.
@@ -82,7 +165,7 @@ The manifest declares Chrome 116 as the oldest supported version. The checks tha
 
 A probe on Chrome 116 showed that a rich copy pastes as a clickable link, as on current Chrome. Nothing in the 0.4.0 source is newer than Chrome 116, so the minimum stays at 116. The granted suites were not run on 116.
 
-## Hands-on use (0.4.0)
+### Hands-on use (0.4.0)
 
 The project owner checked the release candidates by hand in everyday Google Chrome on macOS. These are human observations, reported for each walkthrough as a whole, and kept separate from the automated results.
 
@@ -250,8 +333,10 @@ See the [README](../README.md#develop-and-verify) and [`AGENTS.md`](../AGENTS.md
 - Screen readers and other assistive technologies.
 - Windows and Linux by hand, and native shortcuts on those systems. The automated checks without grants pass on both.
 - Chrome 116 by hand, its toolbar-button behavior, and the checks that need Allow clicks. The automated checks that could run there passed (see above).
-- 0.4.0 in Brave and Microsoft Edge (0.3.0 was checked there by hand), other Chromium-based browsers, and Brave and Edge on Windows and Linux.
+- 0.5.0 and 0.4.0 in Brave and Microsoft Edge (0.3.0 was checked there by hand), other Chromium-based browsers, and Brave and Edge on Windows and Linux.
 - The real right-click menus beyond the owner's hands-on check; automated checks simulate them.
+- Release candidate 3's three changes by hand: Add link on PDFs, the Full view button and the Export panel's line about authors.
+- Citation files in reference managers other than the ones the owner tried.
 - The website on physical phones and non-Chromium browsers.
 
-Version 0.2.0 received an informal report of successful everyday Chrome use without itemized steps. The 0.4.0 hands-on results above are the owner's report for the current build. Firefox and Safari are not supported ports. Chrome Web Store submission is planned for a later version.
+Version 0.2.0 received an informal report of successful everyday Chrome use without itemized steps. The 0.5.0 hands-on results above are the owner's report for the current build. Firefox and Safari are not supported ports. Chrome Web Store submission is planned for a later version.

@@ -13,7 +13,7 @@ import assert from 'node:assert/strict';
 import {readFile, writeFile, mkdir, rm, cp} from 'node:fs/promises';
 import {resolve} from 'node:path';
 import {launch, fixtureServer, rpc, until, evidence, scratch, root} from './helpers/browser.mjs';
-import {createState, reduceState, createBackup, readBackup, BACKUP_LIMITS, MAX_CUSTOM_FIELDS} from '../src/core/model.js';
+import {createState, reduceState, createBackup, readBackup, BACKUP_LIMITS, BACKUP_FORMAT_VERSION, MAX_CUSTOM_FIELDS} from '../src/core/model.js';
 const VERSION = JSON.parse(await readFile(new URL('../src/manifest.json', import.meta.url), 'utf8')).version;
 
 const stamp = new Date().toISOString().replace(/[:.]/g, '-');
@@ -118,6 +118,10 @@ try {
   await rpc(A.ui, {type: 'state.mutate', action: {type: 'settings.update', patch: {holdKey: 'q', holdExceptions: ['https://maps.example'], welcomeSeen: true, exportPrefix: 'link-meteor-research', exportTimestamp: false, exportTimestampFormat: 'date'}}});
   await A.ui.waitForTimeout(300);
   const savedA = await state(A.ui);
+  // 0.5.0 RC2: the date of the last backup, and what removing Link Meteor does.
+  await until(async () => (await A.ui.locator('#backup-last').innerText()) === 'Last backup: never', 'no backup yet');
+  assert.equal(await A.ui.locator('#backup-remove-note').innerText(), 'Removing Link Meteor from Chrome deletes everything it saved. A backup file keeps it.');
+  const handedOver = Date.now();
   requests.length = 0;
   const [download] = await Promise.all([A.ui.waitForEvent('download'), A.ui.locator('#backup-download').click()]);
   const fileName = download.suggestedFilename();
@@ -136,6 +140,12 @@ try {
   assert.equal(backup.state.settings.exportPrefix, 'link-meteor-research');
   const outbound = requests.filter((url) => !/^(chrome-extension|blob|data):/.test(url));
   assert.deepEqual(outbound, [], 'backing up sends nothing anywhere');
+  await until(async () => /^Last backup: (?!never)/.test(await A.ui.locator('#backup-last').innerText()), 'the backup date shows');
+  const lastStored = (await A.ui.evaluate(() => chrome.storage.local.get('linkMeteorLastBackup'))).linkMeteorLastBackup;
+  assert.deepEqual(Object.keys(lastStored), ['at'], 'only the time is kept');
+  assert.ok(Date.parse(lastStored.at) >= handedOver - 1000 && Date.parse(lastStored.at) <= Date.now(), 'the time of this backup');
+  assert.equal(await A.ui.locator('#backup-last').getAttribute('title'), lastStored.at);
+  check('The Backup panel says what removing Link Meteor deletes, and shows Last backup: never, then the time of the backup just made', {lastBackup: await A.ui.locator('#backup-last').innerText()});
   check('Download a backup: every collection, link, note, tag and setting, read back by readBackup in Node', {fileName, bytes: backupText.length, requestsDuringBackup: requests.length, outbound: 0});
 
   // Files for the preview, refusal and large-restore checks, built with the model in Node.
@@ -146,7 +156,7 @@ try {
   const invalid = {
     'not-json.json': ['{"format":', 'This file is not a Link Meteor backup: it is not valid JSON.'],
     'not-a-backup.json': ['[]', 'This file is not a Link Meteor backup.'],
-    'newer-format.json': [JSON.stringify({...backup, formatVersion: 3}), 'This backup was made by a newer version of Link Meteor (backup format 3). Update Link Meteor, then restore it.'],
+    'newer-format.json': [JSON.stringify({...backup, formatVersion: BACKUP_FORMAT_VERSION + 1}), `This backup was made by a newer version of Link Meteor (backup format ${BACKUP_FORMAT_VERSION + 1}). Update Link Meteor, then restore it.`],
     'bad-url.json': [JSON.stringify({...backup, state: {...backup.state, collections: [{...backup.state.collections[0], links: [{...backup.state.collections[0].links[0], url: 'javascript:alert(1)'}]}, ...backup.state.collections.slice(1)]}}), "This backup can't be restored: link.url must be an HTTP(S), mailto, or tel URL."],
     'oversized.json': [' '.repeat(BACKUP_LIMITS.bytes + 1), 'This backup is larger than 50 MB, the most Link Meteor can restore at once.'],
   };
@@ -224,7 +234,7 @@ try {
   await noticeIncludes(B.ui, 'Restore undone.');
   assert.deepEqual(await state(B.ui), S0, 'Undo puts the previous state back exactly');
   assert.equal(await B.ui.locator('#restore-status').isVisible(), false);
-  assert.deepEqual(await rpc(B.ui, {type: 'backup.status'}), {undo: null});
+  assert.deepEqual(await rpc(B.ui, {type: 'backup.status'}), {undo: null, lastBackup: null});
   assert.equal('linkMeteorRestoreUndo' in await stored(B.ui), false, 'Undo frees the snapshot');
   check('Undo after the page is closed and reopened puts the previous state back and clears the snapshot');
 
@@ -283,7 +293,7 @@ try {
   const fileFocus = await B.ui.evaluate(() => ({id: document.activeElement?.id, outline: getComputedStyle(document.querySelector('label[for=backup-file]')).outlineStyle}));
   assert.deepEqual(fileFocus, {id: 'backup-file', outline: 'solid'}, 'the file control is reachable by keyboard with a visible focus ring');
   assert.deepEqual(await unlabeled(B.ui), []);
-  const pairs = [['backup help', '#backup-help'], ['storage help', '#storage-help'], ['preview source', '.restore-source span:nth-child(2)'], ['mode note', '.restore-mode-note'], ['mode line', '.restore-mode li'],
+  const pairs = [['backup help', '#backup-help'], ['removal note', '#backup-remove-note'], ['last backup', '#backup-last'], ['storage help', '#storage-help'], ['preview source', '.restore-source span:nth-child(2)'], ['mode note', '.restore-mode-note'], ['mode line', '.restore-mode li'],
     ['access warning', '.restore-access'], ['restore choose', 'label[for=backup-file]'], ['replace button', '#restore-replace'], ['select all label', '#select-all-label']];
   const light = await contrast(B.ui, pairs);
   await resize(B.ui, 320, 900);

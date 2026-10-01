@@ -1,0 +1,47 @@
+{
+  "started": "2026-09-29T19:41:38.390Z",
+  "profile": "r050-rc1-site",
+  "browser": "Chrome for Testing via Playwright, real unpacked extension, Chrome’s own downloads; grants prepared through the product by the owner",
+  "checks": [
+    {
+      "name": "Chrome’s settings report the profile’s own download folder under .scratch/, and Playwright’s download handling is off"
+    },
+    {
+      "name": "Download files saves the PDF, PNG and [PDF] link named after their anchor text, reports the sign-in page and the missing file, and keeps both same-named PDFs",
+      "folder": "Link Meteor/Downloads-check-202609291941",
+      "files": [
+        "Attention-in-small-systems (1).pdf",
+        "Attention-in-small-systems.pdf",
+        "Figure-1-heat-map.png",
+        "Paywalled-article.html",
+        "fixture.test.pdf"
+      ],
+      "result": "Saved 4 files to Link Meteor › Downloads-check-202609291941 in your downloads folder. 1 link gave a web page instead of a file, often a sign-in page. 1 download failed."
+    },
+    {
+      "name": "Download in a link’s details saves that one file into the collection’s folder"
+    },
+    {
+      "name": "11 files: confirmed first; Cancel stops the downloads in progress and starts no more, leaving no partial files"
+    },
+    {
+      "name": "The card’s Download 6 files saves into the destination collection’s folder and says what arrived",
+      "folder": "Link Meteor/Card-downloads-202609291941",
+      "files": [
+        "Attention-in-small-systems (1).pdf",
+        "Attention-in-small-systems.pdf",
+        "Figure-1-heat-map.png",
+        "Paywalled-article.html",
+        "fixture.test.pdf"
+      ]
+    },
+    {
+      "name": "Every new file is in the profile’s own download folder, and nowhere else",
+      "added": 11,
+      "requestsWithAccessHeld": 3,
+      "where": ".scratch/r050-rc1-site-downloads"
+    }
+  ],
+  "result": "PASS",
+  "finished": "2026-09-29T19:41:43.077Z"
+}

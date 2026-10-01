@@ -2,12 +2,14 @@
 // bookmarking the links still ticked in its preview, and opening the full view at that capture.
 // Also what 0.4.0 adds around it: links already saved, Undo after adding right away, the card's two
 // remembered choices, and the navigation links *Capture this page* left out.
+// 0.5.0: saving keeps each link's context and the page's citation (citations.js).
 // The contracts are in docs/CONTRACTS.md ("The capture card", and "Added in 0.4.0").
-import {reduceState} from '../core/model.js';
+import {reduceState, MAX_CONTEXT} from '../core/model.js';
 import {exportFileName, makeExport, richLinks} from '../core/export.js';
 import {serial, readState, writeState, mutate} from './store.js';
 import {bookmarkLinks} from './bookmarks.js';
 import {openUrls, webUrls} from './open.js';
+import {citationPages} from './citations.js';
 
 export const WORKBENCH = chrome.runtime.getURL('ui/workbench.html');
 export const OPEN_INTENT_KEY = 'linkMeteorOpenIntent';
@@ -23,8 +25,8 @@ const PREFERENCES = ['contentOnly', 'skipSaved'];
 const MISSING_DESTINATION = 'The chosen collection no longer exists, so nothing was saved. Choose another destination.';
 const SAVE_FAILED = 'Could not save this change. Existing collections are intact. Export or remove an older collection to free extension storage, then retry.';
 
-// Capture candidates become stored occurrences: validated URL schemes, strings everywhere, and the
-// page's own URL and title as provenance.
+// Capture candidates become stored occurrences: validated URL schemes, strings everywhere, the
+// page's own URL and title as provenance, and the words around the link (0.5.0), if any.
 export function occurrences(candidates, tab, batchId) {
   if (!Array.isArray(candidates) || candidates.length > 20000) throw new Error('A capture can contain at most 20,000 links. Select a smaller region.');
   const capturedAt = new Date().toISOString();
@@ -32,9 +34,10 @@ export function occurrences(candidates, tab, batchId) {
     const url = new URL(String(candidate?.url));
     if (!['http:','https:','mailto:','tel:'].includes(url.protocol)) throw new Error('Capture contained an unsupported link scheme.');
     const text = key => typeof candidate[key] === 'string' ? candidate[key] : '';
+    const context = text('context').replace(/\s+/gu, ' ').trim().slice(0, MAX_CONTEXT);
     return {id:crypto.randomUUID(),anchorText:text('anchorText'),accessibleLabel:text('accessibleLabel'),url:url.href,
       originalHref:text('originalHref'),sourceUrl:tab.url || text('sourceUrl'),sourceTitle:tab.title || text('sourceTitle'),
-      frameUrl:text('frameUrl'),capturedAt,batchId,notes:'',tags:[]};
+      frameUrl:text('frameUrl'),capturedAt,batchId,notes:'',tags:[],...(context ? {context} : {})};
   });
 }
 
@@ -67,18 +70,23 @@ export async function openWorkbench({view, batchId} = {}) {
 
 // Adds links to a collection (default: the active one) in one step of the state queue. With
 // skipSaved (default: the saved setting), links whose URL the collection already holds are left out
-// and counted as skipped.
-export function appendLinks(links, {collectionId, skipSaved, missing = MISSING_DESTINATION} = {}) {
+// and counted as skipped. 0.5.0: with saveContext off, no context is kept, whatever the page sent;
+// pages ({pageUrl: PageCitation}, from citationPages) join the collection's page citations.
+export function appendLinks(links, {collectionId, skipSaved, pages, missing = MISSING_DESTINATION} = {}) {
   return serial(async () => {
     const previous = await readState();
     const home = previous.collections.find(c => c.id === (collectionId ?? previous.activeCollectionId));
     if (!home) throw new Error(missing);
     const held = (skipSaved ?? previous.settings.skipSaved) ? new Set(home.links.map(link => link.url)) : null;
-    const added = held ? links.filter(link => !held.has(link.url)) : links;
+    const kept = held ? links.filter(link => !held.has(link.url)) : links;
+    const added = previous.settings.saveContext === false ? kept.map(({context: _left, ...link}) => link) : kept;
+    const cited = pages && Object.keys(pages).length ? pages : null;
     let state = previous;
-    if (added.length) {
-      state = reduceState(previous, {type: 'links.append', collectionId: home.id, links: added});
-      try { await writeState(previous, state); } catch { throw new Error(SAVE_FAILED); }
+    if (added.length || cited) {
+      const action = {type: 'links.append', collectionId: home.id, links: added};
+      // A citation the model refuses is left out; the links are still saved.
+      try { state = reduceState(previous, cited ? {...action, pages: cited} : action); } catch (error) { if (!cited) throw error; state = reduceState(previous, action); }
+      if (state !== previous) try { await writeState(previous, state); } catch { throw new Error(SAVE_FAILED); }
     }
     return {state, collectionId: home.id, name: home.name, count: added.length, skipped: links.length - added.length};
   });
@@ -100,7 +108,9 @@ export async function commitCapture(message, sender, {remember = async () => {}}
   if (message.skipSaved !== undefined && typeof message.skipSaved !== 'boolean') throw new Error('Say whether to skip links that are already saved.');
   const batchId = crypto.randomUUID();
   const links = occurrences(message.links, tab, batchId);
-  const added = await appendLinks(links, {collectionId, skipSaved: message.skipSaved === true});
+  // The page's own citation tags (0.5.0), kept for the page the links came from.
+  const pages = citationPages(message.page, tab.url || links[0]?.sourceUrl);
+  const added = await appendLinks(links, {collectionId, skipSaved: message.skipSaved === true, pages});
   if (added.count) await rememberAdd({tabId: tab.id, collectionId: added.collectionId, batchId, count: added.count});
   await remember(tab).catch(() => {});
   let warning = '';

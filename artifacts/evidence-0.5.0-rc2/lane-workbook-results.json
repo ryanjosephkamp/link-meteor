@@ -1,0 +1,65 @@
+{
+  "formatted": "pass",
+  "formatted_checks": {
+    "about_labels_bold": true,
+    "about_matches": true,
+    "about_rows": [
+      [
+        "Exported (local time)",
+        "2026-09-30 16:19:25 (UTC-04:00)"
+      ],
+      [
+        "Exported (UTC)",
+        "2026-09-30 20:19:25 UTC"
+      ],
+      [
+        "Collection",
+        "Urban heat: “sources” / 2026"
+      ],
+      [
+        "Links",
+        "53"
+      ],
+      [
+        "View",
+        "Every occurrence; sorted by capture order, ascending"
+      ],
+      [
+        "Filters",
+        "None"
+      ],
+      [
+        "Columns",
+        "Anchor text, URL"
+      ],
+      [
+        "Cells",
+        "Every cell is text. Nothing is a formula, number or date."
+      ],
+      [
+        "Link Meteor version",
+        "0.5.0"
+      ]
+    ],
+    "all_cells_strings": true,
+    "all_cells_text_format": true,
+    "auto_filter": "A1:B54",
+    "body_not_bold": true,
+    "column_widths": [
+      58,
+      54
+    ],
+    "exported_at_utc": "2026-09-30 20:19:25 UTC",
+    "freeze_panes": "A2",
+    "header_bold": true,
+    "hyperlink_targets_equal_cell_text": true,
+    "hyperlinks": 52,
+    "links_outside_url_columns": [],
+    "unlinked_web_or_mail_cells": [],
+    "widths_fitted": true
+  },
+  "ooxml_structure": "pass",
+  "openpyxl": "opened; exact cell values matched",
+  "rows": 53,
+  "zip_crc": "pass"
+}

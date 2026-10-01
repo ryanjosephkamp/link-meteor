@@ -7,9 +7,11 @@ import { bindReview } from './workbench/review.js';
 import { bindCapture, startInventory, onCaptureStorageChange, restoreSessionReport, watchTabs } from './workbench/capture.js';
 import { bindExport, renderColumns } from './workbench/export.js';
 import { bindBookmarks } from './workbench/bookmarks.js';
+import { bindImports } from './workbench/imports.js';
 import { bindOpen } from './workbench/open.js';
 import { bindSettings, loadShortcut, renderShortcut } from './workbench/settings.js';
 import { bootTheme } from './workbench/appearance.js';
+import { closeOnToolbarClick } from './workbench/panel.js';
 
 function bindEvents() {
   bindViews();
@@ -22,12 +24,14 @@ function bindEvents() {
   bindReview();
   bindCapture();
   bindBookmarks();
+  bindImports();
 }
 
 async function init() {
   bindEvents(); renderColumns();
   loadShortcut();
   hideOpenFullInTab();
+  closeOnToolbarClick();
   showVersion();
   await reloadState();
   await startInventory();

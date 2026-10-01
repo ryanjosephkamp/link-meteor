@@ -1,6 +1,7 @@
 // Backup and restore: one file with everything, a restore preview, merge or replace, and Undo.
 // Backing up and previewing need no message: the page builds the file and both plans itself,
-// and only a chosen restore, its Undo and the Undo status go to the background.
+// and only a chosen restore, its Undo, the Undo status and the time of the last backup go to the
+// background.
 import { createBackup, readBackup, planRestore, BACKUP_LIMITS, MAX_CUSTOM_FIELDS } from '../../core/model.js';
 import { exportFileName } from '../../core/export.js';
 import { THEMES } from '../../core/themes.js';
@@ -9,13 +10,13 @@ import { ui, request, action, show, reloadState } from './state.js';
 import { render, onRender, onEscape } from './rendering.js';
 import { closeEditor } from './collections.js';
 
-const UNDO_KEY = 'linkMeteorRestoreUndo';
+const UNDO_KEY = 'linkMeteorRestoreUndo', LAST_BACKUP_KEY = 'linkMeteorLastBackup';
 const SETTING_NAMES = {
   holdKey: 'Hold key', holdTrigger: 'Hold trigger', holdScope: 'Where hold-drag runs', holdOrigins: 'Hold-drag sites',
   holdExceptions: 'Never on these sites', welcomeSeen: 'Welcome card', exportPrefix: 'Export name prefix',
   exportTimestamp: 'Date in export names', exportTimestampFormat: 'Export date format',
   theme: 'Theme', appearance: 'Appearance', afterDrag: 'After a drag', afterDragFormat: 'Copy format after a drag',
-  contentOnly: 'Leave out navigation links', skipSaved: 'Skip links already saved',
+  contentOnly: 'Leave out navigation links', skipSaved: 'Skip links already saved', saveContext: 'Save the words around each link',
 };
 
 let pending = null;       // the chosen file: {text, backup, fileName}
@@ -48,6 +49,8 @@ export async function downloadBackup() {
   const link = document.createElement('a'); link.href = href; link.download = name;
   document.body.append(link); link.click(); link.remove();
   setTimeout(() => URL.revokeObjectURL(href), 60000);
+  await request({ type: 'backup.made' }).catch(() => {});
+  scheduleStatus();
   const contents = `${plural(backup.state.collections.length, 'collection')}, ${plural(totalLinks(backup.state.collections), 'link')} and your settings`;
   if (text.length > BACKUP_LIMITS.bytes) {
     show(`Downloaded ${name} with ${contents}. It is larger than ${BACKUP_LIMITS.bytes / 1024 / 1024} MB, the most Link Meteor can restore at once, so keep it as a copy; to restore, remove links you no longer need and back up again.`, 'error');
@@ -113,7 +116,7 @@ function settingValue(key, value) {
     case 'appearance': return { system: 'system', light: 'light', dark: 'dark' }[value] || String(value);
     case 'afterDrag': return { card: 'show the card', copy: 'copy right away', add: 'add right away' }[value] || String(value);
     case 'afterDragFormat': return { tsv: 'text + URL table', text: 'URLs', markdown: 'Markdown', rich: 'rich links' }[value] || String(value);
-    case 'contentOnly': case 'skipSaved': return value ? 'on' : 'off';
+    case 'contentOnly': case 'skipSaved': case 'saveContext': return value ? 'on' : 'off';
     default: return String(value);
   }
 }
@@ -255,9 +258,14 @@ async function discardUndo() {
   $('backup-download').focus();
 }
 
-// The last restore's Undo, read from the background so it survives closing the page.
+// The last backup's time, and the last restore's Undo, read from the background so they survive
+// closing the page.
 export async function refreshStatus() {
-  const { undo } = await request({ type: 'backup.status' });
+  const { undo, lastBackup } = await request({ type: 'backup.status' });
+  const last = $('backup-last');
+  last.textContent = lastBackup ? `Last backup: ${formatTime(lastBackup)}` : 'Last backup: never';
+  last.title = lastBackup || '';
+  last.classList.toggle('is-never', !lastBackup);
   $('restore-status').hidden = !undo;
   if (!undo) return;
   const { summary } = undo;
@@ -284,6 +292,6 @@ export function bindBackup() {
   });
   // A preview stays true to the saved state: when it changes, both plans are made again.
   onRender(() => { if (pending && !$('restore-preview').hidden && ui.state !== previewedState) action(renderPreview); });
-  chrome.storage?.onChanged?.addListener((changes, area) => { if (area === 'local' && UNDO_KEY in changes) scheduleStatus(); });
+  chrome.storage?.onChanged?.addListener((changes, area) => { if (area === 'local' && (UNDO_KEY in changes || LAST_BACKUP_KEY in changes)) scheduleStatus(); });
   scheduleStatus();
 }

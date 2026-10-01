@@ -55,6 +55,30 @@ try{
  await ui.locator('.row-details summary').click();await until(async()=>await ui.locator('.occurrence').count()===100,'First details page');await ui.getByRole('button',{name:'Show next 100 occurrences',exact:true}).click();await until(async()=>await ui.locator('.occurrence').count()===200,'Second details page');await ui.locator('.row-details summary').click();await until(async()=>await ui.locator('.occurrence').count()===0,'Collapsed detail cleanup');pass('Large duplicate group details load on demand in 100-occurrence increments');
  const single=(await active()).links[0];await ui.locator('.row-details summary').click();const note=ui.getByRole('textbox',{name:'Note for Variant 0',exact:true});await note.fill('Unsaved draft survives');
  await rpc(ui,{type:'state.mutate',action:{type:'collection.update',id:(await active()).id,patch:{tags:['refresh']}}});await new Promise(r=>setTimeout(r,250));assert.equal(await note.inputValue(),'Unsaved draft survives');await note.locator('xpath=ancestor::form').getByRole('button',{name:'Save',exact:true}).click();await until(async()=>(await active()).links[0].notes==='Unsaved draft survives','Per-link note');pass('Per-link draft survives background update and saves separately from anchor text');
+ // 0.5.0 Import links from a bookmark folder (needs bookmark access in this profile, so Chrome shows no prompt): a small real folder made
+ // here with chrome.bookmarks, read with its subfolder, imported into a new collection with folder paths (a repeated bookmark skipped),
+ // undone, and removed again, leaving every other bookmark as it was.
+ const importTreeBefore=await ui.evaluate(()=>chrome.bookmarks.getTree());
+ const importRoot=await ui.evaluate(async base=>{const root=await chrome.bookmarks.create({title:'Link Meteor import fixture'});await chrome.bookmarks.create({parentId:root.id,title:'Heat and Health Lab',url:base+'/large/1'});
+  const labs=await chrome.bookmarks.create({parentId:root.id,title:'Labs'});await chrome.bookmarks.create({parentId:labs.id,title:'Urban Canopy Group',url:base+'/large/2'});await chrome.bookmarks.create({parentId:labs.id,title:'Heat and Health Lab',url:base+'/large/1'});return root;},fixture.base);
+ try{
+  const importPath=`${(await ui.evaluate(id=>chrome.bookmarks.get(id),importRoot.parentId))[0].title} › Link Meteor import fixture`;
+  const collectionBefore=(await rpc(ui,{type:'state.get'})).activeCollectionId;
+  await ui.locator('#import-bookmarks').click();await until(async()=>await ui.locator('#import-folder option').count()>0,'Import: real folders listed',10000);
+  await ui.locator('#import-folder-search').fill('Link Meteor import fixture');await ui.locator('#import-folder').selectOption(importRoot.id);
+  assert.ok((await ui.locator('#import-folder-status').innerText()).endsWith(`Imports from ${importPath}.`));assert.equal(await ui.locator('#import-subfolders').isChecked(),true);
+  await ui.locator('#import-read-folder').click();await until(()=>ui.locator('#import-plan').isVisible(),'Import: folder preview',10000);
+  assert.equal(await ui.locator('#import-source').innerText(),`From the bookmark folder ${importPath} and its subfolders · 3 bookmarks`);
+  assert.deepEqual(await ui.evaluate(()=>[...document.querySelectorAll('#import-table tbody tr')].map(row=>[row.cells[1].textContent,row.cells[row.cells.length-1].textContent])),[['Heat and Health Lab',''],['Urban Canopy Group',''],['Heat and Health Lab','Repeats row 1']]);
+  assert.equal(await ui.locator('#import-destination option:checked').innerText(),'A new collection “Link Meteor import fixture”');
+  await ui.locator('#import-commit').click();await until(async()=>(await ui.locator('#notice').innerText()).includes('Imported 2 links into “Link Meteor import fixture”.'),'Import: imported',10000);
+  const importedState=await rpc(ui,{type:'state.get'});const importedHome=importedState.collections.find(c=>c.id===importedState.activeCollectionId);
+  assert.deepEqual(importedHome.links.map(l=>[l.anchorText,l.url,l.imported,l.sourceUrl]),[['Heat and Health Lab',fixture.base+'/large/1','Bookmarks › Link Meteor import fixture',''],['Urban Canopy Group',fixture.base+'/large/2','Bookmarks › Link Meteor import fixture › Labs','']]);
+  await ui.locator('#notice button',{hasText:'Undo'}).click();await until(async()=>(await ui.locator('#notice').innerText()).includes('Import undone: removed 2 links and the collection “Link Meteor import fixture”.'),'Import: undone',10000);
+  const undoneState=await rpc(ui,{type:'state.get'});assert.equal(undoneState.activeCollectionId,collectionBefore);assert.ok(!undoneState.collections.some(c=>c.name==='Link Meteor import fixture'));
+  pass('Import links from a real bookmark folder with its subfolder: folder paths kept, a repeated bookmark skipped, and undone',{folder:importPath});
+ }finally{await ui.evaluate(id=>chrome.bookmarks.removeTree(id).catch(()=>{}),importRoot.id);}
+ const importStrip=node=>({...node,dateGroupModified:undefined,children:node.children?.map(importStrip)});assert.deepEqual(importStrip((await ui.evaluate(()=>chrome.bookmarks.getTree()))[0]),importStrip(importTreeBefore[0]),'the import fixture folder is gone and no other bookmark changed');
  // Return the captured large collection to the smaller user-facing test dataset for later inspection.
  const primary=(await rpc(ui,{type:'state.get'})).collections.find(c=>c.name==='Browser acceptance');if(primary)await rpc(ui,{type:'state.mutate',action:{type:'collection.activate',id:primary.id}});
  result.result='PASS';

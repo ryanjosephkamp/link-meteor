@@ -1,6 +1,8 @@
 // Pure collection state and non-destructive review views.
 import { fileNamePart } from './export.js';
 import { THEME_IDS } from './themes.js';
+import { typeGroup } from './insights.js';
+import { citationFor } from './identifiers.js';
 
 const LINK_STRINGS = ['id', 'anchorText', 'accessibleLabel', 'url', 'originalHref', 'sourceUrl', 'sourceTitle', 'frameUrl', 'capturedAt', 'batchId', 'notes'];
 const SORTS = new Set(['page', 'anchor', 'url', 'domain', 'newest']);
@@ -27,6 +29,7 @@ export const SETTINGS_DEFAULTS = Object.freeze({
   afterDragFormat: 'tsv',           // the copy format for afterDrag 'copy': 'tsv', 'text', 'markdown' or 'rich'
   contentOnly: false,               // leave out navigation, header, footer and sidebar links
   skipSaved: false,                 // when adding, skip URLs already in the destination collection
+  saveContext: true,                // save the words around each link when capturing (0.5.0)
 });
 const HOLD_TRIGGERS = new Set(['letter', 'modifier']);
 const HOLD_SCOPES = new Set(['sites', 'all']);
@@ -39,11 +42,20 @@ export const MAX_HOLD_EXCEPTIONS = 1000;
 export const MAX_CUSTOM_FIELDS = 20, MAX_FIELD_NAME = 60, MAX_FIELD_VALUE = 2000;
 const FIELD_ID = /^[a-z0-9][a-z0-9-]{0,80}$/;
 export const MAX_EXPORT_PREFIX = 40;
+// Research data (0.5.0): optional per-link and per-collection fields; absent means none.
+export const MAX_CONTEXT = 400, MAX_IMPORTED = 300, MAX_PAGES = 5000;
+const LINK_STATUSES = new Set(['reading', 'read']);
+const STATUS_FILTERS = new Set(['any', 'unread', 'reading', 'read']);
+// A page citation's text fields and their limits; authors is a list of names as printed.
+const PAGE_TEXT = { title: 300, date: 40, journal: 300, publisher: 300, volume: 300, issue: 300, firstPage: 300, lastPage: 300,
+  doi: 300, pmid: 300, arxiv: 300, isbn: 300, pdfUrl: 2000, readAt: 40 };
+export const MAX_AUTHORS = 50, MAX_AUTHOR = 200;
 
 // Backup files have their own format version, independent of the storage schema.
 export const BACKUP_FORMAT = 'link-meteor-backup';
-// Format 2 (0.4.0) adds the appearance and capture settings; format 1 files still restore.
-export const BACKUP_FORMAT_VERSION = 2;
+// Format 2 (0.4.0) adds the appearance and capture settings; format 3 (0.5.0) adds context,
+// reading status, stars, imported labels and page citations. Formats 1 and 2 still restore.
+export const BACKUP_FORMAT_VERSION = 3;
 // Backups travel through extension messaging, which carries at most 64 MiB per message.
 export const BACKUP_LIMITS = Object.freeze({ bytes: 50 * 1024 * 1024, collections: 10000, links: 250000 });
 
@@ -92,7 +104,80 @@ function link(value) {
   destinationUrl(value.url);
   const checked = { ...value, tags: stringList(value.tags, 'link.tags') };
   if (value.fields !== undefined) checked.fields = fieldValues(value.fields);
-  return checked;
+  return research(checked);
+}
+
+/* Research data (0.5.0). A link may hold `context` (the words around it on its page), `status`
+   ('reading' or 'read'; absent means unread), `starred: true` and `imported` (where an imported
+   link came from). A collection may hold `pages: {pageUrl: PageCitation}`, citation details read
+   from pages Link Meteor had open. All optional, so a 0.4.0 state needs no migration. */
+function research(item, name = 'link') {
+  const kept = { ...item };
+  for (const [key, max] of [['context', MAX_CONTEXT], ['imported', MAX_IMPORTED]]) {
+    if (kept[key] === undefined) continue;
+    if (typeof kept[key] !== 'string') throw new Error(`${name}.${key} must be text`);
+    if (kept[key].length > max) throw new Error(`${name}.${key} can be at most ${max} characters`);
+    if (!kept[key]) delete kept[key];
+  }
+  if (kept.status !== undefined && !LINK_STATUSES.has(kept.status)) throw new Error(`${name}.status must be 'reading' or 'read'`);
+  if (kept.starred !== undefined) {
+    if (typeof kept.starred !== 'boolean') throw new Error(`${name}.starred must be true or false`);
+    if (!kept.starred) delete kept.starred;
+  }
+  return kept;
+}
+
+// A page's address without its fragment: the key for its citation.
+export function pageKey(url) {
+  try { const parsed = new URL(url); parsed.hash = ''; return ['http:', 'https:'].includes(parsed.protocol) ? parsed.href : ''; } catch { return ''; }
+}
+
+function pageCitation(value, name = 'page citation') {
+  object(value, name);
+  const kept = {};
+  for (const [key, text] of Object.entries(value)) {
+    if (key === 'authors') {
+      const authors = stringList(text, `${name}.authors`).map(author => author.trim().replace(/\s+/gu, ' ')).filter(Boolean);
+      if (authors.length > MAX_AUTHORS) throw new Error(`${name} can list at most ${MAX_AUTHORS} authors`);
+      if (authors.some(author => author.length > MAX_AUTHOR)) throw new Error(`An author's name can be at most ${MAX_AUTHOR} characters`);
+      if (authors.length) kept.authors = authors;
+      continue;
+    }
+    if (!(key in PAGE_TEXT)) throw new Error(`Unsupported ${name} field: ${key}`);
+    if (typeof text !== 'string') throw new Error(`${name}.${key} must be text`);
+    const clean = text.trim().replace(/\s+/gu, ' ');
+    if (clean.length > PAGE_TEXT[key]) throw new Error(`${name}.${key} can be at most ${PAGE_TEXT[key]} characters`);
+    if (clean) kept[key] = clean;
+  }
+  return kept;
+}
+
+function pagesMap(value, name = 'collection.pages') {
+  if (value === undefined) return {};
+  object(value, name);
+  const entries = Object.entries(value);
+  if (entries.length > MAX_PAGES) throw new Error(`A collection can keep citation details for at most ${MAX_PAGES.toLocaleString('en-US')} pages`);
+  const kept = {};
+  for (const [url, citation] of entries) {
+    if (!url || pageKey(url) !== url) throw new Error(`${name} has an invalid page address: ${url}`);
+    kept[url] = pageCitation(citation, `${name} entry`);
+  }
+  return kept;
+}
+
+// Merges newer page citations into older ones (a newer reading of the same address replaces it)
+// and keeps at most MAX_PAGES, dropping the oldest readings first.
+function mergePages(older, newer) {
+  const merged = { ...older };
+  for (const [url, citation] of Object.entries(newer)) { delete merged[url]; merged[url] = citation; }
+  const entries = Object.entries(merged);
+  if (entries.length <= MAX_PAGES) return merged;
+  entries.sort(([, a], [, b]) => String(a.readAt || '').localeCompare(String(b.readAt || '')));
+  return Object.fromEntries(entries.slice(entries.length - MAX_PAGES));
+}
+function withPages(item, pages) {
+  const { pages: _old, ...rest } = item;
+  return Object.keys(pages).length ? { ...rest, pages } : rest;
 }
 
 /* Custom columns (0.4.0). A collection may list `fields: [{id, name}]`, and each of its links may
@@ -152,11 +237,13 @@ function validState(state) {
     stringList(current.tags, 'collection.tags');
     if (!Array.isArray(current.links)) throw new Error('collection.links must be an array');
     fieldDefs(current.fields);
+    pagesMap(current.pages);
     for (const item of current.links) {
       object(item, 'link');
       for (const key of LINK_STRINGS) string(item[key], `link.${key}`);
       stringList(item.tags, 'link.tags');
       if (item.fields !== undefined) fieldValues(item.fields);
+      research(item);
     }
   }
   object(state.settings, 'settings');
@@ -218,7 +305,7 @@ function settingsField(key, value, name = key) {
     case 'holdScope':
       if (!HOLD_SCOPES.has(value)) throw new Error(`${name} must be 'sites' or 'all'`);
       return value;
-    case 'welcomeSeen': case 'exportTimestamp': case 'contentOnly': case 'skipSaved':
+    case 'welcomeSeen': case 'exportTimestamp': case 'contentOnly': case 'skipSaved': case 'saveContext':
       if (typeof value !== 'boolean') throw new Error(`${name} must be true or false`);
       return value;
     case 'exportPrefix':
@@ -313,8 +400,28 @@ export function reduceState(input, action) {
         existing.add(item.id);
         appended.push(item);
       }
-      if (!appended.length) return state;
-      return replaceCollection(state, index, { ...current, links: [...current.links, ...appended] });
+      // Citation details read from the pages involved (0.5.0) come with the links, if any.
+      const pages = action.pages === undefined ? null : pagesMap(action.pages, 'pages');
+      if (!appended.length && !(pages && Object.keys(pages).length)) return state;
+      const updated = { ...current, links: [...current.links, ...appended] };
+      return replaceCollection(state, index, pages && Object.keys(pages).length ? withPages(updated, mergePages(pagesMap(current.pages), pages)) : updated);
+    }
+    // Reading status and stars (0.5.0), for many links at once. The workbench keeps the earlier
+    // values for Undo and sends one action per earlier value.
+    case 'links.status': case 'links.star': {
+      const { index, collection: current } = target(state, action.collectionId);
+      const ids = new Set(stringList(action.ids, 'ids'));
+      let apply;
+      if (action.type === 'links.status') {
+        if (action.status !== '' && !LINK_STATUSES.has(action.status)) throw new Error("status must be '', 'reading' or 'read'");
+        apply = ({ status: _old, ...rest }) => (action.status ? { ...rest, status: action.status } : rest);
+      } else {
+        if (typeof action.starred !== 'boolean') throw new Error('starred must be true or false');
+        apply = ({ starred: _old, ...rest }) => (action.starred ? { ...rest, starred: true } : rest);
+      }
+      let changed = false;
+      const links = current.links.map(item => { if (!ids.has(item.id)) return item; changed = true; return apply(item); });
+      return changed ? replaceCollection(state, index, { ...current, links }) : state;
     }
     case 'links.remove': {
       const { index, collection: current } = target(state, action.collectionId);
@@ -412,6 +519,130 @@ export function reduceState(input, action) {
   }
 }
 
+// The page citations links refer to: each link's own address, its source page, and the saved page
+// whose citation it borrows (identifiers.js, citationFor).
+function usedPages(links, pages) {
+  const used = new Set();
+  for (const item of links) for (const key of [pageKey(item.url), pageKey(item.sourceUrl), citationFor(item, pages)?.key]) if (key && pages[key]) used.add(key);
+  return used;
+}
+
+/* Moving and copying links to another collection (0.5.0 RC2) ------------------------------------
+   transferLinks(state, {fromCollectionId, ids, mode, toCollectionId? | newCollection?}) moves or
+   copies the chosen links, in their order, to the end of an existing collection or a new one.
+   Everything travels: notes, tags, context, reading status, star, capture details, custom column
+   values (a column the destination lacks is created there, matched by name otherwise) and the page
+   citations the links use. A link whose address the destination already holds is skipped and stays
+   where it is. A move keeps each link's id; a copy gets new ids. The open collection stays open.
+   Returns {state, record, moved, skipped, fields, name}; record is what revertTransfer needs. */
+export const MAX_COLLECTION_NAME = 120;
+export function transferLinks(input, request, { newId = id } = {}) {
+  const state = validState(migrateState(input));
+  object(request, 'transfer');
+  const { mode } = request;
+  if (mode !== 'move' && mode !== 'copy') throw new Error('Choose whether to move or copy the links.');
+  const source = state.collections.find(item => item.id === request.fromCollectionId);
+  if (!source) throw new Error('The collection these links are in no longer exists.');
+  const ids = new Set(stringList(request.ids, 'ids'));
+  const chosen = source.links.filter(item => ids.has(item.id));
+  if (!chosen.length) throw new Error('None of the chosen links are in this collection any more.');
+  const hasTo = typeof request.toCollectionId === 'string' && request.toCollectionId !== '';
+  const name = typeof request.newCollection === 'string' ? request.newCollection.replace(/\s+/gu, ' ').trim() : '';
+  if (hasTo === !!name) throw new Error('Choose one destination: a collection here, or a new one.');
+  if (name.length > MAX_COLLECTION_NAME) throw new Error(`A collection name can be at most ${MAX_COLLECTION_NAME} characters.`);
+  let next = state, toId = request.toCollectionId;
+  if (name) {
+    next = reduceState(next, { type: 'collection.create', name });
+    toId = next.activeCollectionId;
+    next = { ...next, activeCollectionId: state.activeCollectionId };
+  } else if (toId === source.id) throw new Error('Choose a different collection: these links are already in this one.');
+  else if (!state.collections.some(item => item.id === toId)) throw new Error('The chosen collection no longer exists. Choose another destination.');
+  const destination = () => next.collections.find(item => item.id === toId);
+  const held = new Set(destination().links.map(item => item.url));
+  const going = chosen.filter(item => !held.has(item.url)), skipped = chosen.length - going.length;
+  const where = name || destination().name;
+  if (!going.length) throw new Error(chosen.length === 1 ? `That link is already in “${where}”, so nothing was ${mode === 'move' ? 'moved' : 'copied'}.` : `All ${chosen.length.toLocaleString('en-US')} links are already in “${where}”, so nothing was ${mode === 'move' ? 'moved' : 'copied'}.`);
+  // Custom columns with values on the links that go: the destination's column of the same name, or a new one.
+  const fieldMap = [], created = [];
+  for (const field of fieldDefs(source.fields).filter(field => going.some(item => item.fields?.[field.id]))) {
+    const there = fieldDefs(destination().fields);
+    const match = there.find(item => item.name.toLowerCase() === field.name.toLowerCase());
+    if (match) { fieldMap.push([field.id, match.id]); continue; }
+    if (there.length >= MAX_CUSTOM_FIELDS) throw new Error(`“${where}” has no room for the column “${field.name}”: a collection can have at most ${MAX_CUSTOM_FIELDS} custom columns. Nothing was ${mode === 'move' ? 'moved' : 'copied'}.`);
+    next = reduceState(next, { type: 'fields.add', collectionId: toId, name: field.name });
+    const added = destination().fields.at(-1).id;
+    fieldMap.push([field.id, added]); created.push(added);
+  }
+  const columns = new Map(fieldMap);
+  const arriving = going.map(item => {
+    const { fields: values, ...rest } = item;
+    const mapped = {};
+    for (const [key, text] of Object.entries(values || {})) if (columns.has(key) && text) mapped[columns.get(key)] = text;
+    const moved = Object.keys(mapped).length ? { ...rest, fields: mapped } : rest;
+    return mode === 'move' ? moved : { ...moved, id: newId() };
+  });
+  // Page citations the links use, where the destination has none for that page yet.
+  const sourcePages = pagesMap(source.pages), destinationPages = pagesMap(destination().pages);
+  const pages = {};
+  for (const key of usedPages(going, sourcePages)) if (!destinationPages[key]) pages[key] = sourcePages[key];
+  const goingIds = new Set(going.map(item => item.id)), positions = [];
+  if (mode === 'move') {
+    const from = next.collections.findIndex(item => item.id === source.id);
+    source.links.forEach((item, i) => { if (goingIds.has(item.id)) positions.push(i); });
+    next = replaceCollection(next, from, { ...next.collections[from], links: next.collections[from].links.filter(item => !goingIds.has(item.id)) });
+  }
+  const before = destination().links.length;
+  next = reduceState(next, { type: 'links.append', collectionId: toId, links: arriving, pages });
+  if (destination().links.length - before !== arriving.length) throw new Error('Some of these links could not be added there, so nothing was changed.');
+  const record = { mode, fromCollectionId: source.id, toCollectionId: toId, createdCollection: !!name, fields: created,
+    ids: arriving.map(item => item.id), positions, fieldMap, pages: Object.keys(pages) };
+  return { state: next, record, moved: going.length, skipped, fields: created.length, name: where };
+}
+
+// Undoes a transfer while the links it added are still in their destination: removes them (and the
+// collection, columns and page citations the transfer added, unless other links there now use a
+// citation) and, for a move, puts each back in its old place in
+// the source collection with its values in the source's columns. The caller checks that the added
+// links are unchanged; here anything else that would lose data refuses.
+export function revertTransfer(input, record) {
+  const state = validState(migrateState(input));
+  object(record, 'transfer record');
+  const destination = state.collections.find(item => item.id === record.toCollectionId);
+  if (!destination) throw new Error('The collection these links went to no longer exists, so there is nothing to undo.');
+  const byId = new Map(destination.links.map(item => [item.id, item]));
+  const arrived = stringList(record.ids, 'transfer ids').map(key => byId.get(key));
+  if (arrived.some(item => !item)) throw new Error('Some of these links were removed or moved since, so Undo is no longer possible.');
+  const arrivedIds = new Set(record.ids), others = destination.links.filter(item => !arrivedIds.has(item.id));
+  if (record.createdCollection && (others.length || destination.notes || destination.tags.length)) throw new Error('The new collection changed since, so Undo is no longer possible. Move the links back instead.');
+  if (others.some(item => record.fields.some(fieldId => item.fields?.[fieldId]))) throw new Error('Other links now have values in the columns this added, so Undo is no longer possible. Move the links back instead.');
+  let next;
+  if (record.createdCollection) next = reduceState(state, { type: 'collection.delete', id: destination.id });
+  else {
+    next = { ...reduceState(state, { type: 'links.remove', collectionId: destination.id, ids: record.ids }), undo: state.undo };
+    for (const fieldId of record.fields) next = reduceState(next, { type: 'fields.remove', collectionId: destination.id, fieldId });
+    const at = next.collections.findIndex(item => item.id === destination.id), home = next.collections[at];
+    const pages = pagesMap(home.pages), stillUsed = usedPages(home.links, pages);
+    const kept = Object.fromEntries(Object.entries(pages).filter(([key]) => !(record.pages || []).includes(key) || stillUsed.has(key)));
+    if (Object.keys(kept).length !== Object.keys(pages).length) next = replaceCollection(next, at, withPages(home, kept));
+  }
+  if (record.mode === 'move') {
+    const from = next.collections.findIndex(item => item.id === record.fromCollectionId);
+    if (from < 0) throw new Error('The collection these links came from no longer exists, so Undo is no longer possible.');
+    const source = next.collections[from];
+    const back = new Map(record.fieldMap.map(([sourceId, destinationId]) => [destinationId, sourceId]));
+    const known = new Set(fieldDefs(source.fields).map(field => field.id));
+    const links = [...source.links];
+    arrived.forEach((item, i) => {
+      const { fields: values, ...rest } = item;
+      const mapped = {};
+      for (const [key, text] of Object.entries(values || {})) if (back.has(key) && known.has(back.get(key))) mapped[back.get(key)] = text;
+      links.splice(Math.min(record.positions[i] ?? links.length, links.length), 0, Object.keys(mapped).length ? { ...rest, fields: mapped } : rest);
+    });
+    next = replaceCollection(next, from, { ...source, links });
+  }
+  return validState(next);
+}
+
 function hostname(value) {
   try { return new URL(value).hostname.toLowerCase(); } catch { return ''; }
 }
@@ -419,19 +650,25 @@ function hostname(value) {
 export function queryLinks(links, options = {}) {
   if (!Array.isArray(links)) throw new Error('links must be an array');
   object(options, 'options');
-  const { search = '', domain = '', fileType = '', relation = 'all', sort = 'page', direction = 'asc', dedupe = 'none' } = options;
+  const { search = '', domain = '', fileType = '', relation = 'all', sort = 'page', direction = 'asc', dedupe = 'none', status = 'any', starred = false, typeGroup: group = '', site = '' } = options;
+  if (!STATUS_FILTERS.has(status)) throw new Error(`Invalid status: ${status}`);
+  if (typeof starred !== 'boolean') throw new Error('starred must be true or false');
   if (!SORTS.has(sort)) throw new Error(`Invalid sort: ${sort}`);
   if (!DEDUPES.has(dedupe)) throw new Error(`Invalid dedupe: ${dedupe}`);
   if (!RELATIONS.has(relation)) throw new Error(`Invalid relation: ${relation}`);
   if (!['asc', 'desc'].includes(direction)) throw new Error(`Invalid direction: ${direction}`);
-  for (const [key, value] of Object.entries({ search, domain, fileType })) string(value, key);
+  for (const [key, value] of Object.entries({ search, domain, fileType, typeGroup: group, site })) string(value, key);
   const term = search.toLowerCase();
   const hostTerm = domain.toLowerCase();
   const extension = fileType.toLowerCase().replace(/^\./, '');
   const matched = links.filter(item => {
     const host = hostname(item.url);
-    if (term && ![item.anchorText, item.url, item.sourceTitle, item.sourceUrl, item.notes, ...(item.tags || []), ...Object.values(item.fields || {})]
+    if (term && ![item.anchorText, item.url, item.sourceTitle, item.sourceUrl, item.notes, ...(item.tags || []), ...Object.values(item.fields || {}), item.context || '', item.imported || '']
       .some(value => String(value).toLowerCase().includes(term))) return false;
+    if (status !== 'any' && (item.status || 'unread') !== status) return false;
+    if (starred && item.starred !== true) return false;
+    if (group && typeGroup(item) !== group) return false;
+    if (site && host !== site.toLowerCase()) return false;
     if (hostTerm && !host.includes(hostTerm)) return false;
     if (extension) {
       let path;
@@ -465,7 +702,7 @@ export function queryLinks(links, options = {}) {
 
 /* Backup files ------------------------------------------------------------------------------
    A backup is UTF-8 JSON:
-   {format:'link-meteor-backup', formatVersion:2, createdAt, extensionVersion,
+   {format:'link-meteor-backup', formatVersion:3, createdAt, extensionVersion,
     state:{schemaVersion:1, activeCollectionId, collections, settings}}
    The removal undo snapshot is not included. Readers keep only contract fields, so a release
    that adds stored fields must raise BACKUP_FORMAT_VERSION: older releases then refuse the
@@ -479,6 +716,7 @@ function backupLink(value, columns = new Set()) {
   // Custom values are kept only for the collection's own columns.
   const fields = Object.fromEntries(Object.entries(checked.fields || {}).filter(([key]) => columns.has(key)));
   if (Object.keys(fields).length) kept.fields = fields;
+  for (const key of ['context', 'status', 'starred', 'imported']) if (checked[key] !== undefined) kept[key] = checked[key];
   return kept;
 }
 
@@ -499,6 +737,10 @@ function backupCollection(value, index, collectionIds, linkIds) {
     linkIds.add(checked.id);
     return checked;
   });
+  // Page citations are kept only for pages a link refers to (usedPages).
+  const all = pagesMap(value.pages), used = usedPages(kept.links, all);
+  const pages = Object.fromEntries(Object.entries(all).filter(([url]) => used.has(url)));
+  if (Object.keys(pages).length) kept.pages = pages;
   return kept;
 }
 
@@ -614,8 +856,11 @@ export function planRestore(input, backupInput, mode) {
     }
     const joined = fresh.map(item => item.fields ? withFields(item, Object.fromEntries(Object.entries(item.fields).filter(([key]) => remap.has(key)).map(([key, text]) => [remap.get(key), text]))) : item);
     const fieldsChanged = fields.length !== fieldDefs(current.fields).length;
-    if (fresh.length || notes !== current.notes || tags.length !== current.tags.length || fieldsChanged) {
-      collections[at] = { ...current, notes, tags, ...(fields.length ? { fields } : {}), links: [...current.links, ...joined], updatedAt: now };
+    // Page citations join too; a page already known here keeps its local reading.
+    const localPages = pagesMap(current.pages), pages = mergePages(source.pages || {}, localPages);
+    const pagesChanged = Object.keys(pages).length !== Object.keys(localPages).length;
+    if (fresh.length || notes !== current.notes || tags.length !== current.tags.length || fieldsChanged || pagesChanged) {
+      collections[at] = withPages({ ...current, notes, tags, ...(fields.length ? { fields } : {}), links: [...current.links, ...joined], updatedAt: now }, pages);
     }
   }
   const local = state.settings;

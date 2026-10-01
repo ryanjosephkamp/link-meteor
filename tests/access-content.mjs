@@ -7,12 +7,16 @@
 // candidate 2: the menus' page messages (the right-clicked link, the selection's links and the
 // notice after a menu save or copy), and Download N files in the More menu (only file links, a
 // confirmation above 10, progress, Cancel, missing access) with the notice after a menu download.
+// 0.5.0: context snippets (every kind of block, cuts at word boundaries, saveContext off, 20,000
+// links) and page citations (Highwire, PRISM, JSON-LD, Dublin Core, none and odd tags), in scan(),
+// the card's commit and the menus' answers, read the same way as Save tabs as links reads them.
 // Writes access-content-results.json to LINK_METEOR_EVIDENCE_DIR (default .scratch/evidence-access-capture).
 import assert from 'node:assert/strict';
 import {mkdir, mkdtemp, readFile, rm, writeFile} from 'node:fs/promises';
 import {resolve} from 'node:path';
 import {browserHome, chromePath, fixtureServer, headlessArgs, playwright, root, scratch} from './helpers/browser.mjs';
 import {cardTheme} from '../src/core/themes.js';
+import {readCitationTags} from '../src/background/citations.js';
 
 const evidence = resolve(root, process.env.LINK_METEOR_EVIDENCE_DIR || '.scratch/evidence-access-capture');
 const source = await readFile(resolve(root, 'src/content/capture.js'), 'utf8');
@@ -816,7 +820,11 @@ try {
   await rightClick('#dup-two');
   let answer = await ask({type: 'content.contextLink', url: fixture.base + '/same'});
   assert.equal(answer.ok, true);
-  assert.deepEqual(answer.data.link, {anchorText: 'Second text', accessibleLabel: '', url: fixture.base + '/same', originalHref: '/same', sourceUrl: fixture.base + '/index.html', sourceTitle: 'Meteor Research Lab — deterministic fixture', frameUrl: fixture.base + '/index.html'}, 'the right-clicked one of two links with that address, with its text collapsed');
+  const {context: around, ...fields} = answer.data.link;
+  assert.deepEqual(fields, {anchorText: 'Second text', accessibleLabel: '', url: fixture.base + '/same', originalHref: '/same', sourceUrl: fixture.base + '/index.html', sourceTitle: 'Meteor Research Lab — deterministic fixture', frameUrl: fixture.base + '/index.html'}, 'the right-clicked one of two links with that address, with its text collapsed');
+  // 0.5.0: its context, and the page's citation (none on this page). Its paragraph is mostly other
+  // links ("Then Second text, , and Email the lab."), with too few plain words to be context.
+  assert.deepEqual([around, answer.data.page], ['', null]);
   answer = await ask({type: 'content.contextLink', url: fixture.base + '/other'});
   assert.equal(answer.data.link.anchorText, 'Other link', 'another address: the first link with it');
   await rightClick('#outside');
@@ -825,7 +833,7 @@ try {
   assert.equal((await ask({type: 'content.contextLink', url: fixture.base + '/shadow-menu'})).data.link.anchorText, 'Shadow menu link', 'through an open shadow root');
   answer = await ask({type: 'content.contextLink', url: fixture.base + '/frame-source'});
   assert.deepEqual([answer.data.link.anchorText, answer.data.link.frameUrl], ['Source inside a frame', fixture.base + '/frame.html'], 'in a same-origin frame, by address');
-  assert.deepEqual(await ask({type: 'content.contextLink', url: 'https://nowhere.example/'}), {ok: true, data: {link: null}}, 'no such link: nothing is invented');
+  assert.deepEqual(await ask({type: 'content.contextLink', url: 'https://nowhere.example/'}), {ok: true, data: {link: null, page: null}}, 'no such link: nothing is invented');
   assert.equal(await card(menuPage).count(), 0, 'answering shows nothing');
   pass('content.contextLink answers the right-clicked link’s fields, or the first link with that address (page, shadow root, frame), or null');
 
@@ -892,6 +900,142 @@ try {
   assert.equal(await card(menuPage).count(), 0);
   pass('content.notice after Copy link text + URL puts the two columns on the clipboard (also through the text-area fallback) and offers only Close');
   await menuPage.close();
+
+  /* 0.5.0: context snippets in every kind of block. */
+  const research = await context.newPage();
+  await load(research, '/research/highwire.html', {platform: 'MacIntel', trigger: 'letter', key: 'q'});
+  const contextsOf = (links) => Object.fromEntries(links.map((link) => [new URL(link.url).pathname, link.context]));
+  const scanned = await research.evaluate(() => globalThis.__linkMeteor.scan());
+  const contexts = contextsOf(scanned.links);
+  const SHORT = {
+    '/r/canopy': 'Across forty mid-sized cities, the canopy study found that shaded blocks stayed cooler in the afternoon.',
+    '/r/data': 'Dataset: urban heat records (2019 to 2023)',
+    '/r/only': '',
+    '/r/td': 'Heat index district table by month',
+    '/r/survey': 'Results from the street survey in 2024',
+    '/r/quote': 'As one planner put it, trees are infrastructure, not decoration.',
+    '/r/figure': 'Figure 2. Tree cover by block, from the city inventory.',
+    '/r/appendix': 'See also the appendix for the methods.',
+    '/r/sep': 'Heat and health: a field guide Read the guide',
+    '/r/br': 'First line of the note second line link',
+    '/r/script': 'Before the script scripted link after it',
+    '/r/hidden': 'Look at the visible label here.',
+  };
+  assert.deepEqual(Object.fromEntries(Object.keys(SHORT).map((path) => [path, contexts[path]])), SHORT);
+  // A list of links is not context: a bare run of links, or a line of citations with a few words
+  // between them, gives none, while a sentence that cites two sources keeps its words.
+  const lists = await context.newPage();
+  await load(lists, '/research/lists.html', {platform: 'MacIntel', trigger: 'letter', key: 'q'});
+  const listContexts = contextsOf((await lists.evaluate(() => globalThis.__linkMeteor.scan())).links);
+  assert.deepEqual(listContexts, {'/r/list-1': '', '/r/list-2': '', '/r/list-3': '', '/r/cite-1': '', '/r/cite-2': '', '/r/cite-3': '',
+    '/r/prose-1': 'Shade matters most in the afternoon, as the canopy study and a later survey both found across dozens of neighborhoods.',
+    '/r/prose-2': 'Shade matters most in the afternoon, as the canopy study and a later survey both found across dozens of neighborhoods.'});
+  await lists.close();
+  // A long paragraph is cut on both sides at word boundaries, around the link, within 400 characters.
+  const paragraph = await research.evaluate(() => document.getElementById('ctx-long').textContent.replace(/\s+/g, ' ').trim());
+  const long = contexts['/r/comparison'], inner = long.slice(1, -1), at = paragraph.indexOf(inner);
+  assert.ok(long.length <= 400 && long.startsWith('…') && long.endsWith('…'), long);
+  assert.ok(at > 0 && /\s/.test(paragraph[at - 1]) && /\s/.test(paragraph[at + inner.length]), 'whole words at both cuts');
+  const [left, right] = inner.split('a comparison of twelve interventions');
+  assert.ok(left.length > 150 && right.length > 150, 'the link sits near the middle');
+  // A link at the start of a long paragraph gives all the room to the words after it.
+  const start = contexts['/r/start'];
+  assert.ok(start.startsWith('Opening link at the very start') && start.endsWith('…') && start.length <= 400 && start.length > 380, start);
+  pass('Context: the nearest block (p, li, td, a heading, blockquote, figcaption, or the parent), spaces between blocks and line breaks, no script text or hidden anchor text, empty when the block holds only the link, and long paragraphs cut at word boundaries within 400 characters', {long: long.length, start: start.length});
+
+  /* 0.5.0: page citations, read the same way as Save tabs as links reads them. */
+  const tabReader = `(${readCitationTags.toString()})()`;
+  const CITATIONS = {
+    highwire: {title: 'Cooling cities: a review of street-level interventions', authors: ['Okafor, Adaeze', 'Lindqvist, Tove', 'Ramírez-Soto, Julián'], date: '2024/03/15',
+      journal: 'Journal of Synthetic Urban Climate', publisher: 'Meteor Fixture Press', volume: '12', issue: '3', firstPage: '201', lastPage: '219',
+      doi: 'doi:10.5555/cool.2024.0312', pmid: '31234567', isbn: '978-0-262-03384-8', pdfUrl: `${fixture.base}/research/cooling.pdf`},
+    prism: {title: 'Soil moisture and shade in dense neighborhoods', authors: ['Haddad, Samir', 'Ng, Wei Ling'], date: '2023-06-01', journal: 'Synthetic Hydrology Letters',
+      publisher: 'Meteor Fixture Press', volume: '8', issue: '2', firstPage: '45', lastPage: '61', doi: '10.5555/shl.2023.045'},
+    jsonld: {title: 'Wind corridors and night-time cooling', authors: ['Eriksen, Mads', 'Priya Raman'], date: '2022-11-20', journal: 'Synthetic Atmospheric Review',
+      publisher: 'Meteor Fixture Press', volume: '31', issue: '4', firstPage: '9', lastPage: '27', doi: '10.5555/wind.2022.009'},
+    dublin: {title: 'Rooftop gardens: a community report', authors: ['Mensah, Kofi', 'Olsen, Ingrid'], date: '2021', publisher: 'Meteor Fixture Community Trust', doi: '10.5555/roof.2021.7'},
+    none: null,
+  };
+  assert.deepEqual(scanned.page, CITATIONS.highwire, 'Highwire comes first, before Dublin Core and JSON-LD on the same page');
+  assert.deepEqual(await research.evaluate(tabReader), scanned.page, 'Save tabs as links reads it the same way');
+  const citationPage = await context.newPage();
+  for (const name of ['prism', 'jsonld', 'dublin', 'none', 'odd']) {
+    await load(citationPage, `/research/${name}.html`, {platform: 'MacIntel', trigger: 'letter', key: 'q'});
+    const {page: read, links} = await citationPage.evaluate(() => globalThis.__linkMeteor.scan());
+    assert.deepEqual(await citationPage.evaluate(tabReader), read, `${name}: both readers agree`);
+    assert.equal(links.length, 1, `${name}: the page's link is captured as usual`);
+    if (name !== 'odd') { assert.deepEqual(read, CITATIONS[name], name); continue; }
+    // Odd tags: a huge title is cut, 80 authors become the first 50 (a 300-character name is left out),
+    // and a long date, a long DOI, a blank journal and a script address are left out, without an error.
+    assert.ok(read.title.length <= 300 && read.title.endsWith('…') && read.title.startsWith('word0 word1 word2'), read.title);
+    assert.equal(read.authors.length, 50);
+    assert.ok(!read.authors.some((author) => author.length > 200) && read.authors[2] === 'Author 3, Given');
+    assert.deepEqual(Object.keys(read), ['title', 'authors']);
+  }
+  await citationPage.close();
+  pass('Page citations: Highwire (several authors, a relative PDF address), PRISM with Dublin Core’s title, JSON-LD ScholarlyArticle (DOI from identifier, after bad JSON-LD), Dublin Core in any case, none, and odd tags cut or skipped; both readers agree', {fixtures: 6});
+
+  /* 0.5.0: the card's commit and the menus' answers carry context and the page citation. */
+  const blocks = await research.locator('#blocks').boundingBox();
+  const regionDrag = async () => {
+    await research.bringToFront(); await research.evaluate(() => scrollTo(0, 0));
+    const box = await research.locator('#blocks').boundingBox();
+    await research.keyboard.down('q'); await research.mouse.move(box.x + 4, box.y + 4); await research.mouse.down();
+    await research.mouse.move(box.x + box.width - 4, box.y + box.height - 4, {steps: 8}); await research.mouse.up(); await research.keyboard.up('q');
+    await research.waitForFunction(() => document.getElementById('link-meteor-overlay')?.shadowRoot.querySelector('.count')?.textContent === '12 links selected');
+  };
+  const commitWith = async () => {
+    await card(research).locator('button.add').click();
+    await research.waitForFunction(() => window.__stub.sent.some((m) => m.type === 'capture.commit'));
+    const [commit] = await research.evaluate(() => window.__stub.sent.splice(0).filter((m) => m.type === 'capture.commit'));
+    await research.keyboard.press('Escape');
+    return commit;
+  };
+  assert.ok(blocks.height < 880, `the blocks fit in the window: ${blocks.height}`);
+  await regionDrag();
+  const committed = await commitWith();
+  assert.deepEqual(committed.page, CITATIONS.highwire);
+  assert.deepEqual(contextsOf(committed.links), Object.fromEntries(Object.entries(SHORT).map(([path, text]) => [path, text])), 'each ticked link with its context');
+  const askResearch = (message) => research.evaluate((message) => window.__stub.ask(message), message);
+  const clicked = await askResearch({type: 'content.contextLink', url: `${fixture.base}/r/quote`});
+  assert.deepEqual([clicked.data.link.context, clicked.data.page.title], [SHORT['/r/quote'], CITATIONS.highwire.title]);
+  await research.evaluate(() => { const range = document.createRange(); range.selectNodeContents(document.getElementById('ctx-p')); getSelection().removeAllRanges(); getSelection().addRange(range); });
+  const chosen = await askResearch({type: 'content.selectionLinks'});
+  assert.deepEqual([chosen.data.links.map((link) => link.context), chosen.data.page.title], [[SHORT['/r/canopy']], CITATIONS.highwire.title]);
+  await research.evaluate(() => getSelection().removeAllRanges());
+  pass('The card’s commit sends each ticked link’s context and the page citation (page); content.contextLink and content.selectionLinks answer them too');
+
+  // With saveContext off (content.configure), nothing reads or sends context; citations still go.
+  await research.evaluate(() => window.__stub.deliver({type: 'content.configure', holdKey: 'q', holdTrigger: 'letter', enabled: true, capture: {saveContext: false}}));
+  const off = await research.evaluate(() => globalThis.__linkMeteor.scan());
+  assert.equal(off.links.some((link) => 'context' in link), false);
+  assert.deepEqual(off.page, CITATIONS.highwire);
+  assert.equal(contextsOf((await research.evaluate(() => globalThis.__linkMeteor.scan({context: true}))).links)['/r/canopy'], SHORT['/r/canopy'], 'the background may still ask for it (scan options)');
+  await regionDrag();
+  const committedOff = await commitWith();
+  assert.equal(committedOff.links.some((link) => 'context' in link), false);
+  assert.deepEqual(committedOff.page, CITATIONS.highwire);
+  assert.equal('context' in (await askResearch({type: 'content.contextLink', url: `${fixture.base}/r/quote`})).data.link, false);
+  await research.close();
+  pass('saveContext off: scan, the card’s commit and the menus’ answers carry no context; the page citation still goes');
+
+  // 20,000 links: context stays fast because it reads text nodes around each link, not innerText.
+  const many = await context.newPage();
+  await load(many, '/empty.html', {platform: 'MacIntel', trigger: 'letter', key: 'q'});
+  const timing = await many.evaluate(() => {
+    const words = 'shade water wind street tree roof block heat'.split(' ');
+    document.body.innerHTML = Array.from({length: 2000}, (_, p) => `<p>${Array.from({length: 10}, (_, j) => `Some ${words[j % 8]} words before <a href="/l/${p * 10 + j}">Source ${p * 10 + j}</a> and after it.`).join(' ')}</p>`).join('')
+      + `<div>${Array.from({length: 2000}, (_, i) => `loose ${words[i % 8]} text <a href="/d/${i}">Loose ${i}</a> `).join('')}</div>`;
+    globalThis.__linkMeteor.scan({context: false});
+    const t0 = performance.now(); const plain = globalThis.__linkMeteor.scan({context: false}); const t1 = performance.now();
+    const withContext = globalThis.__linkMeteor.scan({context: true}); const t2 = performance.now();
+    return {links: plain.links.length, withoutMs: Math.round(t1 - t0), withMs: Math.round(t2 - t1), longest: Math.max(...withContext.links.map((link) => link.context.length)), empty: withContext.links.filter((link) => !link.context).length};
+  });
+  await many.close();
+  assert.equal(timing.links, 20000);
+  assert.ok(timing.longest <= 400 && timing.empty === 0, JSON.stringify(timing));
+  assert.ok(timing.withMs < 5000, `scan with context took ${timing.withMs} ms`);
+  pass('20,000 links: every link gets its context, at most 400 characters, in one scan', timing);
 
   if (htmlUnread) result.limits = [`This Chrome's headless clipboard can't be read with navigator.clipboard.read(): ${htmlUnread} clipboard reads checked the plain text only, not the HTML.`];
   result.result = 'PASS';

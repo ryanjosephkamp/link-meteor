@@ -1,4 +1,5 @@
-// Bookmarks: saving links into a new or an existing Chrome bookmark folder, and listing folders.
+// Bookmarks: saving links into a new or an existing Chrome bookmark folder, listing folders, and
+// reading a folder's links for an import.
 import {validWebUrls} from './urls.js';
 
 const PATH_SEPARATOR = ' › ';
@@ -76,8 +77,36 @@ export async function bookmarkLinks(name, links, {folderId, skipExisting = true}
   return {folderId:folder.id,created,count,skipped,failed};
 }
 
+// Imports (0.5.0): every bookmark in a folder, and with recursive in its subfolders too, in tree
+// order, as {title, url, path}; path joins the folder names from the chosen folder down. Bookmarks
+// of every kind are listed (the import skips what isn't a web, email or phone address), up to
+// MAX_FOLDER_LINKS; `more` says some were left out. Nothing in the bookmarks changes.
+const MAX_FOLDER_LINKS = 50000;
+export async function folderLinks(folderId, recursive = true) {
+  await requireAccess('importing a folder');
+  if (typeof folderId !== 'string' || !folderId) throw new Error('Choose a bookmark folder.');
+  if (typeof recursive !== 'boolean') throw new Error('Say whether to include subfolders.');
+  let node;
+  try { [node] = await chrome.bookmarks.getSubTree(folderId); }
+  catch { throw new Error('That bookmark folder no longer exists. Choose another folder.'); }
+  if (!node) throw new Error('That bookmark folder no longer exists. Choose another folder.');
+  if (node.url !== undefined) throw new Error('That is a bookmark, not a folder. Choose a folder.');
+  const links = [];
+  let more = false;
+  const walk = (folder, titles) => {
+    for (const child of folder.children || []) {
+      if (child.url !== undefined) {
+        if (links.length < MAX_FOLDER_LINKS) links.push({title:child.title || '',url:child.url,path:titles.join(PATH_SEPARATOR)}); else more = true;
+      } else if (recursive) walk(child, [...titles, child.title || '(untitled folder)']);
+    }
+  };
+  walk(node, [node.title || '(untitled folder)']);
+  return {folder:{id:node.id,title:node.title || ''},links,more};
+}
+
 // Messages this module answers. Like every table here, they are accepted only from the workbench.
 export const workbenchMessages = {
   'links.bookmark': (message) => bookmarkLinks(message.name,message.links,{folderId:message.folderId,skipExisting:message.skipExisting ?? true}),
   'bookmarks.folders': () => bookmarkFolders(),
+  'bookmarks.folderLinks': (message) => folderLinks(message.folderId,message.recursive ?? true),
 };

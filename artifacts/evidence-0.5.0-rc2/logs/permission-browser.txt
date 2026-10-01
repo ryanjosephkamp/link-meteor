@@ -1,0 +1,10 @@
+PASS The per-site gesture opens an overlay before its grant is revoked
+PASS Actual host permission revocation prunes saved hold origin and dynamic content registration
+PASS Already loaded page no longer starts the revoked hold-key gesture
+PASS Capture after grant revocation is a denied result, not successful zero
+PASS Removing all-sites access returns the saved scope to 'sites'
+PASS Saved hold origins and registrations match the grants Chrome still reports
+PASS An open tab of a site no longer allowed stops the gesture without a reload
+PASS The already-open per-site fixture follows Chrome’s remaining grant
+PASS Capture on the no-longer-allowed site is denied
+PASS The all-sites switch shows off after Chrome’s grant is removed

@@ -164,7 +164,7 @@ function revertOnError(event, fn) {
   return action(async () => { try { await fn(event.target.checked); } catch (error) { renderSite(); throw error; } });
 }
 
-/* After a drag (0.4.0) --------------------------------------------------------- */
+/* After a drag (0.4.0), and saving the words around each link (0.5.0) ---------- */
 const AFTER_DRAG_HELP = {
   card: 'The capture card lists the links, so you choose what to add or copy.',
   copy: 'The links go straight to the clipboard. A small notice says so, with Show links to see them.',
@@ -182,6 +182,7 @@ function renderAfterDrag() {
   $('after-drag-format').value = settings.afterDragFormat;
   $('content-only').checked = settings.contentOnly;
   $('skip-saved').checked = settings.skipSaved;
+  $('save-context').checked = settings.saveContext !== false;
 }
 
 async function saveCapture(patch) {
@@ -199,6 +200,7 @@ function bindAfterDrag() {
   $('after-drag-format').addEventListener('change', (event) => action(() => saveCapture({ afterDragFormat: event.target.value })));
   $('content-only').addEventListener('change', (event) => action(() => saveCapture({ contentOnly: event.target.checked })));
   $('skip-saved').addEventListener('change', (event) => action(() => saveCapture({ skipSaved: event.target.checked })));
+  $('save-context').addEventListener('change', (event) => action(() => saveCapture({ saveContext: event.target.checked })));
 }
 
 export function bindSettings() {

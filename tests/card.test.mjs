@@ -1,7 +1,8 @@
 // The capture card's 0.4.0 messages in the background, with Chrome's APIs simulated in Node:
 // capture.saved, capture.commit with skipSaved, capture.copy as rich links, capture.undoAdd,
 // capture.preference, and Capture this page with content links only (capture.run and
-// capture.includeLeftOut). Each handler's validation is checked. API mocks, not Chrome itself.
+// capture.includeLeftOut). 0.5.0: each link's context and the page's citation, and saveContext.
+// Each handler's validation is checked. API mocks, not Chrome itself.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createState} from '../src/core/model.js';
@@ -13,8 +14,8 @@ const tabs = [
   {id: 2, windowId: 1, url: 'https://b.test/page', title: 'Page B'},
   {id: 3, windowId: 1, url: 'chrome-extension://meteor/ui/workbench.html', title: 'Link Meteor', active: true},
 ];
-// What the page script's scan() returns for each tab; set by the checks.
-const scans = new Map();
+// What the page script's scan() returns for each tab; set by the checks. Every script run is recorded.
+const scans = new Map(), scripted = [];
 globalThis.chrome = {
   storage: {
     onChanged: event(),
@@ -24,7 +25,7 @@ globalThis.chrome = {
   runtime: {getURL: (path) => 'chrome-extension://meteor/' + path, sendMessage: async () => {}, onMessage: event(), onInstalled: event(), onStartup: event()},
   permissions: {async contains() { return false; }, onAdded: event(), onRemoved: event()},
   scripting: {
-    async executeScript(spec) { return spec.files ? [] : [{result: scans.get(spec.target.tabId) || {links: [], warnings: []}}]; },
+    async executeScript(spec) { scripted.push(spec); return spec.files ? [] : [{result: scans.get(spec.target.tabId) || {links: [], warnings: []}}]; },
     async getRegisteredContentScripts() { return []; }, async unregisterContentScripts() {}, async registerContentScripts() {},
   },
   tabs: {async query() { return tabs; }, async get(id) { const tab = tabs.find((t) => t.id === id); if (!tab) throw Error('No tab'); return tab; }, async sendMessage() {}, async create() { return {id: 99}; }, async update() {}},
@@ -208,4 +209,49 @@ test('left-out links are bounded: at most 5,000 are kept, with the true total', 
   assert.deepEqual([included.count, included.total], [5000, 5200]);
   assert.equal(collection(home).links.filter((l) => l.batchId === report.batchId).length, 5000);
   await settle();
+});
+
+test('0.5.0: the card and Capture this page keep each link’s context and the page’s citation, keyed by its address', async () => {
+  const home = (await ok({type: 'state.mutate', action: {type: 'collection.create', name: 'Research'}}, WORKBENCH)).activeCollectionId;
+  // What a page script sent: text is cut to the model's limits, codes are read as identifiers read
+  // them, and anything else too long or unknown is left out.
+  const page = {title: '  Cooling \n  cities ', authors: ['Okafor, Adaeze', ' ', 'x'.repeat(201), 42, 'Lindqvist,   Tove'], date: '2024-03-15', journal: 'j'.repeat(310),
+    doi: 'https://doi.org/10.5555/COOL.1.', pmid: 'PMID: 123', arxiv: 'arXiv:2101.00001', isbn: '978-0-262-03384-8', pdfUrl: 'javascript:alert(1)', volume: 'v'.repeat(301), issue: 3, unknown: 'dropped'};
+  const commit = await ok({type: 'capture.commit', links: [candidate(1, {context: 'Across forty   cities, Link 1 found shade.'}), candidate(2, {context: 'x'.repeat(500)}), candidate(3, {context: 7}), candidate(4, {context: '  '})], page});
+  const saved = collection(home).links.filter((l) => l.batchId === commit.batchId);
+  assert.deepEqual(saved.map((l) => l.context), ['Across forty cities, Link 1 found shade.', 'x'.repeat(400), undefined, undefined], 'context is text, at most 400 characters, and absent when empty');
+  const {readAt, ...cited} = collection(home).pages['https://a.test/page'];
+  assert.deepEqual(cited, {title: 'Cooling cities', authors: ['Okafor, Adaeze', 'Lindqvist, Tove'], date: '2024-03-15', journal: 'j'.repeat(299) + '…', doi: '10.5555/COOL.1', pmid: '123', arxiv: '2101.00001', isbn: '978-0-262-03384-8'});
+  assert.ok(Date.parse(readAt) > 0, 'when it was read');
+
+  // Keyed by the page's address without its fragment; a page without a title gives no citation.
+  const article = {url: 'https://c.test/article?id=7#results', tab: {id: 9, windowId: 1, url: 'https://c.test/article?id=7#results', title: 'Article'}};
+  await ok({type: 'capture.commit', links: [candidate(5)], page: {title: 'An article'}}, article);
+  assert.equal(collection(home).pages['https://c.test/article?id=7'].title, 'An article');
+  for (const odd of [{authors: ['Only authors']}, 'A title as text', ['A title'], null]) await ok({type: 'capture.commit', links: [candidate(6)], page: odd}, OTHER_PAGE);
+  assert.equal(collection(home).pages['https://b.test/page'], undefined);
+  // A newer reading of the same page replaces the older one.
+  await ok({type: 'capture.commit', links: [candidate(7)], page: {title: 'Cooling cities, revised'}});
+  assert.deepEqual(Object.keys(collection(home).pages['https://a.test/page']), ['title', 'readAt']);
+
+  // Capture this page: the scan's context and page citation, and the context choice sent to the page.
+  scripted.length = 0;
+  scans.set(1, {warnings: [], links: [candidate(8, {context: 'Words around Link 8.'})], page: {title: 'Scanned page', doi: '10.5555/scan.8'}});
+  const {report} = await ok({type: 'capture.run', tabIds: [1]}, WORKBENCH);
+  const scannedLink = collection(home).links.find((l) => l.batchId === report.batchId);
+  assert.equal(scannedLink.context, 'Words around Link 8.');
+  assert.equal(collection(home).pages['https://a.test/page'].title, 'Scanned page');
+  assert.deepEqual(scripted.filter((spec) => spec.func && spec.func.name !== 'documentType').map((spec) => spec.args), [[{context: true}]]);
+
+  // With saveContext off, no context is kept, whatever the page sent; citations still are.
+  await ok({type: 'state.mutate', action: {type: 'settings.update', patch: {saveContext: false}}}, WORKBENCH);
+  const off = await ok({type: 'capture.commit', links: [candidate(9, {context: 'Not kept'})], page: {title: 'Kept anyway'}});
+  assert.equal('context' in collection(home).links.find((l) => l.batchId === off.batchId), false);
+  assert.equal(collection(home).pages['https://a.test/page'].title, 'Kept anyway');
+  scripted.length = 0;
+  const offRun = await ok({type: 'capture.run', tabIds: [1]}, WORKBENCH);
+  assert.equal('context' in collection(home).links.find((l) => l.batchId === offRun.report.batchId), false);
+  assert.deepEqual(scripted.filter((spec) => spec.func && spec.func.name !== 'documentType').map((spec) => spec.args), [[{context: false}]], 'the page is told not to read context');
+  await ok({type: 'state.mutate', action: {type: 'settings.update', patch: {saveContext: true}}}, WORKBENCH);
+  scans.delete(1);
 });

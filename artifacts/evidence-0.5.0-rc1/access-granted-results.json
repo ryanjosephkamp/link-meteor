@@ -1,0 +1,68 @@
+{
+  "started": "2026-09-29T20:05:55.140Z",
+  "profile": "r050-rc1b-all",
+  "browser": "Chrome for Testing via Playwright, real unpacked extension, grants prepared through the product by the owner",
+  "checks": [
+    {
+      "name": "A page opened as the browser starts gets hold-drag within seconds, without a reload",
+      "attempts": 1,
+      "seconds": 0
+    },
+    {
+      "name": "All-sites scope: one registered script covers http and https; the switch shows it on",
+      "registered": 1
+    },
+    {
+      "name": "Hold-drag works on a second origin with no per-site grant and no prompt",
+      "origin": "http://localhost:52478"
+    },
+    {
+      "name": "Modifier trigger on a real page: Meta-drag selects; a plain Meta-click opens the link as usual"
+    },
+    {
+      "name": "Never on these sites: off at once in the open tab, off after a reload, and back on without a reload"
+    },
+    {
+      "name": "This site, in all-sites scope, is the Never on this site toggle"
+    },
+    {
+      "name": "Capture this page on a never-visited origin needs no prompt with all-sites access",
+      "origin": "http://127.0.0.1:52488"
+    },
+    {
+      "name": "Save tabs as links with all-sites access reads each tab’s own citation tags (Highwire, PRISM, JSON-LD, Dublin Core) into the collection’s pages, without a prompt",
+      "read": 5,
+      "found": 4
+    },
+    {
+      "name": "Open as a tab group names the group after the collection when tab groups are allowed"
+    },
+    {
+      "name": "Card: Open as a tab group is named after the destination; Bookmark this selection saves a folder"
+    },
+    {
+      "name": "The switch turns all-sites off (offering to remove Chrome’s grant) and on again"
+    }
+  ],
+  "grants": {
+    "origins": [
+      "http://*/*",
+      "http://127.0.0.1:52478/*",
+      "https://*/*"
+    ],
+    "permissions": [
+      "activeTab",
+      "bookmarks",
+      "clipboardWrite",
+      "contextMenus",
+      "storage",
+      "tabs",
+      "unlimitedStorage",
+      "tabGroups",
+      "scripting",
+      "sidePanel"
+    ]
+  },
+  "result": "PASS",
+  "finished": "2026-09-29T20:06:06.132Z"
+}

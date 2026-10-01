@@ -638,3 +638,560 @@ Chrome shows several items from one extension under a "Link Meteor" submenu, so 
 - **What's highlighted:** after a region selection is released, every selected link (up to 250), not only those under the last rectangle. Each box is redrawn from its link's current rectangles, including through same-origin frames, once per animation frame whenever the page or a scrolling box scrolls or the window resizes. So the highlights stay on their links.
 - **Unticked links** show a dashed outline instead of a filled box.
 - **The selection rectangle** disappears on release.
+
+## Added in 0.5.0
+
+These contracts are for 0.5.0 "Research tools". They were written before building, and each area's "as built" part records what was settled while building. As before, [ACCEPTANCE.md](ACCEPTANCE.md) records what was tested. Everything below stays in this browser, adds no server, and never looks anything up online: citations and identifiers come only from what the pages showed.
+
+### Link and collection data
+
+New optional fields; absent means none, so a 0.4.0 state needs no migration, and 0.4.0 keeps them when it writes.
+
+| Field | Where | Type and limits | Meaning |
+| --- | --- | --- | --- |
+| `context` | link | string, at most `MAX_CONTEXT` (400) characters | The words around the link on its page, as captured (see [Context snippets](#context-snippets)). Never edited. |
+| `status` | link | `'reading'` or `'read'` | Reading status. Absent means unread. |
+| `starred` | link | `true` | Starred. Absent means not starred. |
+| `imported` | link | string, at most 300 characters | Where an imported link came from, such as `labs-shortlist.csv, row 3` or `Bookmarks › Research › Labs`. Absent for captured links. |
+| `pages` | collection | `{[pageUrl]: PageCitation}`, at most 5,000 entries | Citation details read from pages Link Meteor had open (see [Page citations](#page-citations)), keyed by the page's address without its `#fragment`. |
+
+`PageCitation`: `{title, authors, date, journal, publisher, volume, issue, firstPage, lastPage, doi, pmid, arxiv, isbn, pdfUrl, readAt}`. `authors` is an array of at most 50 names, each as printed (at most 200 characters); every other field is a string (at most 300 characters; `date` at most 40, as printed); empty fields are left out.
+
+- A link's **own citation** is `pages[link.url]` (without its fragment), present when Link Meteor read that page, for example when its tab was saved as a link.
+- A link's **source citation** is `pages[link.sourceUrl]`: the page it was captured from.
+- Entries no link refers to are tolerated and left out of backups and exports.
+
+**Reducer actions:**
+- `links.status {collectionId?, ids, status: '' | 'reading' | 'read'}`: `''` clears the status (unread).
+- `links.star {collectionId?, ids, starred: boolean}`.
+- `links.append` accepts `pages: {[pageUrl]: PageCitation}` beside `links`, merged into the collection's `pages`; a newer reading replaces an older one for the same address.
+- The workbench keeps what `links.status` and `links.star` changed for Undo, as it does for `fields.fill`.
+
+**`queryLinks`** gains `status: 'any' | 'unread' | 'reading' | 'read'`, `starred: boolean` and `typeGroup` (a file-type group as Insights shows it, from `typeGroup(link)` in `src/core/insights.js`), `site` (one site's links exactly, for Insights; the Domain option still matches part of a name), and its search also matches `context` and `imported`.
+
+**Backup format 3.** `BACKUP_FORMAT_VERSION` becomes 3, so 0.4.0 refuses a 0.5.0 backup with its update message instead of dropping fields. `readBackup` accepts formats 1 to 3. A merge keeps local `status` and `starred` for links already present, and local page citations for addresses already present.
+
+### Settings: additive schema-v1 fields
+
+| Field | Type and default | Meaning |
+| --- | --- | --- |
+| `saveContext` | boolean, `true` | Save the words around each link when capturing. Off saves no `context`. |
+
+### Context snippets
+
+The page script sets `context` on each candidate:
+- the link's nearest block ancestor: `p`, `li`, `dd`, `dt`, `td`, `th`, `blockquote`, `figcaption`, `caption`, `h1` to `h6` or `summary`; otherwise its parent;
+- that block's `textContent`, spaces collapsed, cut at word boundaries to at most 400 characters around the anchor text, with `…` where cut;
+- empty when the block holds only the link's own text, or when `saveContext` is off;
+- empty when the words around the link are not prose: fewer than 8 letters of plain text (outside links) in the window read, or more letters in other links' text than in plain text, as in a bare list of links or a line of citations.
+
+Regions and *Capture this page* set it. Saved tabs and imported links have none.
+
+### Page citations
+
+When capturing, the page script reads the top document's own citation tags, once per capture, and returns them as `page` beside `links` (`{links, inaccessibleFrames, warnings, page}`). It reads, in this order, the first that gives a title:
+1. Highwire Press tags, the ones Google Scholar indexes: `citation_title`, `citation_author` (one per author), `citation_publication_date` or `citation_date`, `citation_journal_title`, `citation_publisher`, `citation_volume`, `citation_issue`, `citation_firstpage`, `citation_lastpage`, `citation_doi`, `citation_pmid`, `citation_arxiv_id`, `citation_isbn` and `citation_pdf_url`;
+2. PRISM (`prism.publicationName`, `prism.volume`, `prism.number`, `prism.startingPage`, `prism.doi`);
+3. schema.org JSON-LD whose `@type` is `ScholarlyArticle`, `Article`, `Book` or `Report` (a DOI only from `identifier` or `sameAs`);
+4. Dublin Core (`DC.title`, `DC.creator`, `DC.date`, `DC.publisher`, `DC.identifier` when it is a DOI), in any case, as a last resort.
+
+A page with none of these has no page citation. **Save tabs as links** also reads each tab's citation tags when Link Meteor already has access to that site (all sites, or that site); it never asks for access to do so, and the report says how many tabs it read.
+
+### Context snippets and page citations, as built
+
+Files: `content/capture.js`, `background/citations.js` (new), `background/card.js`, `background/menus.js`, `background/tabs.js` and the capture pipeline in `background.js`. Fixtures: `tests/fixtures/research/*.html`, served at `/research/<name>.html`.
+
+**Context.**
+- The block is the link's nearest ancestor in its own tree from the list above; otherwise its parent node (an element, or the open shadow root the link sits in).
+- The text is the block's text nodes (textContent), read outward from the link on each side only as far as needed, at most 120 text nodes a side.
+  - Text in `script`, `style`, `noscript`, `template` and SVG `title` or `desc` is skipped.
+  - A space separates text in different block-level elements, and text on either side of a `br`, where textContent would join the words.
+  - An open shadow root's text isn't part of its host's block.
+- The middle is the link's anchor text as captured (innerText), so hidden text inside the link stays out and the anchor text can be found in the context.
+- The room is 400 characters minus the anchor text's length, half on each side; a side that needs less gives the rest to the other. A cut side starts or ends with "…", which counts toward the 400, and never splits a word.
+- Empty when neither side has text, or when the anchor text alone leaves less than 2 characters.
+- Speed: in Chrome for Testing on a Mac, a scan of 20,000 links took 0.37 s with context and 0.15 s without (`tests/access-content.mjs` records it). Region drags read context only when saving, never while dragging.
+- Set by `scan(options)` (`options.context`, default the page's `saveContext`), the card's `capture.commit` (ticked links only), `content.contextLink` and `content.selectionLinks`. Copying, opening, downloading and bookmarking don't read it.
+- The background keeps it through `occurrences` (text, spaces collapsed, at most 400 characters; absent when empty). `appendLinks` drops every link's `context` when `saveContext` is `false`, whatever the page sent. *Capture this page* sends the setting as `scan`'s argument (`{context}`).
+
+**`saveContext`.**
+- It reaches the page script in `settings.get` and in `content.configure`'s `capture` (it joined `CAPTURE_FIELDS` in `background/hold.js`); a change reconfigures open tabs.
+- In the rail, under *After a drag*: `#save-context`, a checkbox labeled "Save the words around each link", described by `#save-context-help`. Restore previews name the setting.
+
+**Reading citation tags.** `pageCitation()` in the page script and `readCitationTags()` in `background/citations.js` are the same code; the second stands alone for `chrome.scripting.executeScript`. `tests/access-content.mjs` checks that they agree on every fixture.
+- Meta tags come from the first 2,000 `meta[name][content]`, names compared ignoring case.
+- Beyond the list above:
+  - Highwire: `citation_authors` (split at semicolons) when there is no `citation_author`.
+  - PRISM: the title, authors and publisher come from Dublin Core (`dc.title`, `dc.creator`, `dc.publisher`, or their `dcterms.` names); the date from `prism.publicationDate` or `prism.coverDate`, then `dc.date`. `prism.endingPage`, `prism.issueIdentifier`, `prism.publisher` and `prism.isbn` are read too.
+  - Dublin Core: `dcterms.` names count as `DC.` ones (`dcterms.issued`, `dcterms.date` or `dcterms.created` for the date). A DOI comes from an identifier written as `10.…`, `doi:10.…`, `info:doi/10.…` or a doi.org address.
+- JSON-LD:
+  - The first 20 `script[type*="ld+json" i]` of at most 1,000,000 characters; bad JSON is skipped.
+  - Nodes are found in arrays and `@graph`, 4 levels deep. A reference (`{"@id": …}` alone) is followed once within the page.
+  - Types, with or without the `https://schema.org/` prefix: the four above plus schema.org's common kinds of article (`MedicalScholarlyArticle`, `NewsArticle`, `BlogPosting`, `TechArticle`), so blog and news posts count.
+  - Fields: title from `headline` or `name`; authors from `author` (`name`, or given and family names); date from `datePublished` or `dateCreated`; `publisher`'s name; `pageStart`, `pageEnd`, `isbn`.
+  - Journal, volume and issue come from `isPartOf`, through `PublicationIssue` (`issueNumber`), `PublicationVolume` (`volumeNumber`) and `Periodical` (`name`).
+  - A DOI only from `identifier` (a `PropertyValue` whose `propertyID` says DOI, or a DOI written as text) or `sameAs` (a doi.org address).
+- Limits:
+  - Each value is read from at most 10,000 characters, spaces collapsed.
+  - Title, journal and publisher are cut to 300 characters at a word boundary with "…".
+  - A date over 40 characters, any other value over 300, and author names over 200 are left out; at most the first 50 authors are kept.
+  - `citation_pdf_url` is resolved against the page, and kept only as an HTTP(S) address of at most 2,000 characters.
+  - Nothing throws: what can't be read is left out, and a page with no usable title gives `null`.
+- The reading is `{title, authors?, date?, journal?, publisher?, volume?, issue?, firstPage?, lastPage?, doi?, pmid?, arxiv?, isbn?, pdfUrl?}` as printed, or `null`.
+
+**Saving citations.**
+- The page's reading goes as `page` in `scan`'s result and in `capture.commit`, and in the menus' answers: `content.contextLink` answers `{link, page}`, and `content.selectionLinks` answers `{links, warnings, page}`.
+- `citationPages(page, url)` (`background/citations.js`) turns it into `{[pageKey(url)]: PageCitation}`, keyed by the tab's address (or the links' `sourceUrl` where Chrome hides it):
+  - known fields only, with the model's limits (a title, journal or publisher is cut; anything else too long is left out);
+  - `doi` as identifiers read it (`doiIn`), `pmid` as digits (`PMID: 42` becomes `42`), `arxiv` without `arXiv:`, `pdfUrl` only as an HTTP(S) address;
+  - `readAt`, the time it was read;
+  - no title, no citation.
+- `appendLinks(links, {pages})` passes them to `links.append`, even when every link was skipped as already saved, so a newer reading of the page replaces the older. If the model refused a citation, the links would still be saved without it.
+- One citation per scanned document: *Capture this page* and tab captures (per tab), the card's commit, *Add link* and *Capture links in the selection*.
+
+**Save tabs as links.**
+- For each web page in the save (one per address), `permissions.contains({origins: [origin + '/*']})`, asked once per origin, decides whether Link Meteor already has access: all sites, or that site. The tab a person just acted on is tried as well: the right-clicked tab for a menu save, and This page's tab from the workbench. Chrome gives temporary access to it, and if reading still fails it counts as needing access. Other tabs never use temporary access.
+- Where it has access, `executeScript({target: {tabId}, func: readCitationTags, injectImmediately: true})` reads the tags, 8 tabs at a time, each given 3 seconds. A discarded tab, or one that fails or doesn't answer in time, is not read. Nothing asks for access.
+- Each tab's citation is kept under its own address, so each saved link has its own citation.
+- The report gains `citations: {tabs, read, found, needAccess}`: the web pages in the save, those whose tags were read, those that had a citation, and those without site access.
+- The report (`.report-citations`, under its title) and the menus' notice add one sentence after the summary: "Read citation details from 12 of 45 tabs; the others need site access."
+  - Other forms: "Read citation details from all 45 tabs.", "Read the tab’s citation details.", "Read no citation details; the tabs need site access.", and "the other needs site access".
+  - When tabs with access didn't answer: "didn’t answer", or "need site access or didn’t answer".
+  - *Save this tab as a link* from a menu adds "Read its citation details." only when the page had a citation.
+
+### Identifiers (`src/core/identifiers.js`, pure)
+
+`identifiersOf(link, pages?)` returns `{doi?, arxiv?, pmid?, pmcid?, isbn?}`, found in `url` and `originalHref`, and in the citation the link uses (its own page's, or since release candidate 2 one borrowed from a page about the same work: see `citationFor` below). They are derived each time, never stored.
+- **DOI:** Crossref's pattern (`10.` followed by 4 to 9 digits, `/` and a suffix of letters, digits and `-._;()/:`), from `doi.org/…`, `dx.doi.org/…`, `/doi/…` paths and `doi=` query values. Percent-encoding is decoded, trailing punctuation is trimmed, and DOIs compare ignoring case. An arXiv DOI (`10.48550/arXiv.<id>`) also gives the arXiv ID.
+- **arXiv:** new-style `YYMM.NNNN(N)` and old-style `archive/YYMMNNN`, with an optional `vN`, from `arxiv.org/abs/…` and `arxiv.org/pdf/…`.
+- **PubMed:** a PMID from `pubmed.ncbi.nlm.nih.gov/<id>/` and `ncbi.nlm.nih.gov/pubmed/<id>`; a PMCID `PMC<digits>` from `pmc.ncbi.nlm.nih.gov/articles/…` and the older `ncbi.nlm.nih.gov/pmc/articles/…`.
+- **ISBN:** ISBN-13 (978 or 979, weights 1 and 3) or ISBN-10 (weights 10 to 1, check digit 0 to 9 or X) with a valid check digit, from `/isbn/…` paths (Open Library, WorldCat) and `isbn=`, `ean=` or `vid=ISBN` values. Shop product codes are not read as ISBNs.
+
+### Reading status, star and Insights in the workbench
+
+- **Link details** open with a *Reading* row (Unread, Reading, Read, and a *Star* toggle), then *Context*, *Identifiers* (each with Copy) and *Cited from* (the source citation), above the existing facts.
+- **Rows** show a star, *Reading* or *Read*, and the identifier kind as badges.
+- **Selection:** *Mark as read*, *Mark as unread* and *Star* for the selected links, with Undo.
+- **View:** *Reading* (Any, Unread, Reading, Read) and *Starred only*, shown as chips like the other view options.
+- **Insights** (`src/core/insights.js`, pure; `insights(links, pages)`): a *Links* or *Insights* switch in the list heading shows, for the whole collection:
+  - totals: links, unique addresses, sites, pages captured from, links with an identifier, starred;
+  - top sites and file types, with counts;
+  - other sites or the same site;
+  - reading status;
+  - addresses saved more than once, and how many under different anchor text;
+  - captures over time, by week, for up to 26 weeks.
+
+  Choosing a site, file type, status or *Starred* shows those links in the list, as a view option.
+
+#### Reading status, star and Insights, as built
+
+**Link details.** Each occurrence (`.occurrence`) opens with `.occ-new`, full width above `.facts` at every size:
+- `.reading` (a group labeled "Reading status and star for <label>"):
+  - `.status-seg`, a radio group labeled "Reading status": radios named `status-<link id>` with values `''` (Unread), `reading` and `read`, marked `data-link-field="status:<value>"`;
+  - `.star-btn`, a toggle with `aria-pressed`, reading "Star" (`data-link-field="star"`). Until release candidate 2 it switched to "Starred".
+
+  A change sends `links.status` or `links.star` for that link at once. The notice says "Marked “the canopy study” as read." or "Starred “the canopy study”.", with Undo. Keyboard focus stays on the control when the list is drawn again.
+- Then, only when the link has them, labeled groups (`.occ-block`, label `.occ-label`):
+  - *Context*: `blockquote.context` with the anchor text in a `mark` (its first exact match, else ignoring case), and `.context-meta`: "The words around the link on “<source title or host>”, as captured. Saved in this browser."
+  - *Identifiers*: `ul.idents`, one `.ident` per kind in `IDENTIFIER_LABELS` order: the label, the value and *Copy* (labeled "Copy DOI 10.5555/…"; the notice says "Copied the DOI."). A DOI's value is a link to `https://doi.org/<doi>` (`target="_blank"`, `rel="noopener noreferrer"`), opened only when clicked; other values are text.
+  - *Cited from*: `.cited` with `.cited-title` ("Untitled page" without one), `.cited-line` (authors, the first three and "and N more authors" past four; the journal, else the publisher, with vol., no. and pp.; the date as printed; DOI, arXiv, PubMed and ISBN; joined by " · ") and `.cited-note` ("From the source page’s own citation tags, read when you captured it. Saved in this browser; nothing was looked up online."). It shows `pages[pageKey(link.sourceUrl)]`; for a saved tab that is the tab's own page.
+  - *Imported from*: `.imported-from`, the link's `imported` text.
+
+**Row badges**, in order after the anchor text: `×N`, `.badge.star` (a star icon and "Starred"), `.badge.status` ("Reading" or "Read"), EMAIL or PHONE, the file type, one `.badge.badge-id` per identifier kind (DOI, arXiv, PubMed, PMC, ISBN) and `.badge.imported`. The new badges are written in sentence case and shown in capitals. A grouped row shows the star when any occurrence is starred, a status only when every occurrence has it, its first occurrence's identifiers, and Imported when any occurrence was imported.
+
+**Selection.** `#reading-actions` (a group in the list toolbar, after the selection count) shows while links in the view are selected: `#mark-read`, `#mark-unread` and `#star-selected` (`#star-selected-label` reads "Unstar" when every selected link is starred, otherwise "Star").
+- They act on the selected links in the view, as Remove does, and send one action for the links whose value changes. When none changes, nothing is sent and the notice says "The selected link is already read." or "All 3 selected links are already read."
+- Notices: "Marked 3 links as read.", "Starred 3 links.", "Unstarred 3 links.", each with Undo. Undo sends one action per distinct earlier value, as Fill does, and says "Put back the earlier reading status of 2 links." or "Put back the earlier stars of 2 links."
+
+**View options.**
+- In `#filter-panel`: `#status-filter` (Reading: `any`, `unread`, `reading`, `read`) and `#starred-filter` (Starred only). `#type-group` is a hidden input holding the type group chosen in Insights.
+- They pass `status`, `starred` and `typeGroup` to `queryLinks`.
+- Chips: "Reading status: Read", "Starred only" and "Type: PDF". Reset view and *Clear search and filters* clear them.
+- An export's About filters list them: "Reading status: Read", "Starred links only", "Type: PDF".
+
+**Insights** (`src/ui/workbench/insights.js`):
+- **The switch.** `#view-switch` (a group labeled "Show links or insights", with `#show-links` and `#show-insights`, each with `aria-pressed`) stands in for the list heading. `#review-title` stays for screen readers ("Links" or "Insights"), and it shows only while the collection is empty; then the switch hides and the list shows.
+- **The view.** Insights adds `.is-insights` to `#review`, which hides everything but the heading and `#insights`, and `#result-count` reads "For the whole collection". "/" shows the list and focuses its search.
+- **The cards** (`.insight`; headings `#insight-top-sites`, `#insight-file-types`, `#insight-other-sites-or-the-same-site`, `#insight-reading`, `#insight-saved-more-than-once`, `#insight-captures-over-time-by-week`), all from `insights(links, {pages, limit: 12})`:
+  - totals (`.totals`): links, unique addresses, sites, pages captured from, with an identifier, and starred;
+  - top sites: the 8 with the most links, with a note when there are more;
+  - file types;
+  - other sites or the same site: a split bar, and a legend with counts and percentages of all links, adding "Email, phone or no source page" when there are any;
+  - reading: Unread, Reading and Read;
+  - saved more than once: the top 5 addresses, and "N addresses were saved more than once; M of them under different anchor text.";
+  - captures over time, by week: one column per week, drawn to scale against the busiest week (an empty week has no column), an axis with the first week, "Peak: N links, week of <date>" and the last week, a note that weeks run Monday to Sunday in UTC (and how many links fall outside them), and a list of every week for screen readers.
+
+  Bars are drawn to scale against the largest in their card.
+- **Choices** are buttons (`.bar-row`, and the starred total), described by `#insights-choose-help`. Rows with a count of 0 aren't buttons.
+  - A site sets Domain to its host. Domain matches hosts that contain it, as always, so choosing `example.org` also shows `journal.example.org`.
+  - A file type sets `#type-group`, a status sets Reading, and Starred sets Starred only.
+  - Choosing clears the search and the other filters (sorting and grouping stay), shows the list and focuses `#show-links`.
+- **Drawing.** The cards are drawn when Insights opens, and again only when the collection's `updatedAt` or link count changes while it's shown. Keyboard focus stays on the same choice across a redraw. A capture's *Show only these links* shows the list.
+
+**Stable element IDs:** `#view-switch`, `#show-links`, `#show-insights`, `#insights`, `#insights-choose-help`, `#reading-actions`, `#mark-read`, `#mark-unread`, `#star-selected`, `#star-selected-label`, `#status-filter`, `#starred-filter`, `#type-group`.
+
+**Tests:** `tests/reading-browser.mjs` (no grants) covers these from the keyboard, Undo, the view options against `queryLinks`, Insights against `insights()`, 320 px and contrast in light and dark. `tests/visual-browser.mjs` measures the new badges, details and Insights in every theme and scheme, at 320 px, with screenshots.
+
+### Exports
+
+**New columns** for tables, CSV, TSV, Excel, HTML and JSON: `context` (Context), `status` (Reading status: Unread, Reading or Read), `starred` (Starred: Yes or empty), `doi` (DOI), `arxiv` (arXiv ID), `pmid` (PubMed ID), `isbn` (ISBN) and `imported` (Imported from). Identifier columns are derived per link.
+
+**Citation formats** in the Format list, under *Citations and notes*. Each writes one entry per row of the view or selection (grouped rows use their first occurrence) and never looks anything up:
+
+| Format | Extension | Entry |
+| --- | --- | --- |
+| `bibtex` | `.bib` | `@article` when the link's citation has a journal, otherwise `@misc`, as Zotero writes web pages: `title`, `author`, `year`, `howpublished` (only for an arXiv preprint: `arXiv preprint arXiv:<id>`), `journal`, `volume`, `number`, `pages`, `doi`, `eprint` with `archivePrefix = {arXiv}` (as arXiv's own export does), `isbn`, `url`, `urldate`, `note` (the link's note) and `keywords` (its tags). Otherwise no `howpublished`, so the address isn't printed twice. Keys are the first author's family name or the title's first word, plus the year, made unique with `a`, `b`… Escaping follows Zotero: `# $ % & _` get a backslash; `\ ~ ^ { }` and `< > |` become macros or escaped braces; `url` and `doi` stay raw. |
+| `ris` | `.ris` | `TY  - JOUR` when there is a journal, `UNPB` for an arXiv preprint, otherwise `ELEC`; `TI`, `AU` (one per author), `PY`, `DA`, `T2`, `PB` and `AN` (a preprint's `arXiv` and `arXiv:<id>`), `VL`, `IS`, `SP`, `EP`, `SN` (the ISBN), `DO`, `UR`, `Y2` (the capture date, as `YYYY/MM/DD/`), `N1` (the note), `KW` (one per tag) and `ER  - `. Each line is a two-letter tag, two spaces, a hyphen and a space; CRLF line endings. |
+| `csl` | `.json` | An array of CSL-JSON items with `id` and `type` (`article-journal`, `article` for an arXiv preprint, or `webpage`), `title`, `author` (split into family and given names when printed as "Family, Given", otherwise `literal`), `issued`, `container-title`, `publisher` and `number` (a preprint's `arXiv` and `arXiv:<id>`), `volume`, `issue`, `page`, `DOI`, `PMID`, `PMCID`, `ISBN`, `URL`, `accessed` (`date-parts`), `note` and `keyword`. `container-title` is the journal, or for a web page the source site's name; a preprint has none. |
+| `annotated` | `.md` | An annotated bibliography: the collection's name, then per link a citation line (authors, year, title, journal, DOI or address), its note, its context as a quote, and its tags. |
+| `obsidian` | `.md` | An Obsidian note: YAML front matter (`title`, `created`, `tags`, `source: Link Meteor`), then one list item per link, `[anchor text](url)`, with its note, custom columns as `name:: value` fields, and its context as an indented quote. |
+
+The title is the title of the citation the link uses when there is one, otherwise its anchor text, accessible label or address, in that order. Authors, dates, journals and pages come only from that citation: the link's own page's, or since release candidate 2 one borrowed from a saved page about the same work. The Export panel says how many entries have a DOI or arXiv ID and how many have authors and a date, and shows the first entry.
+
+#### Exports, as built
+
+**Columns** (`src/core/export.js`):
+- `COLUMNS` gains, after Tags: `context` (Context), `status` (Reading status), `starred` (Starred), `doi` (DOI), `arxiv` (arXiv ID), `pmid` (PubMed ID), `isbn` (ISBN) and `imported` (Imported from). *Add a column…* lists them in that order.
+- Cells: `status` is `Unread`, `Reading` or `Read`; `starred` is `Yes` or empty; each identifier column is `identifiersOf(row, pages)`, found once per row; `context` and `imported` as stored. CSV and TSV put an apostrophe before formula-looking text, as for every column; workbook cells stay text and only the URL columns link.
+- `makeExport(rows, {format, columns, about, fields, pages})`: `pages` (default `{}`) is the collection's page citations; anything but an object is refused. Downloads and Copy table pass the collection's `pages`.
+- JSON rows keep `context`, `status`, `starred` and `imported` as stored. Identifiers are derived, so JSON doesn't add them.
+
+**Citation formats** (`src/core/cite.js`, pure; it imports only `identifiers.js`):
+- `CITE_FORMATS` is `['bibtex', 'ris', 'csl', 'annotated', 'obsidian']`. Extensions: `bib`, `ris`, `json`, `md`, `md`. Types: `application/x-bibtex`, `application/x-research-info-systems`, `application/vnd.citationstyles.csl+json` and `text/markdown`, each with `;charset=utf-8`.
+- `citations(rows, {format, pages, fields, collection, date})` returns the file. `citeFirst(rows, options)` returns the first entry exactly as the file writes it (for CSL-JSON, the first item on its own). `citeFacts(rows, pages)` returns `{entries, identified, unauthored, authorsAndDate, pageTitles, addressTitles, notes, contexts}`; `unauthored` (release candidate 3) counts entries with a DOI or arXiv ID and no authors. `dateParts(text)` returns `[year, month?, day?]`.
+- With a citation format, `makeExport` ignores `columns` and takes the collection's name and the export time from `about` (checked as usual). Without `about`, there is no name and no export time.
+- **Every entry:**
+  - The title is the `title` of the citation the link uses, else its anchor text, accessible label or address, with spaces collapsed.
+  - Authors, date, journal, volume, issue and pages come only from the citation the link uses: its own, `pages[url without #fragment]`, or (release candidate 2) one borrowed with `citationFor`. The source page's citation is never used for the link just because the link was captured there.
+  - (Release candidate 2) An arXiv entry with no date takes the year and month of its ID (`arxivDate`), and one without a journal is an arXiv preprint in every format.
+  - Dates as printed: year-first numbers (`2025-03-14`, `2025/03`, also inside other text), month names (`14 March 2025`, `March 14, 2025`, `2019 Aug 23`) and a lone year. Day-first or month-first numbers (`03/04/2025`) give only the year. The access date is the local calendar date of `capturedAt`.
+  - Names are split into family and given names only when printed with exactly one comma ("Okafor, Amara").
+  - Keys (BibTeX keys and CSL `id`s): the first author's family name (a name printed without a comma gives its last word), else the title's first word with a letter, skipping *a*, *an* and *the* (for a title that is the address, the site's first label); lowercase ASCII letters and digits, accents folded; then the year; `link` when nothing is left. Repeats get `a`, `b`… `z`, `aa`… in row order.
+- **BibTeX:**
+  - Fields in this order: `title, author, year, howpublished, journal, volume, number, pages, doi, eprint, archivePrefix, isbn, url, urldate, note, keywords`. `@article` when the link's own citation has a journal, otherwise `@misc`.
+  - Layout: two spaces, the field name padded to 12, ` = {value}`, one field per line; a blank line between entries; a final newline; an empty file for no rows. Every value is on one line.
+  - Escaping as Zotero writes it: `# $ % & _` get a backslash; `\ ~ ^ < > |` become `{\textbackslash}`, `{\textasciitilde}`, `{\textasciicircum}`, `{\textless}`, `{\textgreater}` and `{\textbar}`; `{` and `}` become `\{\vphantom{\}}` and `\vphantom{\{}\}`, so braces stay balanced.
+  - `url` and `doi` stay raw, except that `{`, `}`, `\` and spaces are percent-encoded, so a brace in an address can't unbalance the entry.
+  - `author`: "Family, Given" as printed (a part containing the word "and" is braced); any other name is braced whole, `{Jun Watanabe}`, so readers keep it as one name. `pages` uses `--`. `eprint` is the arXiv ID with its version, if the address has one. `note` is the link's note; `keywords` its tags, joined with ", ".
+  - Titles (release candidate 2): a word with a capital letter after its first character (an acronym, `3D`, `COVID-19`, `iPhone`) is braced, `{DNA}`, so classic styles keep it as written. Other capitals stay free.
+  - Not written: `month`, `publisher`, and PubMed and PMC IDs (BibTeX has no standard field for them).
+- **RIS:**
+  - Tags in this order: `TY, TI, AU…, PY, DA, T2, PB, AN, VL, IS, SP, EP, SN, DO, UR, Y2, N1, KW…, ER`. `PY` is the year. `DA` is `YYYY/MM/DD/`, or `YYYY/MM//`, when the month is known. `Y2` is the access date as `YYYY/MM/DD/`. `T2` is the journal only. `EP` is written only with a different first page.
+  - Values are on one line and empty ones are left out. `ER  - ` ends every record, records are separated by a blank line, every line ends with CRLF, and no rows give an empty file.
+  - Not written: the PubMed and PMC IDs, which RIS has no standard tag for. An arXiv ID is written only for a preprint, as `AN  - arXiv:<id>`.
+- **CSL-JSON:**
+  - The array, indented by two spaces, with each date's parts on one line (`"date-parts": [[2025, 3, 14]]`), and a final newline; `[]` for no rows.
+  - Keys in this order: `id, type, title, author, issued, container-title, publisher, number, volume, issue, page, DOI, PMID, PMCID, ISBN, URL, accessed, note, keyword`. `issued` is `date-parts` when a year is found, otherwise `{literal}`. A web page's `container-title` is its site, the link's own host without `www.`, and none for `doi.org`. `page` uses a hyphen. `note` keeps its line breaks. `keyword` is the tags joined with ", ".
+- **Annotated bibliography:**
+  - `# <collection name>` (or `# Links`), then "An annotated bibliography of 16 links, exported from Link Meteor on 2026-09-29.", then a numbered list.
+  - Each item starts with its citation: `Authors; joined (2025). Title. *Journal*, 12(3), 45–52. <https://doi.org/…>`, or without authors `Title. (2025).`; a preprint has `arXiv preprint arXiv:<id>.` in place of the journal; the link is the DOI's `https://doi.org/` address when there is a DOI, otherwise the link's address. A title that is the address is written once, as the link.
+  - Then, indented under the number, each line of the note as its own paragraph, the context as a `>` quote, and `Tags: a, b`.
+- **Obsidian note:**
+  - Front matter: `title` (quoted), `created` (the export time, local, `YYYY-MM-DDTHH:mm`), `tags` and `source: Link Meteor`. `tags` lists every link's tags as Obsidian tags, quoted: spaces become hyphens, characters other than letters, digits, `_`, `-` and `/` are dropped, tags of digits only are left out, and the first spelling of each is kept; `tags: []` when there are none.
+  - One list item per link: `- [anchor text](address)` (the accessible label, then the citation title, then the address when there is no anchor text), then its tags as `#tag`. Indented two spaces under it: the note's lines, `Preprint:: arXiv:<id>` for an arXiv preprint (release candidate 2), each filled custom column as `Name:: value` (the value raw and on one line; `::` in a name becomes `:`), and the context as a `>` quote. Link addresses percent-encode `< > ( ) [ ] \` and spaces.
+- **Markdown escaping**, in both Markdown formats: page text, notes and tags get a backslash before `` \ ` * _ [ ] < > # | ~ $ ``, `==` and `%%` are broken up, and a line never starts with a bare `-`, `+`, `=` or `1.`. So text reads as written and never becomes formatting, a link, an Obsidian tag, a highlight, a comment or math.
+
+**The Export panel:**
+- `#format` ends with `<optgroup label="Citations and notes">`: `bibtex` "BibTeX (.bib)", `ris` "RIS (.ris)", `csl` "CSL-JSON (.json)", `annotated` "Annotated bibliography (.md)" and `obsidian` "Obsidian note (.md)".
+- Choosing one hides `#columns-fieldset` and shows `#cite-block` (hidden while the view has no links): `#cite-facts` (list items, with each number in `<b>`), `#cite-first-label` ("First entry"; "First record" for RIS; "First list item" for the Obsidian note) and `#cite-first`, a `pre` with `role="region"` named by the label and `tabindex="0"`, so it scrolls from the keyboard; it is at most 190 px high.
+- The facts, for BibTeX, RIS, CSL-JSON and the annotated bibliography: "16 entries, one per link" ("one per unique address" or "one per unique address and anchor text" when grouped; "selected" is added with a selection), "5 with a DOI or arXiv ID", "2 with authors and a date, read from the pages themselves", and how titles are made: "14 use the anchor text as the title" (adding ", or the address when there is none"), "Titles are the anchor text" or "Every title comes from the page itself". For the Obsidian note: "16 list items, one per link", "3 with a note", "4 with the words around the link on its page" and "2 custom columns as name:: value fields, where filled in".
+- The download button reads "Download BibTeX file", "Download RIS file", "Download CSL-JSON file", "Download annotated bibliography" or "Download Obsidian note". The file name follows the usual pattern with the format's extension. The entries are the export's rows (`targetRows()`): the view or the selection, with grouped rows using their first occurrence.
+
+### Imports
+
+- **Sources:**
+  - a file, up to 20 MB: CSV, TSV, Excel (`.xlsx`, the first sheet or a chosen one), a text or Markdown list, an HTML page or browser bookmarks file, or a Link Meteor JSON export;
+  - pasted text: addresses, Markdown links or HTML;
+  - a Chrome bookmark folder, with or without its subfolders, through the optional `bookmarks` permission that 0.3.0 added.
+- **Parsing (`src/core/imports.js`, pure):**
+  - `parseDelimited(text, delimiter)`: RFC 4180 quoting, a leading byte-order mark ignored, CRLF or LF;
+  - `parseList(text)`: one link per Markdown link or bare `http(s)`, `mailto:` or `tel:` address;
+  - `readXlsx(bytes, {inflateRaw, parseXml})`: the workbook's sheets as rows of text, with shared and inline strings, numbers as written, and formulas as their cached values, never evaluated. The workbench supplies `DecompressionStream('deflate-raw')` (Chrome 103 and later) and `DOMParser`.
+  - HTML is read with `DOMParser` in the workbench: every `<a href>`, with its text and its folder path in a bookmarks file.
+- **Mapping:** `planImport(rows, mapping, {links, skipSaved})` returns `{links, newFields, skipped: [{row, reason}]}`.
+  - The mapping names the address column (required), and optionally anchor text, notes, tags, reading status, starred, and existing or new custom columns.
+  - *First row is column names* is detected and can be changed.
+  - Rows are skipped, each with its reason: no address; an address that isn't a web, email or phone address; a repeat of an earlier row (same address and anchor text); already saved, with *Skip links already saved there*. At most 20,000 links per import.
+- **Imported links:** `anchorText` as mapped, or empty; `url`; `originalHref` as written in the file; empty `sourceUrl`, `sourceTitle` and `frameUrl`; `capturedAt` the import time; one `batchId` per import; `imported`; and the mapped notes, tags, status, star and custom values. Rows and details show *Imported*.
+- **Messages (workbench only):**
+  - `import.commit {collectionId?, newCollection?, links, newFields}` adds the links as one batch, creating the collection and columns first, and returns `{state, batchId, collectionId}`;
+  - `import.undo {collectionId, batchId}` removes that batch and anything the import created, refused if the batch changed since;
+  - `bookmarks.folderLinks {folderId, recursive}` returns `{links: [{title, url, path}]}`.
+
+#### Imports, as built
+
+**Reading** (`src/core/imports.js`, pure; it imports only limits from `model.js`):
+- Limits: `MAX_IMPORT_BYTES` (20 MB per file), `MAX_IMPORT_LINKS` (20,000 links per import) and `MAX_XLSX_PART` (150 MB for one workbook part once unpacked).
+- `decodeText(bytes)`: UTF-16 with a byte-order mark, else UTF-8 (a UTF-8 mark is dropped), else Windows-1252.
+- `parseDelimited(text, delimiter = ',', {onProgress?})`: as the contract says. A quote inside an unquoted field is text, and text after a closing quote joins the field. An unterminated quote runs to the end. `onProgress(rows)` is called every 10,000 rows.
+- `sniffDelimiter(text)`: tab, comma or semicolon, whichever the first line with text holds most of outside quotes; comma when none. A `.csv` file is read with it, so semicolon files from European spreadsheets work.
+- `readText(text, {kind, delimiter, onProgress})`: `{kind: 'table', rows, delimiter}` or `{kind: 'list', entries}`. `kind: 'text'` (`.txt` files and pasted text) is a tab-separated table when its first line with text holds a tab (cells copied from a spreadsheet), otherwise a list.
+- `parseList(text)`: `[{anchorText, href, line}]`, in reading order.
+  - Markdown links keep their label, with backslash escapes removed. A `<…>` address and a title are allowed.
+  - Bare addresses lose trailing `. , ; : ! ? * ' "`, curly quotes, `»`, `›` and `…`, and closing brackets they don't open.
+  - A line with a single bare address uses the words around it, without list markers, check boxes and separators, as its anchor text.
+- `readXlsx(bytes, {inflateRaw, parseXml, sheet = 0})`: `{sheets: [name], sheet, rows, numbers}`. It reads only the chosen sheet, whose part it finds through the package and workbook relationships (any namespace prefix, relative or absolute targets, part names in any case). Details:
+  - Rows with no text are left out, and `numbers` gives each kept row's number in the sheet.
+  - Cells are placed by their references.
+  - Shared and inline strings are joined from their runs, without phonetic guides, and Excel's `_xHHHH_` escapes are decoded.
+  - Numbers are as stored, so a date is its serial number. Booleans are `TRUE` or `FALSE`, and errors are as shown (`#DIV/0!`).
+  - A formula is its cached value, and empty without one.
+
+  It refuses, each with a reason:
+  - an older `.xls` or a password-protected workbook (both start with the OLE signature);
+  - encrypted ZIP entries;
+  - the large-file ZIP format;
+  - compression other than stored or deflate;
+  - a part over `MAX_XLSX_PART`;
+  - a missing workbook, a workbook without sheets, a chart sheet;
+  - XML that doesn't parse.
+- `readExportJson(text)`: a Link Meteor JSON export (an array of rows, or `{about, rows}`) as `{names, rows}` with the export's own column names: Anchor text, URL, Notes, Tags, Reading status, Starred, then its custom columns by `about.fields`. A backup is refused with where to restore it. Any other JSON is refused.
+- `detectHeader(rows)`: the first row with text names the columns when it holds no address and either a known column name (the names below, or one of Link Meteor's export columns) or text above a column whose later rows hold addresses.
+- `columnNames(rows, header)`: the header's cells, with blanks as `Column C` and repeats as `Notes (2)`. Without a header, the column letters.
+- `dataRows(rows, header)`: the rows with text, after the header row.
+- `guessMapping(names, rows, {fields, skip})`: `{url, anchorText, notes, tags, status, starred, fields: [{id, column}], fresh: [{column, name, use}], overflow}`. How it chooses:
+  - By name, lowercased with punctuation as spaces, most likely first:
+    - address: url, address, link, links, href, uri, web address, website, web site, webpage, web page, link url, page url, homepage;
+    - anchor text: anchor text, title, name, link text, text, label, anchor, page title, link title;
+    - notes: notes, note, comments, comment, description, annotation, annotations, remarks, summary;
+    - tags: tags, tag, keywords, keyword, labels, categories, category, topics;
+    - reading status: reading status, status, read status, reading;
+    - starred: starred, star, stars, favorite, favourite, favorites, favourites.
+  - A named address column holding no addresses gives way to the column with the most. Without a name, the column with the most addresses is the address, and the first column of words among `Column X` columns is the anchor text.
+  - The destination's own columns match by name, ignoring case.
+  - Every column left over is proposed as a new column (`fresh`), up to the collection's room for custom columns (`overflow` counts the rest). A proposal isn't chosen (`use: false`) when the column is empty, is one of Link Meteor's export-only columns (Accessible label, Original href, Source page URL, Source page title, Frame URL, Captured at, Capture batch ID, Occurrence ID, Context, DOI, arXiv ID, PubMed ID, ISBN, Imported from), or is in `skip` (a bookmarks source's Folder column). New names are cut to 60 characters and kept distinct from the destination's.
+- `importAddress(value)`: `{url}` or `{reason}`.
+  - The cell is trimmed and loses wrapping `<…>`, and `www.` gets `https://`.
+  - The URL parser's `href` is stored, so `https://Example.org` becomes `https://example.org/`.
+  - Only `http:` and `https:` with a host, and `mailto:` and `tel:` with a path, are links.
+- `readingStatus(value)`: `read` for read, done, finished or completed; `reading` for reading, in progress, started or currently reading; otherwise unread. `starredValue(value)`: yes, y, true, 1, x, starred, star, ✓, ✔, ★ or ⭐.
+- `planImport(rows, mapping, options)` (see the contract) returns `{links, newFields, skipped, counts, cut, preview, previewSkipped}`:
+  - Rows with no text are ignored, not skipped. The header is the first row with text.
+  - The checks run in this order: no address (`no-address`), not a web, email or phone address (`not-link`), a repeat of an earlier row with the same address and anchor text (`repeat`, with `of`, the earlier row's number), already saved (`saved`, with `skipSaved`), then the limit.
+  - Rows after the 20,000th link are one entry, `{row, reason: 'limit', rows}`.
+  - `counts` has `rows`, `links` and a count per reason. `preview` and `previewSkipped` describe the first `preview` rows (default 100) with their mapped values.
+  - Links:
+    - Anchor text has its spaces collapsed, and notes are trimmed.
+    - Tags are split at commas and semicolons, with repeats removed.
+    - `originalHref` is the address cell exactly as written, or `options.originals[row]`, the `href` attribute as written for HTML.
+    - A custom value over 2,000 characters is cut, ending in `…`, and counted in `cut`.
+    - Existing columns are keyed by id, and new ones by `new-1`, `new-2`… in `newFields: [{key, name}]`.
+  - `imported` is `<source>, <unit> <number>` (`labs-shortlist.csv, row 3`, `notes.md, line 4`, `Pasted links, link 2`), or `<source> › <folder path>` for bookmarks, cut to 300 characters. A workbook with several sheets adds the sheet: `labs.xlsx › Sources, row 3`.
+
+**The background** (`src/background/imports.js`, and `src/background/bookmarks.js`):
+- `import.commit {collectionId? | newCollection?, links, newFields?, skipSaved?}` => `{state, batchId, collectionId, count, skipped, fields}`.
+  - Exactly one destination. A new collection's name has its spaces collapsed and is cut to 120 characters. An existing destination becomes the active collection, as a new one does.
+  - `newFields` keys must look like column ids, and must be distinct. Each is added with `fields.add`, so the model's name rules and the 20-column limit apply.
+  - Every link is built again from what an import may set: anchor text, address, address as written, notes, tags, `imported` (required, at most 300 characters), status, star and custom values for the destination's columns or the new keys. It gets a new id, one new `batchId` and the import time as `capturedAt`. Empty source fields and the accessible label are empty, whatever the message held. The model then checks each link as for any append.
+  - With `skipSaved`, addresses the destination holds are dropped here too (`skipped`). Nothing left is refused ("Every link is already saved there").
+  - One state write, so a refusal or a failed write changes nothing. The Undo record is kept at session key `linkMeteorImports` (the latest 10): `{batchId, collectionId, createdCollection, fields, previousActive, count, digest, createdAt}`, where `digest` is a SHA-256 of the batch's links with sorted keys.
+- `import.undo {collectionId, batchId}` => `{state, count, collectionRemoved, fieldsRemoved}`.
+  - It removes the import's collection when the import created it. Otherwise it removes the batch (the list's own removal Undo is kept) and the columns the import created.
+  - If the import's collection is still the active one, the collection that was active before the import becomes active again.
+  - It is refused when:
+    - the record is gone (the browser restarted, or 10 newer imports);
+    - the collection no longer exists;
+    - the batch's links differ from what was written: count, notes, tags, status, star or any other field;
+    - a created collection holds other links, notes or tags;
+    - another link has a value in a created column.
+- `bookmarks.folderLinks {folderId, recursive = true}` => `{folder: {id, title}, links: [{title, url, path}], more}`.
+  - Needs bookmark access. Bookmarks of every kind are listed, up to 50,000; `more` says some were left out.
+  - `path` joins the folder names from the chosen folder down: `Research › Labs`.
+
+**The workbench** (`src/ui/workbench/imports.js`, `import-worker.js`):
+- *Import links* in the rail, before Backup and restore: *Choose a file…*, *Paste links* and *From a bookmark folder…*. The import view takes the place of Capture and the list in the main column (`.main.is-importing`); at compact widths choosing a source shows the main view.
+- **Files** are read by extension:
+  - `.csv` is delimited with the delimiter sniffed; `.tsv` and `.tab` are tab-separated;
+  - `.xlsx` and `.xlsm` are workbooks;
+  - `.txt` and `.text` are text, and `.md` and `.markdown` are lists;
+  - `.html` and `.htm` are HTML; `.json` is an export.
+
+  Without a known extension, the content decides: a ZIP is a workbook, `<` starts HTML, `{` or `[` starts JSON, anything else is text. `.xls`, `.xlsb`, `.ods` and `.numbers` are refused with how to save them. A file over 20 MB is refused before it is read. Any refusal closes the view and says "Nothing was imported."
+- **Delimited text and lists** are decoded and parsed in a module worker, which reports "Reading labs.csv: 20,000 rows so far…". The page parses by itself only if the worker can't start.
+- **HTML**, a page or a bookmarks file, is read with `DOMParser`. Each `<a href>` gives its text, else its `aria-label`, `title` or image `alt`.
+  - A relative address is resolved against the page's `<base href>`, or the address in a saved page's `<!-- saved from url=… -->` comment. Otherwise it stays as written, and the preview skips it.
+  - In a Netscape bookmarks file (Chrome, Firefox, Safari and Edge exports), each link also gets its folder path from the `<H3>` headings, and its `TAGS` and `<DD>` description. These fill the *Folder*, *Tags* and *Notes* columns when any link has them. Folder isn't chosen as a new column; it is in `imported`.
+- **Pasted text**:
+  - HTML copied from a web page is used when the clipboard held it and the text is unchanged since the paste, so links keep their anchor text.
+  - Otherwise, text holding `<a href=` is HTML, and anything else is `readText` with `kind: 'text'`.
+- **A bookmark folder:** the click asks `chrome.permissions.request({permissions: ['bookmarks']})` before anything is awaited. A decline closes the view and says so. Folders are listed with `bookmarks.folders` and searched as in *Save as bookmarks*. *Include subfolders* is on by default, and *Preview links* reads `bookmarks.folderLinks`. The source is `Bookmarks`, so `imported` is `Bookmarks › Research › Labs`.
+- **The mapping:**
+  - *First row is column names*, detected, for tables only.
+  - One select per part: Address (URL) (required; columns only), Anchor text, Notes, Tags, Reading status and Starred (each with "(none)"). Then the destination's own columns, then a new column per proposal, "Deadline (new column)", with "(skip this column)".
+  - Without a header, each option shows the column's first value: "Column B: https://…".
+  - Changing the header detection maps again. Changing the destination keeps the link's own parts and maps the custom columns again.
+- **The preview:**
+  - A table of the first 100 rows (Row, Line or Link; anchor text; address; then each mapped part and column). A skipped row is struck through and names its reason in words ("Repeats row 2"), in a column headed "Skipped because" for screen readers.
+  - *Show only skipped rows*, shown when rows are skipped, lists the first 100 of those.
+  - A note: "All 7 rows." or "Showing the first 100 of 60,000 rows."
+- **The destination** is *A new collection “labs-shortlist”* by default. It is named after the file without its extension, the folder's title or "Pasted links", with " (2)" when a collection has that name already. The existing collections follow. *Skip links already saved there* is on, and disabled for a new collection.
+- **The summary:**
+  - "Adds 42 links, marked Imported, and 1 new custom column."
+  - "Skips 4 rows: 2 have no address, 1 repeats an earlier row, 1 isn’t a web, email or phone address. You can undo the import."
+  - Lists count links rather than rows.
+  - Cut values are counted too. With nothing to add: "Nothing to add." and what to change.
+  - The button says "Import 42 links", and is disabled with nothing to add.
+- **After Import**, the view closes and the destination shows with the new rows marked as arrivals. The notice says "Imported 42 links into “labs-shortlist” and added 1 custom column." with Undo. Undo says "Import undone: removed 42 links, the collection “labs-shortlist” and 1 custom column.", or shows the refusal.
+- **Cancel and Escape** close the view with "Import canceled. Nothing was added." Focus returns to the source's control, or to the search field at compact widths. The preview is planned again whenever the saved state changes while it is open.
+- **Stable element IDs:**
+  - the rail: `#import-panel`, `#import-panel-title`, `#import-panel-help`, `#import-file`, `#import-paste`, `#import-bookmarks`;
+  - the view: `#import`, `#import-title`, `#import-source`, `#import-progress`, `#import-commit`, `#import-commit-label`, `#import-cancel`;
+  - pasting: `#import-paste-step`, `#import-text`, `#import-read-text`;
+  - a bookmark folder: `#import-folder-step`, `#import-folder-search`, `#import-folder`, `#import-folder-status`, `#import-subfolders`, `#import-read-folder`;
+  - the plan: `#import-plan`, `#import-sheet-row`, `#import-sheet`, `#import-header-row`, `#import-header`, `#import-map` (with `#import-map-url`, `#import-map-anchorText`, `#import-map-notes`, `#import-map-tags`, `#import-map-status`, `#import-map-starred`, `#import-map-field-N` and `#import-map-new-N`), `#import-map-help`, `#import-table`, `#import-table-note`, `#import-only-skipped`, `#import-destination`, `#import-skip-saved`, `#import-summary`, `#import-summary-main`, `#import-summary-skips`.
+- **Not in this release:** Excel dates show as their serial numbers, and a bare DOI or `example.org` without `www.` isn't read as an address.
+
+### Theme fix
+
+Ember light's `danger` becomes `oklch(0.42 0.17 355)`, with `danger-wash` `oklch(0.967 0.018 355)` and `danger-line` `oklch(0.86 0.06 355)`, so the Remove buttons no longer look like Ember's orange links. `tests/themes.test.mjs` gains a check that `danger` and `accent-text` stay distinguishable in every theme and color-vision simulation. One pair is allowed, with its reason: Meteor light under the deuteranopia simulation. Meteor stays the 0.3.0 look value for value, and its Remove buttons carry a trash icon and the word Remove.
+
+### Permissions and privacy
+
+**0.5.0 adds no permission.**
+- Imports from a bookmark folder use the optional `bookmarks` permission that 0.3.0 added, asked for in the click, as today.
+- *Save tabs as links* reads a tab's citation tags only with site access Link Meteor already has; it never asks for more.
+- Files to import are read in the browser and never uploaded.
+- Context snippets, page citations, reading status and stars are stored with the collections in this browser. They go into backups and exports only when you make them.
+
+`docs/PRIVACY.md`, `site/privacy.html` and `CHROMEWEBSTORE.md` say so in the foundation. The UI says "Saved in this browser" beside the new data, as for notes.
+
+### Automatic backups and settings sync: not in 0.5.0
+
+The plan recommends building these later. Here is what the browser allows, so the design can be decided with the facts.
+
+**Automatic backups to a folder you choose** (File System Access; no manifest permission):
+- A folder can be chosen only in a tab, with a click; the full view qualifies. Choosing one in the side panel is unreliable before Chrome 143.
+- The choice can be kept, but writing to it later needs the folder access to still be live:
+  - access lasts while one of Link Meteor's pages stays open, and for up to 16 hours after the last one closes;
+  - after a browser restart, access needs a click again, unless Chrome's "Allow on every visit" option was chosen (Chrome 122 and later). Whether that option is offered to extensions is untested.
+- The background worker can't ask for access, so it can't back up on a schedule by itself.
+- A workable design writes a backup at most once a day while the full view or the side panel is open. When access has lapsed, it shows "Backups paused: allow the folder again" with a one-click button, and it keeps the last N files by removing only files it named itself.
+
+**Automatic backups to the Downloads folder** instead need the optional `downloads` permission that 0.4.0 added:
+- Each backup shows Chrome's download bubble. Hiding it needs `downloads.ui`, which hides the download bubble for every download in the profile, so it isn't proposed.
+- With Chrome's "Ask where to save each file" on, every backup opens a Save dialog.
+
+**Settings sync through Chrome Sync** (`chrome.storage.sync`, part of the existing `storage` permission):
+- Sync works only between copies of Link Meteor with the same extension ID, for people signed in to Chrome with the Extensions sync option on.
+- A Developer-mode copy's ID comes from its folder's path. So **for Developer-mode installs, settings sync only between computers that load Link Meteor from exactly the same folder path**.
+- A fixed `key` in the manifest would give every copy the same ID. But a test copy loaded beside the everyday one would then replace it, and it's unconfirmed whether the Chrome Web Store keeps such a key. Store installs share one ID, so sync works for them.
+- Limits: 100 KB in all, 8 KB per item, 120 writes a minute.
+- When a second computer first syncs, Chrome replaces that computer's synced settings with the account's.
+- Settings would travel through Google's Chrome Sync. Collections never would.
+
+**Frames from other sites and closed components** (recommended for 0.6.0):
+- `chrome.dom.openOrClosedShadowRoot` works in the page script with no permission.
+- `scripting.executeScript` with `allFrames` reaches every frame Link Meteor has access to, and silently skips the rest.
+- Listing every frame, to say which were skipped, would need `webNavigation`, which Chrome describes as "Read your browsing history". The plan avoids it: frames that didn't answer are reported as a count.
+
+## Added in 0.5.0 release candidate 2
+
+After the owner's hands-on check of release candidate 1. It adds no permission and no network access.
+
+### The citation a link uses (`src/core/identifiers.js`)
+
+- `citationFor(link, pages?, ids?)` returns `{key, citation, reason}` or `null`:
+  - `reason: 'own'`: the link's own page, `pages[url without #fragment]`;
+  - otherwise a saved page about the same work, in this order: `'pdf'` (its `pdfUrl`, from `citation_pdf_url`, is the link's address without its fragment), `'doi'` (the same DOI, ignoring case) and `'arxiv'` (the same arXiv ID, ignoring the version).
+- A page's DOI and arXiv ID come from its tags, or from its own address (a saved `arxiv.org/abs/…` tab without tags still matches). When several pages match, the newest `readAt` wins. The index is built once per `pages` object.
+- `identifiersOf`, every citation format, `citeFacts`, the export columns, Insights and a link's details all use it.
+- **Backups** keep a page citation when a link uses it this way, besides the link's own address and source page.
+- **In a link's details**, a *Citation* block shows the citation the link uses when that isn't its source page's. Its note says where it came from, for example "From the citation tags of “SplatFields: …”, which names this link as its PDF. Citation exports use it."
+- `arxivDate(id)` returns `[year, month]` from an arXiv ID's first four digits, the year and month of first submission: `2409.11211` gives `[2024, 9]`, `hep-th/9901001` gives `[1999, 1]` (old-style years 91 to 99 are 1990s). Otherwise `[]`.
+
+### Citation formats
+
+- An arXiv preprint is an entry with an arXiv ID and no journal:
+  - BibTeX: `@misc` with `howpublished = {arXiv preprint arXiv:<id>}`, besides `eprint` and `archivePrefix`;
+  - RIS: `TY  - UNPB`, `PB  - arXiv` and `AN  - arXiv:<id>`;
+  - CSL-JSON: `type: "article"`, `publisher: "arXiv"`, `number: "arXiv:<id>"`, and no `container-title`;
+  - the annotated bibliography: `arXiv preprint arXiv:<id>.` after the title;
+  - the Obsidian note: a `Preprint:: arXiv:<id>` field.
+- **BibTeX titles** brace each word with a capital after its first character. A word is letters and digits, joined by `-`, `'` or `’`.
+- **RIS** writes the ISBN as `SN`.
+
+### Moving and copying links
+
+**The model** (`src/core/model.js`, pure):
+- `transferLinks(state, {fromCollectionId, ids, mode: 'move' | 'copy', toCollectionId? | newCollection?}, {newId?})` returns `{state, record, moved, skipped, fields, name}`.
+  - It moves or copies the chosen links, in their order, to the end of an existing collection or a new one (named with collapsed spaces, at most `MAX_COLLECTION_NAME`, 120).
+  - A new collection is not opened: the open collection stays open.
+  - Everything travels: notes, tags, context, status, star, capture details, `imported`, and custom column values. A value goes to the destination's column of the same name (ignoring case), or to a column created there. When the destination has no room, it refuses and nothing changes.
+  - The page citations the links use (own address, source page, borrowed) are copied where the destination has none for that page.
+  - A link whose address the destination already holds is skipped and stays where it is. When every chosen link is already there, it refuses.
+  - A move keeps each link's id; a copy gives new ids (`newId`).
+  - An earlier removal's Undo snapshot is kept.
+  - `record` is `{mode, fromCollectionId, toCollectionId, createdCollection, fields, ids, positions, fieldMap, pages}`: the created column ids, the ids the destination received, a move's original positions, the column mapping, and the page citations it added.
+- `revertTransfer(state, record)` removes the received links and what the transfer created, and for a move puts each link back at its old position with its values in the source's columns.
+  - It removes: the new collection, or the created columns and the added page citations that no remaining link uses.
+  - It refuses when a received link is gone, the new collection has other content, or other links have values in the created columns.
+
+**Messages** (workbench only, `src/background/transfer.js`):
+- `links.transfer {fromCollectionId, ids, mode, toCollectionId? | newCollection?}` saves `transferLinks` in one write and returns `{state, transferId, mode, moved, skipped, fields, collectionId, name, createdCollection}`. A failed write changes nothing.
+- `links.transferUndo {transferId}` checks that the received links are exactly as the transfer wrote them (a SHA-256 fingerprint of their canonical JSON), then saves `revertTransfer`. It returns `{state, mode, count, collectionRemoved, fieldsRemoved}`, and refuses with what to do instead.
+- Session key `linkMeteorTransfers`: the last 10 transfers' records with `transferId`, `digest` and `createdAt`. It lives until the browser closes.
+
+**The workbench** (`src/ui/workbench/move.js`):
+- `#move-selected` "Move to…" and `#copy-selected` "Copy to…" show in the list toolbar while links in the view are selected.
+- In each link's details, `.occurrence-move` holds "Move to…", named "Move <label> to another collection".
+- `#move-panel` (a form) holds:
+  - `#move-title` ("Move 3 selected links to another collection", or "Move “label” to another collection");
+  - `#move-to`: every other collection with its link count, then "New collection…";
+  - `#move-new-row` / `#move-new`, shown for a new collection;
+  - `#move-help`, which says beforehand how many links go, how many are already there and stay, and which columns it adds, or what is missing;
+  - `#move-apply` ("Move 2 links", disabled while something is missing) and `#move-cancel`.
+- Escape or Cancel closes the panel and returns focus to the button that opened it. The panel closes when the links it names are gone.
+- A move clears the moved links from the selection. The notice says, for example, "Moved 2 links to “Thesis”. 1 link was already there and stayed here. Added 1 column there." Its Undo sends `links.transferUndo`.
+
+### Closing the side panel from the toolbar
+
+- On each toolbar click, the background opens the side panel in that window, as before, then sends `{type: 'panel.toggle', windowId}` to Link Meteor's pages.
+- A side panel already open in that window closes: with `chrome.sidePanel.close({windowId})` where Chrome has it (Chrome 151 does), otherwise, or when that fails, with `window.close()`.
+- The full view in a tab ignores the message (`chrome.tabs.getCurrent()` finds its tab). A panel opened by this click isn't listening yet, so it stays open.
+
+### The last backup
+
+- `backup.made {}` records when the workbench handed a backup file to Chrome's download: local key `linkMeteorLastBackup`, `{at: ISO time}`. It records nothing about the file, and Chrome doesn't report whether the person kept it.
+- `backup.status` now returns `{undo, lastBackup}`; `lastBackup` is that time, or `null`.
+- In Backup and restore:
+  - `#backup-remove-note` says "Removing Link Meteor from Chrome deletes everything it saved. A backup file keeps it.";
+  - `#backup-last` says "Last backup: never" or "Last backup: <local date and time>", with the exact time as its title.
+- Chrome's own "Remove Link Meteor?" dialog can't be changed by an extension. `chrome.runtime.setUninstallURL` would open a website after removal, when the data is already gone, so it isn't used.
+
+### PDFs and files on the computer
+
+- `inject(tab)`, used for capturing a page or a region, refuses before injecting:
+  - for a tab whose address ends in `.pdf`: "Link Meteor can’t read the links inside a PDF yet. To save one link, right-click it and choose Link Meteor, then Add link.";
+  - for a `file:` page: "Link Meteor can’t capture from files on your computer. …", with the same advice.
+- For other web pages, it first reads `document.contentType` (a named function, `documentType`) and refuses a PDF the same way. Chrome's PDF viewer shows a PDF, and no extension can read that.
+- *Capture this page* and the capture report use the same words, in place of "Choose an ordinary HTTP or HTTPS webpage".
+- Reading the links inside PDFs is planned for 0.6.0.
+- The right-click menu is not gated this way: see release candidate 3 below.
+
+### The Star button
+
+The Star toggle in a link's details keeps the label "Star". `aria-pressed` and the pressed look say whether it's starred, so screen readers don't announce the state twice. The selection's Star or Unstar button is unchanged.
+
+## Added in 0.5.0 release candidate 3
+
+After the owner's hands-on check of release candidate 2. It adds no permission and no network access.
+
+### The right-click menu on PDFs and files
+
+Release candidate 2's capture gate also stopped *Add link* on PDFs, which had worked before. Now:
+- The menus load the page script with `injectScript(tab)`, which has no PDF or file gate. In a PDF's tab the script can show a notice, though it can read no links. `inject(tab)` keeps the gate for *Select a region*, *Capture this page* and the shortcut.
+- *Add link* and *Copy link text + URL*: when the page can't be asked at all (no script can load there), the link is kept with the address Chrome gave, as when the page can't find it.
+  - Add link then saves it and opens the full view at it, since the page can't show the notice.
+  - Copy link reports that the page couldn't copy.
+- A link saved from a local file has that file's address as its source page, where Chrome shows it to Link Meteor.
+
+### The full view and the side panel
+
+- The side panel's `#open-full` is a labeled button, "Full view" (`aria-label` "Open the full view in a tab"). It stays hidden in the full view itself.
+- In a panel narrower than 480 px, the header's buttons take their own row under the collection's name.
+- Clicking it opens the full view (`ui.open`), then closes the side panel it is in (`closeIfSidePanel()` in `src/ui/workbench/panel.js`).
+- *Open the full view* in the toolbar icon's menu opens it, then sends `{type: 'panel.close', windowId}`. The side panel in that window closes, as for `panel.toggle`.
+
+### Papers with no authors yet
+
+For BibTeX, RIS, CSL-JSON and the annotated bibliography, `#cite-facts` gains a line when `unauthored` is above zero: "2 with a DOI or arXiv ID but no authors yet. Capture from the paper’s own page (on arXiv, its abstract page) or save that page as a tab, and its authors and date fill in". Nothing is looked up online, so authors come only from a saved page about the paper.

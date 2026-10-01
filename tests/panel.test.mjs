@@ -1,4 +1,5 @@
-// A second toolbar click closes the side panel (0.5.0 RC2), with Chrome's APIs simulated in Node:
+// A second toolbar click closes the side panel, and so does opening the full view (0.5.0), with
+// Chrome's APIs simulated in Node:
 // the background opens the panel first (inside the click) and then announces the click with its
 // window; ui/workbench/panel.js closes only the side panel in that window, with Chrome's own close
 // when it has one and window.close() otherwise. tests/access-browser.mjs presses Chrome's real
@@ -27,8 +28,15 @@ test('a toolbar click opens the side panel in its window, inside the click, then
   assert.deepEqual(calls, [['open', 7], ['message', {type: 'panel.toggle', windowId: 7}]]);
 });
 
+test('Open the full view in the toolbar’s menu opens it, then tells that window’s side panel to close', async () => {
+  calls.length = 0;
+  await chrome.contextMenus.onClicked.listeners[0]({menuItemId: 'meteor-full-view'}, {id: 1, windowId: 7, url: 'https://a.test/'});
+  await new Promise((done) => setTimeout(done, 10));
+  assert.deepEqual(calls, [['tab', 'chrome-extension://meteor/ui/workbench.html'], ['message', {type: 'panel.close', windowId: 7}]]);
+});
+
 test('only the side panel in that window closes itself: Chrome’s own close, else window.close()', async () => {
-  const {closeOnToolbarClick} = await import('../src/ui/workbench/panel.js');
+  const {closeOnToolbarClick, closeIfSidePanel} = await import('../src/ui/workbench/panel.js');
   const settle = () => new Promise((done) => setTimeout(done, 10));
   const page = ({tab, close}) => {
     const listeners = [], closed = [];
@@ -60,7 +68,19 @@ test('only the side panel in that window closes itself: Chrome’s own close, el
   panel.send({type: 'panel.toggle', windowId: 7});
   await settle();
   assert.deepEqual(panel.closed, ['window.close'], 'an older Chrome without sidePanel.close');
+  // The toolbar menu's Open the full view closes it too, and so does its own Full view button.
+  panel = page({tab: undefined, close: 'works'});
+  await settle();
+  panel.send({type: 'panel.close', windowId: 9});
+  assert.deepEqual(panel.closed, []);
+  panel.send({type: 'panel.close', windowId: 7});
+  await settle();
+  assert.deepEqual(panel.closed, [['sidePanel.close', {windowId: 7}]]);
+  await closeIfSidePanel();
+  assert.equal(panel.closed.length, 2, 'the Full view button closes the panel it is in');
   panel = page({tab: {id: 3, windowId: 7}, close: 'works'});
   await settle();
   assert.equal(panel.listeners.length, 0, 'the full view in a tab doesn’t listen');
+  await closeIfSidePanel();
+  assert.deepEqual(panel.closed, [], 'and a tab never closes itself');
 });

@@ -84,8 +84,10 @@ async function tell(tab, notice, {inject}) {
 // only the link's address, so the page names the link under the last right-click, or the first link
 // with that address. When neither is found (inside another site's frame, say), only the address is
 // kept: text is never invented.
+// The same goes for a page that can't be asked at all, such as a PDF in Chrome's viewer.
 async function clickedLink(info, tab, inject) {
-  const {link, page} = await askPage(tab, {type: 'content.contextLink', url: info.linkUrl}, inject);
+  let link = null, page = null;
+  try { ({link, page} = await askPage(tab, {type: 'content.contextLink', url: info.linkUrl}, inject)); } catch { /* the address Chrome gave is kept */ }
   if (link) return {link, page, read: true};
   return {link: {anchorText: '', accessibleLabel: '', url: info.linkUrl, originalHref: '', frameUrl: info.frameUrl || tab.url || ''}, page, read: false};
 }
@@ -136,7 +138,11 @@ const handlers = {
     await chrome.storage.session.set({[OPEN_INTENT_KEY]: {view: 'links', batchId: '', what: 'tabs', scope: 'window', createdAt: new Date().toISOString()}}).catch(() => {});
     await chrome.tabs.create({url: WORKBENCH, windowId: tab.windowId});
   },
-  [MENU.fullView]: () => openWorkbench(),
+  // The full view replaces the side panel in that window (ui/workbench/panel.js closes it).
+  [MENU.fullView]: async (info, tab) => {
+    await openWorkbench();
+    if (tab?.windowId !== undefined) chrome.runtime.sendMessage({type: 'panel.close', windowId: tab.windowId}).catch(() => {});
+  },
 };
 
 // contextMenus.onClicked: runs this module's items and leaves other areas' items to them. `deps`

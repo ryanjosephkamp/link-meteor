@@ -54,13 +54,21 @@ async function inventory(callerTabId) {
   return {tabs,currentWindowId:current?.id,targetTabId:target?.id};
 }
 
+// The page script, wherever Chrome lets it load. The right-click menu uses this directly: Add link
+// and Copy link work on a PDF and on a file too, where the script can show a notice but read no links.
+async function injectScript(tab) {
+  if (tab.incognito) throw new Error('Incognito collection is not enabled in this release.');
+  await chrome.scripting.executeScript({target:{tabId:tab.id},files:['content/capture.js']});
+}
+
+// For capturing a page or a region: only where there are links the script can read.
 async function inject(tab) {
   if (tab.incognito) throw new Error('Incognito collection is not enabled in this release.');
   if (tab.url && (!ordinaryUrl(tab.url) || captureRefusal(tab.url) === PDF_REFUSAL)) throw new Error(captureRefusal(tab.url));
   // A PDF whose address doesn't say so: Chrome's viewer shows it, and no extension can read that.
   const [probe] = await chrome.scripting.executeScript({target:{tabId:tab.id},func:function documentType() { return document.contentType; }});
   if (probe?.result === 'application/pdf') throw new Error(PDF_REFUSAL);
-  await chrome.scripting.executeScript({target:{tabId:tab.id},files:['content/capture.js']});
+  await injectScript(tab);
 }
 
 async function arm(tabId, callerTabId) {
@@ -173,7 +181,7 @@ chrome.commands.onCommand.addListener((command, tab) => {
 // The right-click and toolbar menus (background/menus.js); Download linked file is background/downloads.js's.
 chrome.contextMenus.onClicked.addListener((info,tab) => info.menuItemId === DOWNLOAD_MENU_ID
   ? downloadFromMenu(info,tab).catch(error => reportActivationError(error))
-  : menuClicked(info,tab,{arm,captureTabs,inject,reportError:reportActivationError}));
+  : menuClicked(info,tab,{arm,captureTabs,inject:injectScript,reportError:reportActivationError}));
 async function reportActivationError(error) {
   await chrome.storage.session.set({linkMeteorActivationError:String(error.message || error)});
   await chrome.tabs.create({url:WORKBENCH});

@@ -404,7 +404,7 @@ test('0.5.0: the citations sentence, in every case', async () => {
   assert.equal(say({tabs: 1200, read: 1000, needAccess: 0}), 'Read citation details from 1,000 of 1,200 tabs; the others didn’t answer.');
 });
 
-test('0.5.0 RC2: on a PDF or a file on the computer, Select a region and Capture this page say what works instead', async () => {
+test('0.5.0 RC2 and RC3: on a PDF or a file on the computer, Select a region and Capture this page say what works instead, and Add link works', async () => {
   const {PDF_REFUSAL, FILE_REFUSAL} = await import('../src/background/urls.js');
   const extra = [
     {id: 7, windowId: 3, url: 'https://pdfs.test/view?id=9', title: 'Paper', contentType: 'application/pdf'},
@@ -425,6 +425,25 @@ test('0.5.0 RC2: on a PDF or a file on the computer, Select a region and Capture
       assert.deepEqual([calls.inject, calls.arm], [[], []], 'the page script is neither injected nor armed');
     }
     assert.match(PDF_REFUSAL, /right-click it and choose Link Meteor, then Add link/);
+    // 0.5.0 RC3: and Add link does work there. Where the page script can load (a PDF on the web), the
+    // link is saved with its address and the page says so; where it can't (here, the files), the
+    // link is still saved and the full view opens at it.
+    for (const [tab, scripted] of [[extra[0], true], [extra[3], true], [extra[1], false], [extra[2], false]]) {
+      reset();
+      const before = active().links.length, linkUrl = `https://cited.test/paper-${tab.id}`;
+      await click('meteor-add-link', tab, {linkUrl});
+      const saved = active().links.at(-1);
+      assert.equal(active().links.length, before + 1, tab.url);
+      assert.deepEqual([saved.anchorText, saved.url, saved.sourceUrl], ['', linkUrl, tab.url]);
+      assert.equal(session.linkMeteorActivationError, undefined, 'no refusal');
+      if (scripted) {
+        assert.deepEqual(calls.inject, [tab.id], 'the page script loads for the notice');
+        assert.equal(lastNotice(tab.id).text, 'Added 1 link to “Thesis sources”. Link Meteor couldn’t read its text on this page, so it was saved with its address only.');
+      } else {
+        assert.equal(calls.created.at(-1).url, 'chrome-extension://meteor/ui/workbench.html', 'the full view shows what was saved');
+        assert.equal(session.linkMeteorOpenIntent.batchId, saved.batchId);
+      }
+    }
   } finally {
     tabs.splice(tabs.length - extra.length);
     for (const tab of extra) pages.delete(tab.id);

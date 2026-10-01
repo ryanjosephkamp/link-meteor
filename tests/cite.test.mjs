@@ -144,8 +144,8 @@ test('citeFirst is the first entry as written; citeFacts counts what the entries
     assert.equal(citeFirst([], options(format)), '');
   }
   assert.ok(citeFirst(LINKS, options('bibtex')).startsWith('@misc{surface,\n  title        = {Surface temperature'));
-  assert.deepEqual(citeFacts(LINKS, PAGES), { entries: 13, identified: 3, authorsAndDate: 2, pageTitles: 3, addressTitles: 1, notes: 2, contexts: 2 });
-  assert.deepEqual(citeFacts([], PAGES), { entries: 0, identified: 0, authorsAndDate: 0, pageTitles: 0, addressTitles: 0, notes: 0, contexts: 0 });
+  assert.deepEqual(citeFacts(LINKS, PAGES), { entries: 13, identified: 3, unauthored: 2, authorsAndDate: 2, pageTitles: 3, addressTitles: 1, notes: 2, contexts: 2 });
+  assert.deepEqual(citeFacts([], PAGES), { entries: 0, identified: 0, unauthored: 0, authorsAndDate: 0, pageTitles: 0, addressTitles: 0, notes: 0, contexts: 0 });
 });
 
 test('grouped rows use their first occurrence; nothing but the rows, pages, name, columns and time matters', () => {
@@ -213,6 +213,8 @@ test('a link borrows the citation of a saved page about the same work', () => {
   assert.match(citations([paper('https://arxiv.org/abs/2409.11211v2')], { format: 'bibtex', pages: two }), /title {8}= \{Newer reading\}/);
   // The Export panel's counts follow the borrowed citation.
   assert.equal(citeFacts([paper('https://arxiv.org/pdf/2409.11211')], ABSTRACT_PAGE).authorsAndDate, 1);
+  // Without a saved page about it, an identified paper has no authors, and the count says so.
+  assert.deepEqual([citeFacts([paper('https://arxiv.org/pdf/2409.11211')], ABSTRACT_PAGE).unauthored, citeFacts([paper('https://arxiv.org/pdf/2409.11211')], {}).unauthored], [0, 1]);
 });
 
 test('arXiv preprints: a year and month from the ID when nothing else dates them, marked in every format', () => {

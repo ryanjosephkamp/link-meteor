@@ -301,13 +301,14 @@ export function citeFirst(rows, options) {
   return items ? cslJson(items[0]) : texts[0];
 }
 
-// What the entries hold, for the Export panel: how many have a DOI or arXiv ID, authors and a
-// date, a title from the page itself, only their address as a title, a note and context.
+// What the entries hold, for the Export panel: how many have a DOI or arXiv ID, how many of those
+// have no authors (no saved page describes them yet), authors and a date, a title from the page
+// itself, only their address as a title, a note and context.
 export function citeFacts(rows, pages = {}) {
-  const facts = { entries: rows.length, identified: 0, authorsAndDate: 0, pageTitles: 0, addressTitles: 0, notes: 0, contexts: 0 };
+  const facts = { entries: rows.length, identified: 0, unauthored: 0, authorsAndDate: 0, pageTitles: 0, addressTitles: 0, notes: 0, contexts: 0 };
   for (const row of rows) {
     const entry = entryOf(row, pages);
-    if (entry.ids.doi || entry.ids.arxiv) facts.identified++;
+    if (entry.ids.doi || entry.ids.arxiv) { facts.identified++; if (!entry.authors.length) facts.unauthored++; }
     if (entry.authors.length && entry.year) facts.authorsAndDate++;
     if (entry.fromPage) facts.pageTitles++;
     else if (entry.fromAddress) facts.addressTitles++;

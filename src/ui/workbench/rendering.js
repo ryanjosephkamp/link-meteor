@@ -1,6 +1,7 @@
 // Page frame: the render pass, compact views and page-level keys.
 import { $ } from './helpers.js';
 import { ui, action, request, currentCollection } from './state.js';
+import { closeIfSidePanel } from './panel.js';
 import { renderCollectionHeader } from './collections.js';
 import { renderBookmarkDefaults } from './bookmarks.js';
 import { renderUndo, renderLinks } from './review.js';
@@ -43,7 +44,8 @@ const escapeHandlers = [];
 export function onEscape(handler) { escapeHandlers.push(handler); }
 
 export function bindViews() {
-  $('open-full').addEventListener('click', () => action(async () => { await request({ type: 'ui.open' }); }));
+  // Shown only in the side panel, which closes once the full view is open in its tab.
+  $('open-full').addEventListener('click', () => action(async () => { await request({ type: 'ui.open' }); await closeIfSidePanel(); }));
   $('collection-switch').addEventListener('click', (event) => setView('collections', event.currentTarget));
   $('rail-done').addEventListener('click', () => setView('links'));
   $('dock-export').addEventListener('click', (event) => setView('export', event.currentTarget));
@@ -57,7 +59,7 @@ export function bindViews() {
   });
 }
 
-// The full view in its own tab has no need for the Open full view button.
+// The full view in its own tab has no need for the Full view button.
 export function hideOpenFullInTab() {
   chrome.tabs?.getCurrent?.().then((tab) => { if (tab) $('open-full').hidden = true; }).catch(() => {});
 }

@@ -773,7 +773,11 @@ try {
     citeFiles[format] = got;
   }
   await ui.locator('#format').selectOption('bibtex');
-  assert.deepEqual(await facts(), ['14 entries, one per link', '4 with a DOI or arXiv ID', '2 with authors and a date, read from the pages themselves', '11 use the anchor text as the title, or the address when there is none']);
+  const citeLines = await facts();
+  assert.deepEqual([citeLines[0], citeLines[1], citeLines[2], citeLines[4]], ['14 entries, one per link', '4 with a DOI or arXiv ID', '2 with authors and a date, read from the pages themselves', '11 use the anchor text as the title, or the address when there is none']);
+  // 0.5.0 RC3: papers no saved page describes have no authors; the panel says how to get them.
+  assert.equal(citeLines[3], '2 with a DOI or arXiv ID but no authors yet. Capture from the paper’s own page (on arXiv, its abstract page) or save that page as a tab, and its authors and date fill in');
+  assert.equal(citeLines.length, 5);
   await ui.locator('#format').selectOption('obsidian');
   assert.deepEqual(await facts(), ['14 list items, one per link', '2 with a note', '2 with the words around the link on its page', '2 custom columns as name:: value fields, where filled in']);
   // Valid for their readers: balanced braces in every BibTeX entry, ER and CRLF in RIS, a CSL-JSON array.

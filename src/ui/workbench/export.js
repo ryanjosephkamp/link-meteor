@@ -167,6 +167,8 @@ function renderCite(rows, format) {
     lines.push(item(facts.entries, `${facts.entries === 1 ? 'entry' : 'entries'}, ${per}`),
       item(facts.identified, 'with a DOI or arXiv ID'),
       item(facts.authorsAndDate, 'with authors and a date, read from the pages themselves'));
+    // A paper's authors come only from its own page: say how to get them, since nothing is looked up.
+    if (facts.unauthored) lines.push(item(facts.unauthored, `with a DOI or arXiv ID but no authors yet. Capture from the paper’s own page (on arXiv, its abstract page) or save that page as a tab, and its authors and date fill in`));
     const rest = facts.entries - facts.pageTitles;
     if (!facts.pageTitles) lines.push(item(null, facts.addressTitles ? 'Titles are the anchor text, or the address when a link has none' : 'Titles are the anchor text'));
     else if (rest) lines.push(item(rest, `${rest === 1 ? 'uses' : 'use'} the anchor text as the title${facts.addressTitles ? ', or the address when there is none' : ''}`));

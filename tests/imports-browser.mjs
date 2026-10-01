@@ -459,7 +459,7 @@ try {
     await rpc(ui, {type: 'state.mutate', action: {type: 'settings.update', patch: {theme, appearance: scheme}}});
     await until(() => ui.evaluate(([theme, scheme]) => document.documentElement.dataset.theme === theme && document.documentElement.dataset.scheme === scheme, [theme, scheme]), `${theme} ${scheme} applied`);
     // Even with reduced motion, colors change through a 0.01 ms transition: measure once it has ended.
-    await until(() => ui.evaluate(() => !document.getAnimations().length), `${theme} ${scheme} settled`);
+    await until(() => ui.evaluate(() => !document.getAnimations().some((animation) => animation.playState === 'running' || animation.playState === 'pending')), `${theme} ${scheme} settled`);
     const measured = await contrast();
     for (const entry of measured) { assert.ok(!entry.missing, `${theme} ${scheme} ${entry.name} missing`); assert.ok(entry.ratio >= 4.5, `${theme} ${scheme} ${entry.name} contrast ${entry.ratio}`); }
     assert.equal(await overflow(), false, `${theme} ${scheme}: overflow at 320`);

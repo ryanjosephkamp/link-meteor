@@ -12,9 +12,12 @@ const manifest = JSON.parse(await readFile(resolve(root, 'src/manifest.json'), '
 const zipName = `link-meteor-${manifest.version}.zip`;
 const zip = await readFile(resolve(root, 'artifacts', zipName));
 await verifyPackagedSource(zip, resolve(root, 'src'));
+// The export module and everything it imports: since 0.5.0, the citation formats and identifiers.
 const pairs = [
   ['src/core/export.js', 'site/assets/js/core/export.js'],
   ['src/core/xlsx.js', 'site/assets/js/core/xlsx.js'],
+  ['src/core/identifiers.js', 'site/assets/js/core/identifiers.js'],
+  ['src/core/cite.js', 'site/assets/js/core/cite.js'],
   ['assets/brand/icon.svg', 'site/assets/img/icon.svg'],
   ['assets/brand/mark.svg', 'site/assets/img/mark.svg'],
   ['src/icons/32.png', 'site/assets/img/icon-32.png'],

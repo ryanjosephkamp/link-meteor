@@ -13,11 +13,11 @@ Capture the trail. Keep the source.
 
 Link Meteor is a free Chrome extension for collecting links with their **actual anchor text and URL in separate fields**, reviewing their sources, and exporting a useful research collection. It has no account, ads, telemetry, paid tier, or backend dependency.
 
-This repository contains the Chrome extension (development build 0.4.0) and its [live website](https://ryanjosephkamp.github.io/link-meteor/). Install the extension from the downloadable ZIP using Chrome's **Load unpacked** option. Chrome Web Store submission is planned for a later version. See [testing and compatibility](docs/ACCEPTANCE.md) for the environments and workflows checked so far, and the [changelog](CHANGELOG.md) for what changed.
+This repository contains the Chrome extension (development build 0.5.0) and its [live website](https://ryanjosephkamp.github.io/link-meteor/). Install the extension from the downloadable ZIP using Chrome's **Load unpacked** option. Chrome Web Store submission is planned for a later version. See [testing and compatibility](docs/ACCEPTANCE.md) for the environments and workflows checked so far, and the [changelog](CHANGELOG.md) for what changed.
 
 ## Try the development build
 
-1. [Download version 0.4.0](https://ryanjosephkamp.github.io/link-meteor/downloads/link-meteor-0.4.0.zip) and extract it to a folder you will keep. The ZIP is a development package, not a store installer.
+1. [Download version 0.5.0](https://ryanjosephkamp.github.io/link-meteor/downloads/link-meteor-0.5.0.zip) and extract it to a folder you will keep. The ZIP is a development package, not a store installer.
 2. Open `chrome://extensions` in Chrome and enable **Developer mode**.
 3. Choose **Load unpacked** and select the extracted folder containing `manifest.json`.
 4. Open an ordinary webpage (try the [practice page](https://ryanjosephkamp.github.io/link-meteor/practice.html)). Use the extension toolbar action for the side panel, or **Option+Shift+L** on Mac / **Alt+Shift+L** on Windows and Linux to select a region. The side panel's welcome card offers **Allow on all sites (recommended)**, so you can hold a key and drag on any site, or **Choose sites later**.
@@ -25,7 +25,7 @@ This repository contains the Chrome extension (development build 0.4.0) and its 
 
 Chrome manages shortcut assignments at `chrome://extensions/shortcuts`. A shortcut can conflict with another extension or system shortcut; use **Change shortcut** in Link Meteor to inspect it. Reload the extension at `chrome://extensions` after rebuilding, then reload test webpages so their injected script is current.
 
-For an existing installation, keep the same installation folder path and follow the [update instructions](https://ryanjosephkamp.github.io/link-meteor/install.html). Loading a different unpacked path can create a separate extension with separate storage. Since 0.3.0, **Download a backup** saves every collection and setting to one file, and **Restore from a backup** brings it back on this or another computer, merged or replacing, with Undo. Earlier versions have no restore, so export anything you want to keep before updating from them. A 0.4.0 backup uses a newer format that 0.3.0 can't restore.
+For an existing installation, keep the same installation folder path and follow the [update instructions](https://ryanjosephkamp.github.io/link-meteor/install.html). Loading a different unpacked path can create a separate extension with separate storage. Since 0.3.0, **Download a backup** saves every collection and setting to one file, and **Restore from a backup** brings it back on this or another computer, merged or replacing, with Undo. Earlier versions have no restore, so export anything you want to keep before updating from them. A 0.5.0 backup uses a newer format that 0.4.0 and earlier can't restore.
 
 ## What is included
 
@@ -33,9 +33,12 @@ For an existing installation, keep the same installation folder path and follow 
 - A capture card with filters (All, Other sites, PDFs, Same site), links already saved marked and optionally skipped, and navigation links left out on request. **After a drag** can show the card, copy right away or add right away with Undo.
 - Optional hold-key drag: hold a letter (Z by default), or Command on a Mac and Ctrl elsewhere, and drag. One optional choice allows it on all sites, with a **Never on these sites** list; otherwise it is enabled one site at a time.
 - Named local collections with collection notes/tags and per-occurrence notes/tags, plus up to 20 custom columns per collection that you name and fill in, which search, exports and backups include.
-- Search, domain/file-type/internal/external filters, sorting, row selection, removal and one-step undo.
+- Search, domain/file-type/internal/external filters, sorting, row selection, removal and one-step undo. **Move to…** and **Copy to…** send links to another collection, with one Undo for both.
+- Research details for each link: the words around it on its page, a DOI, arXiv ID, PubMed ID or ISBN read from its address, and the citation tags that pages publish about themselves. A link to a PDF uses the citation of a saved page about the same work. Nothing is looked up online.
+- Reading status (Unread, Reading, Read) and stars, with view options for both, and **Insights**: a collection's sites, file types, reading status, repeats and captures by week.
+- **Import links** from CSV, TSV, Excel, lists, HTML and bookmarks files, Link Meteor JSON, pasted text or a Chrome bookmark folder, with column mapping, a preview of skipped rows and Undo.
 - Reversible unique-URL and unique-URL-plus-anchor views. Originals and different labels/sources remain stored; expand a group to inspect them.
-- Real `.xlsx`, CSV, TSV, Markdown, HTML, JSON and URL-list downloads, named after the collection and the date and time by default. Excel workbooks have a bold frozen header, filters, clickable links and an About sheet. Clipboard columns/URLs/Markdown; new or existing bookmark folders, skipping links already there; opening up to 500 HTTP(S) URLs in tabs, a new window or a tab group, with a confirmation above 20.
+- Real `.xlsx`, CSV, TSV, Markdown, HTML, JSON and URL-list downloads, and citation formats (BibTeX, RIS, CSL-JSON, an annotated bibliography and an Obsidian note), named after the collection and the date and time by default. Excel workbooks have a bold frozen header, filters, clickable links and an About sheet. Clipboard columns/URLs/Markdown; new or existing bookmark folders, skipping links already there; opening up to 500 HTTP(S) URLs in tabs, a new window or a tab group, with a confirmation above 20.
 - Backup and restore of every collection and setting, with a preview, merge or replace, and Undo.
 - Copy as rich links (clickable anchor text for Google Docs, Word or Notion), and downloading the files behind links, such as PDFs and images, into `Downloads/Link Meteor/<collection>/` with optional download access.
 - Right-click actions on links, selections and pages, and a menu on the toolbar icon: add or copy one link, capture a selection's links, save tabs as links, or download a linked file.
@@ -45,7 +48,7 @@ For an existing installation, keep the same installation folder path and follow 
 
 ## Fidelity and coverage
 
-Anchor text is the rendered textual label with whitespace runs collapsed to one space and surrounding whitespace trimmed. Image alt text and accessible labels are separate fields. Empty anchor text stays empty, including in Markdown. Link Meteor never fetches a destination to invent a title or citation.
+Anchor text is the rendered textual label with whitespace runs collapsed to one space and surrounding whitespace trimmed. Image alt text and accessible labels are separate fields. Empty anchor text stays empty, including in Markdown. Link Meteor never fetches a destination to invent a title or citation: citation details come only from tags that the pages you had open published about themselves, and from identifiers in addresses.
 
 Each occurrence stores resolved URL, original href, source URL/title, frame URL, timestamp and batch ID. Repeated URLs are separate occurrences until you choose a grouped view. Captured `mailto:` and `tel:` URLs can be exported; batch opening/bookmarking is limited to HTTP(S). A textless bookmark uses the URL as its browser bookmark title without changing the saved anchor-text field.
 
@@ -96,7 +99,7 @@ For a changed build, create a new isolated profile and prepare its grants throug
 
 Tests store isolated profiles and cache under `.scratch/acceptance-final`, bind the local synthetic fixture server to `127.0.0.1:52478`, and fail if that port is occupied. `LINK_METEOR_TEST_PROFILE` and `LINK_METEOR_FIXTURE_PORT` can change these isolated resources. The browser suite **resets collections in its selected test profile**, so never point it at a personal browser profile. Prepare permission grants through the extension in the isolated browser. The harness records a build fingerprint and refuses reuse after packaged bytes change; prepare a fresh named test profile for a changed build. Headless optional-permission behavior was not accepted as native evidence.
 
-`tests/xlsx-fixture.mjs` and `tests/verify-workbook.py` independently check OOXML and, when available, openpyxl parsing. See `docs/ACCEPTANCE.md` for current executed results, commands, native checks and limits. The declared Chrome minimum, 116, passed the checks that need no grants in Chrome for Testing 116, except the toolbar-button checks, which the test tool can't run there; the granted checks were not run on 116. The owner checked 0.4.0 by hand in everyday Chrome on macOS, and 0.3.0 in Brave and Microsoft Edge as well. Other operating systems, other Chromium browsers and screen-reader use still need human review.
+`tests/xlsx-fixture.mjs` and `tests/verify-workbook.py` independently check OOXML and, when available, openpyxl parsing. See `docs/ACCEPTANCE.md` for current executed results, commands, native checks and limits. The declared Chrome minimum, 116, passed the checks that need no grants in Chrome for Testing 116, except the toolbar-button checks, which the test tool can't run there; the granted checks were not run on 116. The owner checked two test builds of 0.5.0 by hand in everyday Chrome on macOS, as they did 0.4.0, and 0.3.0 in Brave and Microsoft Edge as well. Other operating systems, other Chromium browsers and screen-reader use still need human review.
 
 ## Website
 

@@ -1,0 +1,6 @@
+PASS A link to a PDF shows the citation it borrows from the saved page that names it as its PDF, and says so 
+PASS Move to…: the panel says what happens; everything travels, a repeat stays, a column is matched and one created, the borrowed citation goes too; Undo puts both collections back exactly {"moved":2,"skipped":1}
+PASS Copy to… a new collection: a name is required; copies get new ids and columns, the source and the open collection stay; Undo removes the new collection 
+PASS Move to… in a link’s details moves that link; Escape closes the panel and returns focus 
+PASS At 320 px nothing overflows with the panel open 
+PASS Text contrast is at least 4.5:1 in light and dark for the buttons and the panel {"measured":14,"lowest":6.02}

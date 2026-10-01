@@ -788,7 +788,7 @@ Files: `content/capture.js`, `background/citations.js` (new), `background/card.j
 **Link details.** Each occurrence (`.occurrence`) opens with `.occ-new`, full width above `.facts` at every size:
 - `.reading` (a group labeled "Reading status and star for <label>"):
   - `.status-seg`, a radio group labeled "Reading status": radios named `status-<link id>` with values `''` (Unread), `reading` and `read`, marked `data-link-field="status:<value>"`;
-  - `.star-btn`, a toggle with `aria-pressed`, reading "Star" or "Starred" (`data-link-field="star"`).
+  - `.star-btn`, a toggle with `aria-pressed`, reading "Star" (`data-link-field="star"`). Until release candidate 2 it switched to "Starred".
 
   A change sends `links.status` or `links.star` for that link at once. The notice says "Marked “the canopy study” as read." or "Starred “the canopy study”.", with Undo. Keyboard focus stays on the control when the list is drawn again.
 - Then, only when the link has them, labeled groups (`.occ-block`, label `.occ-label`):

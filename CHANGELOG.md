@@ -1,5 +1,65 @@
 # Changelog
 
+## 0.5.0 (2026-10-01)
+
+"Research tools": Link Meteor now keeps what a research workflow needs around each link, and gets links in and out in more ways:
+- context, page citations and identifiers;
+- reading status, stars and Insights;
+- citation exports;
+- imports;
+- moving and copying links between collections.
+
+### Extension
+
+- **Context.** Each link keeps the words around it on its page, up to 400 characters, where they are a sentence or a paragraph. A bare list of links has none. *Save the words around each link*, under *After a drag*, turns it off. Search includes context.
+- **Page citations.** When a page publishes citation tags (Highwire, PRISM, JSON-LD or Dublin Core), Link Meteor keeps its title, authors, journal, date, pages and identifiers. It reads them from the page you capture from and from tabs you save as links, and never looks anything up online. Saving a tab reads its tags only where Link Meteor already has access to the site.
+- **Identifiers** read from a link's address: DOI, arXiv ID, PubMed and PMC IDs, and ISBN (with its check digit). Rows show them as badges; a link's details list them with *Copy*.
+- **Borrowed citations.** A link uses the citation of a saved page about the same work: a page that names the link as its PDF, or one with the same DOI or arXiv ID. Capturing *View PDF* on an arXiv abstract page gives the PDF link its title, every author and the date.
+- **Reading status and stars.** Mark a link Unread, Reading or Read, and star it, in its details or for a selection, with Undo. *Reading* and *Starred only* filter the list.
+- **Insights.** Switch a collection from *Links* to *Insights* to see its sites, file types, reading status, repeated addresses and captures by week. Choosing an entry shows those links.
+- **Citation exports:** BibTeX, RIS, CSL-JSON, an annotated bibliography and an Obsidian note.
+  - Titles, authors and dates come from each link's citation; without one, the title is the anchor text.
+  - BibTeX braces acronyms and words with inner capitals, so styles keep them as written.
+  - An arXiv link takes its year and month from its ID when nothing else dates it, and every format marks it as an arXiv preprint.
+  - The Export panel shows the first entry, and says how many entries have a DOI or arXiv ID, how many have authors and a date, and how many papers have no authors yet, with how to fill them in.
+- **New export columns:** context, reading status, starred, DOI, arXiv ID, PubMed ID, ISBN and imported from.
+- **Import links** from a CSV, TSV or Excel file, a text or Markdown list, an HTML page or a browser's bookmarks file, a Link Meteor JSON export, pasted text, or a Chrome bookmark folder. Choose which column is which, including new custom columns. A preview lists every skipped row with its reason, and Undo removes the import. Files are read in the browser and never uploaded.
+- **Move to… and Copy to…** send selected links, or one link from its details, to another collection or a new one. Notes, tags, context, reading status, stars, custom column values and citations go with them; a column the other collection lacks is created there. A link that's already there stays where it was, and one Undo puts both collections back.
+- **The toolbar icon closes the side panel** on a second click. The side panel's **Full view** button is labeled, and the panel closes when the full view opens.
+- **Backup and restore shows the date of the last backup,** and says that removing Link Meteor from Chrome deletes everything it saved.
+- **On PDFs and files on your computer,** *Select a region* and *Capture this page* say that Link Meteor can't read the links inside yet. *Add link* in the right-click menu saves the link you clicked.
+- **Ember light's Remove buttons** are now a crimson that no longer looks like Ember's orange links.
+- **Backups** use format 3, which adds context, reading status, stars, imported labels and page citations. 0.5.0 restores 0.3.0 and 0.4.0 backups; earlier versions can't restore a 0.5.0 backup.
+
+### Permissions
+
+**0.5.0 adds no permission.** Importing from a bookmark folder uses the optional `bookmarks` access that 0.3.0 added, asked for in that click.
+
+### Website
+
+- The download is now 0.5.0.
+- The guide has new sections for context and citations and for importing links, and covers reading status, Insights, citation exports, and moving and copying links.
+- The home and install pages cover the new features, and the privacy page describes what 0.5.0 stores.
+
+### Download
+
+`link-meteor-0.5.0.zip`, 801,611 bytes, SHA-256 `57020852b82b26d8d0562707bddeb00ef4ffcd5875264c23ba0e6da875ff589f`. To update from 0.4.0, replace the contents of the same folder, then reload Link Meteor at `chrome://extensions`. Your collections stay with that folder.
+
+### Known issues
+
+- Link Meteor can't read the links inside a PDF yet. Right-click a link in the PDF and choose *Add link* to save it. Capturing every link in a PDF is planned for the next release.
+- A link saved on its own, such as a PDF tab, has no authors until you capture from the paper's own page or save that page as a tab. Nothing is looked up online.
+- Names printed without a comma, such as "Jun Watanabe", stay whole in citations, so reference managers show them as one name.
+- Removing all-sites access can also remove access to sites you allowed one at a time. That is Chrome's behavior, as before.
+- Tested so far:
+  - automated checks without grants in Chrome for Testing 151 on macOS, Windows and Linux;
+  - the checks that need Allow clicks, on macOS;
+  - the checks that need no grants on Chrome for Testing 116, except the toolbar button, which the test tool can't press there;
+  - the owner's hands-on checks of two test builds in everyday Chrome on macOS; the problems they found were fixed in this build.
+
+  The right-click menus can't be opened by automated Chrome, so their automated checks are simulations. Screen readers are not yet tested. See [testing and compatibility](docs/ACCEPTANCE.md).
+- The site's videos and product screenshots still show 0.2.2.
+
 ## 0.4.0 (2026-09-29)
 
 "Make it yours": themes and a card that works the way you do, plus five additions from the first hands-on check:

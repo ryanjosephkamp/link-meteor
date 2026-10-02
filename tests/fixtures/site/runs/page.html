@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Listing</title>
+<style>
+body{margin:0;font:16px/1.5 system-ui;color:#22302a;background:#fff}
+header{padding:16px 24px;border-bottom:2px solid #9b2c1f;font-weight:700}
+main{max-width:720px;margin:0 auto;padding:8px 24px 40px}
+ol{padding-left:24px}li{padding:6px 0}li a{font-weight:700;color:#1b4f9c}
+.pager{display:flex;gap:14px;align-items:center;padding:16px 0;border-top:1px solid #ddd}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+</style>
+<header>Example preprints · a paged listing for the Follow Next checks</header>
+<nav><a href="/site/runs/page.html?about=1">About</a> <a href="/site/runs/page.html?help=1">Help</a></nav>
+<main><h1 id="heading"></h1><ol id="items"></ol><div id="pager" class="pager"></div></main>
+<script>
+// What the address asks for:
+//   p       this page's number (default 1)
+//   of      how many pages the listing has (default 3)
+//   per     links on each page (default 5)
+//   next    how Next is written (see below; default "text")
+//   after   where the last page's Next goes: "loop" (back to page 1), "other" (this page on the
+//           fixture's second site), "hang" (an address that never answers), "gone" (an address
+//           Chrome can't load), or nothing (no Next on the last page)
+//   tall    1: each page is several screens tall
+//   decoy   1: a link named Next in the text, before the pager's own
+const ask=new URLSearchParams(location.search),number=(key,fallback)=>Number(ask.get(key))>0?Number(ask.get(key)):fallback;
+const p=number('p',1),of=number('of',3),per=number('per',5),style=ask.get('next')||'text',after=ask.get('after')||'';
+document.title=`Listing, page ${p}`;
+document.getElementById('heading').textContent=`New submissions · page ${p} of ${of}`;
+document.getElementById('items').innerHTML=Array.from({length:per},(_,i)=>{const n=(p-1)*per+i+1;return `<li${ask.get('tall')==='1'?' style="padding:60px 0"':''}><a href="/site/runs/note.html?n=${n}">Paper ${n}</a> · <a href="/site/runs/note.html?n=${n}&amp;pdf=1">pdf</a></li>`;}).join('');
+const to=page=>{const next=new URLSearchParams(ask);next.set('p',page);return `/site/runs/page.html?${next}`;};
+const other=()=>{const url=new URL(to(1),location.href);url.hostname=location.hostname==='localhost'?'127.0.0.1':'localhost';url.searchParams.delete('after');return url.href;};
+const last=p>=of,target=!last?to(p+1):after==='loop'?to(1):after==='other'?other():after==='hang'?'/hang':after==='gone'?'/gone':'';
+const pager=document.getElementById('pager');
+if(ask.get('decoy')==='1')document.getElementById('items').insertAdjacentHTML('afterend','<p>In this series: <a id="decoy" href="/site/runs/note.html?n=99">Next</a></p>');
+if(p>1)pager.insertAdjacentHTML('beforeend',`<a id="previous" href="${to(p-1)}">‹ Previous</a>`);
+pager.insertAdjacentHTML('beforeend',`<span>Page ${p} of ${of}</span>`);
+// Next, in its many spellings.
+const NEXT={
+  'rel-link':url=>{const link=document.createElement('link');link.rel='next';link.href=url;document.head.append(link);return '';},
+  'rel-a':url=>`<a id="next" rel="nofollow next" href="${url}">Continue</a>`,
+  text:url=>`<a id="next" href="${url}">Next</a>`,
+  'text-page':url=>`<a id="next" href="${url}">Next page</a>`,
+  raquo:url=>`<a id="next" href="${url}">Next »</a>`,
+  arrow:url=>`<a id="next" href="${url}">›</a>`,
+  arrows:url=>`<a id="next" href="${url}">→</a>`,
+  aria:url=>`<a id="next" href="${url}" aria-label="Next page"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3l5 5-5 5" fill="none" stroke="currentColor"/></svg></a>`,
+  title:url=>`<a id="next" href="${url}" title="Next"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3l5 5-5 5" fill="none" stroke="currentColor"/></svg></a>`,
+  hidden:url=>`<a id="next" href="${url}">›<span class="sr-only">Next page</span></a>`,
+  older:url=>`<a id="next" href="${url}">← Older posts</a>`,
+  upper:url=>`<a id="next" href="${url}">NEXT  PAGE ›</a>`,
+  // Not a next page: a button, a link switched off, a link to this same page, a script address.
+  button:()=>`<button id="next" type="button">Next</button>`,
+  disabled:url=>`<a id="next" href="${url}" aria-disabled="true">Next</a>`,
+  self:()=>`<a id="next" href="${location.pathname+location.search}#top">Next</a>`,
+  script:()=>`<a id="next" href="javascript:void 0">Next</a>`,
+  invisible:url=>`<a id="next" href="${url}" style="display:none">Next</a>`,
+  // Words that only look like it.
+  article:url=>`<a id="next" href="${url}">Next: how the listing is made</a>`,
+  newer:url=>`<a id="next" href="${url}">Newer posts →</a>`,
+  none:()=>'',
+};
+if(target&&NEXT[style])pager.insertAdjacentHTML('beforeend',NEXT[style](target));
+</script>
+</html>

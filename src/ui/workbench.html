@@ -341,11 +341,20 @@
           <div class="tab-tools"><button id="tabs-all" class="link-btn" type="button">Select all</button><button id="tabs-none" class="link-btn" type="button">Clear</button><span id="tab-picked" class="tab-picked"></span></div>
           <div id="tab-options" class="tab-options"></div>
         </fieldset>
+        <div id="capture-further" class="capture-further" role="group" aria-label="Go further than this screen">
+          <label class="name-check"><input id="further-scroll" type="checkbox" aria-describedby="further-scroll-help"><span>Scroll to the end first<small id="further-scroll-help">For pages that load more as you scroll. Stops at the end, at 50 screens, at 5,000 links or after 2 minutes.</small></span></label>
+          <div class="name-check"><input id="further-next" type="checkbox" aria-label="Follow Next" aria-describedby="further-next-help"><span><label for="further-next">Follow Next, up to</label> <input id="follow-pages" class="follow-pages" type="number" min="2" max="20" step="1" value="20" inputmode="numeric" aria-label="Pages to follow, 2 to 20"> <label for="follow-pages">pages</label><small id="further-next-help">Moves this tab to the page’s own Next link and captures each page. Stops when there is no Next or the next page is on a site Link Meteor can’t read.</small></span></div>
+        </div>
         <div class="capture-actions">
           <button id="capture" class="btn primary" type="button"><svg class="icon" aria-hidden="true"><use href="#i-download"/></svg><span id="capture-label">Capture this page</span></button>
           <button id="arm" class="btn" type="button"><svg class="icon" aria-hidden="true"><use href="#i-region"/></svg><span>Select a region</span><span id="arm-keys" class="btn-keys" aria-hidden="true"></span></button>
         </div>
         <p id="pdf-note" class="help pdf-note" hidden></p>
+        <div id="run-progress" class="run-progress" role="status" hidden>
+          <div class="run-text"><strong id="run-title"></strong><span id="run-text"></span></div>
+          <button id="run-stop" class="btn small" type="button">Stop</button>
+          <div class="run-bar" aria-hidden="true"><i id="run-bar"></i></div>
+        </div>
         <div id="capture-report" class="report" hidden></div>
       </section>
 
@@ -444,6 +453,7 @@
             <button id="move-selected" class="btn quiet small" type="button" aria-expanded="false" aria-controls="move-panel" hidden><svg class="icon" aria-hidden="true"><use href="#i-folders"/></svg>Move to…</button>
             <button id="copy-selected" class="btn quiet small" type="button" aria-expanded="false" aria-controls="move-panel" hidden><svg class="icon" aria-hidden="true"><use href="#i-copy"/></svg>Copy to…</button>
             <button id="lookup-selected" class="btn quiet small" type="button" hidden><svg class="icon" aria-hidden="true"><use href="#i-search"/></svg>Look up details</button>
+            <button id="pages-selected" class="btn quiet small" type="button" aria-expanded="false" aria-controls="pages-panel" hidden><svg class="icon" aria-hidden="true"><use href="#i-tabs"/></svg>Capture their pages…</button>
           </div>
           <form id="fill-panel" class="fill-panel" aria-labelledby="fill-title" hidden>
             <p id="fill-title" class="fill-title"></p>
@@ -469,6 +479,19 @@
               <p id="lookup-done" class="lookup-done" hidden><span id="lookup-done-text" role="status"></span><button id="lookup-undo" class="link-btn" type="button">Undo<span class="sr-only"> the lookup</span></button><button id="lookup-dismiss" class="link-btn" type="button">Dismiss<span class="sr-only"> the lookup’s result</span></button></p>
             </div>
           </div>
+          <form id="pages-panel" class="fill-panel pages-panel" aria-labelledby="pages-title" hidden>
+            <p id="pages-title" class="fill-title"></p>
+            <ul class="pages-facts">
+              <li>Each page opens in a background tab, one at a time, is captured and closed.</li>
+              <li>20 pages at most in one run, 2 seconds apart. You can stop at any time.</li>
+              <li id="pages-only"></li>
+            </ul>
+            <div class="pages-access"><p id="pages-access" aria-live="polite"></p><button id="pages-allow" class="btn small" type="button" hidden></button></div>
+            <label>Add to <select id="pages-destination" aria-describedby="pages-help"></select></label>
+            <label id="pages-new-row" hidden>Name <input id="pages-new" autocomplete="off" maxlength="200" aria-describedby="pages-help"></label>
+            <p id="pages-help" class="help" aria-live="polite"></p>
+            <div class="confirm-actions"><button id="pages-apply" class="btn primary small" type="submit" disabled>Capture pages</button><button id="pages-cancel" class="btn quiet small" type="button">Cancel</button></div>
+          </form>
           <div id="remove-view-confirm" class="confirm danger-confirm toolbar-confirm" role="group" aria-labelledby="remove-view-confirm-text" hidden>
             <p id="remove-view-confirm-text"></p>
             <div class="confirm-actions"><button id="remove-view-confirm-yes" class="btn danger-solid small" type="button">Remove all</button><button id="remove-view-confirm-no" class="btn quiet small" type="button">Keep them</button></div>

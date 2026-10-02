@@ -55,6 +55,8 @@ function simulate({ scope, initialTabs, afterPermissionTabs, selectedIds = [], t
     targetTab: () => initialTabs.find((item) => item.id === targetTabId),
     chooseLocalPdf: () => { if (pdf === 'local') pdfCalls.push('choose'); return pdf === 'local'; },
     capturePdf: async (target, options) => { if (pdf === 'web') pdfCalls.push({ tabId: target?.id, ...options }); return pdf === 'web'; },
+    // Scroll to the end first and Follow Next (0.6.0) are off here: the plain capture goes on.
+    runFurther: async () => false,
     renderCaptureButton() {},
     $: () => captureButton,
     chrome: {

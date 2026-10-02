@@ -24,7 +24,7 @@
     active?.close();
     for (const {target, type, listener, options} of listeners.splice(0)) target.removeEventListener(type, listener, options);
     try { chrome.runtime.onMessage.removeListener(onMessage); } catch { /* extension reloaded */ }
-    held=false;holdEnabled=false;pressStart=null;fileNoticeHost?.remove();
+    held=false;holdEnabled=false;pressStart=null;fileNoticeHost?.remove();runNow?.halt?.();runNow=null;clearTimeout(runTimer);runHost?.remove();
   }
   const MAX_LINKS = 20000;
   // The card lists at most this many links for unticking; the rest stay included.
@@ -1071,14 +1071,168 @@
     try{reply?.({ok:true,data:answers[message.type]()});}catch(error){reply?.({ok:false,error:String(error.message || error)});}
   }
 
+  /* Runs (0.6.0): scrolling to the end, the page's Next link, and the run's notice --------------- */
+  // A run is a capture that takes more than one step (background/runs.js). This page's part:
+  // scrollScan (Scroll to the end first), nextLink (Follow Next) and the notice with Stop.
+  // The scroll's limits. A caller may lower them (options.scroll.limits), never raise them.
+  const SCROLL={screens:50,links:5000,ms:120000,settle:600,grow:2000,still:3,poll:200};
+  // runNow: {runId, halt} while a run reads this page, so Stop and Escape reach it.
+  let runHost=null,runNow=null,runTimer=0;
+  const wait=ms=>new Promise(done=>setTimeout(done,ms));
+  const tell=message=>{try{chrome.runtime.sendMessage(message).catch(()=>{});}catch{/* extension reloaded */}};
+  // The notice: the run's counter as its text and one Stop button. Once the run is over it says how
+  // it ended, and closes itself after NOTICE_MS unless it has focus or the pointer is over it.
+  function runNotice(text,{going=true}={}){
+    if(!runHost?.isConnected){
+      const host=document.createElement('div');host.setAttribute(marker,'notice');host.id='link-meteor-run-notice';
+      host.style.cssText='all:initial!important;position:fixed!important;right:16px!important;bottom:16px!important;z-index:2147483647!important;';
+      host.attachShadow({mode:'open'}).innerHTML=`<style>:host{--k-ground:#161d2d;--k-strong:#fff;--k-ink:#eef0f4;--k-muted:#a2a8b5;--k-focus:#c3f344;--k-shadow-45:rgba(8,11,20,.45)}
+        .panel{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;box-sizing:border-box;width:390px;max-width:calc(100vw - 32px);padding:10px 10px 10px 12px;background:var(--k-ground);color:var(--k-ink);border:1px solid color-mix(in srgb,var(--k-strong) 10%,transparent);border-radius:14px;box-shadow:0 18px 50px var(--k-shadow-45);font:600 13px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+        p{flex:1 1 200px;min-width:0;margin:0;color:var(--k-strong);font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+        button{flex:none;display:inline-flex;align-items:center;justify-content:center;min-height:30px;margin-left:auto;padding:0 12px;border:1px solid color-mix(in srgb,var(--k-strong) 16%,transparent);border-radius:8px;background:color-mix(in srgb,var(--k-strong) 7%,transparent);color:var(--k-strong);font:600 12.5px/1.2 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;cursor:pointer}
+        button:hover:not(:disabled){background:color-mix(in srgb,var(--k-strong) 14%,transparent);border-color:color-mix(in srgb,var(--k-strong) 28%,transparent)}
+        button:focus-visible{outline:2px solid var(--k-focus);outline-offset:2px}
+        button:disabled{opacity:.45;cursor:default}
+        .run-close{width:30px;padding:0;border-color:transparent;background:transparent;color:var(--k-muted)}
+        svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round}
+        [hidden]{display:none!important}
+        @media(forced-colors:active){.panel,button{border:1px solid CanvasText}}</style><div class="panel"><p class="run-text" role="status"></p><button type="button" class="run-stop">Stop</button><button type="button" class="run-close" aria-label="Close notice" title="Close" hidden>${ICON_X}</button></div>`;
+      const panel=host.shadowRoot.querySelector('.panel');
+      host.shadowRoot.querySelector('.run-stop').onclick=stopRun;host.shadowRoot.querySelector('.run-close').onclick=closeRunNotice;
+      panel.addEventListener('mouseleave',holdRunNotice);panel.addEventListener('focusout',holdRunNotice);
+      document.documentElement.append(host);runHost=host;
+    }
+    themeHost(runHost);clearTimeout(runTimer);
+    const root=runHost.shadowRoot,stop=root.querySelector('.run-stop'),close=root.querySelector('.run-close'),had=root.activeElement===stop;
+    root.querySelector('.run-text').textContent=text;stop.hidden=!going;stop.disabled=false;close.hidden=going;
+    if(!going){if(had)close.focus();holdRunNotice();}
+  }
+  function holdRunNotice(){clearTimeout(runTimer);if(runHost&&!runNow)runTimer=setTimeout(()=>{if(!runHost?.shadowRoot.querySelector('.panel').matches(':hover,:focus-within'))closeRunNotice();},NOTICE_MS);}
+  function closeRunNotice(){clearTimeout(runTimer);runHost?.remove();runHost=null;}
+  // Stop, from the notice's button, Escape, or the workbench (content.run with halt): the scroll
+  // ends at once with what it has, and the background ends the run.
+  function stopRun(){
+    if(!runNow)return;
+    runNow.halt?.();
+    if(runHost){runHost.shadowRoot.querySelector('.run-text').textContent='Stopping…';runHost.shadowRoot.querySelector('.run-stop').disabled=true;}
+    tell({type:'run.stop',runId:runNow.runId});
+  }
+  // An open card or selection takes Escape first.
+  listen(document,'keydown',event=>{if(event.key!=='Escape'||!runNow||busy())return;event.preventDefault();event.stopPropagation();stopRun();},true);
+  // content.run from the background: {runId, text} shows the counter; with done, how the run ended;
+  // with halt, Stop was pressed in the workbench.
+  function runMessage(message){
+    if(message.halt){if(runNow&&(!message.runId||message.runId===runNow.runId)){runNow.halt?.();if(runHost){runHost.shadowRoot.querySelector('.run-text').textContent='Stopping…';runHost.shadowRoot.querySelector('.run-stop').disabled=true;}}return;}
+    if(message.done){runNow=null;if(message.text)runNotice(String(message.text),{going:false});else closeRunNotice();return;}
+    if(runNow?.runId!==message.runId)runNow={runId:String(message.runId || '')};
+    runNotice(String(message.text || ''));
+  }
+  // What scrolls the page: the document, or, where the document itself doesn't scroll, the largest
+  // scrolling box that fills at least half of the window (an app's own list).
+  function scroller(){
+    const root=document.scrollingElement || document.documentElement;
+    if(root.scrollHeight>root.clientHeight+1)return root;
+    let best=null,area=innerWidth*innerHeight/2;
+    for(const element of document.querySelectorAll('*')){
+      if(element.scrollHeight<=element.clientHeight+1||element.clientWidth*element.clientHeight<area)continue;
+      if(!/(auto|scroll)/.test(getComputedStyle(element).overflowY)||!visible(element))continue;
+      best=element;area=element.clientWidth*element.clientHeight;
+    }
+    return best || root;
+  }
+  // options.scroll: {runId, lead, links, limits}. `lead` and `links` are a longer run's own counter
+  // ("Following Next: page 4 of up to 20 · ", and its links so far), put before this page's.
+  async function scrollScan(options={}){
+    const want=options.scroll && typeof options.scroll==='object'?options.scroll:{},cap=key=>{const value=Number(want.limits?.[key]);return value>0?Math.min(SCROLL[key],value):SCROLL[key];};
+    const max={screens:cap('screens'),links:cap('links'),ms:cap('ms')},settle=cap('settle'),grow=cap('grow'),poll=Math.min(SCROLL.poll,settle);
+    const box=scroller(),home={left:box.scrollLeft,top:box.scrollTop},started=Date.now(),seen=new Map(),links=[];
+    let screens=1,still=0,ended='',halted=false;
+    const state={runId:String(want.runId || ''),halt(){halted=true;}};runNow=state;
+    // A link is kept the first time its element shows that address and those words, so what the
+    // page removes later stays, and what it shows again in the same element isn't counted twice.
+    const gather=()=>{
+      for(const record of collect().records){
+        const key=record.link.url+'\n'+record.link.anchorText,known=seen.get(record.element);
+        if(known?.has(key))continue;
+        if(known)known.add(key);else seen.set(record.element,new Set([key]));
+        if(links.length>=max.links)continue;
+        const link=withContext(record.link,record.element,options.context);links.push(record.chrome?{...link,pageChrome:true}:link);
+      }
+    };
+    const note=()=>{
+      const base=Number(want.links)||0;
+      if(runNow===state&&!halted)runNotice(want.lead?`${want.lead}screen ${screens} of up to ${max.screens} · ${plural(base+links.length,'link')}`:`Scrolling: screen ${screens} of up to ${max.screens} · ${plural(links.length,'link')}`);
+      tell({type:'run.scroll',runId:state.runId,screen:screens,of:max.screens,links:links.length});
+    };
+    gather();note();
+    while(!ended){
+      if(halted)ended='stopped';else if(links.length>=max.links)ended='links';else if(screens>=max.screens)ended='screens';else if(Date.now()-started>=max.ms)ended='time';
+      if(ended)break;
+      const before={top:box.scrollTop,height:box.scrollHeight,count:links.length};
+      box.scrollBy({top:Math.max(1,Math.round((box===document.scrollingElement?innerHeight:box.clientHeight)*.9)),behavior:'instant'});
+      // Settle: 600 ms, then up to 2 s more while the page's height still changes.
+      for(let waited=0,height=box.scrollHeight;waited<settle+grow&&!halted;){await wait(poll);waited+=poll;const now=box.scrollHeight,quiet=now===height;height=now;if(waited>=settle&&quiet)break;}
+      gather();
+      const moved=Math.abs(box.scrollTop-before.top)>=1;
+      if(moved)screens++;
+      // The end: three steps in a row that couldn't scroll further and found nothing new.
+      still=!moved&&box.scrollHeight===before.height&&links.length===before.count?still+1:0;
+      if(still>=SCROLL.still)ended='end';
+      note();
+    }
+    box.scrollTo({left:home.left,top:home.top,behavior:'instant'});
+    const more=' The page may have more.',text=ended==='end'?`Reached the end after ${plural(screens,'screen')}.`:ended==='screens'?`Stopped at ${plural(max.screens,'screen')}.${more}`:ended==='links'?`Stopped at ${plural(max.links,'link')}.${more}`:ended==='time'?`Stopped after ${max.ms%60000?plural(Math.round(max.ms/1000),'second'):plural(max.ms/60000,'minute')}.${more}`:`Stopped at screen ${screens}: you pressed Stop.${more}`;
+    // Alone, the notice says how the scroll ended. In a longer run, the background's counter follows.
+    if(runNow===state&&!want.lead){runNow=null;runNotice(`${text} ${plural(links.length,'link')} found.`,{going:false});}
+    // The page's own details come from one last plain scan; its links are the ones gathered above.
+    return {...scan({context:false}),links,scroll:{screens,of:max.screens,ended,text}};
+  }
+  // Follow Next: the page's own next page. In order: <link rel="next"> or <a rel="next">; then a
+  // visible link named next by its aria-label, its title or its text. Returns {url, how}; or
+  // {button: true} where next is a button, which has no address to go to; or null.
+  const NEXT_WORDS=new Set(['next','next page','next results','next posts','next entries','older','older posts','older entries','older articles','older stories','more results','weiter','nächste','nächste seite','suivant','suivante','page suivante','siguiente','página siguiente','próxima','próxima página','próximo','successivo','successiva','volgende','volgende pagina','次へ','次のページ','下一页','下一頁','다음']);
+  const NEXT_MARKS=new Set(['›','»','→','>','>>','⟩','▶','▸','❯','⇒']);
+  const ARROWS=/^[\s‹›«»←→<>⟨⟩◀▶◂▸❮❯⇐⇒…·|:-]+|[\s‹›«»←→<>⟨⟩◀▶◂▸❮❯⇐⇒…·|:.-]+$/gu;
+  function namesNext(value){
+    const text=normalize(value).toLowerCase();
+    if(!text||text.length>40)return false;
+    return NEXT_MARKS.has(text)||NEXT_WORDS.has(text.replace(ARROWS,''));
+  }
+  const labelsOf=element=>[element.getAttribute('aria-label'),element.getAttribute('title'),element.textContent,element.getAttribute('value'),...[...element.querySelectorAll('img[alt]')].map(img=>img.alt)];
+  const switchedOff=element=>element.disabled===true||!!element.closest('[aria-disabled="true"],[disabled],.disabled,.is-disabled');
+  function nextLink(){
+    const here=location.href.split('#')[0];
+    // A next page is a web address other than this page's own.
+    const address=element=>{try{const url=new URL(element.getAttribute('href'),element.baseURI);if(url.protocol!=='http:'&&url.protocol!=='https:')return '';url.hash='';return url.href===here?'':url.href;}catch{return '';}};
+    for(const element of document.querySelectorAll('link[rel~="next" i][href],a[rel~="next" i][href],area[rel~="next" i][href]')){
+      if(element.closest(`[${marker}]`)||(element.localName!=='link'&&switchedOff(element)))continue;
+      const url=address(element);if(url)return {url,how:'rel'};
+    }
+    let found='',inPager='';
+    for(const element of document.querySelectorAll('a[href]')){
+      if(element.closest(`[${marker}]`)||!labelsOf(element).some(namesNext)||switchedOff(element)||!visible(element))continue;
+      const url=address(element);if(!url)continue;
+      found=url;
+      // A link in the page's own pager wins; otherwise the last one, since pagers sit at the end.
+      if(!inPager&&element.closest('nav,[role~="navigation"],[class*="pagination" i],[class*="pager" i],[class*="paging" i],[id*="pagination" i],[id*="pager" i]'))inPager=url;
+    }
+    if(inPager||found)return {url:inPager||found,how:'label'};
+    for(const element of document.querySelectorAll('button,[role="button"],input[type="button"],input[type="submit"],a:not([href])')){
+      if(!element.closest(`[${marker}]`)&&labelsOf(element).some(namesNext)&&!switchedOff(element)&&visible(element))return {button:true};
+    }
+    return null;
+  }
+
   const onMessage=(message,sender,reply)=>{
     if(message?.type==='content.configure'){holdEnabled=!!message.enabled;holdKey=message.holdKey;holdTrigger=message.holdTrigger==='modifier'?'modifier':'letter';held=false;pressStart=null;followSettings({card:message.card,...message.capture});}
     if(message?.type==='links.progress')active?.progress(message);
     if(message?.type==='downloads.progress')fileProgress(message);
+    if(message?.type==='content.run')runMessage(message);
     menuMessage(message,reply);
   };
   chrome.runtime.onMessage.addListener(onMessage);
   // With the System appearance, an open card follows the computer switching between light and dark.
   listen(darkScheme,'change',()=>themeHost(overlayHost));
-  globalThis.__linkMeteor={scan,arm,alive,dispose};configure();
+  // scan: with options.scroll, the top frame scrolls to the end first (a promise of the same answer).
+  globalThis.__linkMeteor={scan:options=>options?.scroll&&window===top?scrollScan(options):scan(options),arm,alive,dispose,next:nextLink};configure();
 })();

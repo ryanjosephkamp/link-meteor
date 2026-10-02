@@ -1,6 +1,12 @@
 (() => {
   if (globalThis.__linkMeteor?.alive?.()) return;
   globalThis.__linkMeteor?.dispose?.();
+  // 0.6.0: Capture this page loads this script in every frame Link Meteor may read. A frame that the
+  // document around it can reach is read from there (see collect), so its own copy does nothing.
+  // In a frame from another site the script only reads that frame's links (scan): selection, the
+  // card, hold-key drag and the menus' messages stay in the top document.
+  const FRAME = window !== window.top;
+  if (FRAME) { try { if (window.parent.document) return; } catch { /* a frame from another site */ } }
   const listeners = [];
   function listen(target, type, listener, options) {
     target.addEventListener(type, listener, options);
@@ -207,7 +213,43 @@
     return null;
   }
 
-  // Whether a link sits in page chrome, looking out through open shadow roots to their hosts.
+  /* Closed components and frames (0.6.0) -------------------------------------------------------- */
+  // An element's shadow root, a closed one too: chrome.dom needs no permission. Where Chrome lacks
+  // it, only open roots are seen. Only these elements and custom elements can hold a shadow root,
+  // and asking about any other kind (an SVG element) throws.
+  const SHADOW_HOSTS=new Set('article aside blockquote body div footer h1 h2 h3 h4 h5 h6 header main nav p section span'.split(' '));
+  function shadowOf(element) {
+    if (element.shadowRoot) return element.shadowRoot;
+    if (element.namespaceURI!=='http://www.w3.org/1999/xhtml' || !(SHADOW_HOSTS.has(element.localName) || element.localName.includes('-'))) return null;
+    try { return chrome.dom?.openOrClosedShadowRoot?.(element) || null; } catch { return null; }
+  }
+  // The deepest element at a point, looking into shadow roots (closed ones hide it from events).
+  function elementAt(x,y) {
+    let found=document.elementFromPoint(x,y);
+    for (let root=found&&shadowOf(found),depth=0;root&&depth<50;root=shadowOf(found),depth++) { const inner=root.elementFromPoint(x,y); if (!inner||inner===found||inner.getRootNode()!==root) break; found=inner; }
+    return found;
+  }
+  // Where a frame sits: its index among its parent's frames at each level from the top ("2.0", and
+  // "" for the top itself), or null where that can't be told (a frame inside a shadow root has no
+  // index). Capture this page pairs a frame this document can't reach with the copy of this script
+  // inside that frame by it, so nothing has to be sent through the page.
+  const MAX_FRAMES=1000;
+  function frameIndex(parent,child) { try { for (let i=0,n=Math.min(parent.length,MAX_FRAMES);i<n;i++) if (parent[i]===child) return i; } catch { /* the frame is gone */ } return -1; }
+  function framePath(win) { const path=[]; try { for (let w=win;w!==w.top;w=w.parent) { const i=frameIndex(w.parent,w); if (i<0) return null; path.unshift(i); } } catch { return null; } return path.join('.'); }
+  function pathBelow(at,parent,child) { const i=at===null||!parent||!child?-1:frameIndex(parent,child); return i<0?null:at?`${at}.${i}`:String(i); }
+  // The site a frame belongs to: the one its src names, when that is a web address; otherwise the
+  // site of the document it sits in (a frame written in the page, or one with no address, is that
+  // page's own). '' when neither is a web address.
+  const webSite=value=>{ try { const url=new URL(value); return url.protocol==='http:'||url.protocol==='https:'?url.origin:''; } catch { return ''; } };
+  function frameSite(element) { const src=element.hasAttribute('srcdoc')?'':element.getAttribute('src'); let named=''; try { named=src?webSite(new URL(src,element.baseURI).href):''; } catch { /* not an address */ } return named||webSite(element.ownerDocument.URL)||webSite(location.href); }
+  // What a selection says about the frames it can't reach into: how many, and which other sites they are from.
+  function framesLeftOut(frames) {
+    const hosts=[...new Set(frames.map(frame=>frame.site).filter(site=>site&&site!==webSite(location.href)))].map(site=>new URL(site).host),n=frames.length;
+    const names=hosts.length>3?`${hosts.slice(0,3).join(', ')} and ${hosts.length-3} more`:hosts.length>1?`${hosts.slice(0,-1).join(', ')} and ${hosts.at(-1)}`:hosts[0];
+    return `Links inside ${n===1?'1 frame':`${n.toLocaleString()} frames`} aren’t included: a selection can’t reach into frames from other sites${names?` (${names})`:''} or sandboxed frames. Capture this page reads them where Link Meteor has access.`;
+  }
+
+  // Whether a link sits in page chrome, looking out through shadow roots to their hosts.
   function inChrome(element) {
     for (let node=element;node;node=node.getRootNode()?.host) if (node.closest(PAGE_CHROME)||pageLevel(node)) return true;
     return false;
@@ -239,13 +281,18 @@
     return anchor.isConnected?geometry(anchor,transform,clip):[];
   }
 
+  // Every link this document can reach: its own, those in shadow roots (closed ones too), and those
+  // in frames it can read. `frames` lists the visible frames it can't read into, each as
+  // {site, at, chrome}: the site its src names, where it sits (see framePath; null for a
+  // selection, which doesn't need it), and whether the frame sits in page chrome.
   function collect(regional=false) {
-    const records = [], warnings = [];
-    let inaccessibleFrames=0, malformedLinks=0, capped=false;
+    const records = [], warnings = [], notes = [], frames = [];
+    let malformedLinks=0, capped=false;
     const seenDocuments = new Set();
     const viewport = {left:0,top:0,right:innerWidth,bottom:innerHeight};
-    // `chrome`: the frame being walked sits in page chrome of the document around it.
-    function walk(root, transform={x:0,y:0,sx:1,sy:1}, clip=viewport, chrome=false) {
+    // `chrome`: the frame being walked sits in page chrome of the document around it. `at`: where
+    // the document being walked sits among the page's frames.
+    function walk(root, transform={x:0,y:0,sx:1,sy:1}, clip=viewport, chrome=false, at=regional?null:framePath(window)) {
       if (root.nodeType===9) { if(seenDocuments.has(root))return; seenDocuments.add(root); }
       for (const element of root.querySelectorAll('*')) {
         if (element.closest(`[${marker}]`)) continue;
@@ -259,35 +306,44 @@
             }
           }
         }
-        if (element.shadowRoot) walk(element.shadowRoot,transform,clip,chrome);
+        const shadow = shadowOf(element);
+        if (shadow) walk(shadow,transform,clip,chrome,at);
         if (element.tagName==='IFRAME' || element.tagName==='FRAME') {
           if (!visible(element)) continue;
+          const outer = chrome||inChrome(element), within = pathBelow(at,element.ownerDocument.defaultView,element.contentWindow);
+          const unread = () => frames.push({site:frameSite(element),at:within,chrome:outer});
           try {
             const child = element.contentDocument;
-            if (!child) {inaccessibleFrames++;continue;}
+            if (!child) {unread();continue;}
             const frame = element.getBoundingClientRect();
             const sx = transform.sx * (element.offsetWidth ? frame.width/element.offsetWidth : 1);
             const sy = transform.sy * (element.offsetHeight ? frame.height/element.offsetHeight : 1);
             const next = {x:transform.x+(frame.left+element.clientLeft)*transform.sx,y:transform.y+(frame.top+element.clientTop)*transform.sy,sx,sy};
             const frameClip={left:next.x,top:next.y,right:next.x+element.clientWidth*sx,bottom:next.y+element.clientHeight*sy};
-            walk(child,next,intersect(clip,frameClip),chrome||inChrome(element));
-          } catch { inaccessibleFrames++; }
+            walk(child,next,intersect(clip,frameClip),outer,within);
+          } catch { unread(); }
         }
       }
     }
     walk(document);
-    if (inaccessibleFrames) warnings.push(`${inaccessibleFrames} inaccessible frame${inaccessibleFrames===1?' was':'s were'} excluded. Same-origin frames and open shadow roots are supported.`);
-    if (malformedLinks) warnings.push(`${malformedLinks} malformed link destination${malformedLinks===1?' was':'s were'} excluded.`);
-    if (capped) warnings.push('Capture reached 20,000 loaded links. Results are partial; select smaller regions for the remainder.');
-    return {records,inaccessibleFrames,warnings};
+    if (malformedLinks) notes.push(`${malformedLinks} malformed link destination${malformedLinks===1?' was':'s were'} excluded.`);
+    if (capped) notes.push('Capture reached 20,000 loaded links. Results are partial; select smaller regions for the remainder.');
+    // A selection says which frames it left out; Capture this page reports them itself (scan).
+    if (frames.length) warnings.push(framesLeftOut(frames));
+    warnings.push(...notes);
+    return {records,inaccessibleFrames:frames.length,frames,warnings,notes,malformed:malformedLinks,capped};
   }
 
   // options.context: whether to add each link's context (default: the saveContext setting).
+  // 0.6.0: also `frames` (the frames this document couldn't read, see collect), `at` (where this
+  // document sits among the page's frames), `url` and `title`, and `malformed` and `capped` (what
+  // `warnings` says, as counts), so the background can join the copies of this script that ran in
+  // the page's frames (background/frames.js). Only the top document reads citation tags.
   function scan(options={}) {
-    const {records,inaccessibleFrames,warnings} = collect();
+    const {records,inaccessibleFrames,frames,notes,malformed,capped} = collect();
     // Links in page chrome carry pageChrome: true, so Capture this page can leave them out.
     const links=records.map(record=>{const link=withContext(record.link,record.element,options?.context);return record.chrome?{...link,pageChrome:true}:link;});
-    return {links,inaccessibleFrames,warnings,page:pageCitation()};
+    return {links,inaccessibleFrames,warnings:notes,page:FRAME?null:pageCitation(),frames,at:framePath(window),url:location.href,title:document.title,malformed,capped};
   }
 
   async function request(message) {
@@ -937,6 +993,9 @@
     document.documentElement.append(host);hold();
   }
 
+  // 0.6.0: in a frame from another site, the script stops here. It answers scan and nothing else.
+  if (FRAME) { globalThis.__linkMeteor={scan,alive,dispose(){}}; return; }
+
   /* Hold-key drag ------------------------------------------------------------------------------ */
   // Letter trigger: hold the letter, then press and drag. Modifier trigger (Command on macOS, Ctrl
   // elsewhere): a plain modifier-click passes through untouched; selection starts only after the
@@ -982,7 +1041,8 @@
   // Chrome gives a menu click the link's address, not its text, so the page records the link under
   // the last right-click, and the background asks for it (content.contextLink).
   let contextAnchor=null;
-  listen(document,'contextmenu',event=>{contextAnchor=event.composedPath().find(node=>node?.nodeType===1&&node.matches('a[href],a[xlink\\:href]'))||null;},true);
+  // 0.6.0: a closed shadow root hides the link from the event, so it is found under the pointer.
+  listen(document,'contextmenu',event=>{contextAnchor=event.composedPath().find(node=>node?.nodeType===1&&node.matches('a[href],a[xlink\\:href]'))||elementAt(event.clientX,event.clientY)?.closest?.('a[href],a[xlink\\:href]')||null;},true);
   // The recorded link when its address matches, otherwise the first link in the page with that address.
   function contextLink(url){
     const recorded=contextAnchor?.isConnected?candidate(contextAnchor,()=>{}):null;
@@ -1002,7 +1062,7 @@
     }
     return false;
   }
-  // Every link that intersects the selection, in the page, its open shadow roots and same-origin frames.
+  // Every link that intersects the selection, in the page, its shadow roots and the frames it can read.
   function selectionLinks(){const {records,warnings}=collect();return {links:records.filter(record=>selected(record.element)).map(record=>withContext(record.link,record.element)),warnings,page:pageCitation()};}
   // Answers the menus' requests; replies {ok, data} or {ok:false, error}. Saves keep the page's citation (page).
   function menuMessage(message,reply){

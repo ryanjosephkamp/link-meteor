@@ -13,12 +13,13 @@ import {createMenus, menuClicked, followMenuWrites, syncMenuTitle, MENU} from '.
 import {tabsMessage} from './background/tabs.js';
 import {citationPages} from './background/citations.js';
 import {workbenchMessages as downloadMessages, pageMessages as downloadPageMessages, cancelDownloads, downloadMenuItem, downloadFromMenu, DOWNLOAD_MENU_ID} from './background/downloads.js';
+import {workbenchMessages as frameMessages, scanTab} from './background/frames.js';
 
 const LAST_TARGET_KEY = 'linkMeteorTarget';
 
 // Workbench-only messages answered by area modules. A type may be claimed by one module only.
 const AREA_MESSAGES = new Map();
-for (const table of [bookmarkMessages, backupMessages, holdMessages, diagnosticsMessages, downloadMessages, importMessages, transferMessages]) {
+for (const table of [bookmarkMessages, backupMessages, holdMessages, diagnosticsMessages, downloadMessages, importMessages, transferMessages, frameMessages]) {
   for (const [type, handler] of Object.entries(table)) {
     if (AREA_MESSAGES.has(type)) throw new Error(`Duplicate Link Meteor message handler: ${type}`);
     AREA_MESSAGES.set(type, handler);
@@ -86,6 +87,8 @@ async function arm(tabId, callerTabId) {
 // are left out, counted per page and kept for the workbench's Include them. With skipSaved, links
 // the collection already holds are skipped and counted. 0.5.0: each link keeps the words around it
 // (unless saveContext is off), and each page its own citation tags, keyed by its address.
+// 0.6.0: the page is read in every frame Link Meteor has access to (background/frames.js); a result's
+// `frames` says how many frames from other sites were read and weren't, and which sites could be allowed.
 async function captureTabs(tabIds,callerTabId) {
   const stateBefore = await serial(readState);
   const collectionId = stateBefore.activeCollectionId, contentOnly = stateBefore.settings.contentOnly === true, context = stateBefore.settings.saveContext !== false;
@@ -104,7 +107,7 @@ async function captureTabs(tabIds,callerTabId) {
         continue;
       }
       await inject(tab);
-      const [{result}] = await chrome.scripting.executeScript({target:{tabId},func:options => globalThis.__linkMeteor.scan(options),args:[{context}]});
+      const result = await scanTab(tabId,{context});
       const after = await chrome.tabs.get(tabId);
       if (tab.url && after.url !== tab.url) throw new Error('The tab navigated during capture; retry on the new page.');
       const found = occurrences(result.links, tab, batchId);
@@ -117,14 +120,14 @@ async function captureTabs(tabIds,callerTabId) {
       leftOutTotal += leftOut.length;
       capturedCount += count;
       results.push({tabId,title:tab.title || '',url:tab.url || '',status:'success',count,leftOut:leftOut.length,skipped,
-        warning:(result.warnings || []).join(' '),error:''});
+        warning:(result.warnings || []).join(' '),error:'',...(result.frames ? {frames:result.frames} : {})});
       await rememberTarget(tab).catch(() => {});
     } catch (error) {
       const message = String(error.message || error);
       results.push({tabId,title:tab?.title || 'Unavailable page',url:tab?.url || '',status:/permission|access.*contents|host permission/i.test(message)?'denied':'error',count:0,leftOut:0,skipped:0,warning:'',error:message});
     }
   }
-  const report = {batchId,results,capturedCount};
+  const report = {batchId,collectionId,results,capturedCount};
   await keepLeftOut({batchId,collectionId,links:leftOutLinks,total:leftOutTotal});
   await chrome.storage.session.set({linkMeteorCaptureReport:{report,createdAt:new Date().toISOString()}}).catch(() => {});
   return {state,report};

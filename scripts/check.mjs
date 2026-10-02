@@ -43,6 +43,7 @@ const suites = [
   { name: 'access-browser', command: [node, 'tests/access-browser.mjs'] },
   { name: 'capture-page-access', command: [node, 'tests/capture-page-access.mjs'] },
   { name: 'access-content', command: [node, 'tests/access-content.mjs'] },
+  { name: 'coverage-browser', command: [node, 'tests/coverage-browser.mjs'] },
   { name: 'exports-browser', command: [node, 'tests/exports-browser.mjs'], profile: true },
   { name: 'backup-browser', command: [node, 'tests/backup-browser.mjs'] },
   { name: 'downloads-browser', command: [node, 'tests/downloads-browser.mjs'], profile: true },

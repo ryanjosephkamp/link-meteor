@@ -86,7 +86,8 @@ try {
   assert.ok(answer.scroll.screens > 2 && answer.scroll.screens < 12, `screens: ${answer.scroll.screens}`);
   assert.equal(answer.links.filter((link) => link.pageChrome).length, 1, 'the navigation link is marked as page chrome, as in a plain scan');
   assert.match(answer.links.find((link) => link.anchorText === 'its data').context, /^Observation 1, written the same day, with its data\.$/);
-  assert.deepEqual(Object.keys(answer).sort(), ['inaccessibleFrames', 'links', 'page', 'scroll', 'warnings'], 'the answer is a scan’s, with how the scroll went');
+  // A scan's answer (with what the frames reader needs: at, capped, frames, malformed, title, url), and how the scroll went.
+  assert.deepEqual(Object.keys(answer).sort(), ['at', 'capped', 'frames', 'inaccessibleFrames', 'links', 'malformed', 'page', 'scroll', 'title', 'url', 'warnings'], 'the answer is a scan’s, with how the scroll went');
   assert.equal(await page.evaluate(() => scrollY), 140, 'scrolled back to where the person was');
   const counters = await sent(page, 'run.scroll');
   assert.ok(counters.length >= answer.scroll.screens && counters.every((message) => message.runId === 'run-1' && message.of === 50));

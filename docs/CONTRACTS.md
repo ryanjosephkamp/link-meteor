@@ -1350,6 +1350,7 @@ A PDF's links are shown before anything is saved, in the Import links view (`#im
   - "7 links are on pictures and have no words; their anchor text stays empty."
   - "You can undo this."
 - `#import-commit`: "Add 17 links"; "Add this PDF as a link" or "Add this paper as a link" when only the PDF itself is added; disabled as "Add links" when there is nothing to add. The count never includes the PDF itself, which the summary names.
+- One batch holds at most `MAX_IMPORT_LINKS` (20,000) links, the PDF itself among them; links past that are left out and counted as over the limit.
 - **The notice:** "Added 17 links and the PDF itself to “<collection>”." with Undo, which answers "Undone: removed 18 links."
 - **Reading:** `#import-progress` (a status) says "Getting the PDF from its tab…" or "Reading <file name>…", then "Reading page 12 of 244…". Cancel, or Escape, stops the reading through an `AbortController` and says "Canceled. Nothing was added."
 - **Nothing to add,** each ending "Nothing was added." and closing the view:

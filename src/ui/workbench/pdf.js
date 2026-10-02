@@ -232,7 +232,7 @@ export function planPdf({ destinationChanged = false } = {}) {
   const held = new Set((home?.links || []).map((link) => link.url));
   const skipSaved = !!home && $('import-skip-saved').checked;
   const saved = skipSaved ? result.links.filter((link) => held.has(link.url)) : [];
-  const adding = skipSaved ? result.links.filter((link) => !held.has(link.url)) : result.links;
+  let adding = skipSaved ? result.links.filter((link) => !held.has(link.url)) : result.links;
   let withSelf = false;
   if (self) {
     const box = $('pdf-self'), has = held.has(self.url);
@@ -242,7 +242,10 @@ export function planPdf({ destinationChanged = false } = {}) {
     if (box.disabled) box.checked = false;
     withSelf = box.checked;
   }
-  pdf.plan = { adding, saved, self: withSelf ? self : null, total: adding.length + (withSelf ? 1 : 0) };
+  // One batch holds at most MAX_IMPORT_LINKS links, the PDF itself among them.
+  const over = Math.max(0, adding.length + (withSelf ? 1 : 0) - MAX_IMPORT_LINKS);
+  if (over) adding = adding.slice(0, adding.length - over);
+  pdf.plan = { adding, saved, over: result.capped + over, self: withSelf ? self : null, total: adding.length + (withSelf ? 1 : 0) };
   view.planned = { state: ui.state };
   renderPdfPlan();
 }
@@ -267,19 +270,20 @@ export function renderPdfPlan() {
     tr.append(node('td', 'num', ''), cell, node('td', 'why', reason));
     return tr;
   };
-  const leftOut = result.internal + result.capped + result.skipped.length + plan.saved.length;
+  const leftOut = result.internal + plan.over + result.skipped.length + plan.saved.length;
   const onlyLeftOut = $('import-only-skipped').checked;
   let rows, total;
   if (onlyLeftOut) {
     rows = [
       ...(result.internal ? [counted(`${plural(result.internal, 'link')} to ${result.internal === 1 ? 'a place' : 'places'} inside the PDF`, 'No address')] : []),
-      ...(result.capped ? [counted(`${plural(result.capped, 'more link')}`, SKIP_REASONS.limit)] : []),
+      ...(plan.over ? [counted(`${plural(plan.over, 'more link')}`, SKIP_REASONS.limit)] : []),
       ...result.skipped.map((item) => { const tr = node('tr', 'skip'); tr.append(node('td', 'num', `p. ${count(item.page)}`), node('td', 'empty-text', '(not read)'), node('td', 'url', ''), node('td', 'why', SKIP_REASONS['not-link'])); return tr; }),
       ...plan.saved.map((link) => row(link, SKIP_REASONS.saved)),
     ];
     total = rows.length;
   } else {
-    rows = result.links.map((link) => row(link, saved.has(link) ? SKIP_REASONS.saved : ''));
+    const adding = new Set(plan.adding);
+    rows = result.links.map((link) => row(link, saved.has(link) ? SKIP_REASONS.saved : adding.has(link) ? '' : SKIP_REASONS.limit));
     total = rows.length;
   }
   const shown = rows.slice(0, PREVIEW_ROWS);
@@ -299,11 +303,11 @@ export function renderPdfPlan() {
     result.internal && `${plural(result.internal, 'link')} to ${result.internal === 1 ? 'a place' : 'places'} inside the PDF`,
     result.skipped.length && `${count(result.skipped.length)} that ${result.skipped.length === 1 ? 'isn’t a web, email or phone address' : 'aren’t web, email or phone addresses'}`,
     plan.saved.length && `${count(plan.saved.length)} already saved there`,
-    result.capped && `${count(result.capped)} over the ${count(MAX_IMPORT_LINKS)}-link limit`,
+    plan.over && `${count(plan.over)} over the ${count(MAX_IMPORT_LINKS)}-link limit`,
   ].filter(Boolean);
   $('import-summary-skips').textContent = [
     !result.links.length ? 'This PDF has no links Link Meteor can read. Scanned pages are pictures, and addresses printed without a link aren’t picked up.' : '',
-    result.links.length && !n ? `Every link in this PDF is already saved there. Untick “Skip links already saved there” to add ${result.links.length === 1 ? 'it' : 'them'} again.` : '',
+    result.links.length && !n ? `${result.links.length === 1 ? 'The link' : 'Every link'} in this PDF is already saved there. Untick “Skip links already saved there” to add ${result.links.length === 1 ? 'it' : 'them'} again.` : '',
     left.length ? `Left out: ${left.join(', ')}.` : '',
     noWords ? `${plural(noWords, 'link')} ${are(noWords)} on ${noWords === 1 ? 'a picture and has' : 'pictures and have'} no words; ${noWords === 1 ? 'its' : 'their'} anchor text stays empty.` : '',
     plan.total ? 'You can undo this.' : '',

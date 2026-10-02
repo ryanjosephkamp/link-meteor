@@ -107,14 +107,27 @@ test('answers are untrusted text: tags and entities are made plain, and every fi
 test('what a lookup adds: only what was missing over a page’s own tags, everything over what a PDF said', () => {
   const lookup = { title: 'The Right Title', authors: ['Ada, A'], date: '2024-09-17', doi: '10.1/x', source: 'datacite', readAt: 'now' };
   const tags = { title: 'Title From The Page', date: '2024', readAt: 'then' };
-  assert.deepEqual(mergeCitation(tags, lookup), { title: 'Title From The Page', date: '2024', readAt: 'then', authors: ['Ada, A'], doi: '10.1/x' }, 'the page’s tags keep their fields and stay the page’s');
+  const filledTags = { title: 'Title From The Page', date: '2024', readAt: 'then', authors: ['Ada, A'], doi: '10.1/x', filled: { authors: 'datacite', doi: 'datacite' } };
+  assert.deepEqual(mergeCitation(tags, lookup), filledTags, 'the page’s tags keep their fields and stay the page’s; what the lookup gave is marked');
   assert.deepEqual(filled(tags, lookup), ['authors', 'doi']);
   const pdf = { title: 'A Guess From The Largest Text', arxiv: '2409.11211', arxivCategory: 'cs.CV', pdfUrl: 'https://arxiv.org/pdf/2409.11211', source: 'pdf', readAt: 'then' };
-  assert.deepEqual(mergeCitation(pdf, lookup), { arxiv: '2409.11211', arxivCategory: 'cs.CV', pdfUrl: 'https://arxiv.org/pdf/2409.11211', title: 'The Right Title', authors: ['Ada, A'], date: '2024-09-17', doi: '10.1/x', source: 'datacite', readAt: 'now' },
-    'a lookup outranks what the PDF said about itself, and keeps what only the PDF knew');
-  assert.deepEqual(mergeCitation(lookup, pdf), mergeCitation(pdf, lookup), 'in either order');
-  assert.deepEqual(mergeCitation(lookup, { title: 'Other', journal: 'J', source: 'crossref', readAt: 'later' }), { ...lookup, journal: 'J' }, 'a second lookup only fills gaps');
-  assert.deepEqual(mergeCitation(lookup, tags), { authors: ['Ada, A'], doi: '10.1/x', title: 'Title From The Page', date: '2024', readAt: 'then' }, 'tags read later take over, and keep what the lookup added');
+  const overPdf = { ...lookup, arxiv: '2409.11211', arxivCategory: 'cs.CV', pdfUrl: 'https://arxiv.org/pdf/2409.11211', filled: { arxiv: 'pdf', arxivCategory: 'pdf', pdfUrl: 'pdf' } };
+  assert.deepEqual(mergeCitation(pdf, lookup), overPdf, 'a lookup outranks what the PDF said about itself, and keeps what only the PDF knew');
+  assert.deepEqual(mergeCitation(lookup, pdf), overPdf, 'in either order');
+  assert.deepEqual(mergeCitation(lookup, { title: 'Other', journal: 'J', source: 'crossref', readAt: 'later' }), { ...lookup, journal: 'J', filled: { journal: 'crossref' } }, 'a second lookup only fills gaps');
+  assert.deepEqual(mergeCitation(lookup, tags), filledTags, 'tags read later take over, and keep what the lookup added');
   assert.deepEqual(mergeCitation(tags, { title: 'Read Again', readAt: 'later' }), { title: 'Read Again', readAt: 'later' }, 'tags read again replace the earlier reading, as in 0.5.0');
+  // Capturing the page again keeps what a lookup filled in, unless the page now gives it itself.
+  assert.deepEqual(mergeCitation(filledTags, { title: 'Read Again', readAt: 'later' }), { title: 'Read Again', readAt: 'later', authors: ['Ada, A'], doi: '10.1/x', filled: { authors: 'datacite', doi: 'datacite' } },
+    'the page’s own date is gone with the old reading; the looked-up authors and DOI stay');
+  assert.deepEqual(mergeCitation(filledTags, { title: 'Read Again', authors: ['Ada, Anna'], readAt: 'later' }), { title: 'Read Again', authors: ['Ada, Anna'], readAt: 'later', doi: '10.1/x', filled: { doi: 'datacite' } }, 'the page’s own authors replace the looked-up ones');
+  // Everything passes the model, and a made-up `filled` is refused or dropped.
+  const key = 'https://doi.org/10.1/x';
+  let state = reduceState(createState(), { type: 'links.append', links: [], pages: { [key]: tags } });
+  state = reduceState(state, { type: 'links.append', links: [], pages: { [key]: lookup } });
+  assert.deepEqual(state.collections[0].pages[key], filledTags);
+  assert.throws(() => reduceState(createState(), { type: 'links.append', links: [], pages: { [key]: { title: 'T', filled: { title: 'somewhere' } } } }), /filled must name one of/);
+  assert.throws(() => reduceState(createState(), { type: 'links.append', links: [], pages: { [key]: { title: 'T', filled: { bogus: 'pdf' } } } }), /Unsupported pages entry field: bogus/);
+  assert.equal(reduceState(createState(), { type: 'links.append', links: [], pages: { [key]: { title: 'T', filled: { authors: 'pdf' } } } }).collections[0].pages[key].filled, undefined, 'a mark for a field that isn’t there is dropped');
   assert.deepEqual(mergeCitation(undefined, lookup), lookup);
 });

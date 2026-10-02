@@ -154,6 +154,18 @@ function pageCitation(value, name = 'page citation') {
       if (authors.length) kept.authors = authors;
       continue;
     }
+    // Which source filled a field the stronger reading left empty (0.6.0): {field: source}.
+    if (key === 'filled') {
+      object(text, `${name}.filled`);
+      const filled = {};
+      for (const [field, source] of Object.entries(text)) {
+        if (field !== 'authors' && !(field in PAGE_TEXT)) throw new Error(`Unsupported ${name} field: ${field}`);
+        if (!CITATION_SOURCES.includes(source)) throw new Error(`${name}.filled must name one of ${CITATION_SOURCES.join(', ')}`);
+        if (value[field] !== undefined && field !== 'source' && field !== 'readAt') filled[field] = source;
+      }
+      if (Object.keys(filled).length) kept.filled = filled;
+      continue;
+    }
     if (!(key in PAGE_TEXT)) throw new Error(`Unsupported ${name} field: ${key}`);
     if (typeof text !== 'string') throw new Error(`${name}.${key} must be text`);
     const clean = text.trim().replace(/\s+/gu, ' ');
@@ -179,17 +191,27 @@ function pagesMap(value, name = 'collection.pages') {
 
 // One address's citation after a newer reading (0.6.0). A page's own citation tags come first,
 // then what a lookup service returned, then what the PDF says about itself. The stronger reading
-// keeps its fields and the weaker one only fills the fields left empty. The same kind of reading
-// again replaces the earlier one for tags and PDFs (they were read afresh); a second lookup only
+// keeps its fields and the weaker one only fills the fields left empty; `filled` records which
+// source gave each of those ({authors: 'crossref'}), so the details can say so. The same kind of
+// reading again replaces the earlier one for tags and PDFs (they were read afresh), but keeps what
+// another source had filled in where the new reading still leaves it empty. A second lookup only
 // fills gaps, so it never churns what an earlier lookup gave.
 const citationRank = (citation) => (!citation.source ? 3 : citation.source === 'pdf' ? 1 : 2);
 export function mergeCitation(older, newer) {
   if (!older) return newer;
   const before = citationRank(older), after = citationRank(newer);
-  if (before === after && before !== 2) return newer;
-  const [strong, weak] = after > before ? [newer, older] : [older, newer];
-  const { source: _source, readAt: _readAt, ...filler } = weak;
-  return { ...filler, ...strong };
+  const afresh = before === after && before !== 2;
+  const [strong, weak] = afresh || after > before ? [newer, older] : [older, newer];
+  const { filled: given = {}, ...result } = strong;
+  const filled = { ...given };
+  for (const [key, value] of Object.entries(weak)) {
+    if (key === 'source' || key === 'readAt' || key === 'filled' || result[key] !== undefined) continue;
+    const from = weak.filled?.[key] || (afresh ? '' : weak.source);
+    if (!from) continue;
+    result[key] = value; filled[key] = from;
+  }
+  const kept = Object.fromEntries(Object.entries(filled).filter(([key]) => result[key] !== undefined));
+  return Object.keys(kept).length ? { ...result, filled: kept } : result;
 }
 // Merges newer page citations into older ones, address by address (mergeCitation), and keeps at
 // most MAX_PAGES, dropping the oldest readings first.

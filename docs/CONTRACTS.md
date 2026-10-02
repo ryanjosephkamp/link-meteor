@@ -1259,6 +1259,7 @@ New optional fields; absent means none, so a 0.5.0 state needs no migration.
 | `arxivVersion` | page citation | string, at most 8 characters (`v1`) | The version on arXiv's stamp. |
 | `arxivCategory` | page citation | string, at most 40 characters (`cs.CV`) | The primary category on arXiv's stamp. |
 | `source` | page citation | `'pdf'`, `'crossref'`, `'datacite'` or `'pubmed'` | Where the citation was read. Absent means the page's own citation tags, as in 0.5.0. |
+| `filled` | page citation | `{[field]: source}` | Which other source filled a field this reading left empty. Absent when none did. |
 
 - **Links from a PDF in a tab** have `sourceUrl` the PDF's address, `sourceTitle` its title, `pdfPage`, and the PDF's citation as their source citation, `pages[sourceUrl]`.
 - **Links from a PDF file** have empty `sourceUrl`, and `imported` such as `paper.pdf, page 3`. Rows and details show *Imported*.
@@ -1469,6 +1470,8 @@ The parts every lane builds on. Where this differs from the draft above, this is
 **The data** (`src/core/model.js`):
 - `pdfPage` on links; `arxivVersion`, `arxivCategory` and `source` on page citations; `MAX_PDF_PAGES`, `CITATION_SOURCES`.
 - **Which reading of a citation wins** (`mergeCitation(older, newer)`, used by `links.append` with `pages`): a page's own citation tags first, then a lookup, then the PDF. The stronger reading keeps its fields, and the weaker one fills only the fields left empty. So a lookup replaces a title that was only guessed from a PDF's largest text, and never replaces anything a page's tags gave. Tags read again, or a PDF read again, replace the earlier reading of the same kind; a second lookup only fills gaps.
+  - `filled: {[field]: source}` on a page citation records which source gave each field the stronger reading had left empty, such as `{authors: 'crossref', journal: 'crossref'}`, so a link's details can say so. Marks for fields that aren't there are dropped.
+  - When a page is captured again, its new tags replace its old ones, and the fields another source had filled in are kept wherever the page still doesn't give them.
 - `pages.restore {collectionId?, pages: {[address]: PageCitation | null}}` sets or removes citations exactly: Undo for a lookup.
 - Settings `followPages` (`MIN_FOLLOW_PAGES` 2 to `MAX_FOLLOW_PAGES` 20) and `lookupDetails`; both are in Copy diagnostics, as a number and yes or no.
 - Backup format 4.

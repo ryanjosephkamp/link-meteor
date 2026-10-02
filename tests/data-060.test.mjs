@@ -28,13 +28,15 @@ test('a page’s own tags are never replaced by what a PDF or a lookup said, and
   const tags = { title: 'From the Page’s Tags', authors: ['Mihajlovic, Marko'], readAt: '2026-10-01T00:00:00.000Z' };
   let state = reduceState(createState(), { type: 'links.append', links: [link('a', PDF)], pages: { [PDF]: tags } });
   state = reduceState(state, { type: 'links.append', links: [], pages: { [PDF]: fromPdf } });
-  assert.deepEqual(home(state).pages[PDF], { arxiv: '2409.11211', arxivVersion: 'v1', arxivCategory: 'cs.CV', date: '17 Sep 2024', pdfUrl: PDF, title: 'From the Page’s Tags', authors: ['Mihajlovic, Marko'], readAt: '2026-10-01T00:00:00.000Z' });
+  assert.deepEqual(home(state).pages[PDF], { arxiv: '2409.11211', arxivVersion: 'v1', arxivCategory: 'cs.CV', date: '17 Sep 2024', pdfUrl: PDF, title: 'From the Page’s Tags', authors: ['Mihajlovic, Marko'], readAt: '2026-10-01T00:00:00.000Z',
+    filled: { arxiv: 'pdf', arxivVersion: 'pdf', arxivCategory: 'pdf', date: 'pdf', pdfUrl: 'pdf' } });
   // The other way around: the PDF was read first, then the page's tags.
   let later = reduceState(createState(), { type: 'links.append', links: [link('a', PDF)], pages: { [PDF]: fromPdf } });
   later = reduceState(later, { type: 'links.append', links: [], pages: { [PDF]: tags } });
   assert.equal(home(later).pages[PDF].title, 'From the Page’s Tags');
   assert.equal(home(later).pages[PDF].arxivCategory, 'cs.CV', 'what only the PDF knew is kept');
   assert.equal(home(later).pages[PDF].source, undefined);
+  assert.equal(home(later).pages[PDF].filled.arxivCategory, 'pdf', 'and marked as the PDF’s');
 });
 
 test('pages.restore sets or removes citations exactly, for a lookup’s Undo', () => {

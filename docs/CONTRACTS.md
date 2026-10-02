@@ -1369,6 +1369,84 @@ In the Export panel's *Download files*, the PDFs among the chosen links (the fil
 - **Frames.** *Capture this page* runs the collector in every frame Link Meteor has access to (`allFrames`), and each frame's links keep their `frameUrl`. With only the toolbar's temporary access, frames from other sites can't be read; the report names their sites, from the frames' addresses in the page, and offers *Allow these sites* to include them. Frames whose sites can't be named are reported as a count. No `webNavigation` permission is used.
 - **Closed components.** The collector looks inside closed shadow roots with `chrome.dom.openOrClosedShadowRoot`, which needs no permission. Region selection includes their links too.
 
+**As built** (`src/content/capture.js`, `src/background/frames.js`, `src/background/frame-join.js`, `src/ui/workbench/frames.js`). Where this differs from the draft above, this is what the code does.
+
+**What was tested first,** in a throwaway profile with a small diagnostic extension:
+- `chrome.dom.openOrClosedShadowRoot` returns a page's own shadow roots, open or closed, and none of the browser's own (a text field, a video, a details element). It throws for anything that isn't an HTML element (an SVG element), and it accepts elements of a same-site frame's document. A call takes under a microsecond.
+- `window.frames` lists the frames in a document, but not a frame inside a shadow root. From inside any frame, another site's too, `parent[i] === window` finds that frame's own index. Both hold in the page script's isolated world.
+- `scripting.executeScript` with `allFrames` and Chrome's default timing doesn't answer while any frame is still loading, or while the page holds a lazy frame it hasn't loaded yet. With `injectImmediately` it answers at once.
+- With a grant for a site, `allFrames` also reaches that site's sandboxed frames, and frames written in the page (`srcdoc`, and `data:` on the current Chrome but not on Chrome 116). The toolbar's temporary access reaches the page's own site, including a frame of that site inside another site's frame, but not a sandboxed frame.
+- All of this holds on Chrome 116 too, except the `data:` frames.
+
+**Closed components** (the page script):
+- `shadowOf(element)` returns `element.shadowRoot`, or `chrome.dom.openOrClosedShadowRoot(element)` for the elements that can hold a shadow root: custom elements, and the eighteen HTML elements `attachShadow` accepts. Where Chrome has no `chrome.dom`, only open roots are seen, as before.
+- Everything that reads the page uses the one collector, so all of these see links inside closed roots: *Capture this page*, region selection and hold-key drag with their highlights, the links of a selection (`content.selectionLinks`), and the right-click lookup's search by address (`content.contextLink`).
+- A closed root hides the right-clicked link from the `contextmenu` event. The page script then finds the link under the pointer (`elementFromPoint`, followed into each shadow root), so the right-clicked one of two links with the same address is still the one saved.
+- Visibility, page chrome and context work as before, looking out through a closed root to its host. A link the page hands to a closed component (a slotted link) is counted once.
+
+**Frames** (the page script):
+- *Capture this page* loads the page script in every frame Chrome lets it into. What a copy does depends on where it is:
+  - **the top document:** everything, as before;
+  - **a frame the document around it can reach** (the same site, not sandboxed): nothing. It returns before defining anything, because that frame is read from outside, as it always was. This is what keeps a link from being read twice;
+  - **any other frame** (another site, or a sandboxed one): it defines `scan` and nothing else. It adds no listeners, asks for no settings, answers no messages, and shows no card. Region selection, hold-key drag and the menus stay in the top document.
+- `scan(options)` returns `{links, warnings, page, inaccessibleFrames, frames, at, url, title, malformed, capped}`:
+  - `frames`: the visible frames this document couldn't read, in page order, each `{site, at, chrome}`:
+    - `site`: the origin its `src` names, when that is a web address; otherwise the origin of the document the frame sits in (a frame written in the page, or one with no address, belongs to that page); `''` when neither is a web address;
+    - `at`: where the frame sits: its index among its parent's frames at each level from the top, joined with dots (`"2.0"`), or `null` for a frame inside a shadow root, which has no index;
+    - `chrome`: the frame sits in page chrome (navigation, a sidebar);
+  - `at`: this document's own place (`""` for the top), `url` and `title`: its address and title;
+  - `malformed` and `capped`: what `warnings` says, as a count and a yes or no;
+  - `warnings` no longer has a sentence about frames: the background writes it. `page` is `null` in a frame.
+- A frame hidden in the page (by the rules that hide a link) is neither read nor counted.
+- A frame's place is worked out from the frames' own order. Nothing is sent through the page, and no `webNavigation` permission is used.
+
+**The pipeline** (the background):
+- `scanTab(tabId, options, {left?, top?, ms?})` in `src/background/frames.js`. `captureTabs` loads the script in the top document as before, then calls it. It makes two `executeScript` calls with `allFrames: true` and `injectImmediately: true`: the script file, then `scan`. It returns `{links, warnings, page, fresh, frames?}`. With `top`, a scan answer the caller already holds for the top document stands in for that document's, and only the frames' answers are new.
+- The frames are read as they are at that moment, and have `FRAMES_MS` (10 seconds) to answer. After that, or when Chrome refuses the call, the top document is read alone and its frames are reported as not read.
+- `joinFrames(results, {left?})` in `src/background/frame-join.js` (pure) joins the answers:
+  - starting at the top document, each entry of `frames` is paired with the answer whose `at` is the same; an entry with no place is paired with an unused answer with no place from the same site;
+  - a paired frame's links follow the top document's. They keep their own `frameUrl`, take the page's address and title as `sourceUrl` and `sourceTitle`, and carry `pageChrome` when their frame sits in page chrome, so *content links only* leaves a sidebar frame out;
+  - an answer nobody pairs is left out. That is a frame hidden in the page, or a frame inside a frame that wasn't read: it is not read either, even where Link Meteor has access to its site;
+  - limits: 20,000 links for the page, 1,000 frames in one document, 32 frames deep.
+- **The sites to ask for:** each unread frame's site, unless Chrome says Link Meteor already has access to it (asking wouldn't help, so that frame is only counted); at most 20 sites (`MAX_FRAME_SITES`).
+- **In the report.** `CaptureReport` gains `collectionId` (the collection the capture went to). A page's result gains `frames` when the page has frames of this kind:
+
+  | Field | Meaning |
+  | --- | --- |
+  | `read` | How many frames were read by their own copy of the page script. |
+  | `unread` | How many visible frames weren't read. |
+  | `sites` | The origins *Allow these sites* asks for, sorted. Empty when there is nothing to ask for. |
+  | `left` | The unread frames, each `{site, at}`, kept so a later reading can tell which frames are new. |
+
+- **The words** (`framesWarning`), at the end of the result's `warning`:
+  - "2 frames from other sites weren’t read, because Link Meteor has no access to a.example and b.example. Allow those sites to include their links." (one site: "1 frame from another site wasn’t read, … Allow that site to include its links."; more than three sites: "a.example, b.example, c.example and 2 more");
+  - a sandboxed frame of the page's own site, which the toolbar's temporary access doesn't reach: "1 sandboxed frame of this site wasn’t read: the toolbar’s temporary access covers the page, not the frames it seals off. Allow this site (a.example) to include its links.";
+  - both kinds: "3 frames weren’t read: 2 from another site (b.example), which Link Meteor has no access to, and 1 sandboxed frame of this site, which the toolbar’s temporary access doesn’t cover. Allow that site and this one (a.example) to include their links.";
+  - frames there is nothing to ask for: "1 frame couldn’t be read: Chrome didn’t let Link Meteor into it." ("1 more frame…" after one of the sentences above).
+- Malformed links are counted across the frames, in one sentence.
+
+**Allow these sites** (the workbench, `src/ui/workbench/frames.js`):
+- A result whose `frames.sites` isn't empty gets a button in its report item, `.report-frames-allow` (also `.report-allow`): *Allow these sites*, or *Allow this site* for one. Its `title` names every site.
+- The click calls `chrome.permissions.request({origins})` once, before anything is awaited, with exactly `sites` as `<origin>/*`. A decline changes nothing and says "Chrome’s request for access to … was declined, so nothing changed. The frames from those sites are still not read."
+- After Allow, the workbench sends `capture.frames {tabId, batchId}` (workbench only), which answers `{state, report, added: {count, skipped, leftOut, frames}}`:
+  - it needs the kept report of that capture (session key `linkMeteorCaptureReport`), with a successful result for that tab that left frames unread, and the tab still at the same address;
+  - it reads the page again and keeps only the links in frames that were in `left` and are read now, and in the frames inside them. A frame is the same frame when its site and its place are the same. So a frame that was read the first time is never added twice;
+  - the links join the capture's own batch (`batchId`) and collection (`collectionId`), whichever collection is active now. *Skip saved* and *content links only* apply. Navigation links left out join those kept for *Include them*; when *Include them* was already used for this capture, they are added;
+  - the page's citation isn't written again;
+  - the kept report is updated (`count`, `leftOut`, `skipped`, `warning`, `frames`, `capturedCount`), so a view opened later shows the same;
+  - `added.frames` counts the frames read now that weren't before.
+- Refusals, each in plain words: no kept report for that capture; nothing left unread; the tab closed; the tab moved to another page; the page can no longer be read; the capture's collection deleted.
+- The notice: "Added 7 links from 6 more frames."; "Read 1 more frame: no links Link Meteor can read there."; or, when the frames still don't answer, "Link Meteor now has access to …, but the frames from those sites still couldn’t be read. The capture report says what is left." Focus stays in the report.
+- With all-sites access every frame is read, `sites` is empty and nothing is offered.
+
+**Region selection, hold-key drag and the menus** stay in the top document. They read the frames the top document can reach, as before, and the card says what it left out: "Links inside 6 frames aren’t included: a selection can’t reach into frames from other sites (a.example and b.example) or sandboxed frames. Capture this page reads them where Link Meteor has access."
+
+**Tests.**
+- `tests/frames.test.mjs` (unit): joining, pairing by place and by site, `left`, the limits, every sentence, and the pipeline with Chrome's APIs simulated (the calls made, the fallback, *content links only* and *Skip saved* per frame, `capture.frames` and its refusals).
+- `tests/access-content.mjs` (the page script with a stub `chrome`): closed roots with a stand-in for `chrome.dom` and without it, in a scan, a hold-key region, the right-click lookup and a selection; and the frames fixture, where the script runs in every frame and the real `joinFrames` joins the answers for each kind of access.
+- `tests/coverage-browser.mjs` (the loaded extension, Chrome's real toolbar action, no grants): closed components through *Capture this page*, a region and the right-click lookup, with the real `chrome.dom`; frames with only the toolbar's access; *Allow these sites* with Chrome's answer stood in for; frames still loading; 320 px and contrast in light and dark. Fixtures: `tests/fixtures/site/coverage/`.
+- Granted, for the owner's session: `tests/access-granted.mjs` (all sites: every frame read, each link once with its `frameUrl`) and `tests/frames-granted.mjs` (the per-site profile: *Allow these sites* with Chrome's real prompt, which names two sites).
+
 ### Page details lookup
 
 Off by default (`lookupDetails`). It fills in a paper's title, authors, date and journal from its identifier.

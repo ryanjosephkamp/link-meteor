@@ -12,6 +12,7 @@ import { renderBookmarkTarget } from './bookmarks.js';
 import { renderOpenTarget } from './open.js';
 import { bindNames, renderNames, renderSavesAs, exportName, followFormatChange } from './names.js';
 import { bindDownloads, renderDownloadTarget } from './downloads.js';
+import { renderLookupLine } from './lookup.js';
 
 const FORMAT_HELP = {
   xlsx: 'Every cell is stored as text, so nothing is reinterpreted as a formula, number or date. Web and email addresses are clickable, and a second sheet, About, records when and how the file was exported.',
@@ -21,10 +22,10 @@ const FORMAT_HELP = {
   html: 'A plain HTML table using your columns. Page text is escaped.',
   json: 'Every field for every link, including all grouped occurrences, after an about block that records when and how the file was exported. Columns do not apply.',
   text: 'One URL per line, exactly as captured. Columns do not apply.',
-  bibtex: 'One entry per link, for Zotero, BibDesk, LaTeX and other reference managers. Built only from what the pages showed; nothing is looked up online.',
-  ris: 'One record per link, for Zotero, EndNote, Mendeley and other reference managers. Built only from what the pages showed; nothing is looked up online.',
-  csl: 'One CSL-JSON item per link, for Zotero, Pandoc and other citation tools. Built only from what the pages showed; nothing is looked up online.',
-  annotated: 'A Markdown bibliography: a citation for each link, with its note, the words around it on its page, and its tags. Nothing is looked up online.',
+  bibtex: 'One entry per link, for Zotero, BibDesk, LaTeX and other reference managers. Built from the details saved with each link; while exporting, nothing is looked up online.',
+  ris: 'One record per link, for Zotero, EndNote, Mendeley and other reference managers. Built from the details saved with each link; while exporting, nothing is looked up online.',
+  csl: 'One CSL-JSON item per link, for Zotero, Pandoc and other citation tools. Built from the details saved with each link; while exporting, nothing is looked up online.',
+  annotated: 'A Markdown bibliography: a citation for each link, with its note, the words around it on its page, and its tags. While exporting, nothing is looked up online.',
   obsidian: 'A Markdown note for an Obsidian vault: properties first, then a list item for each link with its note, custom columns as name:: value fields, and the words around it on its page.',
 };
 const DOWNLOAD_LABELS = { xlsx: 'Excel file', csv: 'CSV file', tsv: 'TSV file', markdown: 'Markdown file', html: 'HTML file', json: 'JSON file', text: 'URL list',
@@ -109,6 +110,7 @@ export function renderExportTarget() {
   $('download-label').textContent = `Download ${DOWNLOAD_LABELS[format]}`;
   renderNames();
   renderCite(rows, format);
+  renderLookupLine(rows, format);
   $('format-help').textContent = (FORMAT_HELP[format] || '') + (format === 'json' && fieldsOf(collection).length ? ' Custom columns are in each link’s fields, and the about block names them.' : '');
   $('columns-help').textContent = ['markdown', 'json', 'text'].includes(format)
     ? 'Columns apply to the Table copy and to CSV, TSV, Excel and HTML files. This format ignores them.'
@@ -166,8 +168,9 @@ function renderCite(rows, format) {
   } else {
     lines.push(item(facts.entries, `${facts.entries === 1 ? 'entry' : 'entries'}, ${per}`),
       item(facts.identified, 'with a DOI or arXiv ID'),
-      item(facts.authorsAndDate, 'with authors and a date, read from the pages themselves'));
-    // A paper's authors come only from its own page: say how to get them, since nothing is looked up.
+      item(facts.authorsAndDate, 'with authors and a date'));
+    // A paper's authors come from its own page, or from a lookup the person asks for (lookup.js adds
+    // Look up details below this list): say how to get them.
     if (facts.unauthored) lines.push(item(facts.unauthored, `with a DOI or arXiv ID but no authors yet. Capture from the paper’s own page (on arXiv, its abstract page) or save that page as a tab, and its authors and date fill in`));
     const rest = facts.entries - facts.pageTitles;
     if (!facts.pageTitles) lines.push(item(null, facts.addressTitles ? 'Titles are the anchor text, or the address when a link has none' : 'Titles are the anchor text'));

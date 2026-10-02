@@ -212,9 +212,9 @@ try {
   const linkDetails = await details(2);
   assert.equal(linkDetails.page, 'Page 1 of the PDF');
   assert.equal(linkDetails.source, `${title}\n${paperUrl}\nPage 1 of the PDF`);
-  assert.deepEqual([linkDetails.citedTitle, linkDetails.citedLine, linkDetails.citedNote], [title, '17 Sep 2024 · DOI 10.5555/fixture.2026.001 · arXiv 2409.11211', 'Read from the PDF itself. Saved in this browser; nothing was looked up online.']);
+  assert.deepEqual([linkDetails.citedTitle, linkDetails.citedLine, linkDetails.citedNote], [title, '17 Sep 2024 · DOI 10.5555/fixture.2026.001 · arXiv 2409.11211', 'Read from the PDF itself. Saved in this browser.']);
   const selfDetails = await details(0);
-  assert.deepEqual([selfDetails.page, selfDetails.citedNote, selfDetails.citation], ['', 'Read from the PDF itself. Saved in this browser; nothing was looked up online.', false], 'the PDF itself is on no page, and its citation is its own');
+  assert.deepEqual([selfDetails.page, selfDetails.citedNote, selfDetails.citation], ['', 'Read from the PDF itself. Saved in this browser.', false], 'the PDF itself is on no page, and its citation is its own');
   pass('capture-this-pdf-adds-one-batch', {links: home.links.length, citation: cited});
 
   // 8. Undo removes the batch. (What the PDF said about itself stays until no link uses it and the

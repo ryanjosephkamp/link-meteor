@@ -154,6 +154,30 @@
         <p id="appearance-help" class="help">The theme also colors the capture card on webpages and the toolbar icon. System follows your computer’s light or dark setting.</p>
       </section>
 
+      <section id="online-panel" class="rail-section online" aria-labelledby="online-title">
+        <h2 id="online-title" class="rail-title">Online lookups</h2>
+        <p class="help">Link Meteor works without the internet. These are extras: each is off until you turn it on, and each says exactly what it sends.</p>
+        <div class="online-item">
+          <div class="hold-row">
+            <input id="lookup-details" type="checkbox" role="switch" class="switch" aria-describedby="lookup-help lookup-sends">
+            <label for="lookup-details">Page details lookup</label>
+          </div>
+          <p id="lookup-help" class="help">Fills in a paper’s title, authors, date and journal when you click Look up details.</p>
+          <div id="lookup-sends" class="sends">
+            <p class="sends-title">What it sends, and where</p>
+            <p class="sends-what">Page details lookup is off unless you turn it on. When it is on and you click Look up details, Link Meteor sends the paper’s DOI, arXiv ID or PubMed ID, and nothing else, to:</p>
+            <ul>
+              <li><b>Crossref</b> (<code>api.crossref.org</code>) for DOIs</li>
+              <li><b>DataCite</b> (<code>api.datacite.org</code>) for DOIs Crossref doesn’t have, including arXiv’s</li>
+              <li><b>NCBI</b> (<code>eutils.ncbi.nlm.nih.gov</code>) for PubMed IDs</li>
+            </ul>
+            <p class="sends-not">No page address, link text, note or collection name is sent. No cookies are sent or kept.</p>
+            <p class="sends-not">Like any website you visit, those services see your IP address and your browser’s version and language.</p>
+            <p class="sends-not">What they return (title, authors, date, journal) is saved in this browser with the link.</p>
+          </div>
+        </div>
+      </section>
+
       <section id="import-panel" class="rail-section import-panel" aria-labelledby="import-panel-title">
         <h2 id="import-panel-title" class="rail-title">Import links</h2>
         <p id="import-panel-help" class="help">From a spreadsheet, a list, a PDF, a web page or bookmarks file, pasted text or a bookmark folder. You see what will be added before anything is. Files are read in this browser and never uploaded.</p>
@@ -419,6 +443,7 @@
             <button id="fill-fields" class="btn quiet small" type="button" aria-expanded="false" aria-controls="fill-panel" hidden>Fill for selected links</button>
             <button id="move-selected" class="btn quiet small" type="button" aria-expanded="false" aria-controls="move-panel" hidden><svg class="icon" aria-hidden="true"><use href="#i-folders"/></svg>Move to…</button>
             <button id="copy-selected" class="btn quiet small" type="button" aria-expanded="false" aria-controls="move-panel" hidden><svg class="icon" aria-hidden="true"><use href="#i-copy"/></svg>Copy to…</button>
+            <button id="lookup-selected" class="btn quiet small" type="button" hidden><svg class="icon" aria-hidden="true"><use href="#i-search"/></svg>Look up details</button>
           </div>
           <form id="fill-panel" class="fill-panel" aria-labelledby="fill-title" hidden>
             <p id="fill-title" class="fill-title"></p>
@@ -434,6 +459,16 @@
             <p id="move-help" class="help" aria-live="polite"></p>
             <div class="confirm-actions"><button id="move-apply" class="btn primary small" type="submit">Move</button><button id="move-cancel" class="btn quiet small" type="button">Cancel</button></div>
           </form>
+          <div id="lookup-toolbar-host" class="lookup-host">
+            <div id="lookup-status" class="lookup-status" hidden>
+              <div id="lookup-progress" class="lookup-progress" hidden>
+                <div class="lookup-text"><strong id="lookup-count" role="status"></strong><span>Sending only each DOI, arXiv ID or PubMed ID to Crossref, DataCite and NCBI.</span></div>
+                <button id="lookup-stop" class="btn small" type="button" aria-label="Stop the lookup">Stop</button>
+                <progress id="lookup-bar" max="1" value="0" aria-labelledby="lookup-count"></progress>
+              </div>
+              <p id="lookup-done" class="lookup-done" hidden><span id="lookup-done-text" role="status"></span><button id="lookup-undo" class="link-btn" type="button">Undo<span class="sr-only"> the lookup</span></button><button id="lookup-dismiss" class="link-btn" type="button">Dismiss<span class="sr-only"> the lookup’s result</span></button></p>
+            </div>
+          </div>
           <div id="remove-view-confirm" class="confirm danger-confirm toolbar-confirm" role="group" aria-labelledby="remove-view-confirm-text" hidden>
             <p id="remove-view-confirm-text"></p>
             <div class="confirm-actions"><button id="remove-view-confirm-yes" class="btn danger-solid small" type="button">Remove all</button><button id="remove-view-confirm-no" class="btn quiet small" type="button">Keep them</button></div>
@@ -510,6 +545,10 @@
         </fieldset>
         <div id="cite-block" class="cite-block" hidden>
           <ul id="cite-facts" class="cite-facts" aria-label="What the file holds"></ul>
+          <div id="lookup-box" class="lookup-box" hidden>
+            <p id="lookup-line" class="lookup-line" hidden><span id="lookup-line-text"></span><button id="lookup-authors" class="btn small" type="button"><svg class="icon" aria-hidden="true"><use href="#i-search"/></svg><span>Look up details</span></button></p>
+            <div id="lookup-export-host" class="lookup-host"></div>
+          </div>
           <p id="cite-first-label" class="help">First entry</p>
           <pre id="cite-first" class="cite-preview" tabindex="0" role="region" aria-labelledby="cite-first-label"></pre>
         </div>

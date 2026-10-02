@@ -210,7 +210,7 @@ try {
   await row(0).locator('summary').click();
   assert.equal(await row(0).locator('.pdf-page').count(), 0, 'the paper itself is on no page');
   assert.deepEqual([await row(0).locator('[aria-label="Citation"] .cited-title').innerText(), await row(0).locator('[aria-label="Citation"] .cited-note').innerText()],
-    [title, 'Read from the PDF itself. Citation exports use it. Saved in this browser; nothing was looked up online.']);
+    [title, 'Read from the PDF itself. Citation exports use it. Saved in this browser.']);
   assert.ok((await ui.locator('#add-column option').allInnerTexts()).includes('PDF page'), 'PDF page is a choosable export column');
   await ui.locator('#notice button', {hasText: 'Undo'}).click();
   await notice('Undone: removed 16 links.');

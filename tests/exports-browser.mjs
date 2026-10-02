@@ -774,7 +774,7 @@ try {
   }
   await ui.locator('#format').selectOption('bibtex');
   const citeLines = await facts();
-  assert.deepEqual([citeLines[0], citeLines[1], citeLines[2], citeLines[4]], ['14 entries, one per link', '4 with a DOI or arXiv ID', '2 with authors and a date, read from the pages themselves', '11 use the anchor text as the title, or the address when there is none']);
+  assert.deepEqual([citeLines[0], citeLines[1], citeLines[2], citeLines[4]], ['14 entries, one per link', '4 with a DOI or arXiv ID', '2 with authors and a date', '11 use the anchor text as the title, or the address when there is none']);
   // 0.5.0 RC3: papers no saved page describes have no authors; the panel says how to get them.
   const unauthored = citeFacts(citeRows, citeOptions.pages).unauthored;
   assert.ok(unauthored > 0, 'the seeded collection has papers no saved page describes');
@@ -847,8 +847,11 @@ try {
   await ui.emulateMedia({colorScheme: 'light', reducedMotion: 'reduce'});
   await ui.setViewportSize({width: 1440, height: 1000});
   // The first entry scrolls, so it takes keyboard focus, with a visible ring, and is named by its label.
+  // 0.6.0: Look up details comes first, since this collection has papers with no authors yet.
   await ui.locator('#format').focus(); await ui.keyboard.press('Tab');
-  assert.equal(await ui.evaluate(() => document.activeElement?.id), 'cite-first', 'Tab reaches the first entry after the format list');
+  assert.equal(await ui.evaluate(() => document.activeElement?.id), 'lookup-authors', 'Tab reaches Look up details after the format list');
+  await ui.keyboard.press('Tab');
+  assert.equal(await ui.evaluate(() => document.activeElement?.id), 'cite-first', 'then the first entry');
   assert.notEqual(await ui.evaluate(() => getComputedStyle(document.activeElement).outlineStyle), 'none');
   assert.equal(await ui.getByRole('region', {name: 'First entry'}).count(), 1);
   await ui.locator('#export-panel').screenshot({path: resolve(evidence, 'lane-cite-desktop.png'), animations: 'disabled'});

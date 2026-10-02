@@ -1432,7 +1432,7 @@ Where this differs from the draft above, this is what the code does.
 - `content.run` from the background: `{runId, text}` shows the counter; `{runId, done: true, text}` says how the run ended; `{runId, halt: true}` is Stop from the workbench.
 
 **Messages** (`src/background/runs.js`; from the workbench unless said):
-- `run.start {kind: 'next' | 'pages', tabId?, urls?, collectionId, scroll?}` answers `{runId}` at once; the run goes on by itself. Refusals: an unknown kind, no collection, a collection that is gone, more than 20 pages ("Choose up to 20 pages at a time."), addresses that aren't web pages, and a run already going ("Link Meteor is already running a capture. Stop it, or wait for it to finish.").
+- `run.start {kind: 'next' | 'pages', tabId?, urls?, collectionId, scroll?}` answers `{runId}` at once; the run goes on by itself. Refusals: an unknown kind, no collection, a collection that is gone, more than 20 pages ("Choose up to 20 pages at a time."), addresses that aren't web pages, and a run already going ("Link Meteor is already running a capture. Stop it, or wait for it to finish."). The kind `files` is described under [PDF files](#pdf-files-one-zip-or-one-combined-pdf), as built.
 - `run.stop {runId}` from the workbench, or from the page the run is reading (its Stop button or Escape). Any other page is refused.
 - `run.status {}` answers `{run}`: the run in progress, or the last one that ended, or `null`.
 - `run.progress {runId, kind, step, of, links, state, title, text, page, startedAt}` goes to Link Meteor's pages as the run moves. `state` is `'running'`, `'stopping'` or `'done'`; `text` is the counter ("Page 4 of up to 20 · 212 links"); `page` is the title of the page being read. With `'done'` it also has `ended {reason, text}`, `summary`, `batchId`, `collectionId`, `name`, `count`, `undone` and `results`.
@@ -1467,7 +1467,7 @@ Where this differs from the draft above, this is what the code does.
 - While a run is going, the background makes a small call every 20 seconds, so Chrome doesn't stop it between pages.
 - When the worker starts and finds `linkMeteorRun` still `'running'`, no worker is driving that run. The step it was on is reported as "Interrupted: Chrome stopped Link Meteor’s background worker", and a background tab it had opened is closed. A run of selected pages then goes on with the rest of its queue. Follow Next ends there, because the tab may be anywhere, and says "Chrome stopped Link Meteor’s background worker, so the run ended early." A scroll's own answer is lost with the worker; its record is closed. What was saved stays in every case.
 
-**Another kind of run.** The engine (the queue, pacing, Stop, progress, the session record and the report) is apart from what one step does. `KINDS` in `src/background/runs.js` has one entry for each kind: `{title, begin, step, pause, counter, words, scrolls?, resumes?, endsOnFailure?, onPage?, saves?, report?}`. `begin` checks the request and returns the queue. `step(job, item)` returns `{row, next?, end?}`: the item's line in the report, one more item for the queue, or the reason the run ends. `engine` holds what a step may use: `pause`, `ask` (a question to Link Meteor's pages, answered by a message type listed in `ANSWERS`), `loaded`, `hasAccess`, `documentType`, `capturePage`, `rowOf`, `unread`, `save` and `progress`. `saves: false` is for a kind that saves no links: it needs no collection, and no Undo is offered. `report: false` is for a kind that shows its own report: nothing is put in `linkMeteorCaptureReport`, and `run.status` and the last `run.progress` carry `results`.
+**Another kind of run.** The engine (the queue, pacing, Stop, progress, the session record and the report) is apart from what one step does. `KINDS` in `src/background/runs.js` has one entry for each kind: `{title, begin, step, pause, counter, words, scrolls?, resumes?, endsOnFailure?, onPage?, saves?, report?}`. `begin` checks the request and returns the queue. `step(job, item)` returns `{row, next?, end?, quick?}`: the item's line in the report, one more item for the queue, the reason the run ends, or that no site was asked for anything, so the next step needn't wait. `engine` holds what a step may use: `pause`, `ask` (a question to Link Meteor's pages, answered by a message type listed in `ANSWERS`), `loaded`, `hasAccess`, `documentType`, `capturePage`, `rowOf`, `unread`, `save` and `progress`. `saves: false` is for a kind that saves no links: it needs no collection, and no Undo is offered. `report: false` is for a kind that shows its own report: nothing is put in `linkMeteorCaptureReport`, and `run.status` and the last `run.progress` carry `results`.
 
 **The workbench** (`src/ui/workbench/runs.js`):
 - `#capture-further` (`role="group"`, "Go further than this screen") holds `#further-scroll`, `#further-next` and `#follow-pages` (2 to 20, saved as `followPages`). It shows for *This page* and *Links in the pages*, and not on a PDF. The two choices last while the view is open; nothing is ticked when it opens.
@@ -1508,6 +1508,73 @@ In the Export panel's *Download files*, the PDFs among the chosen links (the fil
 - `#combine-apply` ("Combine 5 PDFs") gets the files still missing, then writes one PDF with the reader's `extractPages([{document: null}, {document: bytes}, …])` on the first PDF, in the list's order, and hands it to Chrome's download.
 - **What the combined PDF keeps** (tested): every page, its text, its web links, the links inside each document, and each document's bookmarks. **Not kept:** page labels (such as i, ii, iii), form fields' behavior and document-level attachments are not promised. A PDF that needs a password can't be combined, and goes into a ZIP as it is.
 - Whole PDFs only: choosing single pages is not in 0.6.0.
+
+**As built** (`src/ui/workbench/pdf-files.js`, the `files` kind in `src/background/runs.js`, and four functions in `src/core/files.js`). Where this differs from the draft above, this is what the code does.
+
+**Which links, and their names** (`src/core/files.js`, pure):
+- `isPdfLink(link)`: a file link whose address ends in `.pdf` or is a known PDF address, or one labeled `[PDF]` whose address names no other file type. `pdfLinks(links)` gives the PDF links among the chosen links, one per address, in the list's order.
+- `pdfFileName(link)` is `downloadName` for a PDF: named after the anchor text, else the address's own file name, always ending `.pdf`.
+- `uniqueNames(names)` numbers repeats before the extension: `Field-notes.pdf`, `Field-notes (2).pdf`. Names that differ only in case count as repeats.
+
+**The section** (`#pdf-set`, a group at the end of *Download files*, labeled by `#pdf-set-title`):
+- `#pdf-set-title`: "The 9 PDFs", "The PDF" for one, and "PDF files" when the chosen links hold none.
+- `#pdf-zip` (*Download as one ZIP*) shows while the chosen links hold at least one PDF. `#pdf-combine` (*Combine into one PDF…*) always shows, because the panel also combines files from the computer.
+- `#pdf-set-help`:
+  - "Link Meteor gets each PDF through a page of its own site, as when you click the link, and puts them together in this browser. Nothing is uploaded. 20 PDFs at most."
+  - with no PDF links: "No PDF links in this view. PDF links end in .pdf or are labeled [PDF]. You can still combine PDF files from your computer: they are read in this browser and never uploaded."
+  - above 20: "Choose up to 20 PDFs at a time. This view has 21 PDF links: select fewer or filter the view, or leave some out under Combine into one PDF…" (`is-problem`), and *Download as one ZIP* is disabled.
+  - while another run is going: "Another capture is running. Wait for it to finish, or stop it." is added, and both actions wait.
+- `#pdf-access`, shown when a start would ask Chrome for sites: "Needs access to 1 site: journal.example.org (2 PDFs). Chrome asks when you start. PDFs on sites you don’t allow are left out." The panel has the same line for its own list (`#combine-access`).
+- `#pdf-progress` (`role="status"`): `#pdf-progress-title` ("Getting PDF 3 of 5", "Stopping…", "Writing the ZIP…", "Combining the PDFs…"), `#pdf-progress-text` ("journal.example.org · 3.5 MB so far. Keep Link Meteor open until this is done."), `#pdf-stop` and a bar. It sits under the two buttons for a ZIP and inside the panel while it combines. Starting moves focus to Stop. The Capture section's own progress line shows the run too, in every open view.
+- `#pdf-result` (`role="status"`): one sentence, then each file with how it ended.
+- *Download files* itself is unchanged.
+
+**Access.** PDFs on the site of the person's own tab, where Link Meteor can read that tab, need nothing more. For the other sites, the click that starts (*Download as one ZIP*, or *Combine N PDFs*) makes one `chrome.permissions.request` naming exactly those sites, before anything else happens. Whatever Chrome answers, the run starts: the background checks each site itself, and a PDF on a site without access is reported as "No access" and never asked for.
+
+**Getting the files: a run of kind `files`.**
+- `run.start {kind: 'files', tabId?, files: [{url, from?, name?}]}` answers `{runId}`. It names no collection and saves nothing. `tabId` is the person's own tab; `from` is the page the link was captured from, kept only when it is on the PDF's own site; `name` is the file's name, shown in the counter. Refusals: "Choose at least one PDF.", "Choose up to 20 PDFs at a time.", "Choose PDFs at web addresses.", and a run already going.
+- For each file the background finds a tab, in the draft's order, and sends `run.file {runId, step, tabId, url}` to Link Meteor's pages; `url` is empty for the tab's own address. Only the page that started the run answers: it fetches the file through that tab (`pdfThroughTab`), keeps it, and sends `run.fileDone {runId, step, ok: true, size}` or `{runId, step, reason}` (`'not-pdf'`, `'size'`, `'status'`, `'failed'`, `'access'`, or `'set-size'` when the files would pass 200 MB together). The answer to `run.fileDone` is `{taken}`: a file the run did not take (Stop, or an answer that came too late) is dropped.
+- **Which tab:**
+  1. the person's own tab, when Chrome shows its address (so Link Meteor can read it) and it is on the PDF's site;
+  2. otherwise, where Link Meteor has access to the PDF's site, a background tab at `from`, else at the site's front page;
+  3. when a page of the site could not get the file at all (most often because the address moves to another site), a background tab at the PDF's own address, read from that tab's own address once Chrome shows it, where Link Meteor has access to the site it landed on.
+  A background tab is opened only on a site Link Meteor has access to, and is always closed again.
+- **How a file ends** (`results[n]`: `{page, url, title, status, how, size?}`; `title` is the file's name):
+  - `got`: "Fetched";
+  - `no-access`: "No access" (not asked for), "No access: it moved to example.org", or, when the person's own tab could not get it and no background tab may be opened, "Not fetched: the address may move to another site, which Link Meteor has no access to";
+  - `not-pdf`: "Not a PDF: the site asked to sign in, or the address has expired.";
+  - `too-large`: "A PDF can be at most 50 MB.", or "These PDFs are more than 200 MB together. Choose fewer.", which ends the run;
+  - `status`: "The site answered with an error instead of the PDF.";
+  - `downloaded`: "Chrome downloaded this one instead of showing it. It is in your Downloads folder, not in this file." Chrome closes such a tab within a moment of opening it; a tab that shows no address is given 2 seconds to close before it is taken for a page on a site without access;
+  - `not-loaded`: "Didn’t load within 30 seconds", or "Didn’t load: Chrome showed an error page";
+  - `failed`: "Chrome couldn’t get this PDF’s file";
+  - `no-answer`: "The Link Meteor page that started this didn’t answer, so the run ended. Keep it open until the PDFs are fetched." The page gets 2 minutes for each file, and the run ends there;
+  - `not-read`: "Not read: you pressed Stop", and `interrupted`, as for every run.
+- **Pacing:** one file at a time, 2 seconds apart. A file that was never asked for ("No access") costs no pause: a step may answer `quick: true`, which the engine honors for any kind.
+- **The session record** is the run's, as for other kinds, with `own` (the person's tab) and each queue item's `{url, name, from?}`. It holds no file. A restarted background worker goes on with the rest of the queue. The summary is "Fetched 4 of 5 PDFs."
+- The page shows its own report, so nothing is put in `linkMeteorCaptureReport`, and no notice is shown by the other views.
+
+**Download as one ZIP:**
+- Every chosen PDF is fetched; the ZIP is made from those that were, in the list's order, and downloaded at once. A PDF that needs a password goes in as it is: a ZIP reads no PDF, and PDF.js is not loaded for it.
+- The name is the export name pattern with `.zip` (the *File name* field of an export does not apply).
+- `#pdf-result`: "Downloaded Thesis_2026-10-02_1412.zip with 4 of 5 PDFs, 9.4 MB.", then each file: "In the ZIP · 2.1 MB", or why it is not there. When Chrome's request for sites was declined, the sentence adds "Chrome’s request for access was declined, so PDFs on the sites it named were left out."
+- No ZIP is made when no PDF could be fetched ("No PDF could be fetched, so no ZIP was made."), after Stop ("You pressed Stop. No ZIP was made."; a file already fetched is listed as "Fetched, then dropped"), or when the run ended early.
+
+**Combine into one PDF…** (`#combine-panel`, a form labeled by `#combine-title`, "Combine into one PDF, in this order"):
+- `#combine-list` (an ordered list): each PDF's file name, then its link's anchor text (its address when it has none) or "Added from your computer", then "14 pages · 2.1 MB" once the file is here. Each row has *Move … up*, *Move … down* and *Leave out …*, labeled with the file's name. After a move, focus stays on the same button of the moved PDF, or on the button beside it at an end of the list; after *Leave out*, focus goes to *Add PDF files…*. The list is taken from the chosen links when the panel opens; a link removed meanwhile leaves the list, and another collection closes the panel.
+- `#combine-add` (*Add PDF files…*) opens a chooser for PDFs (`#combine-file`, several at once). Files dropped anywhere on the panel are added too; `#combine-empty` says so while the list is empty. Each file is read at once, in this page. They join the end of the list and count toward the limits.
+- `#combine-skip` (`role="status"`, "Left out"): each PDF that can't go in, by name, with the reason: "Needs a password, so it can’t be combined", "Damaged, so it couldn’t be read", "Not a PDF", "A PDF can be at most 50 MB.", or how its file ended in the run. A PDF the person leaves out is not listed.
+- `#combine-name`: filled with the export name pattern ending `.pdf`; what is typed is made safe as an export's file name is.
+- `#combine-total`: "5 PDFs · 71 pages · 9.4 MB. Pages keep their links and bookmarks." Until every file is here: "9 PDFs. 2 are ready (5 pages · 9 KB). Link Meteor fetches the other 7 when you press Combine; their pages and sizes show then. …"
+- `#combine-help`: a limit that is passed ("Choose up to 20 PDFs at a time. Leave out 1."), or that another run is going.
+- `#combine-apply` ("Combine 5 PDFs") and `#combine-cancel`. Escape closes the panel and returns focus to *Combine into one PDF…*. Closing drops every file the panel held. While files are fetched or the PDF is written, the list, the name and Cancel are held, and Stop is the way out.
+- **Combine** fetches the files still missing as one run, counting each PDF's pages as it arrives. When every PDF in the list is here, it writes the PDF and downloads it in the same click. When a PDF had to be left out, or the run was stopped, it stops there instead: the panel shows what is left out, the files already fetched are kept while the panel stays open, and the next *Combine N PDFs* makes the PDF from what is in the list (fetching only what is still missing).
+- `#pdf-result` afterward: "Downloaded Thesis_2026-10-02_1412.pdf: 5 PDFs, 71 pages, 9.4 MB.", then each PDF with its pages and the page it starts on, and what was left out.
+- Files from the computer are refused before they are read when they would pass a limit: "Choose up to 20 PDFs at a time. Nothing was added.", "These PDFs are more than 200 MB together. Choose fewer. Nothing was added.", and a file over 50 MB is left out by name.
+
+**What loads when.** `pdf-files.js` loads with the workbench. `core/pdf.js` (the limits and their words) loads once the chosen links hold a PDF, or the panel is used; `pdf-tab.js` and `pdf-reader.js` when the first file is fetched; PDF.js only when a PDF's pages are counted, which a ZIP never does.
+
+**Tested** without grants: the names, the ZIP's bytes and a combined PDF's order (`tests/pdf-files.test.mjs`); the run with Chrome's APIs simulated, each way of finding a tab among them (`tests/runs.test.mjs`); and the real extension with Chrome's real toolbar action, where same-site PDFs are fetched for real and other sites end as "No access" (`tests/pdf-files-browser.mjs`). With all sites allowed, for the owner's session: PDFs on two sites into one ZIP and one combined PDF, through background tabs, one of them sent as a download and one that Chrome downloads by itself (`tests/access-granted.mjs`).
 
 ### Frames from other sites, and closed components
 

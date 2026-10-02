@@ -50,6 +50,8 @@ function simulate({ scope, initialTabs, afterPermissionTabs, selectedIds = [], t
     render() {},
     captureReport(report, options) { reports.push({ report, options }); },
     currentPagePlan: () => pagePlan,
+    // Scroll to the end first and Follow Next (0.6.0) are off here: the plain capture goes on.
+    runFurther: async () => false,
     renderCaptureButton() {},
     $: () => captureButton,
     chrome: {

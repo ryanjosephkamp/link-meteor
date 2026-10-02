@@ -6,6 +6,7 @@ import { render, setView } from './rendering.js';
 import { renderLinks } from './review.js';
 import { renderSite } from './settings.js';
 import { ALL_SITES, grants, pageAccessPlan } from './access.js';
+import { bindRuns, renderFurther, runFurther, runReport, reportScroll } from './runs.js';
 
 let inventoryTimer, inventoryRequestSequence = 0;
 // Whether the current page's tab can be read right now (a toolbar click, a site grant or all-sites
@@ -59,6 +60,7 @@ export async function refreshOriginAccess(origins) {
 
 export function renderInventory() {
   renderCaptureButton();
+  renderFurther(captureWhat);
   if (!ui.inventory) {
     preview(['Tab preview unavailable. Reopen Link Meteor from an ordinary page, or choose the scope again to refresh it.'], true, 'i-alert');
     $('tab-picker').hidden = ui.scope !== 'selected';
@@ -286,6 +288,7 @@ function reportLeftOut(box, report) {
 }
 
 export function captureReport(report, { source = 'workbench', key = '', createdAt = '', reasons = new Map(), offerAllSites = new Set() } = {}) {
+  if (report.kind === 'run') { runReport(report, { key, createdAt }); return; }
   const box = $('capture-report'); box.replaceChildren(); box.hidden = false;
   ui.displayedReportKey = key;
   ui.displayedReport = report;
@@ -335,6 +338,7 @@ export function captureReport(report, { source = 'workbench', key = '', createdA
   }
   if (!results.length) list.append(node('li', 'report-item error', 'No tab results were returned.'));
   if (list.childNodes.length) box.append(list);
+  reportScroll(box, report);
   reportLeftOut(box, report);
   syncReportAction();
 }
@@ -461,6 +465,8 @@ export async function runCapture() {
         throw new Error('A selected tab changed origin during the permission request. Review the scope and capture again.');
       }
     }
+    // Scroll to the end first, and Follow Next (runs.js).
+    if (await runFurther({ reasons, offerAllSites })) return;
     const { state, report } = await request({ type: 'capture.run', tabIds });
     ui.flashBatch = report.batchId; ui.flashStart = Date.now();
     ui.state = state; render(); captureReport(report, { reasons, offerAllSites });
@@ -478,6 +484,7 @@ export function bindCapture() {
   $('tabs-all').addEventListener('click', () => { for (const tab of ui.inventory?.tabs || []) ui.selectedTabs.add(tab.id); renderInventory(); });
   $('tabs-none').addEventListener('click', () => { ui.selectedTabs.clear(); renderInventory(); });
   $('capture').addEventListener('click', () => action(captureWhat === 'tabs' ? saveTabsAsLinks : runCapture));
+  bindRuns();
   $('arm').addEventListener('click', () => action(async () => { const result = await request({ type: 'capture.arm' }); const tab = ui.inventory?.tabs.find((item) => item.id === result.tabId); show(`Region selection is ready${tab?.title ? ` on “${tab.title}”` : ''}. Drag across links on the page; press Esc to cancel.`); }));
 }
 

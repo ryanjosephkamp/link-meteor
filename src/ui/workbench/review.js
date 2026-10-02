@@ -12,6 +12,7 @@ import { fieldInputs, hasFieldValues, appendFieldValues, renderFill, bindFill } 
 import { linkDownload } from './downloads.js';
 import { renderInsights, insightsShown, setInsights, bindInsights } from './insights.js';
 import { renderMove, bindMove, detailMove } from './move.js';
+import { renderPages, detailPages } from './runs.js';
 
 const PAGE_SIZE = 100;
 const DETAIL_PAGE_SIZE = 100;
@@ -67,6 +68,7 @@ export function renderLinks() {
   syncViewRemoval(collection);
   renderFill(collection);
   renderMove(collection);
+  renderPages(collection);
   $('select-all').checked = !!pageIds.length && pageIds.every((id) => ui.selectedIds.has(id));
   $('select-all').indeterminate = pageIds.some((id) => ui.selectedIds.has(id)) && !$('select-all').checked;
   $('select-all').disabled = !pageIds.length;
@@ -345,7 +347,7 @@ export function renderOccurrence(link, grouped) {
   fact(facts, 'Capture batch', link.batchId, { exact: true, empty: 'Unknown' });
   fact(facts, 'Occurrence ID', link.id, { exact: true });
   const move = node('div', 'occurrence-move'); move.append(detailMove(link));
-  item.append(renderResearch(link), facts, linkDownload(link), move);
+  item.append(renderResearch(link), facts, linkDownload(link), move, detailPages(link));
 
   const form = document.createElement('form'); form.className = 'occurrence-form';
   const draft = ui.linkDrafts.get(link.id);

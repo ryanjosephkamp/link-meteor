@@ -1336,7 +1336,7 @@ Auto-scroll alone is one page and uses `capture.run` with `scroll: true`.
 
 ### PDF files: one ZIP, or one combined PDF
 
-In the Export panel's *Download files*, the PDFs among the chosen links (`knownPdf` in `src/core/files.js`) get two more actions. *Download files* itself is unchanged: it still saves every file one by one through Chrome's downloads.
+In the Export panel's *Download files*, the PDFs among the chosen links (the file links `src/core/files.js` types as `pdf`) get two more actions. *Download files* itself is unchanged: it still saves every file one by one through Chrome's downloads.
 
 **Getting each PDF's file.** A page of the PDF's own site requests it, `fetch(url, {credentials: 'include'})`, as when the link is clicked, with that site's cookies. Which page:
 1. the active tab, when it is on the PDF's site and Link Meteor can run there (the toolbar's temporary access is enough);
@@ -1352,7 +1352,7 @@ In the Export panel's *Download files*, the PDFs among the chosen links (`knownP
 
 **Download as one ZIP** (`#pdf-zip`):
 - `src/core/zip.js` (pure) holds the ZIP writer the workbook writer has used since 0.3.0 (`zip(files)` and `crc32`, moved from `src/core/xlsx.js`, which imports it). Entries are stored, not compressed: PDFs are compressed already, and each file's bytes stay exactly what the site sent.
-- Entry names are the file names `downloadPath` in `src/core/files.js` gives, without its folder, as *Download files* names them; repeats get ` (2)`, ` (3)`.
+- Entry names come from `downloadName` in `src/core/files.js`, as *Download files* names them; repeats get ` (2)`, ` (3)`.
 - The ZIP is named like an export, `<collection>_<date>_<time>.zip`, and is handed to Chrome's download as exports are. It holds no index and nothing but the PDFs.
 
 **Combine into one PDF…** (`#pdf-combine`, opening `#combine-panel`):

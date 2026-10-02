@@ -131,6 +131,28 @@ test('wrapped links become one link; the same address side by side or far apart 
   assert.equal(pdfLinks([pageOne, pageTwo]).links.length, 2);
 });
 
+test('a printed address cut off at a page’s end is one link, without the next page’s running head', () => {
+  // As a typesetter leaves it: "https://" ends the page, the link goes on as a strip across the
+  // foot of that page and across the next page's running head, and the address finishes below it.
+  const url = 'https://thinkpython.com/code/interlock.py', part = (rect) => ({ rect, url, unsafeUrl: url, internal: false });
+  const text = (str, x, y, w) => ({ str, x, y, w, h: 10, rotated: false });
+  const one = page([text('For example, “shoe” and “cold” interlock to form “schooled”. Solution:', 162.5, 94, 314), text('https: //', 480.3, 94, 43.6)], [part([479.3, 90.2, 526.6, 102.2]), part([128.6, 67.8, 526.6, 73.4])], 1);
+  const head = [text('102', 86.4, 723.6, 14.9), text('Chapter 10. Lists', 403.8, 723.6, 78.6)];
+  const rest = [text('thinkpython. com/ code/ interlock. py', 86.4, 696, 179.5), text('.', 267.6, 696, 2.5), text('Credit: an example at a puzzle site.', 275, 696, 180)];
+  const two = page([...head, ...rest], [part([85.4, 719, 483.4, 733]), part([85.4, 692.3, 268.6, 704.2])], 2);
+  const read = pdfLinks([one, two]);
+  assert.deepEqual(rows(read.links), [[1, url, url]], 'one link, on the page it starts on, with the address in one piece');
+  assert.equal(read.links[0].context, `For example, “shoe” and “cold” interlock to form “schooled”. Solution: ${url} . Credit: an example at a puzzle site.`, 'the running head is not the link’s context');
+  // The strip is known only by the piece that completes the address. Another link to the same
+  // address at the top of the next page, with words of its own, is still its own occurrence.
+  const other = page([...head, text('Read it here', 86.4, 696, 60)], [part([85.4, 719, 483.4, 733]), part([85.4, 692.3, 147, 704.2])], 2);
+  assert.deepEqual(rows(pdfLinks([one, other]).links), [[1, 'https: //', url], [2, '102 Chapter 10. Lists Read it here', url]]);
+  // An apostrophe typeset as ’ is the plain one the address has: still one printed address.
+  const zipf = "http://en.wikipedia.org/wiki/Zipf's_law";
+  const printed = pdfLinks([page([text('(', 129.6, 100, 3.3), text('http: // en. wikipedia. org/ wiki/ Zipf’s_ law', 132.9, 100, 216.5), text('). Specifically,', 351.2, 100, 60)], [{ rect: [131.9, 96.3, 352.2, 108.2], url: zipf, unsafeUrl: zipf, internal: false }])]);
+  assert.deepEqual(rows(printed.links), [[1, 'http://en.wikipedia.org/wiki/Zipf’s_law', zipf]]);
+});
+
 test('addresses are checked again: only web, email and phone addresses are links', () => {
   const result = pdfLinks([page([item('a b c d e', 0)], [
     linkAt(0, 6, '', { unsafeUrl: 'appendix.pdf' }), linkAt(12, 18, '', { unsafeUrl: 'javascript:alert(1)' }), linkAt(24, 30, '', { unsafeUrl: '' }),

@@ -55,6 +55,7 @@ Browser checks need the Playwright library and its Chromium (Chrome for Testing)
 | `imports-browser` | Import links: files through the file chooser, pasted links and a bookmark folder (Chrome's prompt stubbed), the mapping, the preview's skips, Undo, 320 px and contrast. |
 | `move-browser` | Move to… and Copy to…: the panel's preview, everything that travels, columns matched or created, borrowed citations, Undo for both collections, a link's details, 320 px and contrast. |
 | `pdf-browser` | The PDF reader inside the extension: loaded only when used, in one module worker, reading every fixture as Node does, refusals in plain words, combining PDFs, and the page's security policy kept. On Chrome 116 it proves the shims. |
+| `pdf-tab-browser` | A PDF's file through a tab, with only the toolbar's temporary access (Chrome's real toolbar action): a PDF in a tab, PDFs on a page's own site including one sent as a download, and each refusal. Nothing downloads. |
 | `lookup-browser` | The sandboxed lookup frame, with the test answering in the services' place: Link Meteor's own page can't connect; one request per identifier with origin `null`, no cookies and no referrer; everything else refused; the frame sealed from Chrome's APIs and storage. No test contacts a real service. |
 | `audit-overlay`, `audit-actions`, `audit-regressions` | Earlier fixes stay fixed. |
 | `visual-browser` | Widths from 320 px, labels, focus, measured contrast, screenshots. Needs `LINK_METEOR_SEED_JSON`; `check` supplies one. |
@@ -73,7 +74,7 @@ Visible runs need the real mouse pointer parked away from the test windows: ask 
 | --- | --- |
 | `LINK_METEOR_EVIDENCE_DIR` | Where suites write results (default `artifacts/evidence`). |
 | `LINK_METEOR_TEST_PROFILE`, `LINK_METEOR_VISUAL_PROFILE` | Profile name under `.scratch/`. |
-| `LINK_METEOR_FIXTURE_PORT` | The local fixture server's port (default `52478`). |
+| `LINK_METEOR_FIXTURE_PORT` | The local fixture server's port (default `52478`). The same server is a second site at `http://localhost:<port>` (`fixture.other`). It serves `tests/fixtures/site/**` at `/site/…` and the PDF fixtures at `/pdf/…`, `/pdf-plain/…`, `/pdf-download/…`, `/pdf-moved/…` and `/pdf-signin/…`; a suite can pass its own `routes`. |
 | `LINK_METEOR_EXTENSION_PATH` | Load another unpacked build instead of `dist/`. |
 | `LINK_METEOR_CHROME_PATH` | Run on another Chrome for Testing build, such as the oldest supported one; adds `--headless=new`. |
 | `LINK_METEOR_PLAYWRIGHT`, `LINK_METEOR_PYTHON` | Where Playwright and Python are. |

@@ -1441,6 +1441,12 @@ The parts every lane builds on. Where this differs from the draft above, this is
 - The library is imported the first time a PDF is read, and one module worker (`pdfjs-worker.js`) is started then and kept while the page is open.
 - PDF.js takes over the bytes it is given, so the reader hands it a copy.
 
+**A PDF's file through a tab** (`src/ui/workbench/pdf-tab.js`):
+- `pdfThroughTab(tabId, url?)` runs one function in that tab with `chrome.scripting.executeScript` and returns `{bytes, type, url}`. Without `url` it asks for the tab's own address (`cache: 'force-cache'`); with `url`, for a PDF on the same site as the page in the tab. The function checks the size and the `%PDF-` start in the tab, before anything is handed over.
+- It throws an `Error` in plain words with a `reason`: `'access'` (Chrome refused the tab: the caller may ask for the site), `'not-pdf'` ("The site didn’t send a PDF: it asked to sign in, or the address has expired."), `'size'`, `'status'` ("The site answered with an error instead of the PDF.") or `'failed'` ("Chrome couldn’t get this PDF’s file from that page."). For the tab's own address the words end with "Download the PDF, then choose Import links, PDF file."
+- `readPdfTab(tabId, options)` returns `readPdf`'s result with `bytes` and `address`.
+- Tested with Chrome's real toolbar action and no other access (`tests/pdf-tab-browser.mjs`): a PDF in a tab, with or without `.pdf` in its address; PDFs on a page's own site, including one sent as a download; a PDF on another site or one that moves there (`'failed'`); a sign-in page; a tab without access; a PDF opened from the computer (`'failed'`). Nothing is downloaded.
+
 **`src/core/pdf.js`** (pure; imports limits and the address rule from `model.js`, `imports.js` and `identifiers.js`):
 - `pdfPages(doc, {onProgress?, signal?})` reads a PDF.js document into plain data: `[{number, width, height, annotations: [{rect, url, unsafeUrl, internal}], items: [{str, x, y, w, h, rotated}]}]`. Items that hold only spaces are dropped; the gaps say the same.
 - `pdfLinks(pages, {saveContext?})` returns `{links: [{url, originalHref, anchorText, pdfPage, context?}], internal, skipped: [{page, reason: 'not-link'}], capped}`.

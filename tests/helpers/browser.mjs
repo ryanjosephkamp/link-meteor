@@ -22,9 +22,37 @@ export const headlessArgs=(headless=true)=>headless&&process.env.LINK_METEOR_CHR
 // expected (the paywall case), the PDF at an address without an extension, the PDF sent slowly
 // (for Cancel), and a missing file.
 const FILES={'/files/paper.pdf':['files/paper.pdf','application/pdf'],'/files/figure.png':['files/figure.png','image/png'],'/files/paywalled.pdf':['files/sign-in.html','text/html;charset=utf-8'],'/files/paper':['files/paper.pdf','application/pdf'],'/files/slow.pdf':['files/paper.pdf','application/pdf']};
-export async function fixtureServer() {
+// 0.6.0: the PDF fixtures (tests/fixtures/pdf), each at several kinds of address:
+//   /pdf/<name>            shown by Chrome's PDF viewer
+//   /pdf-plain/<name>      the same, at an address without ".pdf" (give the name without it)
+//   /pdf-download/<name>   sent as a download (Content-Disposition: attachment)
+//   /pdf-moved/<name>      redirects to the other fixture site's /pdf/<name>
+//   /pdf-signin/<name>     a sign-in page where a PDF was expected
+// and every file under tests/fixtures/site/ at /site/…, for pages a suite adds.
+const SITE_TYPES={'.html':'text/html;charset=utf-8','.js':'text/javascript;charset=utf-8','.css':'text/css;charset=utf-8','.json':'application/json','.png':'image/png','.pdf':'application/pdf','.txt':'text/plain;charset=utf-8'};
+async function fixtureFile(res,file,type,headers={}){
+  try {const body=await readFile(resolve(root,'tests/fixtures',file));res.writeHead(200,{'Content-Type':type,'Content-Length':body.length,...headers});res.end(body);}
+  catch {res.writeHead(404,{'Content-Type':'text/html;charset=utf-8'});res.end('<!doctype html><title>Not found</title><p>Not found');}
+}
+// fixtureServer({routes}): `routes(req, res, url)` may answer a request itself (return true), for
+// pages that must behave: slow, redirecting, counting. Returns {base, other, server, close}:
+// `other` is the same server as a second site (http://localhost:<port>), for frames, Next links
+// and files on another site.
+export async function fixtureServer({routes}={}) {
   const server=createServer(async(req,res)=>{
-    const pathname=new URL(req.url,'http://localhost').pathname;
+    const url=new URL(req.url,`http://${req.headers.host||'localhost'}`),pathname=url.pathname;
+    if(routes&&await routes(req,res,url))return;
+    const pdf=/^\/(pdf|pdf-plain|pdf-download|pdf-moved|pdf-signin)\/([a-z0-9-]+(?:\.pdf)?)$/.exec(pathname);
+    if(pdf){
+      const name=pdf[2].endsWith('.pdf')?pdf[2]:pdf[2]+'.pdf',port=server.address().port;
+      if(pdf[1]==='pdf-moved'){res.writeHead(302,{Location:`http://localhost:${port}/pdf/${name}`});return res.end();}
+      if(pdf[1]==='pdf-signin'){res.writeHead(200,{'Content-Type':'text/html;charset=utf-8','Cache-Control':'no-store'});return res.end('<!doctype html><title>Sign in</title><p>Please sign in to read this article.');}
+      return fixtureFile(res,`pdf/${name}`,'application/pdf',{'Cache-Control':'max-age=600',...(pdf[1]==='pdf-download'?{'Content-Disposition':`attachment; filename="${name}"`}:{})});
+    }
+    if(pathname.startsWith('/site/')&&!pathname.split('/').includes('..')){
+      const type=SITE_TYPES[pathname.slice(pathname.lastIndexOf('.'))];
+      if(type)return fixtureFile(res,pathname.slice(1),type,{'Cache-Control':'no-store'});
+    }
     if(FILES[pathname]){
       const [file,type]=FILES[pathname];
       try {
@@ -44,8 +72,8 @@ export async function fixtureServer() {
     catch {res.writeHead(500);res.end('Fixture unavailable');}
   });
   await new Promise((done,fail)=>{server.once('error',fail);server.listen(Number(process.env.LINK_METEOR_FIXTURE_PORT || 52478),'127.0.0.1',done);});
-  const base=`http://127.0.0.1:${server.address().port}`;
-  return {base,server,close:()=>new Promise(done=>server.close(done))};
+  const base=`http://127.0.0.1:${server.address().port}`,other=`http://localhost:${server.address().port}`;
+  return {base,other,server,close:()=>new Promise(done=>{server.closeAllConnections?.();server.close(done);})};
 }
 
 // Downloads never reach the person's own downloads folder. Each profile downloads into its own

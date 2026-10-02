@@ -1389,6 +1389,57 @@ Off by default (`lookupDetails`). It fills in a paper's title, authors, date and
 - **Where it goes:** the link's own citation, `pages[link.url]`. A lookup fills only fields that are empty; it never replaces what a page's own tags or the person gave. The notice says what changed ("Filled in authors for 6 papers, dates for 2. 1 wasn’t found.") and has Undo.
 - **Turning it on:** *Online lookups* in the workbench's settings shows the explanation below and a switch. The first *Look up details* click with the switch off opens that explanation instead of sending anything.
 
+### Page details lookup, as built
+
+`src/ui/workbench/lookup.js` runs it, and `src/core/lookup.js` (pure) plans a run and says what it changed. Where this differs from the draft above, this is what the code does.
+
+**Turning it on.** `#online-panel` (*Online lookups*) in the rail, before *Import links*:
+- `#lookup-details`, a switch saved as `lookupDetails` with `settings.update`, described by `#lookup-help` and `#lookup-sends`.
+- `#lookup-sends` holds [the words to use](#permissions-browser-settings-and-network-requests), word for word, with the three services as a list (`.sends-what`, three `li`, three `.sends-not`). A unit test compares the page with this file, `docs/PRIVACY.md`, `CHROMEWEBSTORE.md` and `site/privacy.html`.
+- Turning it on says "Page details lookup is on. Nothing is sent until you click Look up details."; turning it off, "Page details lookup is off. Link Meteor requests nothing from any service."
+- **A click with the switch off** (every one, not only the first) requests nothing and creates no frame. It shows the rail on narrow widths, scrolls `#online-panel` into view, moves focus to `#lookup-details`, and says "Page details lookup is off, so nothing was sent. Online lookups says what it sends and where. Turn it on there, then click Look up details again." The saved setting is read again at every click.
+
+**Where it starts.** Each control is labeled *Look up details*:
+- `#lookup-selected` in the list toolbar, shown while the selection in this view holds a link with a DOI, an arXiv ID or a PubMed ID.
+- `.occ-lookup` in a link's details (a group labeled "Missing details"), only where the citation the link uses lacks something: "No authors or journal saved for this paper yet." with a button labeled "Look up details for <the link's text>".
+- `#lookup-box` in the Export panel, under `#cite-facts`: `#lookup-line` with `#lookup-line-text` ("Page details lookup can fill in the 5 with no authors yet, from their DOI or arXiv ID.") and `#lookup-authors`. It shows for BibTeX, RIS, CSL-JSON and the annotated bibliography while the "no authors yet" line does, and looks up exactly the rows that line counts (`unauthored(rows, pages)`).
+
+**What is asked** (`lookupPlan(links, pages, {seen})`, returning `{asks, without, complete, over}`):
+- One ask per identifier, however many links share it: `{key, requests, targets, links}`, with `requests` from `lookupRequests(identifiersOf(link, pages))`.
+- **A link is asked about** only when the citation it uses lacks a title, authors, a date or a journal (`lookupMissing`, `LOOKUP_FIELDS`). A paper asked about only as arXiv's own DOI isn't missing a journal: a preprint has none.
+- **Where an answer goes** (`targets`): the citation the link uses, `citationFor(link, pages)`: its key when the link already uses one (its own page's, or one borrowed from a saved page about the same work), otherwise the link's own address, `pageKey(link.url)`. This replaces the draft's `pages[link.url]`, so a PDF link that borrows its abstract page's citation fills that citation, not a second copy.
+- `without` counts links with no DOI, arXiv ID or PubMed ID, and `complete` links whose citation lacks nothing; neither is asked about. `over` counts identifiers past `MAX_LOOKUPS`; only then, identifiers already asked about since the workbench opened, with nothing to add, go last, so another click reaches the rest.
+
+**A run:**
+- The frame is `iframe#lookup-frame`: hidden, `aria-hidden`, appended to the page when the run starts and removed when it ends, and at once on Stop, which also drops the request in it. One frame a run. Its address is `ui/lookup-frame.html` with nothing added, and each message to it is `{type: 'lookup', id, service, identifier}`.
+- One request at a time; the next starts at least `LOOKUP_PAUSE_MS` after the last answer. For each identifier the services are tried in order until one has the paper. When Crossref can't answer, DataCite is still asked.
+- **It ends** when every identifier was asked about, or early, keeping what it has: *Stop*; a service that answers "too many requests" ("NCBI asked Link Meteor to slow down, so the lookup stopped here."); a service that hasn't answered after 20 seconds ("Crossref took too long to answer, so the lookup stopped here."); `MAX_LOOKUP_FAILURES` (3) papers in a row that couldn't be looked up, as when the computer is offline; or the setting turned off, here or in another Link Meteor page.
+- **Progress:** `#lookup-status` holds `#lookup-progress`: `#lookup-count` (`role="status"`, "Looking up 7 of 31"), "Sending only each DOI, arXiv ID or PubMed ID to Crossref, DataCite and NCBI.", `#lookup-stop` (labeled "Stop the lookup") and `#lookup-bar` (a `progress`). It shows in `#lookup-toolbar-host`, in the list toolbar, for a run started from the list or a link's details, and in `#lookup-export-host` for one started in the Export panel. Focus moves to *Stop* when a run starts, and to *Undo* (or *Dismiss*) when it ends, unless the person moved it elsewhere meanwhile.
+- One run at a time in a page: the two buttons are disabled meanwhile, and a details button says "A lookup is already running. Wait for it to finish, or press Stop."
+- **Saving:** once, when the run ends: `state.mutate` with `links.append` (`links: []`, `pages`), each citation being `readAnswer`'s plus `readAt`, so `mergeCitation` decides what wins. What changed is worked out against the citations as they are at that moment (`lookupOutcome(results, pages, readAt)`). An answer that adds nothing is not saved. A workbench closed in the middle of a run saves nothing from it.
+
+**The result:** `#lookup-done`, in the same place as the progress, with `#lookup-done-text` (`role="status"`), `#lookup-undo` and `#lookup-dismiss`. It stays until dismissed or the next run, and shows only while its collection is open. The words are `lookupReport`'s, counting papers (identifiers):
+- "Filled in titles for 3 papers, authors for 5, dates for 3, journals for 3." For one paper: "Filled in the title, authors, date and journal."
+- "Added other details for 2." when a lookup added only a publisher, volume, pages or the like.
+- "Replaced details read from a PDF for 1." when a title, authors, date or journal read from the PDF itself gave way to the lookup's.
+- "2 had nothing new." "1 wasn’t found." "1 couldn’t be looked up: Crossref answered 503." (the first reason).
+- How it ended, when early: "You stopped the lookup. 12 papers weren’t asked about."; the service's sentence; "The lookup stopped after 3 papers in a row couldn’t be looked up."; "Page details lookup was turned off, so the lookup stopped."
+- "Not looked up: 3 links with no DOI, arXiv ID or PubMed ID, and 2 links that already have these details." When nothing was asked, it starts "Nothing to look up:".
+- "Link Meteor looks up 200 papers at a time. 14 more are waiting: click Look up details again."
+
+**Undo** sends `pages.restore` with what each address held before (`null` where it held nothing), for the addresses that still hold what the lookup left; one that changed again since is left alone, and the result says so. "Lookup undone: the details are as they were before." Undo requests nothing.
+
+**In a link's details,** a citation with `source` `crossref`, `datacite` or `pubmed` has the note "From Crossref, looked up on Oct 2, 2026. Citation exports use it. Saved in this browser." (`lookupNote`; "From DataCite", "From NCBI"; the date in the browser's own format; "Citation exports use it." only for the citation the link uses).
+
+**Words that changed elsewhere,** because a citation may now hold what a lookup filled in:
+- The notes under a citation read from a page's own tags end "Saved in this browser." They no longer add "nothing was looked up online".
+- `#cite-facts` says "2 with authors and a date", without "read from the pages themselves".
+- `#format-help` for BibTeX, RIS and CSL-JSON says "Built from the details saved with each link; while exporting, nothing is looked up online.", and for the annotated bibliography "While exporting, nothing is looked up online."
+
+**A citation's tags, filled in by a lookup, stay the page's:** it keeps no `source`, so its note still names the page's tags, and nothing records which fields the lookup gave.
+
+**Tested** in `tests/lookup-browser.mjs`, with the test answering in the services' place: with the switch off, no frame and no request from any of the three starting places; the requests of a run, in order, at least 350 ms apart, each a `GET` with origin `null`, no cookie, no referrer and no body; what is saved, tags kept, a PDF's guessed title replaced; Undo exact; Stop in the middle; "too many requests"; an answer that isn't JSON; three failures in a row; the switch turned off during a run; BibTeX with the looked-up authors; 320 px; and text contrast in every theme, light and dark. `tests/lookup.test.mjs` covers the plan, what is saved, every sentence of the result, the wording against the privacy texts, and that only the frame's script can make a request.
+
 ### Permissions, browser settings and network requests
 
 **0.6.0 adds no permission to the manifest, asks for no browser setting, and adds one optional online feature.**

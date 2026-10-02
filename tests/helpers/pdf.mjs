@@ -3,6 +3,7 @@
 // src/ui/workbench/pdf-reader.js.
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { combinePdfs as combine, readPdfDocument } from '../../src/core/pdf.js';
 
 const vendor = resolve(import.meta.dirname, '../../src/vendor/pdfjs');
@@ -11,8 +12,8 @@ async function pdfjs() {
   if (!library) {
     // In Node, PDF.js notes once that it can't draw (no canvas). Link Meteor never draws.
     const { warn, log } = console; console.warn = console.log = () => {};
-    try { library = await import(new URL(`file://${resolve(vendor, 'pdf.min.mjs')}`).href); } finally { console.warn = warn; console.log = log; }
-    library.GlobalWorkerOptions.workerSrc = new URL(`file://${resolve(vendor, 'pdf.worker.min.mjs')}`).href;
+    try { library = await import(pathToFileURL(resolve(vendor, 'pdf.min.mjs')).href); } finally { console.warn = warn; console.log = log; }
+    library.GlobalWorkerOptions.workerSrc = pathToFileURL(resolve(vendor, 'pdf.worker.min.mjs')).href;
   }
   return library;
 }

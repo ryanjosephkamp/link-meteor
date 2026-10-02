@@ -13,6 +13,7 @@ import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import {mkdir, readdir, writeFile} from 'node:fs/promises';
 import {resolve} from 'node:path';
+import {pathToFileURL} from 'node:url';
 import {fixtureServer, evidence, root} from './helpers/browser.mjs';
 import {launchWithAction} from './helpers/action.mjs';
 import {fixture as pdfFixture, readPdf} from './helpers/pdf.mjs';
@@ -91,7 +92,7 @@ try {
   pass('pdf-through-a-page-of-its-own-site', {download: download.size});
 
   // 5. A PDF opened from the computer can't be read from its tab, and says so.
-  const local = `file://${resolve(root, 'tests/fixtures/pdf/paper.pdf')}`;
+  const local = pathToFileURL(resolve(root, 'tests/fixtures/pdf/paper.pdf')).href;
   const localTab = await open(local); await click(local);
   const fromLocal = await read(localTab);
   assert.ok(['failed', 'access'].includes(fromLocal.reason), JSON.stringify(fromLocal));

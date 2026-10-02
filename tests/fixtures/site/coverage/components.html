@@ -20,13 +20,15 @@ h1{font-size:28px;margin:0 0 12px}h2{font-size:17px;margin:0 0 6px}section,nav{p
 <section id="unseen"><h2>Hidden</h2><div id="hidden-host" hidden></div></section>
 </main>
 <script>
-const closed = (host, html) => { const root = host.attachShadow({mode: 'closed'}); root.innerHTML = html; return root; };
+// Links never wrap, so each is one box whatever the system's fonts (Windows draws them wider).
+const NOWRAP = '<style>a{white-space:nowrap}</style>';
+const closed = (host, html) => { const root = host.attachShadow({mode: 'closed'}); root.innerHTML = NOWRAP + html; return root; };
 const $ = (id) => document.getElementById(id);
 const first = closed($('closed-host'), '<p>The first source the component names is <a id="closed-one" href="/c/closed-one">Closed one</a>, and then <a id="closed-two" href="/c/closed-two">Closed two</a>, the same address as <a id="closed-again" href="/c/closed-one">Closed one, again</a>.</p>');
 const outer = closed($('nested-host'), '<a id="outer-link" href="/c/outer">Outer closed link</a> <span id="inner"></span>');
 const inner = closed(outer.getElementById('inner'), '<a id="inner-link" href="/c/inner">Inner closed link</a>');
 const open = $('open-host').attachShadow({mode: 'open'});
-open.innerHTML = '<a id="open-link" href="/c/open">Open link</a> <span id="deep"></span>';
+open.innerHTML = NOWRAP + '<a id="open-link" href="/c/open">Open link</a> <span id="deep"></span>';
 const deep = closed(open.getElementById('deep'), '<a id="deep-link" href="/c/closed-in-open">Closed inside open</a>');
 customElements.define('reading-card', class extends HTMLElement {
   constructor() { super(); closed(this, `<a id="custom-link" href="${this.dataset.href}">Custom element link</a>`); }

@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Closed components — coverage fixture</title>
+<style>
+body{margin:0;background:#f3f0e8;color:#26342e;font:16px/1.6 system-ui}main{max-width:760px;margin:auto;padding:24px}
+h1{font-size:28px;margin:0 0 12px}h2{font-size:17px;margin:0 0 6px}section,nav{padding:12px 16px;background:#fff;border:1px solid #d9ddd3;border-radius:10px;margin:12px 0}a{color:#1f6655}
+</style>
+<!-- Links inside closed shadow roots, for 0.6.0. Every root here is closed unless its heading says
+     otherwise. A synthetic page: none of these addresses exist. -->
+<main>
+<h1>Closed components</h1>
+<section id="plain"><h2>In the page</h2><p>An ordinary link beside the components: <a id="light" href="/c/light">Light link</a>.</p></section>
+<section id="closed"><h2>One closed component</h2><div id="closed-host"></div></section>
+<section id="nested"><h2>A closed component inside a closed component</h2><div id="nested-host"></div></section>
+<section id="mixed"><h2>A closed component inside an open one</h2><div id="open-host"></div></section>
+<section id="custom"><h2>A custom element</h2><reading-card id="card" data-href="/c/custom"></reading-card></section>
+<section id="declared"><h2>Declared in the page’s HTML</h2><div id="declared-host"><template shadowrootmode="closed"><p>Declared without a script: <a id="declared-link" href="/c/declared">Declared closed link</a>.</p></template></div></section>
+<section id="slotted"><h2>A link the page hands to a closed component</h2><div id="slot-host"><a id="slotted-link" href="/c/slotted">Slotted link</a></div></section>
+<nav id="site-nav" aria-label="Site"><h2>Navigation</h2><div id="nav-host"></div></nav>
+<section id="unseen"><h2>Hidden</h2><div id="hidden-host" hidden></div></section>
+</main>
+<script>
+const closed = (host, html) => { const root = host.attachShadow({mode: 'closed'}); root.innerHTML = html; return root; };
+const $ = (id) => document.getElementById(id);
+const first = closed($('closed-host'), '<p>The first source the component names is <a id="closed-one" href="/c/closed-one">Closed one</a>, and then <a id="closed-two" href="/c/closed-two">Closed two</a>, the same address as <a id="closed-again" href="/c/closed-one">Closed one, again</a>.</p>');
+const outer = closed($('nested-host'), '<a id="outer-link" href="/c/outer">Outer closed link</a> <span id="inner"></span>');
+const inner = closed(outer.getElementById('inner'), '<a id="inner-link" href="/c/inner">Inner closed link</a>');
+const open = $('open-host').attachShadow({mode: 'open'});
+open.innerHTML = '<a id="open-link" href="/c/open">Open link</a> <span id="deep"></span>';
+const deep = closed(open.getElementById('deep'), '<a id="deep-link" href="/c/closed-in-open">Closed inside open</a>');
+customElements.define('reading-card', class extends HTMLElement {
+  constructor() { super(); closed(this, `<a id="custom-link" href="${this.dataset.href}">Custom element link</a>`); }
+});
+closed($('slot-host'), '<p>Handed in: <slot></slot></p>');
+closed($('nav-host'), '<a id="nav-link" href="/c/nav">Navigation link in a closed component</a>');
+closed($('hidden-host'), '<a id="hidden-link" href="/c/never">Must not be collected</a>');
+// For the checks only: where the first three sections' links are drawn, in page order. A closed
+// root can't be reached from outside, so the page that made the roots says where their links are.
+window.fixtureBoxes = () => [[first, 'closed-one'], [first, 'closed-two'], [first, 'closed-again'], [outer, 'outer-link'], [inner, 'inner-link'], [open, 'open-link'], [deep, 'deep-link']]
+  .map(([root, id]) => { const {left, top, width, height} = root.getElementById(id).getBoundingClientRect(); return {left, top, width, height}; });
+</script>
+</html>

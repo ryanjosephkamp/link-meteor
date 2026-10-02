@@ -4,7 +4,8 @@
 // It never shows a native prompt: every grant it uses already exists. 0.5.0: with all-sites access,
 // Save tabs as links reads each fixture tab's own citation tags into the collection's pages, without
 // asking (the fixture server serves tests/fixtures/research/). 0.6.0: Capture this PDF on a tab whose
-// site Link Meteor already has access to, with no toolbar click on it. Headless unless
+// site Link Meteor already has access to, with no toolbar click on it; and Capture this page reads
+// every frame, from any site: each link once, with the frame it was in. Headless unless
 // LINK_METEOR_HEADED=1; for a visible run, keep the pointer off the Chrome for Testing windows.
 //   LINK_METEOR_TEST_PROFILE=<all-sites profile> LINK_METEOR_FIXTURE_PORT=52481 node tests/access-granted.mjs
 // Writes access-granted-results.json to the evidence folder.
@@ -150,9 +151,69 @@ try {
   await ui.bringToFront();
   await until(async () => (await ui.locator('#scope-preview').innerText()).includes(new URL(second.base).host), 'preview names the new origin');
   await ui.locator('#capture').click();
-  await until(async () => /37 links captured/.test(await ui.locator('#capture-report').innerText()), 'captured the never-visited origin');
+  // 0.6.0: 38, not 37. The page's frame from another site (localhost) is read too, so its link is
+  // saved beside the same link in the frame from the page's own site.
+  await until(async () => /38 links captured/.test(await ui.locator('#capture-report').innerText()), 'captured the never-visited origin');
   assert.deepEqual(await ui.evaluate(() => window.__requests), []);
-  pass('Capture this page on a never-visited origin needs no prompt with all-sites access', {origin: second.base});
+  const visited = (await ui.evaluate(async () => (await chrome.storage.session.get('linkMeteorCaptureReport')).linkMeteorCaptureReport)).report;
+  const visitedLinks = (await rpc(ui, {type: 'state.get'})).collections.flatMap((c) => c.links).filter((link) => link.batchId === visited.batchId);
+  assert.deepEqual(visitedLinks.filter((link) => link.originalHref === '/frame-source').map((link) => link.frameUrl).sort(), [second.base + '/frame.html', second.base.replace('127.0.0.1', 'localhost') + '/frame.html'].sort(), 'the link in each frame, with that frame’s address');
+  assert.deepEqual([visited.results[0].count, visited.results[0].warning, visited.results[0].frames], [38, '', {read: 1, unread: 0, sites: [], left: []}]);
+  pass('Capture this page on a never-visited origin needs no prompt with all-sites access, and reads its frame from another site', {origin: second.base});
+
+  // 0.6.0: frames from other sites (tests/fixtures/site/coverage/frames.html: frames from this site,
+  // localhost and third.localhost, nested, in a sidebar, inside a closed component, sandboxed and
+  // hidden). With all-sites access every frame is read: each link once, with the frame it was in,
+  // and nothing is asked for.
+  const framesUrl = `${fixture.base}/site/coverage/frames.html`, coverage = '/site/coverage/';
+  const otherSite = fixture.base.replace('127.0.0.1', 'localhost'), thirdSite = `http://third.localhost:${new URL(fixture.base).port}`;
+  await page.goto(framesUrl);
+  await page.waitForFunction(() => window.fixtureFramesLoaded());
+  for (const frame of page.frames()) await frame.waitForLoadState('load');
+  await sleep(800);
+  await ui.bringToFront();
+  const framesTab = (await rpc(ui, {type: 'tabs.list'})).tabs.find((tab) => tab.url === framesUrl);
+  assert.ok(framesTab, 'the frames page is listed');
+  const framesCollection = (await rpc(ui, {type: 'state.mutate', action: {type: 'collection.create', name: 'Frames from other sites'}})).activeCollectionId;
+  await ui.evaluate(() => { window.__requests = []; });
+  const framesRun = (await rpc(ui, {type: 'capture.run', tabIds: [framesTab.id]})).report;
+  const framed = (await rpc(ui, {type: 'state.get'})).collections.find((c) => c.id === framesCollection).links.filter((link) => link.batchId === framesRun.batchId);
+  assert.deepEqual(framed.map((link) => [link.anchorText, link.frameUrl]), [
+    ['Top link', framesUrl],
+    ['Inner link same', `${fixture.base}${coverage}inner.html?same`],
+    ['Leaf link same-nested-this', `${fixture.base}${coverage}leaf.html?same-nested-this`],
+    ['Written link', 'about:srcdoc'],
+    ['Leaf link same-nested-other', `${otherSite}${coverage}leaf.html?same-nested-other`],
+    ['Inner link other', `${otherSite}${coverage}inner.html?other`],
+    ['Leaf link other-nested-other', `${otherSite}${coverage}leaf.html?other-nested-other`],
+    ['Leaf link other-nested-this', `${fixture.base}${coverage}leaf.html?other-nested-this`],
+    ['Leaf link third', `${thirdSite}${coverage}leaf.html?third`],
+    ['Leaf link aside', `${otherSite}${coverage}leaf.html?aside`],
+    ['Leaf link component', `${otherSite}${coverage}leaf.html?component`],
+    ['Leaf link', `${fixture.base}${coverage}leaf.html?sandboxed`],
+  ], 'every frame’s links, each with the frame it was in; nothing from the hidden frame');
+  assert.equal(new Set(framed.map((link) => `${link.url} ${link.frameUrl}`)).size, framed.length, 'no link twice');
+  assert.ok(framed.every((link) => link.sourceUrl === framesUrl && link.sourceTitle === 'Frames from other sites — coverage fixture'), 'the page is every link’s source');
+  assert.equal(framed.find((link) => link.anchorText === 'Inner link other').context, 'Words around the frame’s own link: Inner link other.', 'context is read inside the frame');
+  assert.deepEqual([framesRun.results[0].status, framesRun.results[0].count, framesRun.results[0].warning, framesRun.results[0].frames], ['success', 12, '', {read: 7, unread: 0, sites: [], left: []}]);
+  assert.deepEqual(await ui.evaluate(() => window.__requests), [], 'reading the frames asks for nothing');
+  // Content links only: the sidebar frame from another site is page chrome, so its link is left out and counted.
+  await rpc(ui, {type: 'state.mutate', action: {type: 'settings.update', patch: {contentOnly: true}}});
+  const contentRun = (await rpc(ui, {type: 'capture.run', tabIds: [framesTab.id]})).report;
+  await rpc(ui, {type: 'state.mutate', action: {type: 'settings.update', patch: {contentOnly: false}}});
+  assert.deepEqual([contentRun.results[0].count, contentRun.results[0].leftOut], [11, 1]);
+  // Hold-key drag stays in the top document: the copy of the page script inside a frame from another
+  // site only reads links, so a drag that starts inside that frame selects nothing, there or in the page.
+  const holding = (await rpc(ui, {type: 'state.get'})).settings;
+  if (holding.holdTrigger === 'letter') {
+    const inFrame = await page.locator('#other').boundingBox();
+    await page.bringToFront(); await page.keyboard.down(holding.holdKey);
+    await page.mouse.move(inFrame.x + inFrame.width - 30, inFrame.y + inFrame.height - 12); await page.mouse.down();
+    await page.mouse.move(inFrame.x + inFrame.width - 120, inFrame.y + inFrame.height - 40, {steps: 6}); await page.mouse.up();
+    await page.keyboard.up(holding.holdKey); await sleep(300);
+    assert.deepEqual([await page.frameLocator('#other').locator('#link-meteor-overlay').count(), await page.locator('#link-meteor-overlay').count()], [0, 0], 'a drag inside a frame from another site selects nothing');
+  }
+  pass('Frames from other sites with all-sites access: every frame is read (nested, sidebar, inside a closed component, sandboxed), each link once with its frameUrl and context, a hidden frame not at all, with no prompt; content links only leaves the sidebar frame’s link out', {links: framed.length, frames: framesRun.results[0].frames});
 
   // 0.6.0: Capture this PDF where Link Meteor already has access to the PDF's site (here, all sites)
   // and the toolbar was never clicked on its tab. The tab is known as a PDF by its address, or, for

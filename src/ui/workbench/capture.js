@@ -8,6 +8,7 @@ import { renderSite } from './settings.js';
 import { ALL_SITES, grants, pageAccessPlan } from './access.js';
 // PDFs (0.6.0): on a PDF's tab the capture button reads the links inside the PDF (pdf.js).
 import { targetTab, pdfCaptureLabel, previewPdfTab, syncPdfCapture, learnPdfTab, chooseLocalPdf, capturePdf } from './pdf.js';
+import { reportFrames } from './frames.js';
 
 let inventoryTimer, inventoryRequestSequence = 0;
 // Whether the current page's tab can be read right now (a toolbar click, a site grant or all-sites
@@ -319,6 +320,12 @@ export function captureReport(report, { source = 'workbench', key = '', createdA
     if (cited) box.append(node('p', 'help report-citations', cited));
     reportTabs(box, results); syncReportAction(); return;
   }
+  // 0.6.0, Allow these sites: the same report again, with the frames' links folded in (frames.js).
+  const again = (merged) => {
+    const next = key ? JSON.stringify([createdAt, merged.batchId, merged.capturedCount]) : '';
+    if (next) ui.lastContextReportKey = next;
+    captureReport(merged, { source, key: next, createdAt, reasons, offerAllSites });
+  };
   const list = node('ul', 'report-list');
   const quiet = results.length === 1 && results[0].status === 'success' && results[0].count && !results[0].warning;
   for (const result of quiet ? [] : results) {
@@ -338,6 +345,7 @@ export function captureReport(report, { source = 'workbench', key = '', createdA
       allow.addEventListener('click', () => action(allowAllSites));
       item.append(allow);
     }
+    reportFrames(item, result, report, again);
     list.append(item);
   }
   if (!results.length) list.append(node('li', 'report-item error', 'No tab results were returned.'));

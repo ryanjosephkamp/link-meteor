@@ -10,6 +10,9 @@
 // 0.5.0: context snippets (every kind of block, cuts at word boundaries, saveContext off, 20,000
 // links) and page citations (Highwire, PRISM, JSON-LD, Dublin Core, none and odd tags), in scan(),
 // the card's commit and the menus' answers, read the same way as Save tabs as links reads them.
+// 0.6.0: closed shadow roots (with a stand-in for chrome.dom, and without it), in scan(), a region,
+// the right-click lookup and a selection; and frames from other sites, where the script runs in
+// every frame as Chrome would run it and the answers are joined by the background's own joinFrames.
 // Writes access-content-results.json to LINK_METEOR_EVIDENCE_DIR (default .scratch/evidence-access-capture).
 import assert from 'node:assert/strict';
 import {mkdir, mkdtemp, readFile, rm, writeFile} from 'node:fs/promises';
@@ -17,6 +20,7 @@ import {resolve} from 'node:path';
 import {browserHome, chromePath, fixtureServer, headlessArgs, playwright, root, scratch} from './helpers/browser.mjs';
 import {cardTheme} from '../src/core/themes.js';
 import {readCitationTags} from '../src/background/citations.js';
+import {joinFrames} from '../src/background/frame-join.js';
 
 const evidence = resolve(root, process.env.LINK_METEOR_EVIDENCE_DIR || '.scratch/evidence-access-capture');
 const source = await readFile(resolve(root, 'src/content/capture.js'), 'utf8');
@@ -25,8 +29,9 @@ let htmlUnread = 0;
 const pass = (name, data = {}) => { result.checks.push({name, ...data}); console.log('PASS', name, Object.keys(data).length ? JSON.stringify(data) : ''); };
 
 // The stub answers like the background would, and records every message.
-function stub({platform, trigger = 'modifier', key = 'z'}) {
-  const init = ({platform, trigger, key}) => {
+// With `dom`, the stub also stands in for chrome.dom.openOrClosedShadowRoot (0.6.0).
+function stub({platform, trigger = 'modifier', key = 'z', dom = false}) {
+  const init = ({platform, trigger, key, dom}) => {
     if (platform) {
       Object.defineProperty(Navigator.prototype, 'platform', {get: () => platform, configurable: true});
       Object.defineProperty(Navigator.prototype, 'userAgentData', {get: () => undefined, configurable: true});
@@ -78,15 +83,24 @@ function stub({platform, trigger = 'modifier', key = 'z'}) {
       },
       storage: {onChanged: {addListener() {}, removeListener() {}}},
     };
+    // chrome.dom sees into closed shadow roots. Nothing outside an extension can, so this stand-in
+    // remembers each root on its host as the page attaches it. A root declared in the page's HTML is
+    // never attached by a script and stays unseen here; tests/coverage-browser.mjs uses the real API.
+    // Like the real one, it refuses anything that isn't an HTML element.
+    if (dom) {
+      const ROOT = Symbol.for('link-meteor-test-root'), attach = Element.prototype.attachShadow;
+      Element.prototype.attachShadow = function (init) { const root = attach.call(this, init); this[ROOT] = root; return root; };
+      chrome.dom = {openOrClosedShadowRoot: (element) => { if (element?.nodeType !== 1 || element.namespaceURI !== 'http://www.w3.org/1999/xhtml') throw new TypeError('Error in invocation of dom.openOrClosedShadowRoot'); window.__stub.domCalls++; return element[ROOT] || null; }};
+    }
     window.chrome = chrome; // writable, not configurable
     // deliver: a message the background sends without waiting; ask: one it waits for (the menus' requests).
-    window.__stub = {sent, clicks, downs, held, deliver: (message) => listener?.(message),
+    window.__stub = {sent, clicks, downs, held, domCalls: 0, listening: () => !!listener, deliver: (message) => listener?.(message),
       ask: (message) => new Promise((resolve) => { listener?.(message, {id: 'stub'}, resolve); setTimeout(() => resolve('no answer'), 100); })};
     // Page listeners in the bubble phase: they see what the page would see.
     document.addEventListener('click', (event) => { clicks.push({target: event.target.id || event.target.tagName, meta: event.metaKey, ctrl: event.ctrlKey, prevented: event.defaultPrevented}); if (event.target.closest?.('a')) event.preventDefault(); });
     document.addEventListener('pointerdown', (event) => { downs.push({target: event.target.id || event.target.tagName, prevented: event.defaultPrevented}); });
   };
-  return {init, arg: {platform, trigger, key}};
+  return {init, arg: {platform, trigger, key, dom}};
 }
 
 const fixture = await fixtureServer();
@@ -1036,6 +1050,144 @@ try {
   assert.ok(timing.longest <= 400 && timing.empty === 0, JSON.stringify(timing));
   assert.ok(timing.withMs < 5000, `scan with context took ${timing.withMs} ms`);
   pass('20,000 links: every link gets its context, at most 400 characters, in one scan', timing);
+
+  /* 0.6.0: closed shadow roots. */
+  const folder = '/site/coverage/', here = `${fixture.base}${folder}components.html`;
+  const texts = (links) => links.map((link) => link.anchorText);
+  const letter = {platform: 'MacIntel', trigger: 'letter', key: 'q'};
+  // Without chrome.dom (a Chrome that lacks it), only what the page shows openly is read.
+  const plain = await context.newPage();
+  await load(plain, `${folder}components.html`, letter);
+  assert.deepEqual(texts((await plain.evaluate(() => globalThis.__linkMeteor.scan())).links), ['Light link', 'Open link', 'Slotted link'], 'element.shadowRoot alone');
+  await plain.close();
+  const closedPage = await context.newPage();
+  await load(closedPage, `${folder}components.html`, {...letter, dom: true});
+  const closedScan = await closedPage.evaluate(() => globalThis.__linkMeteor.scan());
+  const CLOSED = ['Light link', 'Closed one', 'Closed two', 'Closed one, again', 'Outer closed link', 'Inner closed link', 'Open link', 'Closed inside open', 'Custom element link', 'Slotted link', 'Navigation link in a closed component'];
+  assert.deepEqual(texts(closedScan.links), CLOSED, 'every link once, in page order; nothing from the hidden component');
+  assert.deepEqual(closedScan.links.filter((link) => link.pageChrome).map((link) => link.anchorText), ['Navigation link in a closed component'], 'page chrome is seen out through a closed root');
+  assert.ok(closedScan.links.every((link) => link.frameUrl === here && link.sourceUrl === here));
+  assert.equal(closedScan.links[2].context, 'The first source the component names is Closed one, and then Closed two, the same address as Closed one, again.');
+  assert.deepEqual([closedScan.frames, closedScan.inaccessibleFrames, closedScan.warnings, closedScan.at, closedScan.malformed, closedScan.capped], [[], 0, [], '', 0, false]);
+  // Only elements that can hold a shadow root are asked about: the stand-in refuses anything else.
+  const asked = await closedPage.evaluate(() => { window.__stub.domCalls = 0; document.querySelector('main').insertAdjacentHTML('beforeend', '<svg id="drawn" width="20" height="20"><a href="/c/drawn"><text y="14">S</text></a></svg>'); const scanned = globalThis.__linkMeteor.scan(); document.getElementById('drawn').remove(); return {calls: window.__stub.domCalls, drawn: scanned.links.filter((link) => link.url.endsWith('/c/drawn')).length, hosts: document.querySelectorAll('article,aside,blockquote,body,div,footer,h1,h2,h3,h4,h5,h6,header,main,nav,p,section,span').length}; });
+  assert.ok(asked.drawn === 1 && asked.calls > 0 && asked.calls <= asked.hosts + 12, JSON.stringify(asked));
+  pass('Closed shadow roots: scan reads the links inside them (one, nested, inside an open root, a custom element, a slotted link once, one in navigation as page chrome), with their context; without chrome.dom only open roots are read', {withDom: CLOSED.length, without: 3, asked});
+
+  // A region over three sections, with the hold key: the closed links are selected and highlighted.
+  const dragOver = async (page, first, last, count) => {
+    await page.bringToFront(); await page.evaluate(() => scrollTo(0, 0));
+    const a = await page.locator(first).boundingBox(), b = await page.locator(last).boundingBox();
+    await page.keyboard.down('q'); await page.mouse.move(a.x + 2, a.y + 2); await page.mouse.down();
+    await page.mouse.move(b.x + b.width - 2, b.y + b.height - 2, {steps: 10}); await page.mouse.up(); await page.keyboard.up('q');
+    await page.waitForFunction((count) => document.getElementById('link-meteor-overlay')?.shadowRoot.querySelector('.count')?.textContent === `${count} links selected`, count);
+  };
+  await dragOver(closedPage, '#closed', '#mixed', 7);
+  const regionCard = await closedPage.evaluate(() => {
+    const root = document.getElementById('link-meteor-overlay').shadowRoot, hits = [...root.querySelectorAll('.hit')].map((hit) => hit.getBoundingClientRect());
+    return {rows: [...root.querySelectorAll('.preview .t')].map((row) => row.textContent), hits: hits.length, warning: root.querySelector('.warning').textContent,
+      placed: window.fixtureBoxes().every((box) => hits.some((hit) => Math.abs(hit.left - box.left) < 1.5 && Math.abs(hit.top - box.top) < 1.5 && Math.abs(hit.width - box.width) < 1.5))};
+  });
+  assert.deepEqual(regionCard, {rows: CLOSED.slice(1, 8), hits: 7, warning: '', placed: true});
+  await card(closedPage).locator('button.add').click();
+  await closedPage.waitForFunction(() => window.__stub.sent.some((m) => m.type === 'capture.commit'));
+  const [regionCommit] = await closedPage.evaluate(() => window.__stub.sent.splice(0).filter((m) => m.type === 'capture.commit'));
+  assert.deepEqual([texts(regionCommit.links), regionCommit.links[1].context, regionCommit.inaccessibleFrames], [CLOSED.slice(1, 8), closedScan.links[2].context, 0]);
+  await closedPage.keyboard.press('Escape');
+  pass('Closed shadow roots: a hold-key region selects their links, highlights each where it is drawn, and commits them with their context', {rows: regionCard.rows});
+
+  // The right-click lookup and the selection's links, inside closed roots.
+  const askClosed = (message) => closedPage.evaluate((message) => window.__stub.ask(message), message);
+  const boxAt = async (index) => (await closedPage.evaluate(() => window.fixtureBoxes()))[index];
+  const againBox = await boxAt(2);
+  await closedPage.mouse.click(againBox.left + 4, againBox.top + againBox.height / 2, {button: 'right'});
+  assert.equal((await askClosed({type: 'content.contextLink', url: `${fixture.base}/c/closed-one`})).data.link.anchorText, 'Closed one, again', 'the right-clicked one of two links with that address, inside a closed root');
+  const innerBox = await boxAt(4);
+  await closedPage.mouse.click(innerBox.left + 4, innerBox.top + innerBox.height / 2, {button: 'right'});
+  assert.equal((await askClosed({type: 'content.contextLink', url: `${fixture.base}/c/inner`})).data.link.anchorText, 'Inner closed link', 'inside a closed root inside a closed root');
+  assert.equal((await askClosed({type: 'content.contextLink', url: `${fixture.base}/c/closed-in-open`})).data.link.anchorText, 'Closed inside open', 'another address: found by walking the roots');
+  await closedPage.locator('#slotted-link').click({button: 'right'});
+  assert.equal((await askClosed({type: 'content.contextLink', url: `${fixture.base}/c/slotted`})).data.link.anchorText, 'Slotted link', 'a link the page hands to a closed component');
+  // `first` is the fixture's own reference to its first closed root.
+  await closedPage.evaluate(() => { const text = first.getElementById('closed-two').firstChild; getSelection().setBaseAndExtent(text, 0, text, 6); });
+  const selectedClosed = await askClosed({type: 'content.selectionLinks'});
+  assert.deepEqual(texts(selectedClosed.data.links), ['Closed two'], 'a selection inside a closed root');
+  await closedPage.evaluate(() => getSelection().removeAllRanges());
+  await closedPage.close();
+  pass('Closed shadow roots: content.contextLink answers the link under the pointer inside a closed root (also a nested one, and a slotted link), and content.selectionLinks the links a selection inside one touches');
+
+  /* 0.6.0: frames from other sites. The script runs in every frame, as Chrome runs it where Link
+     Meteor has access, and the background's joinFrames joins the answers. */
+  const otherSite = fixture.other, thirdSite = `http://third.localhost:${new URL(fixture.base).port}`;
+  const framed = await context.newPage();
+  await load(framed, `${folder}frames.html`, {...letter, dom: true});
+  await framed.waitForFunction(() => window.fixtureFramesLoaded() && window.length === 7);
+  for (const frame of framed.frames()) await frame.waitForLoadState('load');
+  await sleep(400);
+  // Every frame gets the script (the sandboxed frame runs no scripts of its own, so it is given the
+  // stub the same way), and answers scan; a frame that defined nothing answers null.
+  const {init: frameInit, arg: frameArg} = stub({...letter, dom: true});
+  const answers = [];
+  for (const [index, frame] of framed.frames().entries()) {
+    const top = frame === framed.mainFrame();
+    if (!top) {
+      if (!await frame.evaluate(() => !!window.__stub)) await frame.evaluate(frameInit, frameArg);
+      await frame.evaluate(source);
+    }
+    const answer = await frame.evaluate(() => ({result: globalThis.__linkMeteor?.scan?.({context: true}) ?? null, keys: Object.keys(globalThis.__linkMeteor || {}), sent: window.__stub.sent.map((m) => m.type), listening: window.__stub.listening()}));
+    answers.push({frameId: top ? 0 : index, url: frame.url(), ...answer});
+  }
+  const short = (url) => { if (url.startsWith('about:')) return url; const at = new URL(url); return (at.origin === fixture.base ? '' : at.host.split(':')[0]) + at.pathname.replace(folder, '/') + at.search; };
+  const byUrl = Object.fromEntries(answers.map((answer) => [short(answer.url), answer]));
+  // A frame the document around it can read holds no copy; a frame from another site holds one that
+  // only scans: it asks for no settings, listens for no messages and reads no citation tags.
+  const idle = ['/inner.html?same', '/leaf.html?same-nested-this', 'about:srcdoc', 'localhost/leaf.html?other-nested-other'];
+  assert.deepEqual(idle.map((name) => [byUrl[name].result, byUrl[name].keys, byUrl[name].sent, byUrl[name].listening]), idle.map(() => [null, [], [], false]));
+  const alone = ['localhost/inner.html?other', '/leaf.html?other-nested-this', 'localhost/leaf.html?same-nested-other', 'third.localhost/leaf.html?third', 'localhost/leaf.html?aside', 'localhost/leaf.html?component', '/leaf.html?sandboxed', 'localhost/leaf.html?hidden'];
+  assert.deepEqual(alone.map((name) => [byUrl[name].keys, byUrl[name].sent, byUrl[name].listening, byUrl[name].result.page]), alone.map(() => [['scan', 'alive', 'dispose'], [], false, null]));
+  assert.deepEqual(Object.fromEntries(alone.map((name) => [name, byUrl[name].result.at])), {'localhost/inner.html?other': '1', '/leaf.html?other-nested-this': '1.0', 'localhost/leaf.html?same-nested-other': '0.1',
+    'third.localhost/leaf.html?third': '2', 'localhost/leaf.html?aside': '3', 'localhost/leaf.html?component': null, '/leaf.html?sandboxed': '4', 'localhost/leaf.html?hidden': '6'});
+  await framed.keyboard.down('q'); await framed.keyboard.up('q');
+  assert.equal(await card(framed).count(), 0);
+  // What the top document says about the frames it couldn't read: each one's site, place and whether it is page chrome.
+  const topAnswer = byUrl['/frames.html'].result;
+  assert.deepEqual(topAnswer.frames, [{site: otherSite, at: '0.1', chrome: false}, {site: otherSite, at: '1', chrome: false}, {site: thirdSite, at: '2', chrome: false}, {site: otherSite, at: '3', chrome: true},
+    {site: otherSite, at: null, chrome: false}, {site: fixture.base, at: '4', chrome: false}]);
+  assert.deepEqual([texts(topAnswer.links), topAnswer.at, topAnswer.inaccessibleFrames, topAnswer.url, topAnswer.title], [['Top link', 'Inner link same', 'Leaf link same-nested-this', 'Written link'], '', 6, `${fixture.base}${folder}frames.html`, 'Frames from other sites — coverage fixture']);
+  pass('Frames: a frame its parent can read holds no copy of the script; a frame from another site holds one that only scans (no settings request, no message listener, no citation); each says where it sits, and the top document lists the frames it couldn’t read with their sites', {places: alone.map((name) => [name, byUrl[name].result.at])});
+
+  // Joined as the background joins them, for the access Link Meteor may have. Chrome runs the script
+  // only in frames it has access to, so each case passes on only those frames' answers.
+  const joinFor = (allowed, options) => joinFrames(answers.filter((answer) => answer.frameId === 0 || allowed(answer)).map(({frameId, result}) => ({frameId, result})), options);
+  const named = (joined) => joined.links.map((link) => [link.anchorText, short(link.frameUrl)]);
+  const TOP = [['Top link', '/frames.html'], ['Inner link same', '/inner.html?same'], ['Leaf link same-nested-this', '/leaf.html?same-nested-this'], ['Written link', 'about:srcdoc']];
+  const OTHER = [['Leaf link same-nested-other', 'localhost/leaf.html?same-nested-other'], ['Inner link other', 'localhost/inner.html?other'], ['Leaf link other-nested-other', 'localhost/leaf.html?other-nested-other'], ['Leaf link other-nested-this', '/leaf.html?other-nested-this']];
+  const everywhere = joinFor(() => true);
+  assert.deepEqual(named(everywhere), [...TOP, ...OTHER, ['Leaf link third', 'third.localhost/leaf.html?third'], ['Leaf link aside', 'localhost/leaf.html?aside'], ['Leaf link component', 'localhost/leaf.html?component'], ['Leaf link', '/leaf.html?sandboxed']], 'all sites: every frame’s links once, with its frameUrl; nothing from the hidden frame');
+  assert.deepEqual([everywhere.read, everywhere.unread, everywhere.links.filter((link) => link.pageChrome).map((link) => link.anchorText)], [7, [], ['Leaf link aside']]);
+  assert.ok(everywhere.links.every((link) => link.sourceUrl === topAnswer.url && link.sourceTitle === topAnswer.title), 'a frame’s links take the page as their source');
+  assert.equal(new Set(everywhere.links.map((link) => `${link.url} ${link.frameUrl}`)).size, everywhere.links.length, 'no link twice');
+  assert.equal(everywhere.links.find((link) => link.anchorText === 'Inner link other').context, 'Words around the frame’s own link: Inner link other.', 'context is read inside the frame');
+  // The toolbar's temporary access: the top document alone.
+  const toolbar = joinFor(() => false);
+  const LEFT = [{site: otherSite, at: '0.1'}, {site: otherSite, at: '1'}, {site: thirdSite, at: '2'}, {site: otherSite, at: '3'}, {site: otherSite, at: null}, {site: fixture.base, at: '4'}];
+  assert.deepEqual([named(toolbar), toolbar.read, toolbar.unread], [TOP, 0, LEFT]);
+  // The other site allowed (and the page's own, as the toolbar gives it, which doesn't reach its sandboxed frame).
+  const some = joinFor((answer) => !answer.url.startsWith(thirdSite) && !answer.url.includes('?sandboxed'));
+  assert.deepEqual([named(some), some.read, some.unread], [[...TOP, ...OTHER, ['Leaf link aside', 'localhost/leaf.html?aside'], ['Leaf link component', 'localhost/leaf.html?component']], 5, [LEFT[2], LEFT[5]]]);
+  // Allow these sites, after the toolbar's reading: only the links in the frames that reading left
+  // unread and that are read now, and in the frames inside them.
+  const fresh = joinFor((answer) => !answer.url.startsWith(thirdSite) && !answer.url.includes('?sandboxed'), {left: toolbar.unread});
+  assert.deepEqual([named(fresh), fresh.fresh, fresh.read], [[...OTHER, ['Leaf link aside', 'localhost/leaf.html?aside'], ['Leaf link component', 'localhost/leaf.html?component']], 5, 5]);
+  // Then the page's own site, for its sandboxed frame: that frame alone is new. The frame of the
+  // page's own site inside the other site's frame was read before, and is not read twice.
+  const sealed = joinFor((answer) => !answer.url.startsWith(thirdSite), {left: some.unread});
+  assert.deepEqual([named(sealed), sealed.fresh, sealed.unread], [[['Leaf link', '/leaf.html?sandboxed']], 1, [LEFT[2]]]);
+  // A frame inside a frame that wasn't read is left out, even where Link Meteor could read it.
+  const inside = joinFor((answer) => answer.url.includes('?other-nested-this'));
+  assert.deepEqual([named(inside), inside.read, inside.unread.length], [TOP, 0, 6]);
+  await framed.close();
+  pass('Frames joined: with all sites every frame is read once (nested, in a closed component, sandboxed, in a sidebar as page chrome) and a hidden frame not at all; with the toolbar’s access only the top document, and each unread frame’s site; with one site allowed, its frames and those inside them; a frame inside an unread frame is left out', {all: everywhere.links.length, toolbar: toolbar.links.length, oneSite: some.links.length, fresh: fresh.links.length});
 
   if (htmlUnread) result.limits = [`This Chrome's headless clipboard can't be read with navigator.clipboard.read(): ${htmlUnread} clipboard reads checked the plain text only, not the HTML.`];
   result.result = 'PASS';

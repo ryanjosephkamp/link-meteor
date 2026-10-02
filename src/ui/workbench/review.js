@@ -12,6 +12,7 @@ import { fieldInputs, hasFieldValues, appendFieldValues, renderFill, bindFill } 
 import { linkDownload } from './downloads.js';
 import { renderInsights, insightsShown, setInsights, bindInsights } from './insights.js';
 import { renderMove, bindMove, detailMove } from './move.js';
+import { renderLookupSelection, detailLookup, lookupNote } from './lookup.js';
 
 const PAGE_SIZE = 100;
 const DETAIL_PAGE_SIZE = 100;
@@ -67,6 +68,7 @@ export function renderLinks() {
   syncViewRemoval(collection);
   renderFill(collection);
   renderMove(collection);
+  renderLookupSelection(collection);
   $('select-all').checked = !!pageIds.length && pageIds.every((id) => ui.selectedIds.has(id));
   $('select-all').indeterminate = pageIds.some((id) => ui.selectedIds.has(id)) && !$('select-all').checked;
   $('select-all').disabled = !pageIds.length;
@@ -379,6 +381,9 @@ function renderResearch(link) {
   if (cited) block.append(occBlock('Cited from', citation(cited)));
   const used = citationFor(link, pages);
   if (used && used.key !== pageKey(link.sourceUrl)) block.append(occBlock('Citation', citation(used.citation, usedNote(used))));
+  // Page details lookup (0.6.0): offered where the citation the link uses lacks something.
+  const lookup = detailLookup(link);
+  if (lookup) block.append(lookup);
   if (link.imported) block.append(occBlock('Imported from', node('p', 'imported-from', link.imported)));
   return block;
 }
@@ -446,14 +451,14 @@ function identifierList(ids) {
 // Where a citation that isn't the source page's comes from, for its note.
 const BORROWED = { pdf: 'which names this link as its PDF', doi: 'which has the same DOI', arxiv: 'which has the same arXiv ID' };
 function usedNote({ key, citation: page, reason }) {
-  if (reason === 'own') return 'From this page’s own citation tags, read when Link Meteor had it open. Citation exports use it. Saved in this browser; nothing was looked up online.';
+  if (reason === 'own') return 'From this page’s own citation tags, read when Link Meteor had it open. Citation exports use it. Saved in this browser.';
   const name = page.title ? `“${page.title}”` : hostOf(key) || 'a saved page';
-  return `From the citation tags of ${name}, ${BORROWED[reason]}. Citation exports use it. Saved in this browser; nothing was looked up online.`;
+  return `From the citation tags of ${name}, ${BORROWED[reason]}. Citation exports use it. Saved in this browser.`;
 }
 
-// A citation read from a page's own tags: title, then authors, journal, date and identifiers on
-// one line, and a note that nothing was looked up.
-const SOURCE_NOTE = 'From the source page’s own citation tags, read when you captured it. Saved in this browser; nothing was looked up online.';
+// A citation: title, then authors, journal, date and identifiers on one line, and a note saying
+// where it was read: a page's own tags, or the service a lookup asked (lookupNote, 0.6.0).
+const SOURCE_NOTE = 'From the source page’s own citation tags, read when you captured it. Saved in this browser.';
 function citation(page, note = SOURCE_NOTE) {
   const box = node('div', 'cited');
   box.append(node('span', 'cited-title', page.title || 'Untitled page'));
@@ -463,7 +468,7 @@ function citation(page, note = SOURCE_NOTE) {
     page.firstPage && (page.lastPage ? `pp. ${page.firstPage}–${page.lastPage}` : `p. ${page.firstPage}`)].filter(Boolean).join(', ');
   const line = [named, venue, page.date, page.doi && `DOI ${page.doi}`, page.arxiv && `arXiv ${page.arxiv}`, page.pmid && `PubMed ${page.pmid}`, page.isbn && `ISBN ${page.isbn}`].filter(Boolean).join(' · ');
   if (line) box.append(node('span', 'cited-line', line));
-  box.append(node('span', 'cited-note', note));
+  box.append(node('span', 'cited-note', lookupNote(page, note !== SOURCE_NOTE) || note));
   return box;
 }
 

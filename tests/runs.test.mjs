@@ -24,7 +24,7 @@ const timers = [];
 const granted = new Set();          // origins Link Meteor has site access to
 const active = new Set();           // tabs with the toolbar's temporary access
 let pagesOpen = true, pdfReply = null, failScripts = false;
-const calls = {created: [], removed: [], updated: [], scans: [], toPage: [], broadcasts: []};
+const calls = {created: [], removed: [], updated: [], scans: [], frames: [], toPage: [], broadcasts: []};
 const origin = (url) => { try { return new URL(url).origin; } catch { return ''; } };
 const readable = (tab) => granted.has(origin(tab.url)) || (active.has(tab.id) && origin(tab.url) === tab.access);
 const visible = (tab) => ({id: tab.id, windowId: 1, status: tab.status, ...(readable(tab) ? {url: tab.url, title: tab.title} : {})});
@@ -73,7 +73,11 @@ globalThis.chrome = {
       if (source.includes('contentType')) return [{result: shown.type}];
       if (source.includes('.next')) return [{result: shown.next ? (shown.next === 'button' ? {button: true} : {url: shown.next, how: 'label'}) : null}];
       if (source.includes('.scan')) {
-        calls.scans.push({id: tab.id, url: tab.url, at: now, options: structuredClone(spec.args[0])});
+        // After Scroll to the end first, the frames are read in a second call (background/frames.js),
+        // which keeps the scrolled top document's answer: it is not another scan of the page.
+        const last = calls.scans.at(-1), afterScroll = spec.target.allFrames && last?.id === tab.id && last.url === tab.url && last.options.scroll && !spec.args[0].scroll;
+        if (afterScroll) calls.frames.push({id: tab.id, url: tab.url, at: now});
+        else calls.scans.push({id: tab.id, url: tab.url, at: now, options: structuredClone(spec.args[0])});
         const wanted = spec.args[0].scroll;
         return [{result: {links: structuredClone(shown.links), warnings: [], inaccessibleFrames: 0, page: null, ...(wanted ? {scroll: shown.scroll || {screens: 4, of: 50, ended: 'end', text: 'Reached the end after 4 screens.'}} : {})}}];
       }
@@ -484,6 +488,7 @@ test('capture.run with scroll: one page through Capture this page’s own pipeli
   const {state: saved, report: answer} = await pending;
   const record = session.linkMeteorRun;
   assert.deepEqual(calls.scans.map((scan) => scan.options), [{context: true, scroll: {runId: record.runId}}]);
+  assert.equal(calls.frames.length, 1, 'the frames are read once, after the scroll, and joined to the scrolled page');
   assert.deepEqual(answer.results[0].scroll, {screens: 50, of: 50, ended: 'screens', text: 'Stopped at 50 screens. The page may have more.'});
   assert.deepEqual([answer.capturedCount, answer.collectionId, saved.collections[0].links.length], [4, state().activeCollectionId, 4]);
   assert.equal(session.linkMeteorCaptureReport.report.collectionId, answer.collectionId, 'the kept report names the collection, for Undo in any view');

@@ -207,7 +207,8 @@ Versions 0.1.0 to 0.4.0 were distributed only as a ZIP for Load unpacked and wer
 ### Known Issues / Limitations
 
 - Chrome does not allow extensions on its own pages, the Chrome Web Store or incognito windows (Link Meteor does not request incognito access).
-- Links inside closed page components cannot be seen or captured. Frames from other sites are reported as unreadable, not skipped silently.
+- A frame from another site is read only when Link Meteor has access to that site. The capture report names the sites it couldn't read and offers to allow them; nothing is skipped silently. A region can't reach into those frames.
+- A PDF opened from the computer can't be read from its tab; the person chooses the file instead, which needs no access. Scanned PDFs have no links to read.
 - Tested on macOS:
   - by hand in Chrome, Brave and Microsoft Edge;
   - in automation in Chrome for Testing, including the checks that need no grants on Chrome for Testing 116, the declared minimum.

@@ -6,6 +6,8 @@ import { render, setView } from './rendering.js';
 import { renderLinks } from './review.js';
 import { renderSite } from './settings.js';
 import { ALL_SITES, grants, pageAccessPlan } from './access.js';
+// PDFs (0.6.0): on a PDF's tab the capture button reads the links inside the PDF (pdf.js).
+import { targetTab, pdfCaptureLabel, previewPdfTab, syncPdfCapture, learnPdfTab, chooseLocalPdf, capturePdf } from './pdf.js';
 
 let inventoryTimer, inventoryRequestSequence = 0;
 // Whether the current page's tab can be read right now (a toolbar click, a site grant or all-sites
@@ -28,7 +30,7 @@ export function renderCaptureButton() {
   const label = $('capture-label'), tabs = captureWhat === 'tabs';
   if (ui.busy) { label.textContent = tabs ? 'Saving…' : 'Capturing…'; $('capture').setAttribute('aria-busy', 'true'); return; }
   $('capture').removeAttribute('aria-busy');
-  if (ui.scope === 'current') { label.textContent = tabs ? 'Save this tab as a link' : 'Capture this page'; return; }
+  if (ui.scope === 'current') { label.textContent = tabs ? 'Save this tab as a link' : pdfCaptureLabel() || 'Capture this page'; return; }
   if (!ui.inventory) { label.textContent = tabs ? 'Save tabs as links' : 'Capture tabs'; return; }
   if (tabs) {
     // Tabs known not to be web pages are left out of the count; the preview says how many.
@@ -74,6 +76,7 @@ export function renderInventory() {
   else if (ui.scope === 'current') {
     if (!target) preview(['Open a webpage, then open Link Meteor from it to capture that page.'], true, 'i-alert');
     else if (!target.url) preview(['The current tab was found, but Chrome hides its address and contents from Link Meteor. Click the Link Meteor toolbar icon while on that page, or allow all sites under Site access.']);
+    else if (previewPdfTab(target)) { /* a PDF: pdf.js says what the click does */ }
     else if (!capturableUrl(target.url)) preview([`This is a browser page (${target.url}). Chrome does not allow capturing it; choose an ordinary webpage.`], true, 'i-ban');
     else {
       const plan = currentPagePlan();
@@ -95,6 +98,7 @@ export function renderInventory() {
     else parts.push('Each tab gets its own result.');
     preview(parts, chosen.length > 100, chosen.length > 100 ? 'i-alert' : 'i-tabs');
   }
+  syncPdfCapture(target, { links: captureWhat === 'links' });
   $('tab-picker').hidden = ui.scope !== 'selected';
   if (ui.scope === 'selected') {
     const area = $('tab-options');
@@ -162,6 +166,7 @@ export async function loadInventory() {
   renderInventory();
   renderSite();
   probePageAccess(target);
+  learnPdfTab(target);
   return inventory;
 }
 
@@ -205,6 +210,8 @@ export const REPORT_STATUS = {
   success: { icon: 'i-check', label: (result) => (result.count ? plural(result.count, 'link') : 'No links') },
   denied: { icon: 'i-ban', label: () => 'Access denied' },
   unsupported: { icon: 'i-ban', label: () => 'Unsupported page' },
+  // A PDF among the tabs: not an error. Its links are read by themselves, with Capture this PDF.
+  pdf: { icon: 'i-page', label: () => 'PDF' },
   error: { icon: 'i-alert', label: () => 'Capture failed' },
 };
 
@@ -421,6 +428,8 @@ export function showContextReport(value) {
 
 export async function runCapture() {
   if (ui.busy) return;
+  // A PDF opened from the computer can't be read from its tab: the click opens the file chooser.
+  if (ui.scope === 'current' && chooseLocalPdf()) return;
   // This page on a site Link Meteor cannot read yet: ask Chrome for that site in this same click,
   // before anything is awaited, then capture either way so a decline is reported as denied.
   const plan = ui.scope === 'current' ? currentPagePlan() : { ask: false };
@@ -438,6 +447,8 @@ export async function runCapture() {
       reasons.set(ui.inventory?.targetTabId, 'Chrome hides this tab’s address and contents from Link Meteor, so it cannot ask for this one site. Allow Link Meteor on all sites to capture it now, or click the Link Meteor toolbar icon while on the page, then capture again.');
       offerAllSites.add(ui.inventory?.targetTabId);
     }
+    // A PDF's links are read from its file and shown before any is added (pdf.js).
+    if (ui.scope === 'current' && await capturePdf(targetTab(), { asked: !!asking, origin: plan.origin })) return;
     if (ui.scope !== 'current') {
       if (!ui.inventory) throw new Error('Tab preview is unavailable. Choose the scope again to refresh it.');
       const scope = ui.scope;

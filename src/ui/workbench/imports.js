@@ -3,15 +3,19 @@
 // what is skipped (and why), and one Import that the notice can undo. Nothing is added before
 // Import. Delimited text and lists are parsed in import-worker.js; workbooks and HTML are read here
 // with DecompressionStream and DOMParser. The contract is in docs/CONTRACTS.md ("Imports").
+// 0.6.0: a PDF, chosen or dropped, is read by pdf.js, which shows its links in this same view; a
+// file can also be dropped on the Import links panel or on the list.
 import { MAX_IMPORT_BYTES, MAX_IMPORT_LINKS, SKIP_REASONS, decodeText, readText, readXlsx, readExportJson, detectHeader, columnNames, dataRows,
   guessMapping, planImport } from '../../core/imports.js';
 import { $, node, count, plural } from './helpers.js';
 import { ui, action, request, show } from './state.js';
 import { render, onRender, onEscape, setView } from './rendering.js';
+import { isPdfFile, isPdfBytes, readPdfFile, resetPdf, planPdf, renderPdfPlan, commitPdf, bindPdf } from './pdf.js';
 
 // The parts of a link a column can fill, in the mapping's order.
 const STANDARD = [['url', 'Address (URL)'], ['anchorText', 'Anchor text'], ['notes', 'Notes'], ['tags', 'Tags'], ['status', 'Reading status'], ['starred', 'Starred']];
-const PREVIEW_ROWS = 100, CELL_TEXT = 160, SHOWN_COLUMNS = 12;
+export const PREVIEW_ROWS = 100;
+const CELL_TEXT = 160, SHOWN_COLUMNS = 12;
 // How the preview names what each source is made of, and its number column.
 const UNITS = { row: { noun: 'row', heading: 'Row' }, line: { noun: 'link', heading: 'Line' }, link: { noun: 'link', heading: 'Link' } };
 const TYPES = { csv: 'csv', tsv: 'tsv', tab: 'tsv', xlsx: 'xlsx', xlsm: 'xlsx', html: 'html', htm: 'html', json: 'json', txt: 'text', text: 'text', md: 'list', markdown: 'list' };
@@ -24,34 +28,37 @@ const PHRASES = {
 };
 
 // The import on screen. `run` changes whenever a read starts or the view closes, so a late answer
-// from an earlier read is ignored.
-const view = { run: 0, kind: '', source: null, table: null, header: false, names: [], mapping: null, destination: 'new', plan: null, planned: null,
-  folders: null, chosen: '', pasted: null, returnFocus: null, busy: false };
+// from an earlier read is ignored. `pdf` is the PDF on screen (pdf.js), in place of a table.
+export const view = { run: 0, kind: '', source: null, table: null, header: false, names: [], mapping: null, destination: 'new', plan: null, planned: null,
+  folders: null, chosen: '', pasted: null, returnFocus: null, busy: false, pdf: null };
 let worker = null, jobs = 0;
+// The control that opened the file chooser when it wasn't Choose a file… itself; it gets the focus back.
+let fileOpener = null;
 
 const collapse = (value) => String(value ?? '').replace(/\s+/gu, ' ').trim();
-const clip = (value, max = CELL_TEXT) => (value.length > max ? `${value.slice(0, max - 1)}…` : value);
-const visible = (element) => !!element?.isConnected && element.getClientRects().length > 0;
+export const clip = (value, max = CELL_TEXT) => (value.length > max ? `${value.slice(0, max - 1)}…` : value);
+export const visible = (element) => !!element?.isConnected && element.getClientRects().length > 0;
 const joined = (parts) => (parts.length > 1 ? `${parts.slice(0, -1).join(', ')} and ${parts.at(-1)}` : parts.join(''));
 const filled = (row) => row.some((cell) => String(cell ?? '').trim());
-function destination() { return view.destination === 'new' ? null : ui.state?.collections.find((item) => item.id === view.destination) || null; }
+export function destination() { return view.destination === 'new' ? null : ui.state?.collections.find((item) => item.id === view.destination) || null; }
 
-function progress(text) { $('import-progress').textContent = text; $('import-progress').hidden = !text; }
+export function progress(text) { $('import-progress').textContent = text; $('import-progress').hidden = !text; }
 
 /* Opening and closing ---------------------------------------------------------------------------- */
 function stopWorker() { worker?.terminate(); worker = null; }
 
 function reset() {
-  view.run++; stopWorker();
+  view.run++; stopWorker(); resetPdf();
   Object.assign(view, { kind: '', source: null, table: null, header: false, names: [], mapping: null, destination: 'new', plan: null, planned: null, pasted: null });
   $('import-map').replaceChildren(); $('import-table').tHead.replaceChildren(); $('import-table').tBodies[0].replaceChildren();
   $('import-only-skipped').checked = false; $('import-skip-saved').checked = true;
   $('import-plan').hidden = true; $('import-commit').hidden = true; progress('');
 }
 
-function openView(kind, opener) {
+export function openView(kind, opener) {
   reset();
   view.kind = kind; view.returnFocus = opener;
+  $('import-title').textContent = kind === 'pdf' ? 'Links in this PDF' : 'Import links';
   $('import-source').textContent = kind === 'paste' ? 'Paste links below, then preview them. Nothing is added until you choose Import.'
     : kind === 'folder' ? 'Choose a bookmark folder, then preview its links. Nothing is added until you choose Import.' : '';
   $('import-paste-step').hidden = kind !== 'paste';
@@ -72,7 +79,7 @@ export function closeImport({ focus = true } = {}) {
   if (focus) (visible(opener) ? opener : $('search')).focus();
 }
 
-function cancel() { if (view.busy) return; closeImport(); show('Import canceled. Nothing was added.'); }
+function cancel() { if (view.busy) return; const pdf = view.kind === 'pdf'; closeImport(); show(pdf ? 'Canceled. Nothing was added.' : 'Import canceled. Nothing was added.'); }
 
 /* Reading -------------------------------------------------------------------------------------- */
 // Delimited text and lists, parsed by the worker; in this page when the worker can't start.
@@ -165,16 +172,19 @@ async function readFileTable(file, bytes, run) {
   return read.kind === 'list' ? listTable(read.entries) : { rows: read.rows, unit: 'row', fixed: false };
 }
 
-async function chooseFile() {
-  const input = $('import-file'), file = input.files?.[0];
-  if (!file) return;
-  openView('file', input);
+// A file from the chooser or a drop. A PDF goes to its own reader and preview (pdf.js), and may be
+// larger than other files.
+async function importFile(file, opener) {
+  if (isPdfFile(file)) return readPdfFile(file, opener);
+  openView('file', opener);
   const run = view.run;
   try {
     if (file.size > MAX_IMPORT_BYTES) throw new Error(`${file.name} is larger than ${MAX_IMPORT_BYTES / 1024 / 1024} MB, the most Link Meteor imports at once. Split it into smaller files, then import each.`);
     progress(`Reading ${file.name}…`);
     const bytes = new Uint8Array(await file.arrayBuffer());
     if (run !== view.run) return;
+    // A PDF whose name doesn't say so.
+    if (isPdfBytes(bytes)) { await readPdfFile(file, opener, bytes); return; }
     const table = await readFileTable(file, bytes, run);
     if (run !== view.run) return;
     setTable(table, { kind: 'file', name: file.name, label: file.name, collection: file.name.replace(/\.[a-z0-9]{1,8}$/i, '') || file.name });
@@ -182,7 +192,60 @@ async function chooseFile() {
     if (run !== view.run) return;
     closeImport();
     throw new Error(`${String(error?.message || error)} Nothing was imported.`);
-  } finally { input.value = ''; }
+  }
+}
+
+function restoreChooser() {
+  const input = $('import-file');
+  if (input.dataset.accept) { input.accept = input.dataset.accept; delete input.dataset.accept; }
+  fileOpener = null;
+}
+async function chooseFile() {
+  const input = $('import-file'), file = input.files?.[0], opener = fileOpener || input;
+  restoreChooser();
+  if (!file) return;
+  try { await importFile(file, opener); } finally { input.value = ''; }
+}
+// Opens the file chooser from another control, such as Choose this PDF… on a local PDF's tab.
+// `accept` narrows the chooser to those files for this one choice.
+export function chooseFileFrom(opener, accept = '') {
+  const input = $('import-file');
+  restoreChooser();
+  fileOpener = opener;
+  if (accept) { input.dataset.accept = input.accept; input.accept = accept; }
+  input.click();
+}
+
+/* Dropped files -------------------------------------------------------------------------------- */
+// A file dropped on the Import links panel, or on the list and the Capture section beside it, is
+// read like one from the chooser. Dropped anywhere else in Link Meteor it does nothing, so a
+// missed drop never replaces this view with the file.
+const DROP_TARGETS = '#import-panel, #main';
+const hasFiles = (event) => [...(event.dataTransfer?.types || [])].includes('Files');
+function bindDrops() {
+  let over = null;
+  const mark = (target) => { if (over === target) return; over?.classList.remove('is-drop'); over = target; over?.classList.add('is-drop'); };
+  document.addEventListener('dragover', (event) => {
+    if (!hasFiles(event)) return;
+    event.preventDefault();
+    const target = view.busy ? null : event.target.closest?.(DROP_TARGETS) || null;
+    event.dataTransfer.dropEffect = target ? 'copy' : 'none';
+    mark(target);
+  });
+  document.addEventListener('dragleave', (event) => { if (!event.relatedTarget) mark(null); });
+  document.addEventListener('drop', (event) => {
+    if (!hasFiles(event)) return;
+    event.preventDefault();
+    const target = over || (view.busy ? null : event.target.closest?.(DROP_TARGETS)) || null;
+    mark(null);
+    if (!target) return;
+    const files = [...event.dataTransfer.files];
+    // Afterward, focus goes where a keyboard user would have started: Choose a file…, or the search box.
+    action(async () => {
+      if (files.length !== 1) throw new Error(files.length ? 'Drop one file at a time. Nothing was imported.' : 'That wasn’t a file Link Meteor can read. Nothing was imported.');
+      await importFile(files[0], $('import-file'));
+    });
+  });
 }
 
 function startPaste(event) { openView('paste', event.currentTarget); $('import-text').focus(); }
@@ -327,7 +390,7 @@ function renderMapping() {
   help.hidden = !mapping.overflow;
 }
 
-function newCollectionName() {
+export function newCollectionName() {
   const base = collapse(view.source?.collection).slice(0, 110) || 'Imported links';
   const names = new Set((ui.state?.collections || []).map((item) => item.name.trim().toLowerCase()));
   let name = base;
@@ -335,7 +398,7 @@ function newCollectionName() {
   return name;
 }
 
-function renderDestination() {
+export function renderDestination() {
   if (view.destination !== 'new' && !destination()) view.destination = 'new';
   const select = $('import-destination');
   select.replaceChildren(new Option(`A new collection “${newCollectionName()}”`, 'new'), ...(ui.state?.collections || []).map((item) => new Option(item.name, item.id)));
@@ -427,9 +490,9 @@ function renderPlan() {
 }
 
 /* Importing and Undo --------------------------------------------------------------------------- */
-function setBusy(value) {
+export function setBusy(value) {
   view.busy = value;
-  $('import-commit').disabled = value || !view.plan?.links.length;
+  $('import-commit').disabled = value || !(view.pdf ? view.pdf.plan?.total : view.plan?.links.length);
   $('import-commit').setAttribute('aria-busy', String(value));
 }
 
@@ -450,23 +513,29 @@ async function commit() {
     result = await request({ type: 'import.commit', links, newFields: view.plan.newFields, skipSaved: !!home && $('import-skip-saved').checked,
       ...(home ? { collectionId: home.id } : { newCollection: name }) });
   } finally { setBusy(false); }
+  const columns = result.fields.length ? ` and added ${plural(result.fields.length, 'custom column')}` : '';
+  const already = result.skipped ? ` ${plural(result.skipped, 'more link')} ${result.skipped === 1 ? 'was' : 'were'} already saved there.` : '';
+  showImported(result, name, `Imported ${plural(result.count, 'link')} into “${name}”${columns}.${already}`);
+}
+
+// After an import is saved: the view closes, the list shows the new links, and the notice has Undo.
+// `undone` starts what Undo says afterward.
+export function showImported(result, name, message, undone = 'Import undone') {
   const opener = view.returnFocus;
   closeImport({ focus: false });
   resetList(result.state);
   ui.flashBatch = result.batchId; ui.flashStart = Date.now();
   render();
-  const columns = result.fields.length ? ` and added ${plural(result.fields.length, 'custom column')}` : '';
-  const already = result.skipped ? ` ${plural(result.skipped, 'more link')} ${result.skipped === 1 ? 'was' : 'were'} already saved there.` : '';
-  show(`Imported ${plural(result.count, 'link')} into “${name}”${columns}.${already}`, 'notice', { actionLabel: 'Undo', onAction: () => undoImport({ ...result, name }) });
+  show(message, 'notice', { actionLabel: 'Undo', onAction: () => undoImport({ ...result, name, undone }) });
   (visible(opener) ? opener : $('search')).focus();
 }
 
-async function undoImport({ collectionId, batchId, name }) {
+async function undoImport({ collectionId, batchId, name, undone = 'Import undone' }) {
   const result = await request({ type: 'import.undo', collectionId, batchId });
   resetList(result.state);
   render();
   const removed = [plural(result.count, 'link'), result.collectionRemoved && `the collection “${name}”`, result.fieldsRemoved && plural(result.fieldsRemoved, 'custom column')].filter(Boolean);
-  show(`Import undone: removed ${joined(removed)}.`);
+  show(`${undone}: removed ${joined(removed)}.`);
 }
 
 /* Binding -------------------------------------------------------------------------------------- */
@@ -491,10 +560,18 @@ export function bindImports() {
     if (run === view.run) setTable(table, source);
   }));
   $('import-header').addEventListener('change', () => { view.header = $('import-header').checked; remap(); renderAll(); });
-  $('import-destination').addEventListener('change', () => { view.destination = $('import-destination').value; remap({ keepStandard: true }); renderDestination(); renderMapping(); plan(); });
-  $('import-skip-saved').addEventListener('change', plan);
-  $('import-only-skipped').addEventListener('change', renderPlan);
-  $('import-commit').addEventListener('click', () => action(commit));
+  $('import-file').addEventListener('cancel', restoreChooser);
+  bindDrops();
+  bindPdf();
+  // A PDF on screen has no columns to map: its own module plans and saves it.
+  $('import-destination').addEventListener('change', () => {
+    view.destination = $('import-destination').value;
+    if (view.pdf) { renderDestination(); planPdf({ destinationChanged: true }); return; }
+    remap({ keepStandard: true }); renderDestination(); renderMapping(); plan();
+  });
+  $('import-skip-saved').addEventListener('change', () => (view.pdf ? planPdf() : plan()));
+  $('import-only-skipped').addEventListener('change', () => (view.pdf ? renderPdfPlan() : renderPlan()));
+  $('import-commit').addEventListener('click', () => action(view.pdf ? commitPdf : commit));
   $('import-cancel').addEventListener('click', cancel);
   onEscape(() => {
     if ($('import').hidden) return false;
@@ -503,7 +580,9 @@ export function bindImports() {
   });
   // The preview stays true to the saved state: another collection's name, or links saved meanwhile.
   onRender(() => {
-    if ($('import').hidden || !view.table || ui.state === view.planned?.state) return;
+    if ($('import').hidden || ui.state === view.planned?.state) return;
+    if (view.pdf) { renderDestination(); planPdf(); return; }
+    if (!view.table) return;
     renderDestination();
     if (JSON.stringify(destinationFields()) !== view.mapping.fieldsKey) { remap({ keepStandard: true }); renderMapping(); }
     plan();

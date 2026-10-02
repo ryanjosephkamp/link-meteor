@@ -217,6 +217,16 @@ test('import.commit saves a PDF’s links (0.6.0): their pages, the PDF as their
   const added = collection(home.id).links.at(-1);
   assert.deepEqual([added.imported, added.pdfPage, added.sourceUrl], ['notes.pdf, page 1', 1, ''], 'a file’s links never name a source page');
 
+  // The PDF itself as a link, saved beside its links: on no page, and its own source page, as a
+  // saved tab is. Any other link without a page or a label is still refused (below).
+  const itself = await ok({type: 'import.commit', collectionId: home.id, links: [
+    {anchorText: 'SplatFields', url: pdf, originalHref: pdf, sourceUrl: pdf, sourceTitle: 'SplatFields'},
+    {anchorText: 'SplatFields', url: 'https://arxiv.org/abs/2409.11211', originalHref: 'https://arxiv.org/abs/2409.11211', imported: 'paper.pdf', sourceUrl: 'https://arxiv.org/abs/2409.11211'},
+  ]});
+  assert.deepEqual(collection(home.id).links.slice(-2).map((link) => [link.url, link.sourceUrl, link.sourceTitle, link.pdfPage, link.imported]),
+    [[pdf, pdf, 'SplatFields', undefined, undefined], ['https://arxiv.org/abs/2409.11211', '', '', undefined, 'paper.pdf']], 'from a tab it names itself; from a file it says which file');
+  await ok({type: 'import.undo', collectionId: home.id, batchId: itself.batchId});
+
   // Undo removes the batch; refusals change nothing.
   const count = collection(home.id).links.length;
   await refused({type: 'import.commit', collectionId: home.id, links: [{anchorText: 'x', url: 'https://x.example/', originalHref: 'x', sourceUrl: 'file:///Users/someone/paper.pdf', pdfPage: 1}]}, /source page must be a web address/);

@@ -47,8 +47,9 @@ const text = (value, what) => {
 function importedLink(raw, {batchId, capturedAt, keys}) {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) throw new Error('Each imported link must be an object.');
   const imported = text(raw.imported, 'source').trim();
-  // Only a link read from a PDF in a tab names a source page; a file's links never do.
-  const sourceUrl = raw.pdfPage !== undefined && !imported ? text(raw.sourceUrl, 'source page') : '';
+  // Only a link read from a PDF in a tab names a source page; a file's links never do. The PDF
+  // itself, saved as a link beside them, is its own source page, as a saved tab is.
+  const sourceUrl = !imported && (raw.pdfPage !== undefined || (raw.sourceUrl && raw.sourceUrl === raw.url)) ? text(raw.sourceUrl, 'source page') : '';
   if (sourceUrl && (pageKey(sourceUrl) === '' || sourceUrl.length > 2000)) throw new Error("A link's source page must be a web address.");
   if ((!imported && !sourceUrl) || imported.length > MAX_IMPORTED) throw new Error(`Each imported link needs where it came from, in at most ${MAX_IMPORTED} characters.`);
   if (raw.tags !== undefined && (!Array.isArray(raw.tags) || raw.tags.some(tag => typeof tag !== 'string'))) throw new Error("Each imported link's tags must be a list of text.");

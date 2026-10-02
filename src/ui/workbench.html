@@ -156,13 +156,14 @@
 
       <section id="import-panel" class="rail-section import-panel" aria-labelledby="import-panel-title">
         <h2 id="import-panel-title" class="rail-title">Import links</h2>
-        <p id="import-panel-help" class="help">From a spreadsheet, a list, a web page or bookmarks file, pasted text or a bookmark folder. You see what will be added before anything is. Files are read in this browser and never uploaded.</p>
+        <p id="import-panel-help" class="help">From a spreadsheet, a list, a PDF, a web page or bookmarks file, pasted text or a bookmark folder. You see what will be added before anything is. Files are read in this browser and never uploaded.</p>
         <div class="import-sources">
-          <input id="import-file" class="import-file sr-only" type="file" accept=".csv,.tsv,.tab,.xlsx,.xlsm,.txt,.text,.md,.markdown,.html,.htm,.json,text/csv,text/tab-separated-values,text/plain,text/markdown,text/html,application/json,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet">
+          <input id="import-file" class="import-file sr-only" type="file" accept=".csv,.tsv,.tab,.xlsx,.xlsm,.txt,.text,.md,.markdown,.html,.htm,.json,.pdf,application/pdf,text/csv,text/tab-separated-values,text/plain,text/markdown,text/html,application/json,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet">
           <label for="import-file" class="btn import-choose"><svg class="icon" aria-hidden="true"><use href="#i-import"/></svg><span>Choose a file…</span></label>
           <button id="import-paste" class="btn" type="button"><svg class="icon" aria-hidden="true"><use href="#i-clipboard"/></svg><span>Paste links</span></button>
           <button id="import-bookmarks" class="btn" type="button"><svg class="icon" aria-hidden="true"><use href="#i-bookmark"/></svg><span>From a bookmark folder…</span></button>
         </div>
+        <p id="import-drop-hint" class="drop-hint"><svg class="icon" aria-hidden="true"><use href="#i-import"/></svg><span>Or drop a file here: a PDF’s links are read with their page numbers.</span></p>
       </section>
 
       <section id="backup-panel" class="rail-section backup" aria-labelledby="backup-title">
@@ -209,6 +210,7 @@
               <li><a href="https://github.com/ryanjosephkamp/link-meteor" target="_blank" rel="noopener noreferrer"><svg class="icon" aria-hidden="true"><use href="#i-code"/></svg>Source code</a></li>
               <li><a href="https://github.com/sponsors/ryanjosephkamp" target="_blank" rel="noopener noreferrer"><svg class="icon heart" aria-hidden="true"><use href="#i-heart"/></svg>Sponsor on GitHub (optional)</a></li>
             </ul>
+            <p id="about-pdfjs" class="help">Reads PDFs with PDF.js by Mozilla (Apache License 2.0), which is part of Link Meteor. PDFs are read in this browser and never uploaded.</p>
             <p class="help">Every feature is free. Sponsoring never unlocks anything. These links open in a new tab only when you choose them.</p>
             <p class="help">Bug reports are public on GitHub. Leave out private URLs, collection contents and notes; the practice page makes a good example.</p>
             <div class="about-diagnostics">
@@ -319,6 +321,7 @@
           <button id="capture" class="btn primary" type="button"><svg class="icon" aria-hidden="true"><use href="#i-download"/></svg><span id="capture-label">Capture this page</span></button>
           <button id="arm" class="btn" type="button"><svg class="icon" aria-hidden="true"><use href="#i-region"/></svg><span>Select a region</span><span id="arm-keys" class="btn-keys" aria-hidden="true"></span></button>
         </div>
+        <p id="pdf-note" class="help pdf-note" hidden></p>
         <div id="capture-report" class="report" hidden></div>
       </section>
 
@@ -341,7 +344,8 @@
         </div>
         <p id="import-progress" class="import-progress" role="status" hidden></p>
         <div id="import-plan" class="import-plan" hidden>
-          <div class="import-options">
+          <dl id="pdf-facts" class="pdf-facts" aria-label="What the PDF says about itself" hidden></dl>
+          <div id="import-options" class="import-options">
             <label id="import-sheet-row" hidden>Sheet <select id="import-sheet"></select></label>
             <label id="import-header-row" class="name-check"><input id="import-header" type="checkbox"><span>First row is column names</span></label>
           </div>
@@ -352,12 +356,13 @@
           </div>
           <div class="import-table-foot">
             <p id="import-table-note" class="help"></p>
-            <label class="name-check"><input id="import-only-skipped" type="checkbox"><span>Show only skipped rows</span></label>
+            <label class="name-check"><input id="import-only-skipped" type="checkbox"><span id="import-only-skipped-label">Show only skipped rows</span></label>
           </div>
           <div class="import-row">
             <label>Add to <select id="import-destination"></select></label>
             <label class="name-check"><input id="import-skip-saved" type="checkbox" checked><span>Skip links already saved there</span></label>
           </div>
+          <label id="pdf-self-row" class="name-check pdf-self" hidden><input id="pdf-self" type="checkbox"><span id="pdf-self-label"></span></label>
           <div id="import-summary" class="import-summary" aria-live="polite"><strong id="import-summary-main"></strong><span id="import-summary-skips" class="skips"></span></div>
         </div>
         <div class="import-actions">

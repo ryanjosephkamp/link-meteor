@@ -836,3 +836,26 @@ label.import-choose { display: inline-flex; cursor: pointer; }
 .import .bookmark-folders { width: 100%; }
 @media (forced-colors: active) { .import, .import-summary, .import .table-scroll { border: 1px solid CanvasText; } }
 /* End of area: imports */
+
+/* 0.6.0 lane K: PDFs. The Capture section on a PDF's tab, what a PDF says about itself above the
+   preview's table, the choice to save the PDF itself, the drop hint, and a file dragged over a
+   place that takes it. */
+.pdf-note { margin-top: -2px; }
+.report-item.pdf .icon { color: var(--muted); }
+.pdf-page { color: var(--ink-2); }
+.pdf-facts { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 6px 12px; padding: 10px 12px; border: 1px solid var(--line); border-left: 3px solid var(--accent-edge); border-radius: var(--r-sm); background: var(--sunken); }
+.pdf-facts dt { padding-top: 2px; color: var(--ink-2); font-size: var(--text-xs); font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; }
+.pdf-facts dd { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 8px; min-width: 0; }
+.pdf-fact { color: var(--ink); font-size: var(--text-sm); font-weight: 600; overflow-wrap: anywhere; }
+.pdf-how { color: var(--ink-2); font-size: var(--text-xs); }
+.import td.empty-text { color: var(--muted); font-style: italic; }
+.import tr.skip.counted td { text-decoration: none; }
+.import .pdf-self { align-items: flex-start; }
+.import .pdf-self input { margin-top: 2px; }
+.import .pdf-self span { min-width: 0; overflow-wrap: anywhere; }
+.drop-hint { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border: 1px dashed var(--line-strong); border-radius: var(--r-sm); color: var(--muted); font-size: var(--text-xs); line-height: 1.45; }
+.drop-hint .icon { flex: none; }
+.import-panel.is-drop .drop-hint { border-color: var(--accent-edge); background: var(--accent-wash); color: var(--ink); }
+.main.is-drop { outline: 2px dashed var(--accent-edge); outline-offset: -3px; border-radius: var(--r-lg); }
+@media (forced-colors: active) { .pdf-facts, .drop-hint { border: 1px solid CanvasText; } .main.is-drop { outline-color: Highlight; } }
+/* End of area: PDFs */

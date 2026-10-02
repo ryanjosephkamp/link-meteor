@@ -336,6 +336,8 @@ export function renderOccurrence(link, grouped) {
   const page = node('span');
   appendTextLink(page, link.sourceUrl, link.sourceTitle || link.sourceUrl || '(unknown page)');
   if (link.sourceTitle && link.sourceUrl) { page.append(document.createElement('br')); page.append(node('span', 'exact', link.sourceUrl)); }
+  // 0.6.0: a link read from a PDF says which page of the PDF it is on.
+  if (link.pdfPage) { if (page.childNodes.length) page.append(document.createElement('br')); page.append(node('span', 'pdf-page', `Page ${count(link.pdfPage)} of the PDF`)); }
   fact(facts, 'Source page', page);
   if (link.frameUrl && link.frameUrl !== link.sourceUrl) {
     const frame = node('span'); appendTextLink(frame, link.frameUrl); fact(facts, 'Inside frame', frame);
@@ -376,7 +378,7 @@ function renderResearch(link) {
   const ids = identifiersOf(link, pages);
   if (Object.keys(ids).length) block.append(occBlock('Identifiers', identifierList(ids)));
   const cited = pages[pageKey(link.sourceUrl)];
-  if (cited) block.append(occBlock('Cited from', citation(cited)));
+  if (cited) block.append(occBlock('Cited from', citation(cited, citedNote(cited))));
   const used = citationFor(link, pages);
   if (used && used.key !== pageKey(link.sourceUrl)) block.append(occBlock('Citation', citation(used.citation, usedNote(used))));
   if (link.imported) block.append(occBlock('Imported from', node('p', 'imported-from', link.imported)));
@@ -443,20 +445,34 @@ function identifierList(ids) {
   return list;
 }
 
+// Where a citation was read, when it wasn't a page's own citation tags: the words for its
+// `source` (0.6.0), or '' for tags. 'pdf' is what a PDF says about itself; the lookup's sources
+// get their words here too.
+export function citationSourceNote(source) {
+  return source === 'pdf' ? 'Read from the PDF itself.' : '';
+}
+const KEPT = 'Saved in this browser; nothing was looked up online.';
+
 // Where a citation that isn't the source page's comes from, for its note.
 const BORROWED = { pdf: 'which names this link as its PDF', doi: 'which has the same DOI', arxiv: 'which has the same arXiv ID' };
 function usedNote({ key, citation: page, reason }) {
-  if (reason === 'own') return 'From this page’s own citation tags, read when Link Meteor had it open. Citation exports use it. Saved in this browser; nothing was looked up online.';
+  const read = citationSourceNote(page.source);
+  if (reason === 'own') return read ? `${read} Citation exports use it. ${KEPT}` : `From this page’s own citation tags, read when Link Meteor had it open. Citation exports use it. ${KEPT}`;
   const name = page.title ? `“${page.title}”` : hostOf(key) || 'a saved page';
-  return `From the citation tags of ${name}, ${BORROWED[reason]}. Citation exports use it. Saved in this browser; nothing was looked up online.`;
+  return `From ${read ? 'what Link Meteor read for' : 'the citation tags of'} ${name}, ${BORROWED[reason]}. ${read ? `${read} ` : ''}Citation exports use it. ${KEPT}`;
+}
+// The note under Cited from: where the source page's citation was read.
+function citedNote(page) {
+  const read = citationSourceNote(page.source);
+  return read ? `${read} ${KEPT}` : SOURCE_NOTE;
 }
 
 // A citation read from a page's own tags: title, then authors, journal, date and identifiers on
 // one line, and a note that nothing was looked up.
-const SOURCE_NOTE = 'From the source page’s own citation tags, read when you captured it. Saved in this browser; nothing was looked up online.';
+const SOURCE_NOTE = `From the source page’s own citation tags, read when you captured it. ${KEPT}`;
 function citation(page, note = SOURCE_NOTE) {
   const box = node('div', 'cited');
-  box.append(node('span', 'cited-title', page.title || 'Untitled page'));
+  box.append(node('span', 'cited-title', page.title || (page.source === 'pdf' ? 'Untitled PDF' : 'Untitled page')));
   const authors = page.authors || [];
   const named = authors.length > 4 ? `${authors.slice(0, 3).join(', ')} and ${plural(authors.length - 3, 'more author')}` : authors.join(', ');
   const venue = [page.journal || page.publisher, page.volume && `vol. ${page.volume}`, page.issue && `no. ${page.issue}`,

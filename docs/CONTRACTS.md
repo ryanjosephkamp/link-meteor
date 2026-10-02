@@ -1198,9 +1198,9 @@ For BibTeX, RIS, CSL-JSON and the annotated bibliography, `#cite-facts` gains a 
 
 ## Planned for 0.6.0
 
-These contracts are for 0.6.0 "Beyond one page": the links inside PDFs, capturing more than one screen or one page, frames from other sites, closed components, and the first optional online feature. They are a draft, written before building; each area will gain an "as built" part. Nothing here is built yet, and 0.5.0 behaves as the sections above say.
+These contracts are for 0.6.0 "Beyond one page": the links inside PDFs, capturing more than one screen or one page, frames from other sites, closed components, the PDFs behind links as one ZIP or one combined PDF, and the first optional online feature. They are a draft, written before building; each area will gain an "as built" part. Nothing here is built yet, and 0.5.0 behaves as the sections above say.
 
-The facts they rest on were tested first, in throwaway profiles with small diagnostic extensions: which PDF reader build runs on the oldest supported Chrome, how a PDF's file can be read from its tab, how long the toolbar's temporary access lasts, and what a lookup request carries.
+The facts they rest on were tested first, in throwaway profiles with small diagnostic extensions: which PDF reader build runs on the oldest supported Chrome, how a PDF's file can be read from its tab or from a page of its site, whether the reader can combine PDFs, how long the toolbar's temporary access lasts, and what a lookup request carries.
 
 ### The promise, restated
 
@@ -1212,7 +1212,7 @@ Until 0.6.0 nothing leaves the browser. From 0.6.0: **nothing leaves your browse
 - **Updating it** is a maintainer's step: `scripts/vendor-pdfjs.mjs <version>` fetches that exact package from the npm registry, checks the registry's integrity value, and copies the two files and the license. No test and no build step contacts the network. A unit test checks the committed files against the recorded hashes.
 - **Chrome 116 to 123** lack two things the reader uses. `src/ui/workbench/pdf-shims.js` supplies them, only where missing: `Promise.withResolvers`, and async iteration of `ReadableStream`. Two wrapper modules load the shims before the reader, in the page and in its worker. With them, the same build reads PDFs on Chrome 116.
 - **Where it runs:** only in Link Meteor's own pages (the side panel and the full view), and only once a PDF is read: the reader is loaded with `import()` at that moment, and its worker is a module worker from the bundled file. It never runs in the background worker or in a web page, and it is not web-accessible.
-- **How it is called:** `getDocument({data, isEvalSupported: false, disableFontFace: true, useSystemFonts: false, useWorkerFetch: false, enableXfa: false})`. Link Meteor reads annotations, text and metadata; it never draws a page. The character maps, standard fonts and image decoders are not bundled. In the few PDFs whose fonts need those character maps, a link's words can come out empty; its address and page number are still read.
+- **How it is called:** `getDocument({data, isEvalSupported: false, disableFontFace: true, useSystemFonts: false, useWorkerFetch: false, enableXfa: false})`. Link Meteor reads annotations, text and metadata, and combines PDFs with `extractPages` (see [PDF files](#pdf-files-one-zip-or-one-combined-pdf)); it never draws a page. The character maps, standard fonts and image decoders are not bundled. In the few PDFs whose fonts need those character maps, a link's words can come out empty; its address and page number are still read.
 - **Limits (`src/core/pdf.js`):** `MAX_PDF_BYTES` 50 MB, `MAX_PDF_PAGES` 2,000, and the existing `MAX_IMPORT_LINKS` (20,000). A file over a limit is refused with the reason, before reading or as soon as the page count is known.
 
 ### Reading a PDF's file
@@ -1324,7 +1324,7 @@ A **run** is a capture that takes more than one step. Every run:
 - Counter: "Page 3 of 12 · 148 links".
 
 **Messages** (`src/background/runs.js`):
-- `run.start {kind: 'next' | 'pages', tabId?, urls?, collectionId, scroll: boolean}` returns `{runId}`, or a refusal;
+- `run.start {kind: 'next' | 'pages' | 'files', tabId?, urls?, collectionId, scroll: boolean}` returns `{runId}`, or a refusal; `files` is the kind [PDF files](#pdf-files-one-zip-or-one-combined-pdf) uses, and saves no links;
 - `run.stop {runId}`;
 - `run.status {}` returns the run in progress, for a workbench opened meanwhile;
 - `run.progress {runId, kind, step, of, links, state}` is sent to Link Meteor's pages as the run moves;
@@ -1333,6 +1333,36 @@ A **run** is a capture that takes more than one step. Every run:
 Auto-scroll alone is one page and uses `capture.run` with `scroll: true`.
 
 **Storage:** session key `linkMeteorRun`: the run in progress (its kind, queue, counts and batch), so a restarted background worker either continues it or reports it as interrupted. It holds no page content, and lives until the browser closes. Only one run at a time.
+
+### PDF files: one ZIP, or one combined PDF
+
+In the Export panel's *Download files*, the PDFs among the chosen links (`knownPdf` in `src/core/files.js`) get two more actions. *Download files* itself is unchanged: it still saves every file one by one through Chrome's downloads.
+
+**Getting each PDF's file.** A page of the PDF's own site requests it, `fetch(url, {credentials: 'include'})`, as when the link is clicked, with that site's cookies. Which page:
+1. the active tab, when it is on the PDF's site and Link Meteor can run there (the toolbar's temporary access is enough);
+2. otherwise a background tab, opened at the page the link was captured from when that page is on the PDF's site, else at the site's front page, and closed afterward;
+3. when the address redirects to another site, a background tab opened at the PDF's own address, read there as [a PDF in a tab](#reading-a-pdfs-file) once Chrome shows it.
+
+- Background tabs need access to those sites, asked for by name in the click, as *Capture selected pages* does. Files on sites without access are reported as "No access" and left out.
+- Chrome saves a PDF to the Downloads folder by itself when a tab is opened at an address the site sends as a download. Steps 1 and 2 avoid that. When step 3 meets one, the report says "Chrome downloaded this one instead of showing it. It is in your Downloads folder, not in this file."
+- Every answer must start with `%PDF-` within its first 1,024 bytes; a sign-in page is reported as "Not a PDF: the site asked to sign in, or the address has expired."
+- It is a run of kind `files`: one file at a time, 2 seconds apart, a counter with Stop ("Getting PDF 3 of 5"), and a report of each file with how it ended.
+- **Limits (`src/core/pdf.js`):** `MAX_PDF_SET` 20 PDFs a run; `MAX_PDF_BYTES` 50 MB each; `MAX_PDF_SET_BYTES` 200 MB in all. More than 20 are refused with "Choose up to 20 PDFs at a time."
+- The files are held in the workbench's memory until the download is made, and nowhere else.
+
+**Download as one ZIP** (`#pdf-zip`):
+- `src/core/zip.js` (pure) holds the ZIP writer the workbook writer has used since 0.3.0 (`zip(files)` and `crc32`, moved from `src/core/xlsx.js`, which imports it). Entries are stored, not compressed: PDFs are compressed already, and each file's bytes stay exactly what the site sent.
+- Entry names are the file names `downloadPath` in `src/core/files.js` gives, without its folder, as *Download files* names them; repeats get ` (2)`, ` (3)`.
+- The ZIP is named like an export, `<collection>_<date>_<time>.zip`, and is handed to Chrome's download as exports are. It holds no index and nothing but the PDFs.
+
+**Combine into one PDF…** (`#pdf-combine`, opening `#combine-panel`):
+- `#combine-list`: the PDFs in the order of the list, each with its file name, its link's anchor text, its page count and size once read, and buttons to move it up or down or leave it out (the same controls as *Columns, in order*, with the same labels and focus handling).
+- *Add PDF files…* and dropping files on the list add PDFs from the computer, read in the browser; they count toward the limits. With no links chosen, the panel still combines files from the computer.
+- `#combine-name`: the file name, by the export name pattern, ending `.pdf`.
+- The summary says the number of PDFs, pages and megabytes, and lists what is left out with the reason: needs a password, damaged, not a PDF, no access, over a limit.
+- `#combine-apply` ("Combine 5 PDFs") gets the files still missing, then writes one PDF with the reader's `extractPages([{document: null}, {document: bytes}, …])` on the first PDF, in the list's order, and hands it to Chrome's download.
+- **What the combined PDF keeps** (tested): every page, its text, its web links, the links inside each document, and each document's bookmarks. **Not kept:** page labels (such as i, ii, iii), form fields' behavior and document-level attachments are not promised. A PDF that needs a password can't be combined, and goes into a ZIP as it is.
+- Whole PDFs only: choosing single pages is not in 0.6.0.
 
 ### Frames from other sites, and closed components
 
@@ -1366,7 +1396,7 @@ Off by default (`lookupDetails`). It fills in a paper's title, authors, date and
 | What | New? | Reason shown |
 | --- | --- | --- |
 | Manifest permissions | None new | |
-| Optional site access (`http://*/*`, `https://*/*`, from 0.3.0) | Two new uses | *Capture selected pages* reads pages in background tabs, and whole-page capture can include frames from other sites. Both ask only for the sites they name, in the click, or use all-sites access where it was already given. |
+| Optional site access (`http://*/*`, `https://*/*`, from 0.3.0) | Three new uses | *Capture selected pages* reads pages in background tabs, whole-page capture can include frames from other sites, and *Download as one ZIP* and *Combine into one PDF* get PDFs through a page of their site. Each asks only for the sites it names, in the click, or uses all-sites access where it was already given. |
 | `chrome.dom.openOrClosedShadowRoot` | New use, no permission | Reads links inside closed components. |
 | A sandboxed page in the manifest (`sandbox.pages`, `content_security_policy.sandbox`) | New | The only place a lookup request can be made. |
 | `content_security_policy.extension_pages` | Unchanged | `connect-src 'none'` stays. |
@@ -1374,6 +1404,7 @@ Off by default (`lookupDetails`). It fills in a paper's title, authors, date and
 | "Allow in Incognito" | Not asked for | `incognito` stays `not_allowed`. |
 | A PDF's file, requested again from its own address | New request | See below. |
 | Pages loaded by Follow Next and by *Capture selected pages* | New requests | See below. |
+| PDF files requested for a ZIP or a combined PDF | New requests | See below. Saving them needs no permission: the file is handed to Chrome's download, as exports are. |
 | Page details lookup | New, optional, off by default | See below. |
 
 **The words to use.** `docs/PRIVACY.md`, `site/privacy.html` and `CHROMEWEBSTORE.md` say these in the foundation, and the workbench shows the same words where each feature starts.
@@ -1382,6 +1413,7 @@ Off by default (`lookupDetails`). It fills in a paper's title, authors, date and
 - **Auto-scroll.** "*Scroll to the end first* scrolls the page for you, so the page loads the rest of itself as it would if you scrolled. It stops at the end, at 50 screens, at 5,000 links, after 2 minutes, or when you press Stop."
 - **Follow Next.** "*Follow Next* moves your tab to the page’s own Next link and captures each page, up to the number you set (20 at most). Each page loads as it would if you clicked Next yourself. It stops when there is no Next, at a site Link Meteor can’t read, at the limit, or when you press Stop."
 - **Capture selected pages.** "*Capture their pages* opens each page you chose in a background tab, one at a time, saves its links and closes the tab: 20 pages at most, with a pause between pages. Each page loads as it would if you opened it yourself, signed in as you are. Link Meteor asks first for access to the sites it will read, unless you allowed all sites. It never follows the links it finds."
+- **One ZIP, or one combined PDF.** "*Download as one ZIP* and *Combine into one PDF* get each PDF you chose through a page of its own site, as when you click the link, signed in as you are: 20 PDFs at most, one at a time. Where that needs a background tab, Link Meteor asks first for access to the sites it will read, unless you allowed all sites. The files are put together inside your browser by Link Meteor and saved through Chrome's download. They are never uploaded, and Link Meteor keeps no copy."
 - **Page details lookup.** "*Page details lookup* is off unless you turn it on. When it is on and you click *Look up details*, Link Meteor sends the paper’s DOI, arXiv ID or PubMed ID, and nothing else, to: Crossref (api.crossref.org) for DOIs; DataCite (api.datacite.org) for DOIs Crossref doesn’t have, including arXiv’s; and NCBI (eutils.ncbi.nlm.nih.gov) for PubMed IDs. No page address, link text, note or collection name is sent. No cookies are sent or kept. Like any website you visit, those services see your IP address and your browser’s version and language. What they return (title, authors, date, journal) is saved in this browser with the link."
 - **`CHROMEWEBSTORE.md`** adds, under remote code: "Link Meteor includes PDF.js (Mozilla, Apache-2.0) as files inside the package. It loads no code from anywhere else." Under data use: the lookup's sentence above, and that it is optional and off by default.
 

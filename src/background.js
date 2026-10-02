@@ -132,7 +132,8 @@ async function captureTabs(tabIds,callerTabId) {
         results.push({tabId,title:tab.title || '',url:tab.url || '',status:'pdf',count:0,leftOut:0,skipped:0,warning:PDF_TAB_NOTE,error:''});
         continue;
       }
-      await inject(tab);
+      // The tab was asked once what it shows, just above; inject() would ask again.
+      await injectScript(tab);
       const result = await scanTab(tabId,{context});
       const after = await chrome.tabs.get(tabId);
       if (tab.url && after.url !== tab.url) throw new Error('The tab navigated during capture; retry on the new page.');

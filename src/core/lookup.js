@@ -163,9 +163,10 @@ export function lookupMissing(citation, requests) {
 }
 
 // Whether two citations hold the same details, in whatever order their fields are.
+// Chrome's storage hands objects back with their keys sorted, at every depth (`filled` is one).
 export function sameCitation(a, b) {
-  const text = (citation) => JSON.stringify(Object.entries(citation || {}).sort(([x], [y]) => (x < y ? -1 : 1)));
-  return !!a === !!b && text(a) === text(b);
+  const sorted = (value) => (Array.isArray(value) ? value.map(sorted) : value && typeof value === 'object' ? Object.fromEntries(Object.keys(value).sort().map((key) => [key, sorted(value[key])])) : value);
+  return !!a === !!b && JSON.stringify(sorted(a || {})) === JSON.stringify(sorted(b || {}));
 }
 
 // The run for these links (or rows): one ask per identifier, however many links share it.

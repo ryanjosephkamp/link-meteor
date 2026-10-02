@@ -290,3 +290,14 @@ test('only the sandboxed frame can make a request, and only lookup.js creates it
   assert.match(lookup, /postMessage\(\{ type: 'lookup', id, service, identifier \}, '\*'\)/, 'the frame is handed an identifier and its service, nothing else');
   assert.equal([...lookup.matchAll(/createElement\('iframe'\)/g)].length, 1);
 });
+
+test('two citations are the same whatever order their fields come back in, at every depth', async () => {
+  const { sameCitation } = await import('../src/core/lookup.js');
+  const a = { title: 'T', authors: ['A', 'B'], filled: { authors: 'crossref', doi: 'crossref' }, doi: '10.1/x' };
+  const b = { doi: '10.1/x', filled: { doi: 'crossref', authors: 'crossref' }, authors: ['A', 'B'], title: 'T' };
+  assert.equal(sameCitation(a, b), true, 'Chrome’s storage sorts keys; the same details still match');
+  assert.equal(sameCitation(a, { ...b, authors: ['B', 'A'] }), false, 'the order of authors is part of the citation');
+  assert.equal(sameCitation(a, { ...b, filled: { authors: 'crossref' } }), false);
+  assert.equal(sameCitation(null, undefined), true);
+  assert.equal(sameCitation(a, null), false);
+});

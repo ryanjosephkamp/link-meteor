@@ -1369,7 +1369,7 @@ Where this differs from the draft above, this is what the code does.
 
 **The report** is kept in `linkMeteorCaptureReport`, as a capture's is, with `kind: 'run'`: `{kind, run, runId, batchId, collectionId, name, results, head, summary, note, ended, capturedCount, found, skipped, leftOut, read, undone?}`. Every open view shows it, and a view opened later shows it too.
 
-**Each page is captured as *Capture this page* captures it:** a run calls the same pipeline (`captureTabs`) with its own batch and collection. So *Leave out navigation links* and *Skip links already saved* apply to every page of a run, context and page citations are kept, and what is left out or skipped is counted in the report. A run only counts what it leaves out: *Include them* is offered after a one-page capture, not after a run.
+**Each page is captured as *Capture this page* captures it:** a run calls the same pipeline (`captureTabs`) with its own batch and collection. So *Leave out navigation links* and *Skip links already saved* apply to every page of a run, context and page citations are kept, and what is left out or skipped is counted in the report. A run only counts what it leaves out: *Include them* is offered after a one-page capture, not after a run. Where a page's capture counts frames from other sites it couldn't read, that page's line says so ("Captured · 2 frames from other sites weren’t read").
 
 **Follow Next:**
 - The first page is the tab's own page; nothing is loaded for it. Each next page: the tab is moved, it gets 30 seconds to load, the notice is shown, 1.5 seconds pass, and it is captured. With *Scroll to the end first*, it is scrolled first.

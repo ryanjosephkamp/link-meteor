@@ -556,3 +556,14 @@ test('another kind of run stands on the same engine: its own steps and words; th
     assert.deepEqual(stopped.results.map((row) => row.how), ['Not read: you pressed Stop', 'Not read: you pressed Stop']);
   } finally { delete runs.KINDS.sample; }
 });
+
+test('a page’s line in the report follows what the capture says: frames it couldn’t read, and a PDF', () => {
+  const item = {url: `${SITE}/p1`}, result = {tabId: 1, title: 'Paper 1', url: `${SITE}/p1`, status: 'success', count: 4, leftOut: 1, skipped: 2, warning: '', error: ''};
+  assert.deepEqual(runs.engine.rowOf(result, item), {url: `${SITE}/p1`, title: 'Paper 1', found: 7, added: 4, skipped: 2, leftOut: 1, status: 'captured', how: 'Captured'});
+  assert.equal(runs.engine.rowOf({...result, frames: {read: 1, unread: 2, sites: ['ads.test'], left: []}}, item).how, 'Captured · 2 frames from other sites weren’t read');
+  assert.equal(runs.engine.rowOf({...result, frames: {read: 3, unread: 1, sites: ['ads.test'], left: []}, scroll: {screens: 6, of: 50, ended: 'end', text: 'Reached the end after 6 screens.'}}, item).how, 'Captured · scrolled 6 screens to the end · 1 frame from other sites wasn’t read');
+  assert.equal(runs.engine.rowOf({...result, frames: {read: 2, unread: 0, sites: [], left: []}}, item).how, 'Captured');
+  assert.equal(runs.engine.rowOf({...result, count: 0, skipped: 3, leftOut: 0}, item).how, 'Captured: nothing new');
+  assert.deepEqual([runs.engine.rowOf({...result, status: 'pdf', count: 0, leftOut: 0, skipped: 0}, item).status, runs.engine.rowOf({...result, status: 'pdf', count: 0, leftOut: 0, skipped: 0}, item).how], ['pdf-unread', 'A PDF: capture it by itself to read its links']);
+  assert.equal(runs.engine.rowOf({...result, status: 'unsupported', count: 0, leftOut: 0, skipped: 0, warning: 'Browser-internal pages, the Chrome Web Store, and incognito pages cannot be captured.'}, item).how, 'Browser-internal pages, the Chrome Web Store, and incognito pages cannot be captured.');
+});

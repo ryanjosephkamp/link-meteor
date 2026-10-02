@@ -137,9 +137,13 @@ function rowOf(result, item) {
   if (result.status === 'success') {
     const how = !found ? 'No links on this page' : !added ? 'Captured: nothing new' : 'Captured';
     const scrolled = !result.scroll ? '' : result.scroll.ended === 'end' ? ` · scrolled ${plural(result.scroll.screens, 'screen')} to the end` : ` · ${result.scroll.text}`;
-    return {...row, status: found ? 'captured' : 'empty', how: how + scrolled, ...(result.warning ? {warning: result.warning} : {})};
+    // Frames from other sites that couldn't be read, where the capture counts them (frames.unread).
+    const unreadFrames = Number.isInteger(result.frames?.unread) && result.frames.unread > 0 ? result.frames.unread : 0;
+    const frames = unreadFrames ? ` · ${plural(unreadFrames, 'frame')} from other sites ${unreadFrames === 1 ? 'wasn’t' : 'weren’t'} read` : '';
+    return {...row, status: found ? 'captured' : 'empty', how: how + scrolled + frames, ...(result.warning ? {warning: result.warning} : {})};
   }
   if (result.status === 'denied') return {...row, status: 'no-access', how: 'No access'};
+  if (result.status === 'pdf') return {...row, status: 'pdf-unread', how: 'A PDF: capture it by itself to read its links'};
   if (/No tab with id/i.test(result.error || '')) return {...row, title: '', status: 'closed', how: 'The tab was closed'};
   if (/error page/i.test(result.error || '')) return {...row, status: 'not-loaded', how: 'Didn’t load: Chrome showed an error page'};
   return {...row, status: 'error', how: result.warning || result.error || 'Couldn’t be read'};
@@ -488,7 +492,7 @@ export const KINDS = {
       for (const url of [item.url, pageKey(result.url || '')]) if (url && !run.seen.includes(url)) run.seen.push(url);
       if (job.stopped) return {row};
       if (row.status === 'closed') return {row, end: {reason: 'tab-closed'}};
-      if (result.status !== 'success') return {row, end: {reason: result.status === 'denied' ? (index ? 'moved-site' : 'denied') : row.status === 'not-loaded' ? 'not-loaded' : 'failed', detail: row.how, shown: true}};
+      if (result.status !== 'success') return {row, end: {reason: result.status === 'denied' ? (index ? 'moved-site' : 'denied') : row.status === 'not-loaded' ? 'not-loaded' : row.status === 'pdf-unread' ? 'pdf' : 'failed', detail: row.how, shown: true}};
       const next = await findNext(run.tabId), url = pageKey(next?.url || '');
       if (index + 1 >= run.cap) return {row, end: {reason: 'cap', more: !!url}};
       if (next?.button) return {row, end: {reason: 'next-button'}};
@@ -516,7 +520,7 @@ export const KINDS = {
         interrupted: INTERRUPTED,
         denied: 'Link Meteor has no access to this page. Click the Link Meteor toolbar icon on it, then try again.',
         'moved-site': 'Next led to a page Link Meteor can’t read: it didn’t load, or it is on a site Link Meteor has no access to.',
-        pdf: 'Next led to a PDF, which Follow Next doesn’t read.',
+        pdf: read ? 'Next led to a PDF, which Follow Next doesn’t read.' : 'This tab shows a PDF, which Follow Next doesn’t read. Capture the PDF by itself.',
         failed: end.detail || 'A page couldn’t be read.',
       }[reason] || '';
       return {head: `Followed Next through ${plural(read, 'page')}: ${addedTo(run)}.`, ended,

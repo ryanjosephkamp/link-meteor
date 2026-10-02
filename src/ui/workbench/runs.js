@@ -89,8 +89,12 @@ function ended(runId) {
 function renderRun() {
   const on = !!going && going.state !== 'done';
   $('run-progress').hidden = !on;
-  // While a run is going, nothing else captures.
-  for (const id of ['arm', 'further-scroll', 'further-next', 'follow-pages']) $(id).disabled = on;
+  // While a run is going, nothing else captures. Only what the run disabled is enabled again.
+  for (const id of ['arm', 'further-scroll', 'further-next', 'follow-pages']) {
+    const control = $(id);
+    if (on && !control.disabled) { control.disabled = true; control.dataset.run = 'held'; }
+    else if (!on && control.dataset.run) { control.disabled = false; delete control.dataset.run; }
+  }
   $('capture').disabled = on || ui.busy;
   if (!$('pages-panel').hidden) describe();
   if (!on) return;

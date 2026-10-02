@@ -2,7 +2,7 @@
 // plans the import itself (core/imports.js); the background checks every link again, creates the
 // collection and custom columns the import needs, and saves it all in one write. The contract is
 // in docs/CONTRACTS.md ("Imports").
-import {reduceState, MAX_IMPORTED} from '../core/model.js';
+import {reduceState, pageKey, MAX_IMPORTED} from '../core/model.js';
 import {MAX_IMPORT_LINKS} from '../core/imports.js';
 import {serial, readState, writeState} from './store.js';
 
@@ -42,14 +42,22 @@ const text = (value, what) => {
 
 // An imported link as stored: only what an import may set, with a new id, the import's batch and
 // time, and new columns' keys turned into their ids. The model checks the rest when it's added.
+// 0.6.0: a link read from a PDF may hold its page and the words around it, and a PDF read from a
+// tab is the links' source page (sourceUrl, sourceTitle) in place of an `imported` label.
 function importedLink(raw, {batchId, capturedAt, keys}) {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) throw new Error('Each imported link must be an object.');
   const imported = text(raw.imported, 'source').trim();
-  if (!imported || imported.length > MAX_IMPORTED) throw new Error(`Each imported link needs where it came from, in at most ${MAX_IMPORTED} characters.`);
+  // Only a link read from a PDF in a tab names a source page; a file's links never do.
+  const sourceUrl = raw.pdfPage !== undefined && !imported ? text(raw.sourceUrl, 'source page') : '';
+  if (sourceUrl && (pageKey(sourceUrl) === '' || sourceUrl.length > 2000)) throw new Error("A link's source page must be a web address.");
+  if ((!imported && !sourceUrl) || imported.length > MAX_IMPORTED) throw new Error(`Each imported link needs where it came from, in at most ${MAX_IMPORTED} characters.`);
   if (raw.tags !== undefined && (!Array.isArray(raw.tags) || raw.tags.some(tag => typeof tag !== 'string'))) throw new Error("Each imported link's tags must be a list of text.");
   const link = {id: crypto.randomUUID(), anchorText: text(raw.anchorText, 'anchor text'), accessibleLabel: '', url: text(raw.url, 'address'),
-    originalHref: text(raw.originalHref, 'address as written'), sourceUrl: '', sourceTitle: '', frameUrl: '', capturedAt, batchId,
-    notes: text(raw.notes, 'note'), tags: [...new Set((raw.tags || []).map(tag => tag.trim()).filter(Boolean))], imported};
+    originalHref: text(raw.originalHref, 'address as written'), sourceUrl, sourceTitle: sourceUrl ? text(raw.sourceTitle, 'source title').replace(/\s+/gu, ' ').trim().slice(0, 300) : '', frameUrl: '', capturedAt, batchId,
+    notes: text(raw.notes, 'note'), tags: [...new Set((raw.tags || []).map(tag => tag.trim()).filter(Boolean))]};
+  if (imported) link.imported = imported;
+  if (raw.pdfPage !== undefined) link.pdfPage = raw.pdfPage;
+  if (text(raw.context, 'context')) link.context = raw.context;
   if (raw.status !== undefined && raw.status !== '') {
     if (!STATUSES.has(raw.status)) throw new Error("An imported link's reading status must be 'reading' or 'read'.");
     link.status = raw.status;
@@ -68,11 +76,12 @@ function importedLink(raw, {batchId, capturedAt, keys}) {
   return link;
 }
 
-// import.commit {collectionId? | newCollection?, links, newFields?, skipSaved?}: creates the new
-// collection (or activates the chosen one), adds the new columns, and appends the links as one
+// import.commit {collectionId? | newCollection?, links, newFields?, skipSaved?, pages?}: creates the
+// new collection (or activates the chosen one), adds the new columns, and appends the links as one
 // batch, all in one write. With skipSaved, addresses the collection already holds are skipped.
+// `pages` (0.6.0) are page citations saved with the links, such as what a PDF says about itself.
 export async function commitImport(message) {
-  const {collectionId, newCollection, links, newFields = [], skipSaved = false} = message;
+  const {collectionId, newCollection, links, newFields = [], skipSaved = false, pages} = message;
   const hasCollection = collectionId !== undefined && collectionId !== null && collectionId !== '';
   const hasNew = newCollection !== undefined && newCollection !== null && newCollection !== '';
   if (hasCollection === hasNew) throw new Error('Choose one destination for the import: a collection here, or a new one.');
@@ -84,6 +93,7 @@ export async function commitImport(message) {
   if (!Array.isArray(newFields) || newFields.some(field => typeof field?.key !== 'string' || !FIELD_KEY.test(field.key) || typeof field.name !== 'string')
     || new Set(newFields.map(field => field.key)).size !== newFields.length) throw new Error('The new columns for this import are not valid.');
   if (typeof skipSaved !== 'boolean') throw new Error('Say whether to skip links already saved there.');
+  if (pages !== undefined && (!pages || typeof pages !== 'object' || Array.isArray(pages))) throw new Error('The citation details for this import are not valid.');
   return serial(async () => {
     const previous = await readState();
     let state = previous, id = collectionId;
@@ -104,7 +114,7 @@ export async function commitImport(message) {
     const all = links.map(raw => importedLink(raw, {batchId, capturedAt, keys}));
     const fresh = held ? all.filter(link => !held.has(link.url)) : all;
     if (!fresh.length) throw new Error('Every link is already saved there, so nothing was imported.');
-    state = reduceState(state, {type: 'links.append', collectionId: id, links: fresh});
+    state = reduceState(state, {type: 'links.append', collectionId: id, links: fresh, ...(pages ? {pages} : {})});
     try { await writeState(previous, state); }
     catch { throw new Error('Could not save the import, so nothing was added. Export or remove an older collection to free extension storage, then retry.'); }
     await remember({batchId, collectionId: id, createdCollection: hasNew, fields: created, previousActive: previous.activeCollectionId,

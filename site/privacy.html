@@ -67,6 +67,8 @@
           <li><a href="#stored">What's stored, and where</a></li>
           <li><a href="#permissions">Permissions</a></li>
           <li><a href="#moves">Actions that move data</a></li>
+          <li><a href="#beyond">PDFs, and more than one page</a></li>
+          <li><a href="#lookup">Page details lookup</a></li>
           <li><a href="#delete">Deleting your data</a></li>
           <li><a href="#site">This website</a></li>
         </ol>
@@ -76,7 +78,8 @@
           <h2 id="summary">In short</h2>
           <ul>
             <li>Your collections are stored by Chrome on your computer, in storage that belongs to the extension. They are not uploaded, synced or shared by Link Meteor.</li>
-            <li>The extension contains no code that contacts a server, its pages' security policy forbids them from making network requests, and capturing a link never visits its destination.</li>
+            <li>Nothing leaves your browser unless you turn on a feature that says exactly what it sends, and where. There is one, <a href="#lookup">Page details lookup</a>, and it is off unless you turn it on.</li>
+            <li>Link Meteor's own pages are forbidden by their security policy from making network requests, and capturing a link never visits its destination.</li>
             <li>There is no account, no telemetry, no analytics, no advertising and no paid tier.</li>
             <li>Permissions beyond the basics are optional, requested only when you use the feature that needs them, and can be removed in Chrome at any time.</li>
           </ul>
@@ -92,8 +95,14 @@
             <li><strong>Your reading status and stars.</strong></li>
             <li><strong>For imported links,</strong> the name of the file or bookmark folder they came from.</li>
           </ul>
+          <p>From version 0.6.0, it can also hold:</p>
+          <ul>
+            <li><strong>For a link read from a PDF,</strong> the page of the PDF it is on.</li>
+            <li><strong>What a PDF says about itself:</strong> its title, arXiv's stamp and a DOI, read from the PDF's own file.</li>
+            <li><strong>Details a lookup returned</strong> (title, authors, date, journal), if you turned Page details lookup on and asked for one. Each citation says where it was read.</li>
+          </ul>
           <p>This is kept in <code>chrome.storage.local</code>, extension storage in your current Chrome profile. Link Meteor does not put it in Chrome Sync. Backups of your computer or Chrome profile are separate from Link Meteor and follow their own settings.</p>
-          <p>While Chrome is open, Link Meteor also keeps the tab you last opened it from and the latest capture report in session storage, so the side panel and full workbench agree. If you leave out navigation links, the latest capture's left-out links wait there too, so you can still include them, and the card's recent adds are listed so Undo can take one back. Your recent imports, and moves and copies between collections, are listed there too, so Undo can reverse one; they say which links went where, not what the links say. Files the card or the right-click menu couldn't download yet, before Chrome gave download access, wait there for up to 10 minutes, until the full view shows them. Session storage is cleared when Chrome closes, and you can dismiss the report at any time.</p>
+          <p>While Chrome is open, Link Meteor also keeps the tab you last opened it from and the latest capture report in session storage, so the side panel and full workbench agree. If you leave out navigation links, the latest capture's left-out links wait there too, so you can still include them, and the card's recent adds are listed so Undo can take one back. Your recent imports, and moves and copies between collections, are listed there too, so Undo can reverse one; they say which links went where, not what the links say. While a capture that takes several steps is running, its progress waits there too; it holds addresses and counts, never page content. Files the card or the right-click menu couldn't download yet, before Chrome gave download access, wait there for up to 10 minutes, until the full view shows them. Session storage is cleared when Chrome closes, and you can dismiss the report at any time.</p>
           <p>Your settings are saved with your collections:</p>
           <ul>
             <li>the hold key;</li>
@@ -103,7 +112,9 @@
             <li>your export file-name preferences;</li>
             <li>your theme, and whether it is light, dark or follows the system;</li>
             <li>what releasing a drag does, and the two capture defaults;</li>
-            <li>whether to save the words around each link.</li>
+            <li>whether to save the words around each link;</li>
+            <li>how many pages Follow Next reads at most;</li>
+            <li>whether Page details lookup is on.</li>
           </ul>
           <p>The side panel and full view also keep the last theme and light or dark choice in their own page storage, so they open in it without a flash.</p>
           <p>After you restore a backup, the state from just before is kept once in the same local storage, so the restore can be undone. It's replaced by the next restore, and cleared when you discard it or change anything else.</p>
@@ -133,6 +144,7 @@
               </tbody>
             </table>
           </div>
+          <p><strong>Version 0.6.0 adds no permission and asks for no browser setting.</strong> Capturing selected pages, including a frame from another site, and getting PDF files use the site access above, asked for by name. Link Meteor does not ask for "Allow access to file URLs": that setting does not make a PDF on your computer readable, and choosing the file needs no access at all.</p>
           <p>Link Meteor does not request access to your history, cookies, passwords, network traffic or incognito windows, and it never reads your list of downloads. You can review and remove its optional access at any time from Link Meteor's card in <code>chrome://extensions</code>. Turning hold-key drag off for a site stops it there; removing the site's access in Chrome also turns it off. Removing all-sites access, with Link Meteor's <em>Remove Chrome's access</em> or Chrome's own controls, can also remove access to sites you allowed one at a time. Link Meteor then turns hold-key drag off wherever it no longer has access.</p>
         </section>
 
@@ -144,11 +156,35 @@
             <dt>Download</dt><dd>Saves a file to your normal downloads folder.</dd>
             <dt>Backup</dt><dd>Saves one file with every collection, link, note, tag and setting to your downloads folder. Nothing is uploaded. Restoring reads a file you choose, shows a preview before anything changes, and treats the file as untrusted: links are checked and unknown fields are dropped.</dd>
             <dt>Import</dt><dd>Reads a file you choose (CSV, TSV, Excel, a list, an HTML or bookmarks file, or a Link Meteor export), text you paste, or a Chrome bookmark folder you pick. Files are read in your browser and never uploaded. Nothing is added until you confirm the preview, and an import can be undone.</dd>
-            <dt>Citations</dt><dd>BibTeX, RIS, CSL-JSON, an annotated bibliography or an Obsidian note, downloaded or copied when you ask. They're built only from what the pages showed and from your notes and tags: identifiers such as DOIs are read from each link's own address, and nothing is looked up online.</dd>
+            <dt>Citations</dt><dd>BibTeX, RIS, CSL-JSON, an annotated bibliography or an Obsidian note, downloaded or copied when you ask. They're built from what the pages and PDFs showed and from your notes and tags: identifiers such as DOIs are read from each link's own address. Nothing is looked up online unless you turn on <a href="#lookup">Page details lookup</a>.</dd>
             <dt>Bookmarks</dt><dd>Creates bookmarks in Chrome, in a new folder or one you choose. <strong>Chrome may sync bookmarks to your other devices</strong>, depending on your own Chrome sync settings.</dd>
             <dt>Open in tabs</dt><dd>Visits those links, in tabs, a new window or a tab group, exactly as if you had clicked them, so those sites receive ordinary requests from your browser. Up to 500 at a time, and Link Meteor asks first above 20.</dd>
           </dl>
           <p>Link Meteor keeps links exactly as captured and never rewrites them. Addresses from private or admin pages can contain sensitive details, so check an export before you share it. Text taken from pages is treated as data: it is escaped in HTML and Markdown exports and protected from being run as formulas in spreadsheet exports.</p>
+        </section>
+
+        <section aria-labelledby="beyond">
+          <h2 id="beyond">PDFs, and more than one page</h2>
+          <p>From version 0.6.0, Link Meteor can read the links inside a PDF and capture more than one screen or page. Each of these happens only when you start it, shows a counter and Stop the whole time, and has a limit stated before it starts.</p>
+          <dl class="defs">
+            <dt>PDFs</dt><dd>To read the links in a PDF that is open in a tab, Link Meteor asks Chrome for the file again from the same address, as that page. Chrome usually answers from its own cache; otherwise the site is asked again, as when you reload the tab. The PDF is read inside your browser by PDF.js, which is part of Link Meteor. It is never uploaded. A PDF you choose from your computer is read the same way, and Link Meteor needs no access for it.</dd>
+            <dt>Scroll to the end first</dt><dd>Scrolls the page for you, so the page loads the rest of itself as it would if you scrolled. It stops at the end, at 50 screens, at 5,000 links, after 2 minutes, or when you press Stop.</dd>
+            <dt>Follow Next</dt><dd>Moves your tab to the page's own Next link and captures each page, up to the number you set (20 at most). Each page loads as it would if you clicked Next yourself. It stops when there is no Next, at a site Link Meteor can't read, at the limit, or when you press Stop.</dd>
+            <dt>Capture their pages</dt><dd>Opens each page you chose in a background tab, one at a time, saves its links and closes the tab: 20 pages at most, with a pause between pages. Each page loads as it would if you opened it yourself, signed in as you are. Link Meteor asks first for access to the sites it will read, unless you allowed all sites. It never follows the links it finds.</dd>
+            <dt>One ZIP, or one combined PDF</dt><dd><em>Download as one ZIP</em> and <em>Combine into one PDF</em> get each PDF you chose through a page of its own site, as when you click the link, signed in as you are: 20 PDFs at most, one at a time. Where that needs a background tab, Link Meteor asks first for access to the sites it will read, unless you allowed all sites. The files are put together inside your browser by Link Meteor and saved through Chrome's download. They are never uploaded, and Link Meteor keeps no copy.</dd>
+          </dl>
+        </section>
+
+        <section aria-labelledby="lookup">
+          <h2 id="lookup">Page details lookup</h2>
+          <p><em>Page details lookup</em> is off unless you turn it on. When it is on and you click <em>Look up details</em>, Link Meteor sends the paper's DOI, arXiv ID or PubMed ID, and nothing else, to:</p>
+          <ul>
+            <li>Crossref (<code>api.crossref.org</code>) for DOIs;</li>
+            <li>DataCite (<code>api.datacite.org</code>) for DOIs Crossref doesn't have, including arXiv's;</li>
+            <li>NCBI (<code>eutils.ncbi.nlm.nih.gov</code>) for PubMed IDs.</li>
+          </ul>
+          <p>No page address, link text, note or collection name is sent. No cookies are sent or kept. Like any website you visit, those services see your IP address and your browser's version and language. What they return (title, authors, date, journal) is saved in this browser with the link.</p>
+          <p>The request is made from a sealed frame inside Link Meteor's page. That frame can reach those three addresses and nothing else, cannot read your collections or settings, and is handed only the identifier. It never runs by itself: only when you click, one request at a time, and at most 200 identifiers in a run. Crossref, DataCite and NCBI have their own privacy practices.</p>
         </section>
 
         <section aria-labelledby="delete">

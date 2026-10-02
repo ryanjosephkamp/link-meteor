@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Link Meteor",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "Capture links with their anchor text, organize local research collections, and export them your way. Free, private, and local.",
   "minimum_chrome_version": "116",
   "permissions": ["activeTab", "scripting", "storage", "unlimitedStorage", "sidePanel", "contextMenus", "clipboardWrite"],
@@ -18,5 +18,9 @@
     }
   },
   "incognito": "not_allowed",
-  "content_security_policy": {"extension_pages":"script-src 'self'; object-src 'none'; base-uri 'none'; connect-src 'none'"}
+  "sandbox": {"pages": ["ui/lookup-frame.html"]},
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'none'; base-uri 'none'; connect-src 'none'",
+    "sandbox": "sandbox allow-scripts; default-src 'none'; script-src 'self'; connect-src https://api.crossref.org https://api.datacite.org https://eutils.ncbi.nlm.nih.gov"
+  }
 }

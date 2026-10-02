@@ -15,7 +15,7 @@ Link Meteor's Chrome release serves research and source collection, with the sam
 - Save named local collections with notes/tags, per-occurrence notes/tags, append operations, explicit deletion and persistence across browser restarts. Failed writes preserve previously saved data and report recovery options.
 - Provide keyboard-accessible controls, visible focus, meaningful labels, light/dark presentation, reduced motion and useful empty/error states. The overlay, side panel and full workbench serve different space constraints without changing the data contract.
 
-“Specific pages” means selected open tabs. Capture does not crawl destinations, visit pasted URLs, paginate, continuously scroll on its own, load virtualized items, parse PDF contents or decode opaque JavaScript buttons. A normal link to a PDF is supported. Authenticated pages can work when accessible to the user and permitted, but every application/layout is not guaranteed.
+“Specific pages” means selected open tabs. Capture does not crawl destinations, visit pasted URLs or decode opaque JavaScript buttons, and by itself it does not paginate, scroll or load virtualized items. From 0.6.0 a person can start three bounded captures, each with a counter, Stop and a limit stated beforehand: scrolling a page to its end, following a page's own Next link for up to 20 pages, and capturing the pages behind up to 20 selected links, one level deep and never further. Link Meteor also reads the links inside PDFs, from a tab or from a file. Links it finds are saved, never followed. A normal link to a PDF is supported. Authenticated pages can work when accessible to the user and permitted, but every application/layout is not guaranteed.
 
 ## Faithful data
 
@@ -52,9 +52,9 @@ Current-page activation uses user-triggered access. Multi-tab capture and persis
 
 The website explains installation, features, privacy, limitations and usage, offers a synthetic practice page and a development ZIP, and remains useful and accessible without tracking or external media services. Branding, code, copy and assets are independently created; similar functionality does not establish name or trademark clearance.
 
-Link Meteor is intended for the Chrome Web Store in a later release. Color themes arrived in 0.4.0, and imports, context snippets and citation exports in 0.5.0; a later release may read the links inside PDFs.
+Link Meteor is intended for the Chrome Web Store in a later release. Color themes arrived in 0.4.0, imports, context snippets and citation exports in 0.5.0, and PDFs, bounded multi-page capture and the first optional online feature in 0.6.0.
 
-Anything that contacts other sites, such as looking up a destination's details, would only ever be opt-in, per request. Firefox, Safari and mobile versions and AI integrations are not planned for now. Future capabilities must preserve originals and require explicit user choices about any new data destinations or costs. Existing structured exports do not imply a remote AI service. Until Store publication, ZIP plus Load unpacked is the supported installation route.
+Nothing leaves the browser unless a person turns on a feature that says exactly what it sends, and where. The first is Page details lookup (0.6.0): off by default, run only on a click, sending only a DOI, an arXiv ID or a PubMed ID to Crossref, DataCite or NCBI. Anything else that contacts other sites would be opt-in in the same way. Firefox, Safari and mobile versions and AI integrations are not planned for now. Future capabilities must preserve originals and require explicit user choices about any new data destinations or costs. Existing structured exports do not imply a remote AI service. Until Store publication, ZIP plus Load unpacked is the supported installation route.
 
 ## Evidence standard
 

@@ -94,10 +94,10 @@ test('readers keep only contract fields and fill settings missing from older bac
   assert.deepEqual(read.state.settings, { ...createState().settings, holdKey: 'q', holdOrigins: ['https://a.example'], theme: 'ember' });
 });
 
-test('backup format 3 (0.5.0) still reads format 1 files from 0.3.0 and format 2 files from 0.4.0, filling the new settings', () => {
+test('backup format 4 (0.6.0) still reads format 1 files from 0.3.0, format 2 from 0.4.0 and format 3 from 0.5.0, filling the new settings', () => {
   const one = structuredClone(createBackup(machineA(), { extensionVersion: '0.3.0' }));
   one.formatVersion = 1;
-  for (const key of ['theme', 'appearance', 'afterDrag', 'afterDragFormat', 'contentOnly', 'skipSaved', 'saveContext']) delete one.state.settings[key];
+  for (const key of ['theme', 'appearance', 'afterDrag', 'afterDragFormat', 'contentOnly', 'skipSaved', 'saveContext', 'followPages', 'lookupDetails']) delete one.state.settings[key];
   const read = readBackup(JSON.stringify(one));
   assert.equal(read.formatVersion, BACKUP_FORMAT_VERSION);
   assert.equal(read.state.settings.theme, 'meteor');
@@ -107,9 +107,15 @@ test('backup format 3 (0.5.0) still reads format 1 files from 0.3.0 and format 2
   assert.equal(read.state.settings.saveContext, true);
   const two = structuredClone(createBackup(machineA(), { extensionVersion: '0.4.0' }));
   two.formatVersion = 2;
-  delete two.state.settings.saveContext;
+  for (const key of ['saveContext', 'followPages', 'lookupDetails']) delete two.state.settings[key];
   assert.equal(readBackup(JSON.stringify(two)).state.settings.saveContext, true);
-  assert.equal(BACKUP_FORMAT_VERSION, 3);
+  const three = structuredClone(createBackup(machineA(), { extensionVersion: '0.5.0' }));
+  three.formatVersion = 3;
+  for (const key of ['followPages', 'lookupDetails']) delete three.state.settings[key];
+  const fromThree = readBackup(JSON.stringify(three)).state.settings;
+  assert.equal(fromThree.followPages, 20);
+  assert.equal(fromThree.lookupDetails, false, 'a restored 0.5.0 backup never turns the lookup on');
+  assert.equal(BACKUP_FORMAT_VERSION, 4);
 });
 
 test('merging into a fresh install joins the default collection by name and adds the rest', () => {

@@ -192,3 +192,39 @@ test('bookmarks.folderLinks: a folder’s bookmarks with their folder paths, wit
   const big = await ok({type: 'bookmarks.folderLinks', folderId: '2'});
   assert.deepEqual([big.links.length, big.more], [50000, true]);
 });
+
+test('import.commit saves a PDF’s links (0.6.0): their pages, the PDF as their source when it was read from a tab, and its citation', async () => {
+  const pdf = 'https://arxiv.org/pdf/2409.11211v1';
+  const citation = {title: 'SplatFields', arxiv: '2409.11211', arxivVersion: 'v1', arxivCategory: 'cs.CV', date: '17 Sep 2024', pdfUrl: pdf, source: 'pdf', readAt: '2026-10-02T10:00:00.000Z'};
+  const fromTab = await ok({type: 'import.commit', newCollection: 'From a PDF tab', pages: {[pdf]: citation}, links: [
+    {anchorText: 'markomih.github.io/SplatFields', url: 'https://markomih.github.io/SplatFields', originalHref: 'https://markomih.github.io/SplatFields', sourceUrl: pdf, sourceTitle: '  SplatFields:   Neural Gaussian Splats ', pdfPage: 3, context: 'The code is publicly available: markomih.github.io/SplatFields.'},
+    {anchorText: '', url: 'https://orcid.org/0000-0001-6305-3896', originalHref: 'https://orcid.org/0000-0001-6305-3896', sourceUrl: pdf, sourceTitle: 'SplatFields', pdfPage: 1},
+  ]});
+  const home = collection(fromTab.collectionId);
+  assert.deepEqual(home.links.map((link) => [link.anchorText, link.pdfPage, link.sourceUrl, link.sourceTitle, link.imported, link.context]), [
+    ['markomih.github.io/SplatFields', 3, pdf, 'SplatFields: Neural Gaussian Splats', undefined, 'The code is publicly available: markomih.github.io/SplatFields.'],
+    ['', 1, pdf, 'SplatFields', undefined, undefined],
+  ], 'empty anchor text stays empty; the PDF is the source page, not an "imported" label');
+  assert.deepEqual(home.pages, {[pdf]: citation});
+  assert.equal(new Set(home.links.map((link) => link.batchId)).size, 1, 'one batch');
+
+  // From a file: no source page, an imported label, and the page.
+  const fromFile = await ok({type: 'import.commit', collectionId: home.id, skipSaved: true, links: [
+    {anchorText: 'the map', url: 'https://maps.example.org/site-4', originalHref: 'https://maps.example.org/site-4', imported: 'notes.pdf, page 1', pdfPage: 1, sourceUrl: 'https://evil.example/'},
+    {anchorText: 'again', url: 'https://markomih.github.io/SplatFields', originalHref: 'x', imported: 'notes.pdf, page 2', pdfPage: 2},
+  ]});
+  assert.deepEqual([fromFile.count, fromFile.skipped], [1, 1]);
+  const added = collection(home.id).links.at(-1);
+  assert.deepEqual([added.imported, added.pdfPage, added.sourceUrl], ['notes.pdf, page 1', 1, ''], 'a file’s links never name a source page');
+
+  // Undo removes the batch; refusals change nothing.
+  const count = collection(home.id).links.length;
+  await refused({type: 'import.commit', collectionId: home.id, links: [{anchorText: 'x', url: 'https://x.example/', originalHref: 'x', sourceUrl: 'file:///Users/someone/paper.pdf', pdfPage: 1}]}, /source page must be a web address/);
+  await refused({type: 'import.commit', collectionId: home.id, links: [{anchorText: 'x', url: 'https://x.example/', originalHref: 'x', sourceUrl: pdf, pdfPage: 0}]}, /pdfPage must be a page number/);
+  await refused({type: 'import.commit', collectionId: home.id, links: [{anchorText: 'x', url: 'https://x.example/', originalHref: 'x', sourceUrl: pdf}]}, /needs where it came from/);
+  await refused({type: 'import.commit', collectionId: home.id, pages: [], links: [{anchorText: 'x', url: 'https://x.example/', originalHref: 'x', sourceUrl: pdf, pdfPage: 1}]}, /citation details for this import are not valid/);
+  await refused({type: 'import.commit', collectionId: home.id, pages: {[pdf]: {source: 'elsewhere'}}, links: [{anchorText: 'x', url: 'https://x.example/', originalHref: 'x', sourceUrl: pdf, pdfPage: 1}]}, /source must be one of/);
+  assert.equal(collection(home.id).links.length, count);
+  await ok({type: 'import.undo', collectionId: home.id, batchId: fromFile.batchId});
+  assert.equal(collection(home.id).links.length, count - 1);
+});

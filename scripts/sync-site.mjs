@@ -12,10 +12,12 @@ const manifest = JSON.parse(await readFile(resolve(root, 'src/manifest.json'), '
 const zipName = `link-meteor-${manifest.version}.zip`;
 const zip = await readFile(resolve(root, 'artifacts', zipName));
 await verifyPackagedSource(zip, resolve(root, 'src'));
-// The export module and everything it imports: since 0.5.0, the citation formats and identifiers.
+// The export module and everything it imports: since 0.5.0, the citation formats and identifiers;
+// since 0.6.0, the ZIP writer the workbook writer uses.
 const pairs = [
   ['src/core/export.js', 'site/assets/js/core/export.js'],
   ['src/core/xlsx.js', 'site/assets/js/core/xlsx.js'],
+  ['src/core/zip.js', 'site/assets/js/core/zip.js'],
   ['src/core/identifiers.js', 'site/assets/js/core/identifiers.js'],
   ['src/core/cite.js', 'site/assets/js/core/cite.js'],
   ['assets/brand/icon.svg', 'site/assets/img/icon.svg'],

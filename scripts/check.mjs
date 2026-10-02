@@ -49,6 +49,8 @@ const suites = [
   { name: 'reading-browser', command: [node, 'tests/reading-browser.mjs'], profile: true },
   { name: 'imports-browser', command: [node, 'tests/imports-browser.mjs'], profile: true },
   { name: 'move-browser', command: [node, 'tests/move-browser.mjs'], profile: true },
+  { name: 'pdf-browser', command: [node, 'tests/pdf-browser.mjs'], profile: true },
+  { name: 'lookup-browser', command: [node, 'tests/lookup-browser.mjs'], profile: true },
   { name: 'audit-overlay', command: [node, 'tests/audit-overlay.mjs'], profile: true },
   { name: 'audit-actions', command: [node, 'tests/audit-actions.mjs'], profile: true },
   { name: 'audit-regressions', command: [node, 'tests/audit-regressions.mjs'], profile: true },

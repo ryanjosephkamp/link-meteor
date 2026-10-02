@@ -1424,3 +1424,56 @@ These are planned for 0.7.0 and are not built in 0.6.0.
 - **Dead-link check** (optional, off by default). "When you click *Check links*, Link Meteor sends one request to each chosen link’s own site, to see whether the page still answers. Each site sees your IP address and your browser’s version, as when you visit it. No cookies are sent. Nothing is sent to anyone else." It needs all-sites access to read an answer, and `connect-src` opened to web addresses on Link Meteor's pages, which is why it is a release of its own.
 - **Wayback** (optional, off by default). "When you click *Find an archived copy*, Link Meteor sends that link’s address to the Internet Archive (archive.org) and saves the archived copy’s address and date with the link. The Internet Archive sees the address and your IP address." It never asks the Archive to save a page.
 - **Incognito session collections.** Needs the manifest's `incognito` key changed and Chrome's "Allow in Incognito" turned on by the person. Until then Link Meteor doesn't run in incognito windows.
+
+### The 0.6.0 foundation, as built
+
+The parts every lane builds on. Where this differs from the draft above, this is what the code does.
+
+**PDF.js, vendored** (`src/vendor/pdfjs/`): the two files, `LICENSE` and `README.md` (version, source address, the package's integrity value, each file's size and SHA-256). `scripts/vendor-pdfjs.mjs <version>` writes them; `tests/vendor.test.mjs` checks them offline. The release list (`scripts/release-files.mjs`) names all four, with `core/pdf.js`, `core/zip.js`, `core/lookup.js`, `ui/lookup-frame.html` and `ui/lookup-frame.js`.
+
+**The reader in Link Meteor's pages** (`src/ui/workbench/`):
+- `pdf-shims.js`, and the two wrappers that load it first: `pdfjs.js` (the library) and `pdfjs-worker.js` (its worker).
+- `pdf-reader.js`:
+  - `readPdf(bytes, {address?, saveContext?, onProgress?, signal?})` returns `{pageCount, links, internal, skipped, capped, linkPages, citation, notes}`. It refuses a file over `MAX_PDF_BYTES` and one that doesn't start with `%PDF-`, in plain words.
+  - `combinePdfs([bytes, …])` returns `{bytes, pages, counts}`.
+  - `withPdf(bytes, fn)` runs `fn` on an open PDF.js document and closes it.
+  - `pdfProblem(error)` gives the words for a PDF that can't be read: "This PDF needs a password. Link Meteor doesn’t ask for passwords." or "This PDF is damaged, or it isn’t a PDF, so it couldn’t be read."
+- The library is imported the first time a PDF is read, and one module worker (`pdfjs-worker.js`) is started then and kept while the page is open.
+- PDF.js takes over the bytes it is given, so the reader hands it a copy.
+
+**`src/core/pdf.js`** (pure; imports limits and the address rule from `model.js`, `imports.js` and `identifiers.js`):
+- `pdfPages(doc, {onProgress?, signal?})` reads a PDF.js document into plain data: `[{number, width, height, annotations: [{rect, url, unsafeUrl, internal}], items: [{str, x, y, w, h, rotated}]}]`. Items that hold only spaces are dropped; the gaps say the same.
+- `pdfLinks(pages, {saveContext?})` returns `{links: [{url, originalHref, anchorText, pdfPage, context?}], internal, skipped: [{page, reason: 'not-link'}], capped}`.
+  - A word with fewer than half of its characters inside the link's rectangle belongs to a neighbor and is left out whole. This is what makes "arXiv:1610.10099" exact where the rectangle reaches into the word before it.
+  - A wrapped link: the next link annotation, with the same address, on a lower line close by (within two and a half line heights), starting left of where the first piece ended. Across a page break, only a printed address in two pieces is joined.
+  - A printed address (the words, without spaces, are the web address or its end) is kept in one piece. Email and phone links keep their words as printed.
+  - `capped` counts links past `MAX_IMPORT_LINKS`.
+- `pdfContext(items, rects, anchorText)`: the link's line or lines, within its own column (neighbors are followed until a gap wider than one and a half line heights), empty when the line holds fewer than 8 letters besides the link's own words.
+- `pdfCitation({info, xmp, firstPage, links, address})`:
+  - the title from the PDF's details only when it is also printed on the first page and isn't a file name; otherwise the largest text in the upper part of the first page, when it is at least 15% larger than the page's body text and at most four lines;
+  - authors from the details only when every name is printed on the first page;
+  - a DOI from the details (`prism:doi`, `pdfx:doi`, `crossmark:doi`, `dc:identifier`); otherwise the first page's, when it names exactly one besides arXiv's own DOI for the stamped paper;
+  - `journal` and `date` from `prism:publicationName` and `prism:publicationDate` or `prism:coverDate`.
+- `pdfCitationNotes(citation, {info, xmp})` says where each part was read, for the preview.
+- `readPdfDocument(doc, options)` does all of the above for one open document. `combinePdfs(list, withDocument)` opens every part first, so one that needs a password or is damaged is refused by name (`error.part` is its index) before anything is written, and opens the result again: PDF.js's writer returns an empty file instead of failing.
+- `isPdf(bytes)`, `pdfProblem(error)`, `pdfSetProblem(sizes)` and the limits `MAX_PDF_BYTES`, `MAX_PDF_PAGES`, `MAX_PDF_SET`, `MAX_PDF_SET_BYTES`.
+
+**`src/core/zip.js`**: `zip(files)` takes `[[name, text or bytes], …]` and returns one `Uint8Array`; `crc32(bytes)`. It refuses repeated or unsafe names, more than 65,535 entries, and more than 4 GB.
+
+**The data** (`src/core/model.js`):
+- `pdfPage` on links; `arxivVersion`, `arxivCategory` and `source` on page citations; `MAX_PDF_PAGES`, `CITATION_SOURCES`.
+- **Which reading of a citation wins** (`mergeCitation(older, newer)`, used by `links.append` with `pages`): a page's own citation tags first, then a lookup, then the PDF. The stronger reading keeps its fields, and the weaker one fills only the fields left empty. So a lookup replaces a title that was only guessed from a PDF's largest text, and never replaces anything a page's tags gave. Tags read again, or a PDF read again, replace the earlier reading of the same kind; a second lookup only fills gaps.
+- `pages.restore {collectionId?, pages: {[address]: PageCitation | null}}` sets or removes citations exactly: Undo for a lookup.
+- Settings `followPages` (`MIN_FOLLOW_PAGES` 2 to `MAX_FOLLOW_PAGES` 20) and `lookupDetails`; both are in Copy diagnostics, as a number and yes or no.
+- Backup format 4.
+
+**`import.commit`** (`src/background/imports.js`) accepts, per link, `pdfPage` and `context`, and for a link read from a PDF in a tab (it has `pdfPage` and no `imported` label) `sourceUrl` and `sourceTitle`. A link with an `imported` label never names a source page. It accepts `pages` beside `links`. An import's Undo removes its links; citations it added stay until no link uses them, as elsewhere.
+
+**`src/core/lookup.js`** (pure): `LOOKUP_SERVICES`, `lookupRequests(ids)`, `lookupUrl(service, identifier)`, `lookupAllowed`, `readCrossref`, `readDatacite`, `readPubmed`, `readAnswer(service, identifier, {status, body})` (a citation, `{missing: true}`, or `{error, stop?}`), `plainText`, `filled(older, newer)`, `LOOKUP_PAUSE_MS` (350) and `MAX_LOOKUPS` (200).
+- Names are stored as "Family, Given", which the citation formats read as family and given names. PubMed's "Family Initials" gains the comma.
+- A preprint's date is the day it was submitted; a chapter's journal is its book.
+
+**The lookup frame** (`src/ui/lookup-frame.html`, `lookup-frame.js`):
+- The workbench posts `{type: 'lookup', id, service, identifier}` to it and receives `{type: 'lookup.answer', id, status, body}` or `{type: 'lookup.answer', id, error}`. It posts `{type: 'lookup.ready'}` once loaded.
+- It builds the address itself from the service and a checked identifier, so nothing else can be requested through it; anything else is answered with "Link Meteor looks up only a DOI, an arXiv ID or a PubMed ID."
+- Tested in the real extension: its requests carry `Origin: null`, no cookie and no referrer; a cookie a service sets is not kept; it cannot reach any other address, Chrome's APIs, storage or its parent page.

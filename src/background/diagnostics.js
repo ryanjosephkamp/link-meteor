@@ -32,6 +32,8 @@ export const SETTING_REPORTS = Object.freeze({
   contentOnly: yesNo,
   skipSaved: yesNo,
   saveContext: yesNo,
+  followPages: value => Number.isInteger(value) && value >= 2 && value <= 20 ? value : INVALID,
+  lookupDetails: yesNo,
 });
 
 function settingsReport(settings) {

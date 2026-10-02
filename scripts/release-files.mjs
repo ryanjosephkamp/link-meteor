@@ -5,7 +5,10 @@ export const FIXED_FILES = [
   'manifest.json', 'background.js', 'content/capture.js',
   'core/model.js', 'core/export.js', 'core/xlsx.js', 'core/themes.js', 'core/files.js', 'core/identifiers.js', 'core/insights.js', 'core/imports.js',
   'core/cite.js',
-  'ui/workbench.html', 'ui/workbench.js', 'ui/workbench.css',
+  // 0.6.0: PDFs, the ZIP writer, the optional lookup and its sandboxed page, and PDF.js as shipped.
+  'core/pdf.js', 'core/zip.js', 'core/lookup.js',
+  'ui/workbench.html', 'ui/workbench.js', 'ui/workbench.css', 'ui/lookup-frame.html', 'ui/lookup-frame.js',
+  'vendor/pdfjs/pdf.min.mjs', 'vendor/pdfjs/pdf.worker.min.mjs', 'vendor/pdfjs/LICENSE', 'vendor/pdfjs/README.md',
 ];
 export const MODULE_FOLDERS = ['background', 'ui/workbench'];
 const MODULE_NAME = /^[a-z0-9-]+\.(js|css)$/;

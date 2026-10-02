@@ -1,5 +1,5 @@
 // Small OOXML workbook writer. ZIP entries are stored (method 0), so no runtime dependency is needed.
-const encoder = new TextEncoder();
+import { zip } from './zip.js';
 
 function xml(value) {
   return String(value)
@@ -26,55 +26,6 @@ function sheetXml(headers, rows) {
     return `<row r="${rowIndex + 1}">${cells}</row>`;
   }).join('');
   return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData>${rowXml}</sheetData></worksheet>`;
-}
-
-function crc32(bytes) {
-  let crc = 0xffffffff;
-  for (const byte of bytes) {
-    crc ^= byte;
-    for (let i = 0; i < 8; i++) crc = (crc >>> 1) ^ ((crc & 1) ? 0xedb88320 : 0);
-  }
-  return (crc ^ 0xffffffff) >>> 0;
-}
-
-function u16(view, offset, value) { view.setUint16(offset, value, true); }
-function u32(view, offset, value) { view.setUint32(offset, value, true); }
-
-function zip(files) {
-  const locals = [];
-  const centrals = [];
-  let offset = 0;
-  for (const [filename, content] of files) {
-    const name = encoder.encode(filename);
-    const data = encoder.encode(content);
-    const crc = crc32(data);
-    const local = new Uint8Array(30 + name.length + data.length);
-    let view = new DataView(local.buffer);
-    u32(view, 0, 0x04034b50); u16(view, 4, 20); u16(view, 6, 0x0800);
-    u16(view, 8, 0); u16(view, 10, 0); u16(view, 12, 33); // stored, 1980-01-01
-    u32(view, 14, crc); u32(view, 18, data.length); u32(view, 22, data.length);
-    u16(view, 26, name.length); u16(view, 28, 0);
-    local.set(name, 30); local.set(data, 30 + name.length);
-    locals.push(local);
-
-    const central = new Uint8Array(46 + name.length);
-    view = new DataView(central.buffer);
-    u32(view, 0, 0x02014b50); u16(view, 4, 20); u16(view, 6, 20); u16(view, 8, 0x0800);
-    u16(view, 10, 0); u16(view, 12, 0); u16(view, 14, 33);
-    u32(view, 16, crc); u32(view, 20, data.length); u32(view, 24, data.length);
-    u16(view, 28, name.length); u32(view, 42, offset);
-    central.set(name, 46); centrals.push(central);
-    offset += local.length;
-  }
-  const centralSize = centrals.reduce((n, part) => n + part.length, 0);
-  const end = new Uint8Array(22);
-  const view = new DataView(end.buffer);
-  u32(view, 0, 0x06054b50); u16(view, 8, files.length); u16(view, 10, files.length);
-  u32(view, 12, centralSize); u32(view, 16, offset);
-  const output = new Uint8Array(offset + centralSize + end.length);
-  let position = 0;
-  for (const part of [...locals, ...centrals, end]) { output.set(part, position); position += part.length; }
-  return output;
 }
 
 // Formatted workbook (0.3.0), written only when options are given: a bold header row frozen in

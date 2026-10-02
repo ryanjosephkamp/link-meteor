@@ -30,6 +30,8 @@ export const SETTINGS_DEFAULTS = Object.freeze({
   contentOnly: false,               // leave out navigation, header, footer and sidebar links
   skipSaved: false,                 // when adding, skip URLs already in the destination collection
   saveContext: true,                // save the words around each link when capturing (0.5.0)
+  followPages: 20,                  // the most pages one Follow Next run reads, 2 to 20 (0.6.0)
+  lookupDetails: false,             // Page details lookup is on; off, nothing is requested from any service (0.6.0)
 });
 const HOLD_TRIGGERS = new Set(['letter', 'modifier']);
 const HOLD_SCOPES = new Set(['sites', 'all']);
@@ -44,18 +46,25 @@ const FIELD_ID = /^[a-z0-9][a-z0-9-]{0,80}$/;
 export const MAX_EXPORT_PREFIX = 40;
 // Research data (0.5.0): optional per-link and per-collection fields; absent means none.
 export const MAX_CONTEXT = 400, MAX_IMPORTED = 300, MAX_PAGES = 5000;
+// PDFs (0.6.0): a link read from a PDF holds the page it is on.
+export const MAX_PDF_PAGES = 2000;
+export const MIN_FOLLOW_PAGES = 2, MAX_FOLLOW_PAGES = 20;
 const LINK_STATUSES = new Set(['reading', 'read']);
 const STATUS_FILTERS = new Set(['any', 'unread', 'reading', 'read']);
 // A page citation's text fields and their limits; authors is a list of names as printed.
 const PAGE_TEXT = { title: 300, date: 40, journal: 300, publisher: 300, volume: 300, issue: 300, firstPage: 300, lastPage: 300,
-  doi: 300, pmid: 300, arxiv: 300, isbn: 300, pdfUrl: 2000, readAt: 40 };
+  doi: 300, pmid: 300, arxiv: 300, isbn: 300, pdfUrl: 2000, readAt: 40, arxivVersion: 8, arxivCategory: 40, source: 20 };
+// Where a citation was read (0.6.0): the PDF itself, or a lookup service. Absent means the page's own citation tags.
+export const CITATION_SOURCES = Object.freeze(['pdf', 'crossref', 'datacite', 'pubmed']);
 export const MAX_AUTHORS = 50, MAX_AUTHOR = 200;
 
 // Backup files have their own format version, independent of the storage schema.
 export const BACKUP_FORMAT = 'link-meteor-backup';
 // Format 2 (0.4.0) adds the appearance and capture settings; format 3 (0.5.0) adds context,
-// reading status, stars, imported labels and page citations. Formats 1 and 2 still restore.
-export const BACKUP_FORMAT_VERSION = 3;
+// reading status, stars, imported labels and page citations; format 4 (0.6.0) adds a link's PDF
+// page, where a citation was read, arXiv's version and category, and two settings. Formats 1 to 3
+// still restore.
+export const BACKUP_FORMAT_VERSION = 4;
 // Backups travel through extension messaging, which carries at most 64 MiB per message.
 export const BACKUP_LIMITS = Object.freeze({ bytes: 50 * 1024 * 1024, collections: 10000, links: 250000 });
 
@@ -110,7 +119,8 @@ function link(value) {
 /* Research data (0.5.0). A link may hold `context` (the words around it on its page), `status`
    ('reading' or 'read'; absent means unread), `starred: true` and `imported` (where an imported
    link came from). A collection may hold `pages: {pageUrl: PageCitation}`, citation details read
-   from pages Link Meteor had open. All optional, so a 0.4.0 state needs no migration. */
+   from pages Link Meteor had open. All optional, so a 0.4.0 state needs no migration.
+   0.6.0 adds `pdfPage`, the page of the PDF a link is on, counting from 1. */
 function research(item, name = 'link') {
   const kept = { ...item };
   for (const [key, max] of [['context', MAX_CONTEXT], ['imported', MAX_IMPORTED]]) {
@@ -124,6 +134,7 @@ function research(item, name = 'link') {
     if (typeof kept.starred !== 'boolean') throw new Error(`${name}.starred must be true or false`);
     if (!kept.starred) delete kept.starred;
   }
+  if (kept.pdfPage !== undefined && (!Number.isInteger(kept.pdfPage) || kept.pdfPage < 1 || kept.pdfPage > MAX_PDF_PAGES)) throw new Error(`${name}.pdfPage must be a page number from 1 to ${MAX_PDF_PAGES.toLocaleString('en-US')}`);
   return kept;
 }
 
@@ -147,6 +158,7 @@ function pageCitation(value, name = 'page citation') {
     if (typeof text !== 'string') throw new Error(`${name}.${key} must be text`);
     const clean = text.trim().replace(/\s+/gu, ' ');
     if (clean.length > PAGE_TEXT[key]) throw new Error(`${name}.${key} can be at most ${PAGE_TEXT[key]} characters`);
+    if (key === 'source' && clean && !CITATION_SOURCES.includes(clean)) throw new Error(`${name}.source must be one of ${CITATION_SOURCES.join(', ')}`);
     if (clean) kept[key] = clean;
   }
   return kept;
@@ -165,11 +177,29 @@ function pagesMap(value, name = 'collection.pages') {
   return kept;
 }
 
-// Merges newer page citations into older ones (a newer reading of the same address replaces it)
-// and keeps at most MAX_PAGES, dropping the oldest readings first.
+// One address's citation after a newer reading (0.6.0). A page's own citation tags come first,
+// then what a lookup service returned, then what the PDF says about itself. The stronger reading
+// keeps its fields and the weaker one only fills the fields left empty. The same kind of reading
+// again replaces the earlier one for tags and PDFs (they were read afresh); a second lookup only
+// fills gaps, so it never churns what an earlier lookup gave.
+const citationRank = (citation) => (!citation.source ? 3 : citation.source === 'pdf' ? 1 : 2);
+export function mergeCitation(older, newer) {
+  if (!older) return newer;
+  const before = citationRank(older), after = citationRank(newer);
+  if (before === after && before !== 2) return newer;
+  const [strong, weak] = after > before ? [newer, older] : [older, newer];
+  const { source: _source, readAt: _readAt, ...filler } = weak;
+  return { ...filler, ...strong };
+}
+// Merges newer page citations into older ones, address by address (mergeCitation), and keeps at
+// most MAX_PAGES, dropping the oldest readings first.
 function mergePages(older, newer) {
   const merged = { ...older };
-  for (const [url, citation] of Object.entries(newer)) { delete merged[url]; merged[url] = citation; }
+  for (const [url, citation] of Object.entries(newer)) {
+    const kept = mergeCitation(merged[url], citation);
+    delete merged[url];
+    merged[url] = kept;
+  }
   const entries = Object.entries(merged);
   if (entries.length <= MAX_PAGES) return merged;
   entries.sort(([, a], [, b]) => String(a.readAt || '').localeCompare(String(b.readAt || '')));
@@ -305,8 +335,11 @@ function settingsField(key, value, name = key) {
     case 'holdScope':
       if (!HOLD_SCOPES.has(value)) throw new Error(`${name} must be 'sites' or 'all'`);
       return value;
-    case 'welcomeSeen': case 'exportTimestamp': case 'contentOnly': case 'skipSaved': case 'saveContext':
+    case 'welcomeSeen': case 'exportTimestamp': case 'contentOnly': case 'skipSaved': case 'saveContext': case 'lookupDetails':
       if (typeof value !== 'boolean') throw new Error(`${name} must be true or false`);
+      return value;
+    case 'followPages':
+      if (!Number.isInteger(value) || value < MIN_FOLLOW_PAGES || value > MAX_FOLLOW_PAGES) throw new Error(`${name} must be a whole number from ${MIN_FOLLOW_PAGES} to ${MAX_FOLLOW_PAGES}`);
       return value;
     case 'exportPrefix':
       if (typeof value !== 'string' || value.length > MAX_EXPORT_PREFIX || fileNamePart(value, MAX_EXPORT_PREFIX) !== value) {
@@ -405,6 +438,19 @@ export function reduceState(input, action) {
       if (!appended.length && !(pages && Object.keys(pages).length)) return state;
       const updated = { ...current, links: [...current.links, ...appended] };
       return replaceCollection(state, index, pages && Object.keys(pages).length ? withPages(updated, mergePages(pagesMap(current.pages), pages)) : updated);
+    }
+    // Sets or removes page citations exactly (0.6.0): Undo for a lookup, which keeps what each
+    // address held before. `pages` maps an address to its citation, or to null to remove it.
+    case 'pages.restore': {
+      const { index, collection: current } = target(state, action.collectionId);
+      object(action.pages, 'pages');
+      const pages = { ...pagesMap(current.pages) };
+      for (const [url, citation] of Object.entries(action.pages)) {
+        if (!url || pageKey(url) !== url) throw new Error(`pages has an invalid page address: ${url}`);
+        if (citation === null) delete pages[url]; else pages[url] = pageCitation(citation, 'pages entry');
+      }
+      if (Object.keys(pages).length > MAX_PAGES) throw new Error(`A collection can keep citation details for at most ${MAX_PAGES.toLocaleString('en-US')} pages`);
+      return replaceCollection(state, index, withPages(current, pages));
     }
     // Reading status and stars (0.5.0), for many links at once. The workbench keeps the earlier
     // values for Undo and sends one action per earlier value.
@@ -702,7 +748,7 @@ export function queryLinks(links, options = {}) {
 
 /* Backup files ------------------------------------------------------------------------------
    A backup is UTF-8 JSON:
-   {format:'link-meteor-backup', formatVersion:3, createdAt, extensionVersion,
+   {format:'link-meteor-backup', formatVersion:4, createdAt, extensionVersion,
     state:{schemaVersion:1, activeCollectionId, collections, settings}}
    The removal undo snapshot is not included. Readers keep only contract fields, so a release
    that adds stored fields must raise BACKUP_FORMAT_VERSION: older releases then refuse the
@@ -716,7 +762,7 @@ function backupLink(value, columns = new Set()) {
   // Custom values are kept only for the collection's own columns.
   const fields = Object.fromEntries(Object.entries(checked.fields || {}).filter(([key]) => columns.has(key)));
   if (Object.keys(fields).length) kept.fields = fields;
-  for (const key of ['context', 'status', 'starred', 'imported']) if (checked[key] !== undefined) kept[key] = checked[key];
+  for (const key of ['context', 'status', 'starred', 'imported', 'pdfPage']) if (checked[key] !== undefined) kept[key] = checked[key];
   return kept;
 }
 

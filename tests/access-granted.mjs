@@ -212,6 +212,54 @@ try {
   await page.keyboard.press('Escape');
   pass('Card: Open as a tab group is named after the destination; Bookmark this selection saves a folder');
 
+  // 0.6.0, runs. Capture their pages… with all-sites access: nothing to ask; each page is read in a
+  // background tab and closed; a PDF among them is read as a PDF by this open workbench; everything
+  // is one batch with one Undo. The pages are on two sites (127.0.0.1 and localhost).
+  const pagesHome = (await rpc(ui, {type: 'state.mutate', action: {type: 'collection.create', name: 'Selected pages'}})).activeCollectionId;
+  const runPages = [`${fixture.base}/site/runs/page.html?of=1&source=a`, `${localhost}/site/runs/page.html?of=1&source=b`, `${fixture.base}/pdf/paper.pdf`];
+  await rpc(ui, {type: 'state.mutate', action: {type: 'links.append', collectionId: pagesHome, links: runPages.map((url, i) => ({id: `run-page-${Date.now()}-${i}`, anchorText: `Source ${i + 1}`, accessibleLabel: '', url, originalHref: url,
+    sourceUrl: fixture.base, sourceTitle: 'Sources', frameUrl: '', capturedAt: new Date().toISOString(), batchId: 'run-pages-seed', notes: '', tags: []}))}});
+  await until(async () => (await ui.locator('#collection-heading').innerText()) === 'Selected pages' && (await ui.locator('.link-row').count()) === 3, 'the three sources');
+  await ui.evaluate(() => { window.__requests = []; });
+  await ui.locator('#select-all').check();
+  await ui.locator('#pages-selected').click();
+  await until(async () => (await ui.locator('#pages-access').innerText()) === 'Link Meteor has access to these pages: you allowed all sites.', 'nothing to ask with all sites allowed');
+  assert.equal(await ui.locator('#pages-allow').isVisible(), false);
+  assert.equal(await ui.locator('#pages-title').innerText(), 'Capture the links on 3 selected pages');
+  const tabsBeforeRun = context.pages().length;
+  await ui.locator('#pages-apply').click();
+  await until(() => ui.locator('#run-progress').isVisible(), 'the run’s progress line');
+  assert.equal(await ui.locator('#run-title').innerText(), 'Capturing selected pages');
+  await until(async () => /^Captured 3 selected pages: added 39 links to “Selected pages”\.$/.test(await ui.locator('#notice .msg').innerText().catch(() => '')), 'the run of three pages', 90000);
+  const runRows = await ui.locator('#capture-report .run-table tbody tr').evaluateAll((rows) => rows.map((row) => [...row.cells].map((cell) => cell.innerText)));
+  assert.deepEqual(runRows.map((row) => [row[0], row[2], row[3]]), [['1', '12', '12'], ['2', '12', '12'], ['3', '15', '15']]);
+  assert.deepEqual(runRows.slice(0, 2).map((row) => row[4]), ['Captured', 'Captured']);
+  assert.match(runRows[2][4], /^Captured: a PDF, \d+ pages?$/);
+  const runAdded = (await rpc(ui, {type: 'state.get'})).collections.find((c) => c.id === pagesHome).links.filter((link) => link.batchId !== 'run-pages-seed');
+  assert.equal(runAdded.length, 39);
+  assert.equal(new Set(runAdded.map((link) => link.batchId)).size, 1, 'one batch');
+  const fromPdf = runAdded.filter((link) => link.pdfPage);
+  assert.equal(fromPdf.length, 15);
+  assert.ok(fromPdf.every((link) => link.sourceUrl === runPages[2] && Number.isInteger(link.pdfPage)), 'a PDF’s links keep the PDF as their source page, and their page numbers');
+  assert.deepEqual([...new Set(runAdded.filter((link) => !link.pdfPage).map((link) => new URL(link.sourceUrl).host))], [new URL(fixture.base).host, new URL(localhost).host], 'pages on both sites were read');
+  assert.equal(context.pages().length, tabsBeforeRun, 'every background tab is closed');
+  assert.deepEqual(await ui.evaluate(() => window.__requests), [], 'no prompt');
+  await ui.locator('#notice button', {hasText: 'Undo'}).click();
+  await until(async () => (await ui.locator('#notice .msg').innerText().catch(() => '')) === 'Undone: removed 39 links from “Selected pages”.', 'Undo for the run');
+  assert.equal((await rpc(ui, {type: 'state.get'})).collections.find((c) => c.id === pagesHome).links.length, 3);
+  pass('Capture their pages with all-sites access: pages on two sites and a PDF, each in a background tab that is closed, one batch, one Undo, no prompt', {links: 39});
+
+  // 0.6.0: with all-sites access, Follow Next may cross to another site.
+  await page.goto(`${fixture.base}/site/runs/page.html?of=1&next=text&after=other`); await sleep(800);
+  const crossingTab = (await rpc(ui, {type: 'tabs.list'})).tabs.find((tab) => tab.url === page.url());
+  const crossingHome = (await rpc(ui, {type: 'state.mutate', action: {type: 'collection.create', name: 'Crossing Next'}})).activeCollectionId;
+  await rpc(ui, {type: 'run.start', kind: 'next', tabId: crossingTab.id, collectionId: crossingHome});
+  await until(async () => (await rpc(ui, {type: 'run.status'})).run?.state === 'done', 'the run that crosses sites', 60000);
+  const crossing = (await rpc(ui, {type: 'run.status'})).run;
+  assert.deepEqual([crossing.summary, crossing.ended.text], ['Followed Next through 2 pages: added 25 links to “Crossing Next”.', 'Page 2 has no Next link.']);
+  assert.equal(new URL(page.url()).hostname, 'localhost', 'the tab moved to the other site');
+  pass('Follow Next crosses to another site where Link Meteor has access to it');
+
   // The all-sites switch off keeps Chrome's grant and offers to remove it; on again needs no prompt.
   await ui.bringToFront();
   await ui.locator('#all-sites').uncheck();

@@ -179,18 +179,18 @@ test('selected pages: no access, a redirect to another site, a slow page, a tab 
   page(`${SITE}/moved`, {redirect: `${OTHER}/elsewhere`});
   page(`${SITE}/slow`, {never: true});
   page(`${SITE}/empty`, {title: 'Nothing here', links: 0});
-  page(`${SITE}/download`, {never: true});
+  page(`${SITE}/download`, {download: true});
   page(`${SITE}/broken`, {title: '', type: 'error'});
   const urls = [`${OTHER}/elsewhere`, `${SITE}/moved`, `${SITE}/slow`, `${SITE}/empty`, `${SITE}/download`, `${SITE}/broken`, `${SITE}/ok`];
   await ask({type: 'run.start', kind: 'pages', collectionId: state().activeCollectionId, urls});
-  // Chrome closes a tab opened at an address it downloads instead of showing.
-  for (let i = 0; i < 400 && session.linkMeteorRun.state === 'running'; i++) { await advance(250); const tab = [...tabs.values()].find((item) => item.url === `${SITE}/download`); if (tab) tabs.delete(tab.id); }
+  // Chrome closes a tab opened at an address it downloads instead of showing (the harness does, 300 ms after "complete").
+  for (let i = 0; i < 400 && session.linkMeteorRun.state === 'running'; i++) await advance(250);
   assert.deepEqual(rows(), [
     [1, 'no-access', 0, 0, 'No access'],
     [2, 'no-access', 0, 0, 'No access: it moved to another site'],
     [3, 'not-loaded', 0, 0, 'Didn’t load within 30 seconds'],
     [4, 'empty', 0, 0, 'No links on this page'],
-    [5, 'closed', 0, 0, 'The tab closed before it was read. Chrome may have downloaded this address as a file instead of showing it.'],
+    [5, 'downloaded', 0, 0, 'Chrome downloaded this address as a file instead of showing it. It is in your Downloads folder; no links were read from it.'],
     [6, 'not-loaded', 0, 0, 'Didn’t load: Chrome showed an error page'],
     [7, 'captured', 2, 2, 'Captured']]);
   assert.deepEqual(calls.created.map((tab) => tab.url), urls.slice(1), 'a page without access is not opened');

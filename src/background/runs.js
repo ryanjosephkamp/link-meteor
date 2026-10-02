@@ -444,6 +444,8 @@ const FILE_REASONS = {
   'set-size': pdfSetProblem(Array(Math.floor(MAX_PDF_SET_BYTES / MAX_PDF_BYTES) + 1).fill(MAX_PDF_BYTES)),
 };
 const DOWNLOADED = 'Chrome downloaded this one instead of showing it. It is in your Downloads folder, not in this file.';
+// A selected page whose address the site sends as a download: Chrome saves the file and closes the tab.
+const PAGE_DOWNLOADED = 'Chrome downloaded this address as a file instead of showing it. It is in your Downloads folder; no links were read from it.';
 const FILE_UNANSWERED = 'The Link Meteor page that started this didn’t answer, so the run ended. Keep it open until the PDFs are fetched.';
 
 const followCap = state => { const value = state.settings.followPages; return Number.isInteger(value) && value >= MIN_FOLLOW_PAGES && value <= MAX_FOLLOW_PAGES ? value : MAX_FOLLOW_PAGES; };
@@ -574,9 +576,16 @@ export const KINDS = {
       try {
         const state = await loaded(job, tab.id, true);
         if (state === 'stopped') return {row: unread(item, STOPPED)};
-        if (state === 'closed') return {row: unread(item, 'The tab closed before it was read. Chrome may have downloaded this address as a file instead of showing it.', 'closed')};
+        if (state === 'closed') return {row: unread(item, PAGE_DOWNLOADED, 'downloaded')};
         if (state === 'timeout') return {row: unread(item, NOT_LOADED, 'not-loaded')};
-        const now = await chrome.tabs.get(tab.id);
+        // A tab Chrome is about to close for a download shows "complete" with no address for a moment first.
+        let now = await chrome.tabs.get(tab.id).catch(() => null);
+        for (let waited = 0; now && !now.url && waited < CLOSING_MS; waited += POLL_MS) {
+          await pause(job, POLL_MS);
+          if (job.stopped) return {row: unread(item, STOPPED)};
+          now = await chrome.tabs.get(tab.id).catch(() => null);
+        }
+        if (!now) return {row: unread(item, PAGE_DOWNLOADED, 'downloaded')};
         // Where the address led: a site without access is closed unread, and reported the same way.
         if (!now.url || !(await hasAccess(now.url))) return {row: unread(item, now.url ? `No access: it moved to ${hostOf(now.url)}` : 'No access: it moved to another site', 'no-access')};
         run.page = {title: now.title || '', url: now.url}; progress(run);

@@ -74,6 +74,31 @@ export function fileLinks(links) {
   });
 }
 
+// A PDF link (0.6.0): a file link whose address ends in .pdf or is a known PDF address, or one
+// labeled [PDF] whose address names no other file type.
+export function isPdfLink(link) {
+  if (!isFileLink(link)) return false;
+  const type = urlFileType(link.url);
+  return type === 'pdf' || (!type && (knownPdf(link.url) || PDF_LABEL.test(String(link.anchorText ?? ''))));
+}
+// The PDF links among these links, one per address, in order.
+export function pdfLinks(links) { return fileLinks(links).filter(isPdfLink); }
+// A PDF's file name, as Download files names it: after its anchor text, ending .pdf.
+export function pdfFileName(link) { return downloadName(link, { mime: 'application/pdf' }); }
+// File names for one folder or one ZIP: a repeat gets " (2)", " (3)" before its extension. Names
+// that differ only in case count as repeats, as they do on most computers.
+export function uniqueNames(names) {
+  const seen = new Set();
+  return names.map((value) => {
+    const name = String(value), dot = name.lastIndexOf('.');
+    const stem = dot > 0 ? name.slice(0, dot) : name, ext = dot > 0 ? name.slice(dot) : '';
+    let unique = name;
+    for (let n = 2; seen.has(unique.toLowerCase()); n++) unique = `${stem} (${n})${ext}`;
+    seen.add(unique.toLowerCase());
+    return unique;
+  });
+}
+
 // The extension for each type Chrome may report. Anything else falls back to Chrome's own name.
 const MIME_EXTENSIONS = {
   'application/pdf': 'pdf', 'application/postscript': 'ps', 'application/rtf': 'rtf', 'text/rtf': 'rtf',

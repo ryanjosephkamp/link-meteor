@@ -7,10 +7,15 @@
 // Every run starts from a click, shows a counter and Stop the whole time, has a firm cap, saves
 // what it finds as one batch with one Undo, keeps what it has when stopped, and ends with a report.
 //
+// - Download as one ZIP and Combine into one PDF get each chosen PDF's file (kind `files`): the Link
+//   Meteor page that started the run fetches it through a tab on the PDF's own site. No links are saved.
+//
 // The engine (the queue, pacing, Stop, progress, the session record and the report) is kept apart
 // from what one step does (KINDS), so another kind of run is one more entry in KINDS.
 // The contract is in docs/CONTRACTS.md ("Runs: auto-scroll, Follow Next and selected pages").
 import {reduceState, pageKey, MIN_FOLLOW_PAGES, MAX_FOLLOW_PAGES, MAX_CONTEXT} from '../core/model.js';
+import {pdfSetProblem, MAX_PDF_BYTES, MAX_PDF_SET_BYTES} from '../core/pdf.js';
+import {isFileLink} from '../core/files.js';
 import {serial, readState, writeState} from './store.js';
 import {WORKBENCH, appendLinks} from './card.js';
 
@@ -23,6 +28,9 @@ const REPORT_KEY = 'linkMeteorCaptureReport';
 // each new page before reading it; selected pages are PAGES_PAUSE_MS apart. A PDF among selected
 // pages is read by an open Link Meteor page, which gets PDF_WAIT_MS to answer.
 export const MAX_RUN_PAGES = 20, LOAD_MS = 30000, NEXT_PAUSE_MS = 1500, PAGES_PAUSE_MS = 2000, PDF_WAIT_MS = 60000;
+// PDF files are fetched FILES_PAUSE_MS apart; the page that fetches one gets FILE_WAIT_MS to answer.
+// A tab opened at an address the site sends as a download is closed by Chrome within CLOSING_MS.
+export const FILES_PAUSE_MS = 2000, FILE_WAIT_MS = 120000, CLOSING_MS = 2000;
 const POLL_MS = 250, LOAD_GRACE_MS = 1000, KEEP_AWAKE_MS = 20000, SCROLL_SCREENS = 50, MAX_LINKS = 20000;
 const SCHEMES = ['http:', 'https:', 'mailto:', 'tel:'];
 const BUSY = 'Link Meteor is already running a capture. Stop it, or wait for it to finish.';
@@ -76,8 +84,10 @@ function pause(job, ms) {
 // page is open, none answers in time, or Stop is pressed.
 function ask(job, message, ms) {
   const key = `${message.runId}:${message.step}`;
+  if (job.stopped) return Promise.resolve(null);
   return new Promise(done => {
-    const finish = answer => { job.asks.delete(key); job.waiters.delete(stopped); done(answer); };
+    // A step may ask again (a file through another tab): an earlier question's timer must not end the later one.
+    const finish = answer => { if (job.asks.get(key) === finish) job.asks.delete(key); job.waiters.delete(stopped); done(answer); };
     const stopped = () => finish(null);
     job.asks.set(key, finish); job.waiters.add(stopped);
     clock.sleep(ms).then(stopped);
@@ -159,7 +169,7 @@ async function drive(job) {
     while (!run.ended) {
       if (job.stopped) { run.ended = {reason: 'stopped'}; break; }
       if (run.at >= run.queue.length) { run.ended = {reason: 'finished'}; break; }
-      if (run.at > 0 && kind.pause) { await pause(job, kind.pause); if (job.stopped) continue; }
+      if (run.at > 0 && kind.pause && !run.quick) { await pause(job, kind.pause); if (job.stopped) continue; }
       const item = run.queue[run.at];
       run.doing = {index: run.at}; run.live = null; run.page = null;
       await save(run); progress(run);
@@ -168,7 +178,7 @@ async function drive(job) {
       catch (error) { outcome = {row: unread(item, `Couldn’t be read: ${error?.message || error}`, 'error'), ...(kind.endsOnFailure ? {end: {reason: 'failed'}} : {})}; }
       run.results.push({page: run.at + 1, ...outcome.row});
       run.links += outcome.row.added || 0;
-      run.at++; run.doing = null; run.live = null;
+      run.at++; run.doing = null; run.live = null; run.quick = outcome.quick === true;
       if (outcome.next) run.queue.push(outcome.next);
       if (outcome.end) run.ended = outcome.end;
       await save(run);
@@ -422,14 +432,29 @@ async function readPdf(job, item, tab) {
     how: links.length ? `Captured: a PDF${size}${added.count ? '' : ', nothing new'}` : `A PDF${size} with no links Link Meteor can read`};
 }
 
+// A web address without its # part, or '' for anything else.
+const webAddress = value => { try { const url = new URL(String(value ?? '')); url.hash = ''; return ['http:', 'https:'].includes(url.protocol) ? url.href : ''; } catch { return ''; } };
+const originOf = url => { try { return new URL(url).origin; } catch { return ''; } };
+// How a PDF's file ends when the page that fetches it says why it couldn't (ui/workbench/pdf-tab.js).
+// The two limits are said in pdfSetProblem's words.
+const FILE_REASONS = {
+  'not-pdf': 'Not a PDF: the site asked to sign in, or the address has expired.',
+  size: pdfSetProblem([MAX_PDF_BYTES + 1]),
+  status: 'The site answered with an error instead of the PDF.',
+  'set-size': pdfSetProblem(Array(Math.floor(MAX_PDF_SET_BYTES / MAX_PDF_BYTES) + 1).fill(MAX_PDF_BYTES)),
+};
+const DOWNLOADED = 'Chrome downloaded this one instead of showing it. It is in your Downloads folder, not in this file.';
+const FILE_UNANSWERED = 'The Link Meteor page that started this didn’t answer, so the run ended. Keep it open until the PDFs are fetched.';
+
 const followCap = state => { const value = state.settings.followPages; return Number.isInteger(value) && value >= MIN_FOLLOW_PAGES && value <= MAX_FOLLOW_PAGES ? value : MAX_FOLLOW_PAGES; };
 const addedTo = (run) => run.count ? `added ${plural(run.count, 'link')} to “${run.name}”` : `no links were added to “${run.name}”`;
 
 // Each kind of run:
 //   title        the progress line's heading
 //   begin        checks the request and returns the run's own fields (queue: [{url}], and more)
-//   step         does one item of the queue: {row, next?, end?}. `row` is the item's line in the
-//                report; `next` is one more item for the queue; `end` ({reason, …}) ends the run
+//   step         does one item of the queue: {row, next?, end?, quick?}. `row` is the item's line in
+//                the report; `next` is one more item for the queue; `end` ({reason, …}) ends the run;
+//                `quick` says no site was asked for anything, so the next step needn't wait
 //   pause        milliseconds between steps
 //   counter      {step, of, links, text} for the progress line
 //   words        {head, ended, where?} for the report, once the run is over
@@ -572,9 +597,110 @@ export const KINDS = {
         ended: reason === 'stopped' ? 'You pressed Stop.' : reason === 'interrupted' ? INTERRUPTED : ''};
     },
   },
+  // The PDFs behind chosen links, for one ZIP or one combined PDF. The Link Meteor page that started
+  // the run holds the files: for each one the background finds a tab on the PDF's own site, and that
+  // page fetches the file through it (run.file, answered by run.fileDone). Which tab, in order:
+  //   1. the person's own tab, when it is on the PDF's site and Link Meteor can read it;
+  //   2. a background tab at the page the link was captured from when that is on the PDF's site,
+  //      else at the site's front page;
+  //   3. when the address moves to another site, a background tab at the PDF's own address, read
+  //      once Chrome shows it.
+  // Background tabs are opened only on sites Link Meteor has access to, and closed afterward.
+  files: {
+    title: 'Getting PDFs', saves: false, report: false, resumes: true, pause: FILES_PAUSE_MS,
+    begin(message) {
+      const files = Array.isArray(message.files) ? message.files : [];
+      if (!files.length) throw new Error('Choose at least one PDF.');
+      const problem = pdfSetProblem(files.map(() => 0));
+      if (problem) throw new Error(problem);
+      const queue = files.map(file => {
+        const url = webAddress(file?.url), from = webAddress(file?.from);
+        if (!url) throw new Error('Choose PDFs at web addresses.');
+        // The page the link came from is opened only when it is a page of the PDF's own site: not a file
+        // (a PDF's own links name that PDF as their source), which Chrome might download instead of showing.
+        return {url, name: typeof file.name === 'string' ? file.name.slice(0, 200) : '', ...(from && originOf(from) === originOf(url) && !isFileLink({url: from}) ? {from} : {})};
+      });
+      return {queue, ...(Number.isInteger(message.tabId) ? {own: message.tabId} : {})};
+    },
+    counter: run => { const step = Math.min(run.at + 1, run.queue.length); return {step, of: run.queue.length, links: 0, text: `Getting PDF ${n(step)} of ${n(run.queue.length)}`}; },
+    async step(job, item) {
+      const {run} = job, index = run.at, origin = originOf(item.url);
+      const ended = (status, how, more = {}) => ({row: {...unread(item, how, status), title: item.name || '', ...more.row}, ...(more.end ? {end: more.end} : {}), ...(more.quick ? {quick: true} : {})});
+      // The page that started the run fetches the file through this tab: '' is the tab's own address.
+      // Returns the step's outcome, or null when another way is worth trying (`why` says what failed).
+      let why = '';
+      const through = async (tabId, url) => {
+        const reply = await ask(job, {type: 'run.file', runId: run.runId, step: index, tabId, url}, FILE_WAIT_MS);
+        why = typeof reply?.reason === 'string' ? reply.reason : '';
+        if (!reply) return job.stopped ? ended('not-read', STOPPED) : ended('no-answer', FILE_UNANSWERED, {end: {reason: 'no-answer'}});
+        if (reply.ok === true) return ended('got', 'Fetched', {row: {size: Number.isInteger(reply.size) && reply.size > 0 ? reply.size : 0}});
+        if (reply.reason === 'set-size') return ended('too-large', FILE_REASONS['set-size'], {end: {reason: 'too-large'}});
+        return Object.hasOwn(FILE_REASONS, reply.reason) ? ended(reply.reason === 'size' ? 'too-large' : reply.reason, FILE_REASONS[reply.reason]) : null;
+      };
+      // A background tab, closed again whatever happens. `use` gets the tab once it has loaded.
+      const inTab = async (url, use) => {
+        let tab;
+        try { tab = await chrome.tabs.create({url, active: false}); } catch (error) { return ended('error', `Chrome couldn’t open a tab for it: ${error?.message || error}`); }
+        run.doing = {index, tabId: tab.id}; await save(run);
+        try {
+          const state = await loaded(job, tab.id, true);
+          if (state === 'stopped') return ended('not-read', STOPPED);
+          return await use(tab.id, state);
+        } finally {
+          await chrome.tabs.remove(tab.id).catch(() => {});
+          run.doing = {index};
+        }
+      };
+      run.page = {title: item.name || '', url: item.url}; progress(run);
+      // 1. The person's own tab. Chrome shows its address only while Link Meteor can read it.
+      let moved = false;
+      if (run.own !== undefined) {
+        const tab = await chrome.tabs.get(run.own).catch(() => null);
+        if (tab?.url && originOf(tab.url) === origin) {
+          const outcome = await through(tab.id, item.url);
+          if (outcome) return outcome;
+          // The page couldn't get it at all: most often the address moves to another site.
+          moved = why === 'failed';
+        }
+      }
+      if (!(await hasAccess(item.url))) return moved ? ended('no-access', 'Not fetched: the address may move to another site, which Link Meteor has no access to') : ended('no-access', 'No access', {quick: true});
+      // 2. A page of the PDF's own site, in a background tab.
+      if (!moved) {
+        const outcome = await inTab(item.from || `${origin}/`, async (tabId, state) => {
+          if (state !== 'complete') return null;
+          const now = await chrome.tabs.get(tabId).catch(() => null);
+          return now?.url && originOf(now.url) === origin ? through(tabId, item.url) : null;
+        });
+        if (outcome) return outcome;
+      }
+      // 3. The address itself, which may move to another site. An address the site sends as a
+      // download never shows: Chrome saves the file and closes the tab.
+      return inTab(item.url, async (tabId, state) => {
+        if (state === 'closed') return ended('downloaded', DOWNLOADED);
+        if (state === 'timeout') return ended('not-loaded', NOT_LOADED);
+        // A tab Chrome is about to close for a download shows no address for a moment first.
+        let now = await chrome.tabs.get(tabId).catch(() => null);
+        for (let waited = 0; now && !now.url && waited < CLOSING_MS; waited += POLL_MS) {
+          await pause(job, POLL_MS);
+          if (job.stopped) return ended('not-read', STOPPED);
+          now = await chrome.tabs.get(tabId).catch(() => null);
+        }
+        if (!now) return ended('downloaded', DOWNLOADED);
+        if (!now.url || !(await hasAccess(now.url))) return ended('no-access', now?.url ? `No access: it moved to ${hostOf(now.url)}` : 'No access: it moved to another site');
+        if (/error page/i.test((await documentType(tabId)).error || '')) return ended('not-loaded', 'Didn’t load: Chrome showed an error page');
+        return await through(tabId, '') || ended('failed', 'Chrome couldn’t get this PDF’s file');
+      });
+    },
+    words({run, reason}) {
+      const got = run.results.filter(row => row.status === 'got').length;
+      return {head: `Fetched ${got === run.queue.length ? plural(got, 'PDF') : `${n(got)} of ${plural(run.queue.length, 'PDF')}`}.`,
+        ended: reason === 'stopped' ? 'You pressed Stop.' : reason === 'interrupted' ? INTERRUPTED : reason === 'no-answer' ? FILE_UNANSWERED : reason === 'too-large' ? FILE_REASONS['set-size'] : ''};
+    },
+  },
 };
-// The message types that answer an ask(), by kind of step: reading a PDF among selected pages.
-const ANSWERS = ['run.pdfLinks'];
+// The message types that answer an ask(), by kind of step: reading a PDF among selected pages, and
+// fetching a PDF's file.
+const ANSWERS = ['run.pdfLinks', 'run.fileDone'];
 // For a kind added later: the engine's tools.
 export const engine = {pause, ask, loaded, hasAccess, documentType, tellPage, capturePage, rowOf, unread, save, progress, plural, hostOf};
 

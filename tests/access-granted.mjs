@@ -5,15 +5,20 @@
 // Save tabs as links reads each fixture tab's own citation tags into the collection's pages, without
 // asking (the fixture server serves tests/fixtures/research/). 0.6.0: Capture this PDF on a tab whose
 // site Link Meteor already has access to, with no toolbar click on it; and Capture this page reads
-// every frame, from any site: each link once, with the frame it was in. Headless unless
-// LINK_METEOR_HEADED=1; for a visible run, keep the pointer off the Chrome for Testing windows.
+// every frame, from any site: each link once, with the frame it was in; and PDFs on two sites go
+// into one ZIP and one combined PDF, each fetched in a background tab on its own site (one of them
+// sent as a download; one address that Chrome downloads by itself, into this profile's own folder).
+// Headless unless LINK_METEOR_HEADED=1; for a visible run, keep the pointer off the Chrome for
+// Testing windows.
 //   LINK_METEOR_TEST_PROFILE=<all-sites profile> LINK_METEOR_FIXTURE_PORT=52481 node tests/access-granted.mjs
 // Writes access-granted-results.json to the evidence folder.
 import assert from 'node:assert/strict';
-import {writeFile} from 'node:fs/promises';
+import {readFile, readdir, writeFile} from 'node:fs/promises';
 import {resolve} from 'node:path';
-import {fixtureServer, launch, rpc, until, evidence} from './helpers/browser.mjs';
+import {fixtureServer, launch, rpc, until, evidence, scratch, downloadsFolder} from './helpers/browser.mjs';
 import {secondFixture} from './access-fixture.mjs';
+import {fixture as pdfFixture, readPdf, combinePdfs} from './helpers/pdf.mjs';
+import {readPackagedMembers} from '../scripts/verify-package.mjs';
 
 const ALL_SITES = ['http://*/*', 'https://*/*'];
 const profile = process.env.LINK_METEOR_TEST_PROFILE;
@@ -21,7 +26,13 @@ if (!profile) throw new Error('Set LINK_METEOR_TEST_PROFILE to the profile prepa
 const result = {started: new Date().toISOString(), profile, browser: 'Chrome for Testing via Playwright, real unpacked extension, grants prepared through the product by the owner', checks: []};
 const pass = (name, data = {}) => { result.checks.push({name, ...data}); console.log('PASS', name, Object.keys(data).length ? JSON.stringify(data) : ''); };
 const sleep = (ms) => new Promise((done) => setTimeout(done, ms));
-const fixture = await fixtureServer();
+// /pdf-moved-download/<name> moves to the other site, which sends the PDF as a download (for PDF files).
+const fixture = await fixtureServer({routes: (req, res, url) => {
+  const moved = /^\/pdf-moved-download\/([a-z0-9-]+\.pdf)$/.exec(url.pathname);
+  if (!moved) return false;
+  res.writeHead(302, {Location: `http://localhost:${req.socket.localPort}/pdf-download/${moved[1]}`}); res.end();
+  return true;
+}});
 const second = await secondFixture();
 const localhost = fixture.base.replace('127.0.0.1', 'localhost');
 const modifier = process.platform === 'darwin' ? 'Meta' : 'Control';
@@ -352,6 +363,75 @@ try {
   assert.deepEqual([crossing.summary, crossing.ended.text], ['Followed Next through 2 pages: added 25 links to “Crossing Next”.', 'Page 2 has no Next link.']);
   assert.equal(new URL(page.url()).hostname, 'localhost', 'the tab moved to the other site');
   pass('Follow Next crosses to another site where Link Meteor has access to it');
+
+  // 0.6.0, PDF files. With all-sites access nothing is asked for. PDFs on two sites (127.0.0.1 and
+  // localhost) go into one ZIP and one combined PDF: each is fetched through a page of its own site in
+  // a background tab that is closed again, including one the site sends as a download, which Chrome
+  // never downloads; an address that moves to the other site is opened by itself and read where it
+  // lands; one that moves to a download is downloaded by Chrome, into this profile's own folder, and
+  // the report says so. The person's own tab is on a third site, so no PDF can be had through it.
+  const paperPdf = await pdfFixture('paper.pdf'), journalPdf = await pdfFixture('journal.pdf'), notesPdf = await pdfFixture('notes.pdf');
+  const profileDownloads = downloadsFolder(profile), profileHome = resolve(scratch, profile + '-home', 'Downloads');
+  const fileNames = async (folder) => (await readdir(folder).catch(() => [])).sort();
+  await page.goto(second.base + '/index.html'); await sleep(800);
+  const filesTab = (await rpc(ui, {type: 'tabs.list'})).tabs.find((tab) => tab.url === page.url());
+  await ui.evaluate((target) => chrome.storage.session.set({linkMeteorTarget: target}), {tabId: filesTab.id, windowId: filesTab.windowId});
+  const filesHome = (await rpc(ui, {type: 'state.mutate', action: {type: 'collection.create', name: 'PDF files'}})).activeCollectionId;
+  const filePdfs = [['A small paper about links', `${fixture.base}/pdf/paper.pdf`], ['Field notes', `${localhost}/pdf-download/notes.pdf`], ['The study, moved', `${fixture.base}/pdf-moved/journal.pdf`],
+    ['Sent elsewhere', `${fixture.base}/pdf-moved-download/notes.pdf`], ['Behind a sign-in page', `${fixture.base}/pdf-signin/paper.pdf`]];
+  await rpc(ui, {type: 'state.mutate', action: {type: 'links.append', collectionId: filesHome, links: filePdfs.map(([anchorText, url], i) => ({id: `pdf-file-${Date.now()}-${i}`, anchorText, accessibleLabel: '', url, originalHref: url,
+    sourceUrl: `${fixture.base}/site/pdf-files.html`, sourceTitle: 'Reading list', frameUrl: '', capturedAt: new Date().toISOString(), batchId: 'pdf-files-seed', notes: '', tags: []}))}});
+  await ui.bringToFront();
+  await until(async () => (await ui.locator('#collection-heading').innerText()) === 'PDF files' && (await ui.locator('#pdf-set-title').innerText()) === 'The 5 PDFs', 'the five PDFs');
+  await until(async () => (await ui.locator('#scope-preview').innerText()).includes(new URL(second.base).host), 'the person’s own tab is on a third site');
+  assert.equal(await ui.locator('#pdf-access').isVisible(), false, 'nothing to ask for with all sites allowed');
+  await ui.evaluate(() => { window.__requests = []; });
+  const filesBefore = await rpc(ui, {type: 'state.get'}), tabsBeforeFiles = context.pages().length, savedBefore = await fileNames(profileDownloads), homeBefore = await fileNames(profileHome);
+  const opened = [];
+  const watchTabs = (tab) => opened.push(tab);
+  context.on('page', watchTabs);
+  const [zipDownload] = await Promise.all([ui.waitForEvent('download', {timeout: 120000}), ui.locator('#pdf-zip').click()]);
+  await until(async () => /^Downloaded /.test(await ui.locator('#pdf-result p').innerText().catch(() => '')), 'the ZIP’s report', 30000);
+  const DOWNLOADED = 'Chrome downloaded this one instead of showing it. It is in your Downloads folder, not in this file.';
+  assert.match(zipDownload.suggestedFilename(), /^PDF-files_\d{4}-\d{2}-\d{2}_\d{4}\.zip$/);
+  assert.match(await ui.locator('#pdf-result p').innerText(), /^Downloaded PDF-files_[\d_-]+\.zip with 3 of 5 PDFs, /);
+  assert.deepEqual(await ui.locator('#pdf-result li').allInnerTexts(), ['A-small-paper-about-links.pdf: In the ZIP · 7 KB', 'Field-notes.pdf: In the ZIP · 1 KB', 'The-study-moved.pdf: In the ZIP · 2 KB', `Sent-elsewhere.pdf: ${DOWNLOADED}`,
+    'Behind-a-sign-in-page.pdf: Not a PDF: the site asked to sign in, or the address has expired.']);
+  const zipMembers = readPackagedMembers(await readFile(await zipDownload.path()));
+  assert.deepEqual([...zipMembers.keys()], ['A-small-paper-about-links.pdf', 'Field-notes.pdf', 'The-study-moved.pdf']);
+  assert.ok(zipMembers.get('A-small-paper-about-links.pdf').equals(paperPdf) && zipMembers.get('Field-notes.pdf').equals(notesPdf) && zipMembers.get('The-study-moved.pdf').equals(journalPdf), 'each PDF byte for byte, from both sites');
+  assert.deepEqual(await ui.evaluate(() => window.__requests), [], 'no prompt');
+  await until(() => context.pages().length === tabsBeforeFiles, 'every background tab is closed');
+  assert.deepEqual(await rpc(ui, {type: 'state.get'}), filesBefore, 'nothing is saved');
+  // Background tabs: a page of each PDF's own site (the page the link came from, or the site's
+  // front page), and the two addresses that move, each by itself.
+  assert.ok(opened.length >= 5, `background tabs were opened: ${opened.length}`);
+  // What Chrome downloaded by itself landed in this profile's own folder, and nowhere else. It is
+  // one file: the PDF sent as a download from its own address was fetched by a page, and not downloaded.
+  const savedNow = (await fileNames(profileDownloads)).filter((name) => !savedBefore.includes(name));
+  assert.equal(savedNow.length, 2, `the ZIP, and the one file Chrome downloaded by itself: ${savedNow}`);
+  const savedBytes = await Promise.all(savedNow.map((name) => readFile(resolve(profileDownloads, name))));
+  assert.ok(savedBytes.some((bytes) => bytes.equals(notesPdf)), 'Chrome’s own download is the PDF the other site sent');
+  assert.deepEqual((await fileNames(profileHome)).filter((name) => !homeBefore.includes(name)), [], 'nothing in the Downloads folder of the browser’s home');
+  pass('PDF files with all-sites access: PDFs on two sites into one ZIP, each through a background tab on its own site that is closed again; one sent as a download; one that moves to the other site; one Chrome downloads by itself, into the profile’s own folder; no prompt', {zip: zipDownload.suggestedFilename(), tabs: opened.length});
+
+  // The same PDFs combined, without the one Chrome would download again.
+  await ui.locator('#pdf-combine').click();
+  await ui.locator('#combine-list button[aria-label="Leave out Sent-elsewhere.pdf"]').click();
+  await ui.locator('#combine-apply').click();
+  await until(async () => (await ui.locator('#combine-skip li').allInnerTexts().catch(() => [])).length === 1 && !(await ui.locator('#combine-apply').isDisabled()), 'the files fetched, one left out', 60000);
+  assert.deepEqual(await ui.locator('#combine-skip li').allInnerTexts(), ['Behind-a-sign-in-page.pdf: Not a PDF: the site asked to sign in, or the address has expired.']);
+  assert.deepEqual(await ui.locator('#combine-list .name small').allInnerTexts(), ['A small paper about links · 3 pages · 7 KB', 'Field notes · 2 pages · 1 KB', 'The study, moved · 2 pages · 2 KB']);
+  assert.equal((await ui.locator('#combine-apply').innerText()).trim(), 'Combine 3 PDFs');
+  const [pdfDownload] = await Promise.all([ui.waitForEvent('download', {timeout: 60000}), ui.locator('#combine-apply').click()]);
+  assert.match(pdfDownload.suggestedFilename(), /^PDF-files_\d{4}-\d{2}-\d{2}_\d{4}\.pdf$/);
+  const combinedHere = await readPdf(await readFile(await pdfDownload.path())), combinedInNode = await readPdf((await combinePdfs([paperPdf, notesPdf, journalPdf])).bytes);
+  assert.equal(combinedHere.pageCount, 7);
+  assert.deepEqual(combinedHere.links.map((link) => [link.url, link.pdfPage]), combinedInNode.links.map((link) => [link.url, link.pdfPage]), 'every page and link, in the list’s order');
+  await until(() => context.pages().length === tabsBeforeFiles, 'every background tab is closed');
+  assert.deepEqual(await ui.evaluate(() => window.__requests), [], 'no prompt');
+  context.off('page', watchTabs);
+  pass('PDF files with all-sites access: the PDFs of two sites combined into one PDF, in the list’s order', {name: pdfDownload.suggestedFilename(), pages: combinedHere.pageCount});
 
   // The all-sites switch off keeps Chrome's grant and offers to remove it; on again needs no prompt.
   await ui.bringToFront();

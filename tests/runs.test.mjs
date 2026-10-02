@@ -14,16 +14,16 @@ const SITE = 'https://papers.test', OTHER = 'https://other.test', WORKBENCH = 'c
 // Each page: its title, links, Next, what kind of document it is, and how it behaves.
 const site = new Map();
 const link = (anchorText, url, extra = {}) => ({anchorText, url, originalHref: url, frameUrl: '', ...extra});
-function page(url, {title = '', links = 2, next = null, type = 'text/html', loadMs = 100, redirect = '', never = false, scroll = null, chrome = 0} = {}) {
+function page(url, {title = '', links = 2, next = null, type = 'text/html', loadMs = 100, redirect = '', never = false, scroll = null, chrome = 0, download = false} = {}) {
   const made = typeof links === 'number' ? [...Array.from({length: links}, (_, i) => link(`${title || url} link ${i + 1}`, `${url}#link-${i + 1}`)), ...Array.from({length: chrome}, (_, i) => link(`Menu ${i + 1}`, `${SITE}/menu/${i + 1}`, {pageChrome: true}))] : links;
-  site.set(url, {title, links: made, next, type, loadMs, redirect, never, scroll});
+  site.set(url, {title, links: made, next, type, loadMs, redirect, never, scroll, download});
 }
 const tabs = new Map();
 let nextTabId = 10, now = 0;
 const timers = [];
 const granted = new Set();          // origins Link Meteor has site access to
 const active = new Set();           // tabs with the toolbar's temporary access
-let pagesOpen = true, pdfReply = null, failScripts = false;
+let pagesOpen = true, pdfReply = null, fileReply = null, failScripts = false;
 const calls = {created: [], removed: [], updated: [], scans: [], frames: [], toPage: [], broadcasts: []};
 const origin = (url) => { try { return new URL(url).origin; } catch { return ''; } };
 const readable = (tab) => granted.has(origin(tab.url)) || (active.has(tab.id) && origin(tab.url) === tab.access);
@@ -37,6 +37,10 @@ function load(tab, url) {
   timers.push({at: now + target.loadMs, done: () => {
     if (!tabs.has(tab.id) || tab.loading !== mine) return;
     const landed = target.redirect || url, shown = site.get(landed) || target;
+    // An address the site sends as a download never shows: Chrome saves the file and closes the tab.
+    // The tab says "complete", with no address, for a moment first, unless it is closed at once.
+    if (shown.download === 'at once') { tabs.delete(tab.id); return; }
+    if (shown.download) { Object.assign(tab, {status: 'complete', url: '', title: ''}); timers.push({at: now + 300, done: () => tabs.delete(tab.id)}); return; }
     Object.assign(tab, {status: 'complete', url: landed, title: shown.title, document: shown});
     // The toolbar's temporary access ends when the tab leaves its site.
     if (origin(landed) !== tab.access) active.delete(tab.id);
@@ -51,6 +55,7 @@ globalThis.chrome = {
       calls.broadcasts.push(structuredClone(message));
       if (!pagesOpen) throw new Error('Could not establish connection. Receiving end does not exist.');
       if (message.type === 'run.pdf' && pdfReply) { const reply = pdfReply(message); setImmediate(() => call({type: 'run.pdfLinks', runId: message.runId, step: message.step, ...reply})); }
+      if (message.type === 'run.file' && fileReply) { const reply = fileReply(message); if (reply) setImmediate(() => call({type: 'run.fileDone', runId: message.runId, step: message.step, ...reply})); }
     }},
   tabs: {
     async query() { return [...tabs.values()].map(visible); },
@@ -122,7 +127,7 @@ async function reset({settings = {}} = {}) {
   for (const key of Object.keys(session)) delete session[key];
   for (const list of Object.values(calls)) list.length = 0;
   tabs.clear(); site.clear(); granted.clear(); active.clear(); timers.length = 0;
-  pagesOpen = true; pdfReply = null; failScripts = false;
+  pagesOpen = true; pdfReply = null; fileReply = null; failScripts = false;
 }
 // The tab the person is looking at, after one toolbar click on it.
 function clicked(url) {
@@ -239,8 +244,8 @@ test('a run is refused before it starts: too many pages, addresses that aren’t
   assert.equal(await refusal({type: 'run.start', kind: 'pages', collectionId: id, urls: ['mailto:a@example.org']}), 'Choose web pages to capture.');
   assert.equal(await refusal({type: 'run.start', kind: 'pages', collectionId: 'gone', urls: [`${SITE}/p1`]}), 'The chosen collection no longer exists, so nothing was started. Choose another destination.');
   assert.equal(await refusal({type: 'run.start', kind: 'pages', urls: [`${SITE}/p1`]}), 'Choose a collection for the links.');
-  assert.equal(await refusal({type: 'run.start', kind: 'files', collectionId: id}), 'A run is one of: next, pages.');
-  assert.equal(await refusal({type: 'run.start', kind: 'scroll', collectionId: id}), 'A run is one of: next, pages.');
+  assert.equal(await refusal({type: 'run.start', kind: 'crawl', collectionId: id}), 'A run is one of: next, pages, files.');
+  assert.equal(await refusal({type: 'run.start', kind: 'scroll', collectionId: id}), 'A run is one of: next, pages, files.');
   assert.equal(await refusal({type: 'run.start', kind: 'next', collectionId: id, scroll: 'yes'}), 'Say whether to scroll each page to the end first.');
   assert.equal((await call({type: 'run.start', kind: 'pages', collectionId: id, urls: [`${SITE}/p1`]}, {url: `${SITE}/p1`, tab: {id: 5}})).error, 'This action must be requested from the Link Meteor workbench.');
   assert.equal(session.linkMeteorRun, undefined, 'nothing was started');
@@ -571,4 +576,220 @@ test('a page’s line in the report follows what the capture says: frames it cou
   assert.equal(runs.engine.rowOf({...result, count: 0, skipped: 3, leftOut: 0}, item).how, 'Captured: nothing new');
   assert.deepEqual([runs.engine.rowOf({...result, status: 'pdf', count: 0, leftOut: 0, skipped: 0}, item).status, runs.engine.rowOf({...result, status: 'pdf', count: 0, leftOut: 0, skipped: 0}, item).how], ['pdf-unread', 'A PDF: capture it by itself to read its links']);
   assert.equal(runs.engine.rowOf({...result, status: 'unsupported', count: 0, leftOut: 0, skipped: 0, warning: 'Browser-internal pages, the Chrome Web Store, and incognito pages cannot be captured.'}, item).how, 'Browser-internal pages, the Chrome Web Store, and incognito pages cannot be captured.');
+});
+
+/* PDF files: one ZIP, or one combined PDF ------------------------------------------------------- */
+// The Link Meteor page that started the run fetches each file through the tab the background
+// names (run.file), and answers run.fileDone. Here the test answers in that page's place.
+const pdf = (name, site = SITE) => `${site}/files/${name}.pdf`;
+const fileRows = (run) => run.results.map((row) => [row.page, row.title, row.status, row.how]);
+const SET_WORDS = 'These PDFs are more than 200 MB together. Choose fewer.';
+const UNANSWERED = 'The Link Meteor page that started this didn’t answer, so the run ended. Keep it open until the PDFs are fetched.';
+
+test('PDF files: through the person’s own tab where it is on the PDF’s site, one at a time, 2 seconds apart; nothing is saved', async () => {
+  await reset(); page(`${SITE}/list`, {title: 'Papers'});
+  const tab = clicked(`${SITE}/list`), asked = [];
+  fileReply = (message) => { asked.push({tabId: message.tabId, url: message.url, step: message.step, at: now}); return {ok: true, size: 1000 + message.step}; };
+  // No collection is named: nothing is saved. The addresses lose their # part; the page a link was
+  // captured from is kept only where it is a page of the PDF's own site, and not itself a file (a
+  // link read out of a PDF names that PDF, which Chrome might download instead of showing).
+  const {runId} = await ask({type: 'run.start', kind: 'files', tabId: tab.id, files: [{url: `${pdf('a')}#page=2`, from: `${SITE}/list`, name: 'A.pdf'}, {url: pdf('b'), from: `${OTHER}/elsewhere`, name: 'B.pdf'}, {url: pdf('c'), from: pdf('the-paper-that-cites-it'), name: 'C.pdf'}]});
+  assert.deepEqual(session.linkMeteorRun.queue, [{url: pdf('a'), name: 'A.pdf', from: `${SITE}/list`}, {url: pdf('b'), name: 'B.pdf'}, {url: pdf('c'), name: 'C.pdf'}]);
+  const first = (await status());
+  assert.deepEqual([first.kind, first.title, first.text, first.step, first.of, first.state], ['files', 'Getting PDFs', 'Getting PDF 1 of 3', 1, 3, 'running']);
+  const done = await toTheEnd();
+  assert.deepEqual(asked.map((item) => [item.tabId, item.url, item.step]), [[tab.id, pdf('a'), 0], [tab.id, pdf('b'), 1], [tab.id, pdf('c'), 2]], 'each file is asked for through the person’s own tab');
+  assert.ok(asked[1].at - asked[0].at >= 2000 && asked[2].at - asked[1].at >= 2000, '2 seconds apart');
+  assert.equal(calls.created.length, 0, 'no tab is opened');
+  assert.deepEqual(done.results.map((row) => [row.page, row.url, row.title, row.status, row.how, row.size]), [[1, pdf('a'), 'A.pdf', 'got', 'Fetched', 1000], [2, pdf('b'), 'B.pdf', 'got', 'Fetched', 1001], [3, pdf('c'), 'C.pdf', 'got', 'Fetched', 1002]]);
+  assert.deepEqual([done.state, done.summary, done.ended.reason, done.ended.text, done.count, done.collectionId], ['done', 'Fetched 3 PDFs.', 'finished', '', 0, '']);
+  assert.equal(session.linkMeteorCaptureReport, undefined, 'the page that asked shows its own report');
+  assert.equal(state().collections[0].links.length, 0, 'no link is saved');
+  const told = calls.broadcasts.filter((message) => message.type === 'run.progress' && message.runId === runId);
+  assert.ok(told.some((message) => message.text === 'Getting PDF 2 of 3' && message.page === 'B.pdf'), 'the counter names the file in hand');
+});
+
+test('PDF files on other sites: not opened without access; with access, a background tab on the PDF’s own site, closed afterward', async () => {
+  await reset(); granted.add(OTHER);
+  page(`${SITE}/list`, {title: 'Papers'}); page(`${OTHER}/article`, {title: 'An article'}); page(`${OTHER}/`, {title: 'Front page'});
+  const tab = clicked(`${SITE}/list`), asked = [];
+  fileReply = (message) => { asked.push({tabId: message.tabId, url: message.url, at: now}); return {ok: true, size: 5}; };
+  const started = now;
+  await ask({type: 'run.start', kind: 'files', tabId: tab.id, files: [
+    {url: 'https://third.test/z.pdf', name: 'Z.pdf'},                           // a site without access
+    {url: pdf('x', OTHER), from: `${OTHER}/article`, name: 'X.pdf'},           // captured from a page of its own site
+    {url: pdf('y', OTHER), from: `${SITE}/list`, name: 'Y.pdf'}]});            // captured from a page of another site
+  const done = await toTheEnd();
+  assert.deepEqual(fileRows(done), [[1, 'Z.pdf', 'no-access', 'No access'], [2, 'X.pdf', 'got', 'Fetched'], [3, 'Y.pdf', 'got', 'Fetched']]);
+  assert.deepEqual(calls.created.map((item) => [item.url, item.active]), [[`${OTHER}/article`, false], [`${OTHER}/`, false]], 'the page the link came from, else the site’s front page, in the background');
+  assert.deepEqual(asked.map((item) => [item.tabId, item.url]), [[calls.created[0].id, pdf('x', OTHER)], [calls.created[1].id, pdf('y', OTHER)]], 'the file is asked for through that tab');
+  assert.deepEqual(calls.removed.map((item) => item.id), calls.created.map((item) => item.id), 'each tab is closed again');
+  assert.ok(asked[0].at - started < 2000, 'a file that was never asked for costs no pause');
+  assert.ok(asked[1].at - asked[0].at >= 2000, 'files that were asked for are 2 seconds apart');
+  assert.equal(done.summary, 'Fetched 2 of 3 PDFs.');
+  // With access to the site of the person's tab too, but the tab on another page: still a background tab.
+  await reset(); granted.add(SITE); page(`${SITE}/`, {title: 'Front'});
+  fileReply = () => ({ok: true, size: 5});
+  await ask({type: 'run.start', kind: 'files', files: [{url: pdf('a'), name: 'A.pdf'}]});
+  assert.deepEqual(fileRows(await toTheEnd()), [[1, 'A.pdf', 'got', 'Fetched']]);
+  assert.deepEqual(calls.created.map((item) => item.url), [`${SITE}/`]);
+});
+
+test('PDF files whose address moves to another site: opened by itself and read where it lands; a download says so', async () => {
+  // The person's own tab can't get it (the page's request fails), so its own address is opened.
+  await reset(); granted.add(SITE); granted.add(OTHER);
+  page(`${SITE}/list`, {title: 'Papers'}); page(pdf('moved'), {redirect: pdf('real', OTHER)}); page(pdf('real', OTHER), {title: 'real.pdf', type: 'application/pdf'});
+  let tab = clicked(`${SITE}/list`), asked = [];
+  fileReply = (message) => { asked.push({tabId: message.tabId, url: message.url}); return message.url ? {reason: 'failed'} : {ok: true, size: 9}; };
+  await ask({type: 'run.start', kind: 'files', tabId: tab.id, files: [{url: pdf('moved'), from: `${SITE}/list`, name: 'Moved.pdf'}]});
+  let done = await toTheEnd();
+  assert.deepEqual(fileRows(done), [[1, 'Moved.pdf', 'got', 'Fetched']]);
+  assert.deepEqual(calls.created.map((item) => item.url), [pdf('moved')], 'only the PDF’s own address is opened: the site’s page already failed');
+  assert.deepEqual(asked, [{tabId: tab.id, url: pdf('moved')}, {tabId: calls.created[0].id, url: ''}], 'read from the tab’s own address once Chrome shows it');
+  assert.equal(tabs.has(calls.created[0].id), false);
+
+  // Without the person's tab: a page of the site first, then the address itself.
+  await reset(); granted.add(SITE); granted.add(OTHER);
+  page(`${SITE}/`, {title: 'Front'}); page(pdf('moved'), {redirect: pdf('real', OTHER)}); page(pdf('real', OTHER), {type: 'application/pdf'});
+  fileReply = (message) => (message.url ? {reason: 'failed'} : {ok: true, size: 9});
+  await ask({type: 'run.start', kind: 'files', files: [{url: pdf('moved'), name: 'Moved.pdf'}]});
+  assert.deepEqual(fileRows(await toTheEnd()), [[1, 'Moved.pdf', 'got', 'Fetched']]);
+  assert.deepEqual(calls.created.map((item) => item.url), [`${SITE}/`, pdf('moved')]);
+  assert.deepEqual(calls.removed.map((item) => item.id), calls.created.map((item) => item.id));
+
+  // It lands on a site Link Meteor can't read: closed unread.
+  await reset(); granted.add(SITE);
+  page(`${SITE}/list`); page(pdf('moved'), {redirect: pdf('real', OTHER)}); page(pdf('real', OTHER), {type: 'application/pdf'});
+  tab = clicked(`${SITE}/list`); asked = [];
+  fileReply = (message) => { asked.push(message.url); return {reason: 'failed'}; };
+  await ask({type: 'run.start', kind: 'files', tabId: tab.id, files: [{url: pdf('moved'), name: 'Moved.pdf'}]});
+  assert.deepEqual(fileRows(await toTheEnd()), [[1, 'Moved.pdf', 'no-access', 'No access: it moved to another site']]);
+  assert.deepEqual(asked, [pdf('moved')], 'nothing is asked of a tab Link Meteor can’t read');
+  assert.equal(tabs.has(calls.created[0].id), false, 'the tab is closed');
+
+  // With the toolbar's access only, no tab is opened at all.
+  await reset(); page(`${SITE}/list`); page(pdf('moved'), {redirect: pdf('real', OTHER)});
+  tab = clicked(`${SITE}/list`);
+  fileReply = () => ({reason: 'failed'});
+  await ask({type: 'run.start', kind: 'files', tabId: tab.id, files: [{url: pdf('moved'), name: 'Moved.pdf'}]});
+  assert.deepEqual(fileRows(await toTheEnd()), [[1, 'Moved.pdf', 'no-access', 'Not fetched: the address may move to another site, which Link Meteor has no access to']]);
+  assert.equal(calls.created.length, 0);
+
+  // An address the site sends as a download: Chrome saves it and closes the tab.
+  await reset(); granted.add(SITE); granted.add(OTHER);
+  page(`${SITE}/list`); page(pdf('moved'), {redirect: pdf('sent', OTHER)}); page(pdf('sent', OTHER), {download: true});
+  tab = clicked(`${SITE}/list`);
+  fileReply = () => ({reason: 'failed'});
+  page(pdf('quick'), {redirect: pdf('sent-at-once', OTHER)}); page(pdf('sent-at-once', OTHER), {download: 'at once'}); page(pdf('gone'), {never: true});
+  await ask({type: 'run.start', kind: 'files', tabId: tab.id, files: [{url: pdf('moved'), name: 'Moved.pdf'}, {url: pdf('quick'), name: 'Quick.pdf'}, {url: pdf('gone'), name: 'Gone.pdf'}]});
+  done = await toTheEnd();
+  const DOWNLOADED = 'Chrome downloaded this one instead of showing it. It is in your Downloads folder, not in this file.';
+  assert.deepEqual(fileRows(done), [[1, 'Moved.pdf', 'downloaded', DOWNLOADED], [2, 'Quick.pdf', 'downloaded', DOWNLOADED], [3, 'Gone.pdf', 'not-loaded', 'Didn’t load within 30 seconds']]);
+  assert.equal(tabs.size, 1, 'only the person’s own tab is left');
+  assert.equal(done.summary, 'Fetched 0 of 3 PDFs.');
+  // A tab that stays open without an address Link Meteor can see is on a site without access, not a download.
+  await reset(); granted.add(SITE);
+  page(`${SITE}/list`); page(pdf('moved'), {redirect: pdf('real', OTHER)}); page(pdf('real', OTHER), {type: 'application/pdf'});
+  tab = clicked(`${SITE}/list`);
+  fileReply = () => ({reason: 'failed'});
+  const began = now;
+  await ask({type: 'run.start', kind: 'files', tabId: tab.id, files: [{url: pdf('moved'), name: 'Moved.pdf'}]});
+  assert.deepEqual(fileRows(await toTheEnd()), [[1, 'Moved.pdf', 'no-access', 'No access: it moved to another site']]);
+  assert.ok(now - began >= 2000, 'after the 2 seconds Chrome takes to close a tab it downloads from');
+});
+
+test('PDF files: a file asked for a second time, through another tab, is not cut short by the first question’s time limit', async () => {
+  await reset(); granted.add(SITE); granted.add(OTHER);
+  page(`${SITE}/list`); page(pdf('moved'), {redirect: pdf('real', OTHER)}); page(pdf('real', OTHER), {type: 'application/pdf'});
+  const tab = clicked(`${SITE}/list`), asked = [];
+  // The person's own tab fails at once; the second question, through the PDF's own tab, is answered late.
+  fileReply = (message) => { asked.push({url: message.url, at: now}); return message.url ? {reason: 'failed'} : null; };
+  const {runId} = await ask({type: 'run.start', kind: 'files', tabId: tab.id, files: [{url: pdf('moved'), name: 'Moved.pdf'}]});
+  await advance(1000);
+  assert.deepEqual(asked.map((item) => item.url), [pdf('moved'), ''], 'asked twice for the same file');
+  // Past the first question's 2 minutes, and still inside the second one's.
+  await advance(120000 - now + asked[0].at + 50);
+  assert.ok(now - asked[1].at < 120000);
+  assert.equal((await status()).state, 'running');
+  assert.deepEqual(await ask({type: 'run.fileDone', runId, step: 0, ok: true, size: 11}), {taken: true}, 'the late answer is still taken');
+  const done = await toTheEnd();
+  assert.deepEqual(done.results.map((row) => [row.status, row.how, row.size]), [['got', 'Fetched', 11]]);
+});
+
+test('PDF files: what the page that fetches one says decides its line; a set over the limit, or no answer, ends the run', async () => {
+  await reset(); page(`${SITE}/list`);
+  let tab = clicked(`${SITE}/list`);
+  const replies = [{reason: 'not-pdf'}, {reason: 'size'}, {reason: 'status'}, {ok: true, size: 7}, {reason: 'set-size'}];
+  fileReply = (message) => replies[message.step];
+  await ask({type: 'run.start', kind: 'files', tabId: tab.id, files: ['signin', 'huge', 'missing', 'fine', 'last', 'never'].map((name) => ({url: pdf(name), name: `${name}.pdf`}))});
+  let done = await toTheEnd();
+  assert.deepEqual(fileRows(done), [
+    [1, 'signin.pdf', 'not-pdf', 'Not a PDF: the site asked to sign in, or the address has expired.'],
+    [2, 'huge.pdf', 'too-large', 'A PDF can be at most 50 MB.'],
+    [3, 'missing.pdf', 'status', 'The site answered with an error instead of the PDF.'],
+    [4, 'fine.pdf', 'got', 'Fetched'],
+    [5, 'last.pdf', 'too-large', SET_WORDS],
+    [6, '', 'not-read', 'Not read']]);
+  assert.deepEqual([done.ended.reason, done.ended.text, done.summary], ['too-large', SET_WORDS, 'Fetched 1 of 6 PDFs.']);
+  assert.equal(calls.created.length, 0, 'a file the site refused is not tried again in a tab');
+
+  // The page that started the run is gone: the first file ends the run.
+  await reset(); page(`${SITE}/list`); tab = clicked(`${SITE}/list`); pagesOpen = false;
+  await ask({type: 'run.start', kind: 'files', tabId: tab.id, files: [{url: pdf('a'), name: 'A.pdf'}, {url: pdf('b'), name: 'B.pdf'}]});
+  done = await toTheEnd();
+  assert.deepEqual(fileRows(done), [[1, 'A.pdf', 'no-answer', UNANSWERED], [2, '', 'not-read', 'Not read']]);
+  assert.deepEqual([done.ended.reason, done.ended.text], ['no-answer', UNANSWERED]);
+  // A page that is open but never answers gets 2 minutes.
+  await reset(); page(`${SITE}/list`); tab = clicked(`${SITE}/list`);
+  fileReply = () => null;
+  await ask({type: 'run.start', kind: 'files', tabId: tab.id, files: [{url: pdf('a'), name: 'A.pdf'}]});
+  await advance(119000);
+  assert.equal((await status()).state, 'running');
+  await advance(2000);
+  assert.deepEqual([(await status()).state, (await status()).ended.reason], ['done', 'no-answer']);
+
+  // Stop, while a file is being fetched: it and the rest are not read, and an answer that comes later is not taken.
+  await reset(); page(`${SITE}/list`); tab = clicked(`${SITE}/list`);
+  fileReply = () => null;
+  const {runId} = await ask({type: 'run.start', kind: 'files', tabId: tab.id, files: [{url: pdf('a'), name: 'A.pdf'}, {url: pdf('b'), name: 'B.pdf'}]});
+  await advance(1000);
+  await ask({type: 'run.stop', runId});
+  await settle();
+  done = await status();
+  assert.deepEqual([done.state, done.ended.reason, done.ended.text, done.summary], ['done', 'stopped', 'You pressed Stop.', 'Fetched 0 of 2 PDFs.']);
+  assert.deepEqual(fileRows(done), [[1, 'A.pdf', 'not-read', 'Not read: you pressed Stop'], [2, '', 'not-read', 'Not read: you pressed Stop']]);
+  assert.deepEqual(await ask({type: 'run.fileDone', runId, step: 0, ok: true, size: 5}), {taken: false});
+});
+
+test('PDF files are refused before a run starts: none, more than 20, and addresses that aren’t on the web; a restarted worker goes on', async () => {
+  await reset();
+  const refusal = async (message) => (await call(message)).error;
+  assert.equal(await refusal({type: 'run.start', kind: 'files'}), 'Choose at least one PDF.');
+  assert.equal(await refusal({type: 'run.start', kind: 'files', files: []}), 'Choose at least one PDF.');
+  assert.equal(await refusal({type: 'run.start', kind: 'files', files: Array.from({length: 21}, (_, i) => ({url: pdf(`p${i}`)}))}), 'Choose up to 20 PDFs at a time.');
+  assert.equal(await refusal({type: 'run.start', kind: 'files', files: [{url: pdf('a')}, {url: 'file:///Users/me/paper.pdf'}]}), 'Choose PDFs at web addresses.');
+  assert.equal(await refusal({type: 'run.start', kind: 'files', files: [{}]}), 'Choose PDFs at web addresses.');
+  assert.equal((await call({type: 'run.start', kind: 'files', files: [{url: pdf('a')}]}, {url: `${SITE}/list`, tab: {id: 5}})).error, 'This action must be requested from the Link Meteor workbench.');
+  assert.equal((await call({type: 'run.fileDone', runId: 'x', step: 0, ok: true, size: 1}, {url: `${SITE}/list`, tab: {id: 5}})).error, 'This action must be requested from the Link Meteor workbench.');
+  assert.equal(session.linkMeteorRun, undefined, 'nothing was started');
+  // 20 are taken.
+  page(`${SITE}/list`); const tab = clicked(`${SITE}/list`);
+  fileReply = () => ({ok: true, size: 1});
+  await ask({type: 'run.start', kind: 'files', tabId: tab.id, files: Array.from({length: 20}, (_, i) => ({url: pdf(`p${i}`), name: `P${i}.pdf`}))});
+  assert.equal((await call({type: 'run.start', kind: 'files', files: [{url: pdf('a')}]})).error, 'Link Meteor is already running a capture. Stop it, or wait for it to finish.', 'one run at a time');
+  assert.equal((await toTheEnd()).summary, 'Fetched 20 PDFs.');
+
+  // What the last worker left: file 1 fetched, file 2 in hand with a background tab open, file 3 to come.
+  await reset(); granted.add(SITE); page(`${SITE}/`, {title: 'Front'});
+  const orphan = {id: nextTabId++, access: '', url: `${SITE}/`, title: 'Front', status: 'complete', document: site.get(`${SITE}/`)};
+  tabs.set(orphan.id, orphan);
+  fileReply = () => ({ok: true, size: 3});
+  session.linkMeteorRun = {runId: 'files-left', kind: 'files', state: 'running', stopping: false, collectionId: '', name: '', batchId: 'batch-left', scroll: false,
+    queue: ['a', 'b', 'c'].map((name) => ({url: pdf(name), name: `${name}.pdf`})), at: 1, seen: [], results: [{page: 1, url: pdf('a'), title: 'a.pdf', status: 'got', found: 0, added: 0, skipped: 0, leftOut: 0, how: 'Fetched', size: 3}],
+    links: 0, doing: {index: 1, tabId: orphan.id}, live: null, page: null, ended: null, startedAt: '2026-10-02T10:00:00.000Z'};
+  await runs.resumeRun();
+  assert.equal(tabs.has(orphan.id), false, 'the tab it had opened is closed');
+  const done = await toTheEnd();
+  assert.deepEqual(fileRows(done), [[1, 'a.pdf', 'got', 'Fetched'], [2, '', 'interrupted', 'Interrupted: Chrome stopped Link Meteor’s background worker'], [3, 'c.pdf', 'got', 'Fetched']]);
+  assert.deepEqual([done.runId, done.summary, done.ended.reason], ['files-left', 'Fetched 2 of 3 PDFs.', 'finished']);
 });

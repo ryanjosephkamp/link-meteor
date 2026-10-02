@@ -7,6 +7,7 @@ import { $, node, button, count, plural, labelFor } from './helpers.js';
 import { request, action, show, currentCollection } from './state.js';
 import { onRender, onEscape, setView } from './rendering.js';
 import { targetRows, requiredRows } from './review.js';
+import { bindPdfFiles, renderPdfSet } from './pdf-files.js';
 
 const PENDING_KEY = 'linkMeteorPendingDownloads';
 // Files left by the card or the menu wait this long for a full view to show them.
@@ -43,6 +44,8 @@ export function renderDownloadTarget(rows) {
   $('downloads-access').hidden = granted;
   $('downloads-access').textContent = ACCESS_REASON;
   if (pending && pending.key !== files.map((file) => file.url).join('\n')) closeConfirm();
+  // 0.6.0: the PDFs among them as one ZIP, or combined into one PDF (pdf-files.js).
+  renderPdfSet(rows);
 }
 
 function openConfirm(files) {
@@ -203,4 +206,5 @@ export function bindDownloads() {
   let first = true;
   onRender(() => { if (first) { first = false; action(loadWaiting); } });
   action(checkAccess);
+  bindPdfFiles();
 }

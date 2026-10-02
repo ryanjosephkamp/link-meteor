@@ -64,10 +64,10 @@ try {
   }, [action, list, options]);
   const loaded = () => [...new Set(requested.map((url) => url.replace(`chrome-extension://${run.id}/`, '')).filter((path) => /pdf/.test(path)))].sort();
 
-  // 1. Lazy: the workbench opened with only its own PDF module (what the person sees), without the
-  // reader, the PDF rules or PDF.js.
+  // 1. Lazy: the workbench opened with only its own two PDF modules (what the person sees: this
+  // one, and the PDFs behind links in the Export panel), without the reader, the PDF rules or PDF.js.
   assert.ok(requested.some((url) => url.endsWith('/ui/workbench.js')), 'the page’s own files are seen');
-  assert.deepEqual(loaded(), ['ui/workbench/pdf.js'], 'PDF.js is not loaded until a PDF is read');
+  assert.deepEqual(loaded(), ['ui/workbench/pdf-files.js', 'ui/workbench/pdf.js'], 'PDF.js is not loaded until a PDF is read');
   assert.equal(ui.workers().length, 0);
   pass('pdf-reader-not-loaded-until-used', {chrome: result.chrome, native});
 
@@ -85,7 +85,7 @@ try {
   pass('pdf-reader-reads-fixtures-as-node-does', counts);
 
   // 3. A real module worker did the work, from the bundled file, and the shims loaded first.
-  assert.deepEqual(loaded().filter((path) => !path.includes('worker')), ['core/pdf.js', 'ui/workbench/pdf-reader.js', 'ui/workbench/pdf-shims.js', 'ui/workbench/pdf.js', 'ui/workbench/pdfjs.js', 'vendor/pdfjs/pdf.min.mjs'], 'the reader, its shims and PDF.js, from inside the extension');
+  assert.deepEqual(loaded().filter((path) => !path.includes('worker')), ['core/pdf.js', 'ui/workbench/pdf-files.js', 'ui/workbench/pdf-reader.js', 'ui/workbench/pdf-shims.js', 'ui/workbench/pdf.js', 'ui/workbench/pdfjs.js', 'vendor/pdfjs/pdf.min.mjs'], 'the reader, its shims and PDF.js, from inside the extension');
   const workers = ui.workers().map((worker) => worker.url().replace(`chrome-extension://${run.id}/`, ''));
   assert.deepEqual(workers, ['ui/workbench/pdfjs-worker.js'], 'one worker, kept for later PDFs');
   pass('pdf-reader-runs-in-one-module-worker', {workers});

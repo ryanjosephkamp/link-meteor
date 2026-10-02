@@ -55,6 +55,7 @@ const suites = [
   { name: 'pdf-tab-browser', command: [node, 'tests/pdf-tab-browser.mjs'] },
   { name: 'lookup-browser', command: [node, 'tests/lookup-browser.mjs'], profile: true },
   { name: 'runs-browser', command: [node, 'tests/runs-browser.mjs'] },
+  { name: 'pdf-files-browser', command: [node, 'tests/pdf-files-browser.mjs'] },
   { name: 'audit-overlay', command: [node, 'tests/audit-overlay.mjs'], profile: true },
   { name: 'audit-actions', command: [node, 'tests/audit-actions.mjs'], profile: true },
   { name: 'audit-regressions', command: [node, 'tests/audit-regressions.mjs'], profile: true },

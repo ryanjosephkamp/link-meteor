@@ -100,7 +100,8 @@ function renderRun() {
   if (!on) return;
   const stopping = going.state === 'stopping';
   $('run-title').textContent = stopping ? 'Stopping…' : going.title;
-  $('run-text').textContent = `${going.text} so far${going.page && going.kind !== 'scroll' ? ` · now on ${quoted(going.page)}` : ''}`;
+  // A run that gets PDF files counts files, not links found "so far".
+  $('run-text').textContent = `${going.text}${going.kind === 'files' ? '' : ' so far'}${going.page && going.kind !== 'scroll' ? ` · now on ${quoted(going.page)}` : ''}`;
   $('run-stop').disabled = stopping;
   $('run-bar').style.width = `${Math.max(0, Math.min(100, Math.round((100 * going.step) / Math.max(1, going.of))))}%`;
 }
@@ -116,8 +117,9 @@ function onProgress(message) {
   if (hadFocus) setTimeout(() => { if (!$('capture').disabled && (!document.activeElement || document.activeElement === document.body)) $('capture').focus({ preventScroll: true }); }, 60);
   waiting.get(message.runId)?.();
   scheduleInventoryRefresh();
-  // Scrolling alone is answered to the view that asked; a run tells every open view how it ended.
-  if (message.kind === 'scroll') return;
+  // Scrolling alone is answered to the view that asked, and the view that asked for PDF files says
+  // how that ended (pdf-files.js); any other run tells every open view how it ended.
+  if (message.kind === 'scroll' || message.kind === 'files') return;
   const text = [message.summary, message.ended?.text].filter(Boolean).join(' ');
   if (message.count && !message.undone) show(text, 'notice', { actionLabel: 'Undo', onAction: () => undo(message) });
   else show(text);

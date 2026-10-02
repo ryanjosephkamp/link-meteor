@@ -610,6 +610,37 @@
         <div id="downloads-result" class="downloads-result" role="status" hidden></div>
         <p id="downloads-help" class="help"></p>
         <p id="downloads-access" class="help downloads-access"></p>
+        <div id="pdf-set" class="pdf-set" role="group" aria-labelledby="pdf-set-title">
+          <p id="pdf-set-title" class="pdf-set-title">PDF files</p>
+          <div class="pdf-set-actions">
+            <button id="pdf-zip" class="btn" type="button" aria-describedby="pdf-set-help pdf-access" hidden><svg class="icon" aria-hidden="true"><use href="#i-download"/></svg><span>Download as one ZIP</span></button>
+            <button id="pdf-combine" class="btn" type="button" aria-expanded="false" aria-controls="combine-panel" aria-describedby="pdf-set-help"><svg class="icon" aria-hidden="true"><use href="#i-import"/></svg><span>Combine into one PDF…</span></button>
+          </div>
+          <p id="pdf-set-help" class="help"></p>
+          <p id="pdf-access" class="help pdf-access" hidden></p>
+          <form id="combine-panel" class="combine-panel" aria-labelledby="combine-title" hidden>
+            <p id="combine-title" class="pdf-set-title">Combine into one PDF, in this order</p>
+            <ol id="combine-list" class="column-list combine-list" aria-labelledby="combine-title"></ol>
+            <p id="combine-empty" class="drop-hint" hidden><svg class="icon" aria-hidden="true"><use href="#i-import"/></svg><span>No PDFs yet. Add PDF files from your computer, or drop them here.</span></p>
+            <div class="pdf-set-actions">
+              <button id="combine-add" class="btn small" type="button"><svg class="icon" aria-hidden="true"><use href="#i-plus"/></svg><span>Add PDF files…</span></button>
+              <span class="help">or drop them on the list</span>
+              <input id="combine-file" type="file" accept=".pdf,application/pdf" multiple tabindex="-1" aria-hidden="true" hidden>
+            </div>
+            <div id="combine-skip" class="combine-skip" role="status" hidden></div>
+            <label for="combine-name">File name <input id="combine-name" maxlength="160" autocomplete="off" spellcheck="false"></label>
+            <p id="combine-total" class="combine-total"></p>
+            <p id="combine-access" class="help pdf-access" hidden></p>
+            <p id="combine-help" class="help" aria-live="polite" hidden></p>
+            <div class="confirm-actions"><button id="combine-apply" class="btn primary" type="submit" aria-describedby="combine-total combine-access combine-help"><svg class="icon" aria-hidden="true"><use href="#i-download"/></svg><span id="combine-apply-label">Combine PDFs</span></button><button id="combine-cancel" class="btn quiet" type="button">Cancel</button></div>
+          </form>
+          <div id="pdf-progress" class="run-progress" role="status" hidden>
+            <div class="run-text"><strong id="pdf-progress-title"></strong><span id="pdf-progress-text"></span></div>
+            <button id="pdf-stop" class="btn small" type="button">Stop</button>
+            <div class="run-bar" aria-hidden="true"><i id="pdf-progress-bar"></i></div>
+          </div>
+          <div id="pdf-result" class="downloads-result pdf-result" role="status" hidden></div>
+        </div>
       </section>
 
       <section class="export-group" aria-labelledby="bookmark-title">

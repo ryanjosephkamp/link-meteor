@@ -1343,7 +1343,7 @@ Where this differs from the draft above, this is what the code does.
 - `options.scroll` is `{runId, lead?, links?, limits?}`. `lead` and `links` are a longer run's own counter, shown before the page's. `limits` can only lower a limit (the checks use it for the time limit).
 - **Where it scrolls:** from where the person is, not from the top. It scrolls the document; where the document itself doesn't scroll, the largest scrolling box that fills at least half of the window.
 - **A step** is 90% of the window's height. It settles for 600 ms, then up to 2 seconds more while the height still changes (checked every 200 ms).
-- **The end** is three steps in a row that couldn't scroll further and found nothing new (same height, same number of links). A step that scrolls through what was already loaded is not such a step, so a long page is scrolled to its end before it is called the end.
+- **The end** is three steps in a row that couldn't scroll further and found nothing new (same height, same number of links). A step that scrolls through what was already loaded is not such a step, so a long page is scrolled to its end before it is called the end. A feed therefore has about 2.4 seconds to load more once its end is reached; one that takes longer is called finished.
 - **A screen** is counted when the page moves; the count starts at 1. The 50th screen is the cap.
 - **What is kept:** the collector runs after every step. A link is kept the first time its element shows that address and those words, with its context read at that moment. So what the page removes later stays, and nothing is counted twice while its element stays.
 - `__linkMeteor.next()` returns `{url, how: 'rel' | 'label'}`, `{button: true}` or `null`:

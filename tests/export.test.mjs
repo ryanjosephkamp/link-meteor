@@ -403,3 +403,30 @@ test('research columns (0.5.0): context, reading status, star, identifiers from 
   assert.deepEqual(json.rows, links);
   assert.throws(() => makeExport(links, { format: 'csv', columns: keys, pages: 'x' }), /pages must be an object/);
 });
+
+test('PDF page (0.6.0): a choosable column beside the capture details, empty for links that came from no PDF', () => {
+  const at = COLUMNS.findIndex(column => column.key === 'pdfPage');
+  assert.deepEqual([COLUMNS[at - 1].key, COLUMNS[at], COLUMNS[at + 1].key], ['frameUrl', { key: 'pdfPage', label: 'PDF page' }, 'capturedAt']);
+  const pdf = 'https://arxiv.org/pdf/2409.11211v1';
+  const links = [
+    { anchorText: 'markomih.github.io/SplatFields', url: 'https://markomih.github.io/SplatFields', sourceUrl: pdf, sourceTitle: 'SplatFields', pdfPage: 3 },
+    { anchorText: '', url: 'https://orcid.org/0000-0001-6305-3896', imported: 'paper.pdf, page 1', pdfPage: 1 },
+    { anchorText: 'From a web page', url: 'https://example.org/' },
+  ];
+  const columns = ['anchorText', 'url', 'sourceUrl', 'pdfPage'];
+  assert.equal(makeExport(links, { format: 'csv', columns }).data, ['Anchor text,URL,Source page URL,PDF page',
+    `markomih.github.io/SplatFields,https://markomih.github.io/SplatFields,${pdf},3`, ',https://orcid.org/0000-0001-6305-3896,,1', 'From a web page,https://example.org/,,', ''].join('\r\n'));
+  assert.equal(makeExport(links, { format: 'tsv', columns: ['pdfPage', 'url'] }).data, 'PDF page\tURL\r\n3\thttps://markomih.github.io/SplatFields\r\n1\thttps://orcid.org/0000-0001-6305-3896\r\n\thttps://example.org/\r\n');
+  assert.match(makeExport(links, { format: 'html', columns: ['pdfPage'] }).data, /<th scope="col">PDF page<\/th>.*<td>3<\/td><\/tr><tr><td>1<\/td><\/tr><tr><td><\/td>/);
+  // The workbook: the page is text like every cell, never a number or a link, and About names the column.
+  const about = { exportedAt: new Date(Date.UTC(2026, 9, 2, 12)), collection: 'Papers', columns };
+  const parts = members(makeExport(links, { format: 'xlsx', columns, about }).data);
+  const sheet = parts.get('xl/worksheets/sheet1.xml');
+  assert.match(sheet, /<c r="D2" [^>]*t="inlineStr"><is><t[^>]*>3<\/t>/);
+  assert.match(sheet, /<c r="D3" [^>]*t="inlineStr"><is><t[^>]*>1<\/t>/);
+  assert.ok([...sheet.match(/<hyperlinks>(.*?)<\/hyperlinks>/s)[1].matchAll(/ref="([A-Z]+)\d+"/g)].every(([, column]) => column !== 'D'), 'a page number is never a link');
+  assert.match(parts.get('xl/worksheets/sheet2.xml'), /Anchor text, URL, Source page URL, PDF page/);
+  // JSON keeps the page as stored, and nothing for links without one.
+  const json = JSON.parse(makeExport(links, { format: 'json', columns, about }).data);
+  assert.deepEqual(json.rows.map(row => row.pdfPage), [3, 1, undefined]);
+});

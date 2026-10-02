@@ -27,10 +27,11 @@ function originOf(value) {
   } catch { return ''; }
 }
 
-function simulate({ scope, initialTabs, afterPermissionTabs, selectedIds = [], targetTabId, pagePlan = { ask: false } }) {
+function simulate({ scope, initialTabs, afterPermissionTabs, selectedIds = [], targetTabId, pagePlan = { ask: false }, pdf = '' }) {
   const messages = [];
   const permissionCalls = [];
   const reports = [];
+  const pdfCalls = [];
   let visibleTabs = initialTabs;
   const captureButton = { disabled: false };
   const ui = {
@@ -50,6 +51,10 @@ function simulate({ scope, initialTabs, afterPermissionTabs, selectedIds = [], t
     render() {},
     captureReport(report, options) { reports.push({ report, options }); },
     currentPagePlan: () => pagePlan,
+    // PDFs (0.6.0, pdf.js): `pdf` is 'local' for a PDF opened from the computer, 'web' for one on the web.
+    targetTab: () => initialTabs.find((item) => item.id === targetTabId),
+    chooseLocalPdf: () => { if (pdf === 'local') pdfCalls.push('choose'); return pdf === 'local'; },
+    capturePdf: async (target, options) => { if (pdf === 'web') pdfCalls.push({ tabId: target?.id, ...options }); return pdf === 'web'; },
     renderCaptureButton() {},
     $: () => captureButton,
     chrome: {
@@ -69,7 +74,7 @@ function simulate({ scope, initialTabs, afterPermissionTabs, selectedIds = [], t
     },
   };
   const runCapture = runInNewContext(`${helperSource}\n${runCaptureSource}\nrunCapture`, dependencies);
-  return { runCapture, ui, captureButton, messages, permissionCalls, reports };
+  return { runCapture, ui, captureButton, messages, permissionCalls, reports, pdfCalls };
 }
 
 test('closed selected tab keeps its original ID for background error reporting', async () => {
@@ -133,4 +138,22 @@ test('a current page whose address Chrome hides offers all sites instead of aski
   const { options } = harness.reports[0];
   assert.deepEqual([...options.offerAllSites], [7]);
   assert.match(options.reasons.get(7), /Allow Link Meteor on all sites/);
+});
+
+test('a PDF in the current tab is read as a PDF, with the site asked for in the same click; the page capture never runs', async () => {
+  const web = simulate({ scope: 'current', initialTabs: [tab(7, 7, 'https://papers.test/a.pdf')], afterPermissionTabs: [tab(7, 7, 'https://papers.test/a.pdf')], targetTabId: 7,
+    pagePlan: { ask: true, origin: 'https://papers.test', tabId: 7 }, pdf: 'web' });
+  await web.runCapture();
+  assert.deepEqual(Array.from(web.permissionCalls[0].origins), ['https://papers.test/*'], 'the same click asks for the site');
+  assert.deepEqual(JSON.parse(JSON.stringify(web.pdfCalls)), [{ tabId: 7, declined: false, origin: 'https://papers.test' }], 'the site was allowed');
+  assert.equal(web.messages.some((m) => m.type === 'capture.run'), false);
+  assert.deepEqual([web.ui.busy, web.captureButton.disabled], [false, false]);
+  // A PDF opened from the computer: the click opens the file chooser at once, and asks for nothing.
+  const local = simulate({ scope: 'current', initialTabs: [tab(8, 7, 'file:///Users/me/paper.pdf')], afterPermissionTabs: [], targetTabId: 8, pdf: 'local' });
+  await local.runCapture();
+  assert.deepEqual([JSON.parse(JSON.stringify(local.pdfCalls)), local.permissionCalls, local.messages], [['choose'], [], []]);
+  // In a capture of several tabs, a PDF is left to the background, which reports it.
+  const several = simulate({ scope: 'window', initialTabs: [tab(1, 7, 'https://a.test/one'), tab(2, 7, 'https://papers.test/a.pdf')], afterPermissionTabs: [tab(1, 7, 'https://a.test/one'), tab(2, 7, 'https://papers.test/a.pdf')], targetTabId: 2, pdf: 'web' });
+  await several.runCapture();
+  assert.deepEqual([several.pdfCalls, Array.from(several.messages.find((m) => m.type === 'capture.run').tabIds)], [[], [1, 2]]);
 });

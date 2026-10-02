@@ -404,8 +404,16 @@ test('0.5.0: the citations sentence, in every case', async () => {
   assert.equal(say({tabs: 1200, read: 1000, needAccess: 0}), 'Read citation details from 1,000 of 1,200 tabs; the others didn’t answer.');
 });
 
-test('0.5.0 RC2 and RC3: on a PDF or a file on the computer, Select a region and Capture this page say what works instead, and Add link works', async () => {
-  const {PDF_REFUSAL, FILE_REFUSAL} = await import('../src/background/urls.js');
+test('0.6.0: on a PDF, Select a region says where its links are read and a capture reports it as a PDF, not an error; a file on the computer says what works; Add link works', async () => {
+  const {PDF_REGION_REFUSAL, PDF_FILE_REGION_REFUSAL, PDF_TAB_NOTE, PDF_FILE_NOTE, FILE_REFUSAL, addressKind, captureRefusal} = await import('../src/background/urls.js');
+  assert.equal(PDF_REGION_REFUSAL, 'Regions can’t be drawn on a PDF. Open Link Meteor’s side panel and choose Capture this PDF.');
+  assert.equal(PDF_TAB_NOTE, 'A PDF: capture it by itself with Capture this PDF.');
+  // What an address alone says: only the path's ending counts, on the web or on the computer.
+  assert.deepEqual(['https://a.test/x.pdf', 'http://a.test/x.PDF?download=1#page=2', 'https://a.test/x.pdf/view', 'https://a.test/view?file=x.pdf', 'file:///Users/me/x.pdf', 'file:///Users/me/x.html', 'chrome://newtab/x.pdf', 'not an address', ''].map(addressKind),
+    ['pdf', 'pdf', '', '', 'pdf-file', 'file', '', '', '']);
+  assert.deepEqual(['https://a.test/x.pdf', 'file:///Users/me/x.pdf', 'file:///Users/me/x.html', 'chrome://newtab/'].map(captureRefusal),
+    [PDF_REGION_REFUSAL, PDF_FILE_REGION_REFUSAL, FILE_REFUSAL, 'Chrome does not allow link capture on this page. Choose an ordinary HTTP or HTTPS webpage.']);
+  assert.doesNotMatch(PDF_REGION_REFUSAL + PDF_FILE_REGION_REFUSAL + PDF_TAB_NOTE + PDF_FILE_NOTE, /can’t read the links inside a PDF/, 'the 0.5.0 words are gone');
   const extra = [
     {id: 7, windowId: 3, url: 'https://pdfs.test/view?id=9', title: 'Paper', contentType: 'application/pdf'},
     {id: 8, windowId: 3, url: 'file:///Users/me/paper.pdf', title: 'paper.pdf'},
@@ -414,17 +422,38 @@ test('0.5.0 RC2 and RC3: on a PDF or a file on the computer, Select a region and
   ];
   tabs.push(...extra);
   for (const tab of extra) pages.set(tab.id, {loaded: false, links: [], selection: [], notices: [], citation: null});
+  const captured = async (tab) => { await click('meteor-page', tab); return session.linkMeteorCaptureReport.report.results[0]; };
   try {
-    for (const [tab, expected] of [[extra[0], PDF_REFUSAL], [extra[1], PDF_REFUSAL], [extra[2], FILE_REFUSAL], [extra[3], PDF_REFUSAL]]) {
+    // A PDF on the web, known by what the tab holds or by its address. From the menu and from the
+    // shortcut, the page itself says where its links are read; nothing is armed and no tab opens.
+    for (const tab of [extra[0], extra[3]]) {
+      for (const start of [() => click('meteor-region', tab), () => chrome.commands.onCommand.listeners[0]('select-region', structuredClone(tab))]) {
+        reset(); calls.arm.length = 0;
+        await start(); await settle();
+        assert.deepEqual([lastNotice(tab.id).text, lastNotice(tab.id).added], [PDF_REGION_REFUSAL, undefined], tab.url);
+        assert.deepEqual([session.linkMeteorActivationError, calls.created, calls.inject, calls.arm], [undefined, [], [tab.id], []], 'said on the page; no region is armed');
+      }
+      // From the workbench, the same words come back to the workbench.
+      await refused({type: 'capture.arm', tabId: tab.id}, /^Regions can’t be drawn on a PDF\. Open Link Meteor’s side panel and choose Capture this PDF\.$/);
+      reset(); calls.arm.length = 0;
+      const result = await captured(tab);
+      assert.deepEqual([result.status, result.count, result.warning, result.error], ['pdf', 0, PDF_TAB_NOTE, ''], tab.url);
+      assert.deepEqual([calls.inject, calls.arm], [[], []], 'the page script is neither injected nor run');
+    }
+    // A PDF opened from the computer, and another file there: the full view says what works.
+    for (const [tab, region, status, note] of [[extra[1], PDF_FILE_REGION_REFUSAL, 'pdf', PDF_FILE_NOTE], [extra[2], FILE_REFUSAL, 'unsupported', FILE_REFUSAL]]) {
       reset(); calls.arm.length = 0;
       await click('meteor-region', tab);
-      assert.equal(session.linkMeteorActivationError, expected, tab.url);
-      await click('meteor-page', tab);
-      const [result] = session.linkMeteorCaptureReport.report.results;
-      assert.equal(result.warning || result.error, expected, tab.url);
+      assert.equal(session.linkMeteorActivationError, region, tab.url);
+      const result = await captured(tab);
+      assert.deepEqual([result.status, result.warning], [status, note], tab.url);
       assert.deepEqual([calls.inject, calls.arm], [[], []], 'the page script is neither injected nor armed');
     }
-    assert.match(PDF_REFUSAL, /right-click it and choose Link Meteor, then Add link/);
+    // Several tabs at once: the PDFs are reported beside the pages, and the pages are still captured.
+    reset(); calls.arm.length = 0;
+    const {report} = await ok({type: 'capture.run', tabIds: [1, 7, 8, 10]});
+    assert.deepEqual(report.results.map((result) => [result.tabId, result.status, result.warning]), [[1, 'success', ''], [7, 'pdf', PDF_TAB_NOTE], [8, 'pdf', PDF_FILE_NOTE], [10, 'pdf', PDF_TAB_NOTE]]);
+    assert.equal(report.capturedCount, 1);
     // 0.5.0 RC3: and Add link does work there. Where the page script can load (a PDF on the web), the
     // link is saved with its address and the page says so; where it can't (here, the files), the
     // link is still saved and the full view opens at it.

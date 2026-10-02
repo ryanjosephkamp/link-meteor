@@ -1,5 +1,5 @@
 import {serial, readState, mutate, onStateWritten} from './background/store.js';
-import {ordinaryUrl, captureRefusal, PDF_REFUSAL, FILE_REFUSAL} from './background/urls.js';
+import {ordinaryUrl, addressKind, captureRefusal, PDF_REGION_REFUSAL, PDF_TAB_NOTE, PDF_FILE_NOTE, FILE_REFUSAL} from './background/urls.js';
 import {workbenchMessages as bookmarkMessages} from './background/bookmarks.js';
 import {workbenchMessages as backupMessages} from './background/backup.js';
 import {workbenchMessages as importMessages} from './background/imports.js';
@@ -61,14 +61,35 @@ async function injectScript(tab) {
   await chrome.scripting.executeScript({target:{tabId:tab.id},files:['content/capture.js']});
 }
 
+// Whether the tab shows a PDF on the web: by its address, or by asking the tab, for a PDF whose
+// address doesn't say so. Chrome's viewer shows it, and the page script can read no links there:
+// the workbench reads a PDF's links from its file (ui/workbench/pdf.js).
+async function showsPdf(tab) {
+  if (addressKind(tab.url) === 'pdf') return true;
+  const [probe] = await chrome.scripting.executeScript({target:{tabId:tab.id},func:function documentType() { return document.contentType; }});
+  return probe?.result === 'application/pdf';
+}
+
 // For capturing a page or a region: only where there are links the script can read.
 async function inject(tab) {
   if (tab.incognito) throw new Error('Incognito collection is not enabled in this release.');
-  if (tab.url && (!ordinaryUrl(tab.url) || captureRefusal(tab.url) === PDF_REFUSAL)) throw new Error(captureRefusal(tab.url));
-  // A PDF whose address doesn't say so: Chrome's viewer shows it, and no extension can read that.
-  const [probe] = await chrome.scripting.executeScript({target:{tabId:tab.id},func:function documentType() { return document.contentType; }});
-  if (probe?.result === 'application/pdf') throw new Error(PDF_REFUSAL);
+  if (tab.url && !ordinaryUrl(tab.url)) throw new Error(captureRefusal(tab.url));
+  if (await showsPdf(tab)) throw new Error(PDF_REGION_REFUSAL);
   await injectScript(tab);
+}
+
+// Select a region from the shortcut or the right-click menu. On a PDF, the page itself says why
+// no region can be drawn there, where its script can show a notice; otherwise the full view does.
+async function armFromPage(tabId) {
+  try { return await arm(tabId); }
+  catch (error) {
+    if (String(error.message || error) !== PDF_REGION_REFUSAL) throw error;
+    try {
+      await injectScript(await chrome.tabs.get(tabId));
+      const reply = await chrome.tabs.sendMessage(tabId,{type:'content.notice',text:PDF_REGION_REFUSAL},{frameId:0});
+      if (!reply?.ok) throw error;
+    } catch { throw error; }
+  }
 }
 
 async function arm(tabId, callerTabId) {
@@ -98,9 +119,14 @@ async function captureTabs(tabIds,callerTabId) {
     try {
       tab = await chrome.tabs.get(tabId);
       if (tab.incognito || (tab.url && !ordinaryUrl(tab.url))) {
-        const refusal = !tab.incognito && captureRefusal(tab.url);
-        results.push({tabId,title:tab.title || 'Restricted page',url:tab.url || '',status:'unsupported',count:0,leftOut:0,skipped:0,
-          warning:[PDF_REFUSAL,FILE_REFUSAL].includes(refusal) ? refusal : 'Browser-internal pages, the Chrome Web Store, and incognito pages cannot be captured.',error:''});
+        const kind = tab.incognito ? '' : addressKind(tab.url);
+        results.push({tabId,title:tab.title || 'Restricted page',url:tab.url || '',status:kind === 'pdf-file' ? 'pdf' : 'unsupported',count:0,leftOut:0,skipped:0,
+          warning:kind === 'pdf-file' ? PDF_FILE_NOTE : kind === 'file' ? FILE_REFUSAL : 'Browser-internal pages, the Chrome Web Store, and incognito pages cannot be captured.',error:''});
+        continue;
+      }
+      // A PDF is not an error: its links are read by themselves, with Capture this PDF.
+      if (await showsPdf(tab)) {
+        results.push({tabId,title:tab.title || '',url:tab.url || '',status:'pdf',count:0,leftOut:0,skipped:0,warning:PDF_TAB_NOTE,error:''});
         continue;
       }
       await inject(tab);
@@ -176,12 +202,12 @@ chrome.action.onClicked.addListener(tab => {
   chrome.runtime.sendMessage({type:'panel.toggle',windowId:tab.windowId}).catch(() => {});
 });
 chrome.commands.onCommand.addListener((command, tab) => {
-  if (command === 'select-region') arm(tab?.id).catch(error => reportActivationError(error));
+  if (command === 'select-region') armFromPage(tab?.id).catch(error => reportActivationError(error));
 });
 // The right-click and toolbar menus (background/menus.js); Download linked file is background/downloads.js's.
 chrome.contextMenus.onClicked.addListener((info,tab) => info.menuItemId === DOWNLOAD_MENU_ID
   ? downloadFromMenu(info,tab).catch(error => reportActivationError(error))
-  : menuClicked(info,tab,{arm,captureTabs,inject:injectScript,reportError:reportActivationError}));
+  : menuClicked(info,tab,{arm:armFromPage,captureTabs,inject:injectScript,reportError:reportActivationError}));
 async function reportActivationError(error) {
   await chrome.storage.session.set({linkMeteorActivationError:String(error.message || error)});
   await chrome.tabs.create({url:WORKBENCH});

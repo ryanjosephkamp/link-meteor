@@ -8,13 +8,15 @@
 // refusal once links changed, the 20,000-link limit, files Link Meteor refuses, the bookmark-folder
 // path with Chrome's prompt stubbed (a simulated decline, a simulated grant the background still
 // refuses, and a simulated bookmarks tree), 320 px, and contrast in every theme, light and dark.
+// 0.6.0: a PDF file beside the other sources (its own preview in the same view; tests/pdf-browser.mjs
+// checks it in full).
 // Nothing is uploaded: no request leaves the extension while importing.
 //   npm run build && LINK_METEOR_FIXTURE_PORT=52580 node tests/imports-browser.mjs
 import assert from 'node:assert/strict';
 import {mkdir, writeFile, rm} from 'node:fs/promises';
 import {resolve} from 'node:path';
 import {deflateRawSync, crc32} from 'node:zlib';
-import {launch, rpc, until, evidence} from './helpers/browser.mjs';
+import {launch, rpc, until, evidence, root} from './helpers/browser.mjs';
 import {makeExport} from '../src/core/export.js';
 import {THEME_IDS} from '../src/core/themes.js';
 
@@ -310,9 +312,34 @@ try {
   await ui.locator('#error button', {hasText: 'Dismiss'}).click();
   pass('A Link Meteor JSON export maps every column itself; a backup, an .xls, a damaged workbook, a file with no links and one over 20 MB are refused with the reason');
 
+  /* A PDF (0.6.0), beside the other sources: the same chooser and view, its links with their pages
+     in place of a column mapping, the same destination choices, and Undo. */
+  assert.match(await text('#import-panel-help'), /^From a spreadsheet, a list, a PDF, a web page or bookmarks file, pasted text or a bookmark folder\./);
+  await preview(resolve(root, 'tests/fixtures/pdf/journal.pdf'));
+  assert.deepEqual([await text('#import-title'), await text('#import-source')], ['Links in this PDF', 'journal.pdf · 2 pages · from a file']);
+  assert.deepEqual([await ui.locator('#import-map').isVisible(), await ui.locator('#import-header-row').isVisible(), await ui.locator('#pdf-facts').isVisible()], [false, false, true], 'no columns to map; what the PDF says about itself instead');
+  assert.deepEqual(await heads(), ['Page', 'Anchor text', 'Address', 'Left out because']);
+  assert.deepEqual(await tableRows(), [['p. 1', 'the archive', 'https://archive.example.org/study', ''], ['p. 2', 'tables', 'https://archive.example.org/study/tables.csv', '']]);
+  assert.equal(await ui.locator('#import-destination option:checked').innerText(), 'reading-list', 'a PDF’s links go to the open collection unless another is chosen');
+  await ui.locator('#import-destination').selectOption({label: 'Thesis sources'});
+  assert.deepEqual(await summary(), ['Adds 2 links from 2 of 2 pages, marked Imported, and the paper’s DOI address as a link.', 'You can undo this.']);
+  assert.equal(await text('#import-commit'), 'Add 2 links');
+  const thesisBefore = (await named('Thesis sources')).links;
+  await ui.locator('#import-commit').click();
+  await notice('Added 2 links and the paper’s DOI address to “Thesis sources”.');
+  assert.deepEqual((await named('Thesis sources')).links.slice(thesisBefore.length).map((link) => [link.anchorText, link.url, link.pdfPage, link.imported]), [
+    ['A Study of Things That Link', 'https://doi.org/10.5555/journal.2026.042', undefined, 'journal.pdf'],
+    ['the archive', 'https://archive.example.org/study', 1, 'journal.pdf, page 1'], ['tables', 'https://archive.example.org/study/tables.csv', 2, 'journal.pdf, page 2']]);
+  await ui.locator('#notice button', {hasText: 'Undo'}).click();
+  await notice('Undone: removed 3 links.');
+  assert.deepEqual((await named('Thesis sources')).links, thesisBefore);
+  assert.equal((await active()).name, 'reading-list', 'back to the collection that was open');
+  pass('A PDF file, beside the other sources: its links with their pages in the same view, no column mapping, the open collection by default, and Undo');
+
   /* Pasted links: a list, cells copied from a spreadsheet, and HTML copied from a web page. */
   await ui.locator('#import-paste').click();
   assert.equal(await ui.evaluate(() => document.activeElement.id), 'import-text');
+  assert.deepEqual([await text('#import-title'), await ui.locator('#pdf-facts').isVisible()], ['Import links', false], 'after a PDF, the view is the usual one again');
   await ui.locator('#import-text').fill('- Heat and Health Lab: https://heat-health.example.edu/.\n[Canopy](https://canopy.example.edu/join)\nmailto:lab@example.edu, tel:+12125550123\nnot a link');
   await ui.locator('#import-read-text').click();
   await until(() => ui.locator('#import-plan').isVisible(), 'pasted preview');

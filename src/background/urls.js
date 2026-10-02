@@ -14,14 +14,28 @@ export function validWebUrls(urls) {
   return urls;
 }
 
-// What Link Meteor says when it can't capture a tab's page (0.5.0 RC2): for a PDF (Chrome shows it
-// in its own viewer, which no extension can read) or a file on the computer, what does work instead.
-export const PDF_REFUSAL = 'Link Meteor can’t read the links inside a PDF yet. To save one link, right-click it and choose Link Meteor, then Add link.';
-export const FILE_REFUSAL = 'Link Meteor can’t capture from files on your computer. To save one link, right-click it and choose Link Meteor, then Add link.';
-export function captureRefusal(value) {
+// What a tab's address says it holds: 'pdf' (a PDF on the web), 'pdf-file' (a PDF opened from the
+// computer), 'file' (another file there) or ''. A PDF whose address doesn't end in .pdf is found
+// by asking the tab (background.js).
+export function addressKind(value) {
   let url = null;
-  try { url = new URL(value); } catch { /* not an address */ }
-  if (url && /\.pdf$/i.test(url.pathname)) return PDF_REFUSAL;
-  if (url?.protocol === 'file:') return FILE_REFUSAL;
-  return 'Chrome does not allow link capture on this page. Choose an ordinary HTTP or HTTPS webpage.';
+  try { url = new URL(value); } catch { return ''; }
+  const pdf = /\.pdf$/i.test(url.pathname);
+  if (url.protocol === 'file:') return pdf ? 'pdf-file' : 'file';
+  return pdf && ['http:', 'https:'].includes(url.protocol) ? 'pdf' : '';
+}
+
+// What Link Meteor says where a region can't be drawn or a page's links can't be read. 0.6.0: the
+// links inside a PDF are read in the side panel (Capture this PDF, or the file itself for a PDF
+// opened from the computer), so these say where to go.
+export const PDF_REGION_REFUSAL = 'Regions can’t be drawn on a PDF. Open Link Meteor’s side panel and choose Capture this PDF.';
+export const PDF_FILE_REGION_REFUSAL = 'Regions can’t be drawn on a PDF. Open Link Meteor’s side panel and choose the PDF’s file there.';
+export const FILE_REFUSAL = 'Link Meteor can’t capture from files on your computer. To save one link, right-click it and choose Link Meteor, then Add link.';
+// A PDF among the tabs of a capture is not an error: its links are read by themselves.
+export const PDF_TAB_NOTE = 'A PDF: capture it by itself with Capture this PDF.';
+export const PDF_FILE_NOTE = 'A PDF on your computer: choose its file with Import links.';
+export function captureRefusal(value) {
+  const kind = addressKind(value);
+  return kind === 'pdf' ? PDF_REGION_REFUSAL : kind === 'pdf-file' ? PDF_FILE_REGION_REFUSAL : kind === 'file' ? FILE_REFUSAL
+    : 'Chrome does not allow link capture on this page. Choose an ordinary HTTP or HTTPS webpage.';
 }

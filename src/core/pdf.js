@@ -105,17 +105,25 @@ function wordsUnder(items, [x1, y1, x2, y2]) {
   return pieces;
 }
 
-// When the words, without their spaces, are the address or its end, they are a printed address:
-// the address as printed, in one piece. Otherwise null.
-function printedAddress(text, url) {
-  const squashed = text.replace(/\s+/gu, '');
-  if (squashed.length < 6 || !/^https?:/iu.test(url)) return null;
+// The ways an address is printed: whole, without its scheme, without "www.", with or without a last slash.
+function addressForms(url) {
   const forms = new Set();
   for (const form of [url, (() => { try { return decodeURI(url); } catch { return url; } })()]) for (const value of [form, form.replace(/\/$/u, '')]) {
     forms.add(value); forms.add(value.replace(/^[a-z][a-z0-9+.-]*:(\/\/)?/iu, '')); forms.add(value.replace(/^[a-z][a-z0-9+.-]*:(\/\/)?(www\.)?/iu, ''));
   }
-  const lower = squashed.toLowerCase();
-  return [...forms].some((form) => { const value = form.toLowerCase(); return value === lower || value.endsWith(lower) || value === lower.replace(/\/$/u, ''); }) ? squashed : null;
+  return [...forms].map((form) => form.toLowerCase());
+}
+// Words without their spaces, for comparing with an address: lowercase, and a typeset apostrophe
+// (Zipf’s_law) is the plain one an address has.
+const squash = (text) => text.replace(/\s+/gu, '');
+const comparable = (text) => squash(text).toLowerCase().replace(/[\u2018\u2019]/gu, "'");
+// When the words, without their spaces, are the address or its end, they are a printed address:
+// the address as printed, in one piece. Otherwise null.
+function printedAddress(text, url) {
+  const squashed = squash(text);
+  if (squashed.length < 6 || !/^https?:/iu.test(url)) return null;
+  const lower = comparable(text);
+  return addressForms(url).some((value) => value === lower || value.endsWith(lower) || value === lower.replace(/\/$/u, '')) ? squashed : null;
 }
 
 // The words on the line or lines a link sits on, in its own column: its neighbors left and right
@@ -169,7 +177,7 @@ export function pdfLinks(pages, { saveContext = true } = {}) {
   const found = [], skipped = [];
   let internal = 0, previous = null; // previous: the link made by the annotation just before this one
   for (const page of pages) {
-    for (const annotation of page.annotations) {
+    for (const [index, annotation] of page.annotations.entries()) {
       if (annotation.internal) { internal++; previous = null; continue; }
       const address = importAddress(annotation.url || annotation.unsafeUrl);
       if (!address.url) { skipped.push({ page: page.number, reason: 'not-link' }); previous = null; continue; }
@@ -179,6 +187,16 @@ export function pdfLinks(pages, { saveContext = true } = {}) {
         // On one page, a piece on the next line; across a page break, only a printed address in two pieces.
         if (last.page === page ? wrapsOnto(last.rect, annotation.rect) : page.number === last.page.number + 1 && !!printedAddress(together, address.url)) {
           previous.text = together; previous.parts.push({ page, rect: annotation.rect });
+          continue;
+        }
+        // A printed address cut off at the end of a page: some PDFs carry its link on as a strip
+        // across the next page's running head, before the piece that finishes it. The words under
+        // that strip are the page's heading, not the link's, so the strip only holds the place.
+        // It is known by what follows it: a piece on the next line that completes the address.
+        const next = page.annotations[index + 1];
+        if (page.number === last.page.number + 1 && next && !next.internal && importAddress(next.url || next.unsafeUrl).url === address.url && wrapsOnto(annotation.rect, next.rect)
+          && printedAddress([previous.text, joined(wordsUnder(page.items, next.rect))].filter(Boolean).join(' '), address.url)) {
+          previous.parts.push({ page, rect: annotation.rect, margin: true });
           continue;
         }
       }
@@ -191,8 +209,8 @@ export function pdfLinks(pages, { saveContext = true } = {}) {
     const anchorText = printedAddress(entry.text, entry.url) || entry.text;
     const link = { url: entry.url, originalHref: entry.originalHref, anchorText, pdfPage: entry.parts[0].page.number };
     if (saveContext) {
-      const byPage = [...new Set(entry.parts.map((part) => part.page))];
-      const context = byPage.map((page) => pdfContext(page.items, entry.parts.filter((part) => part.page === page).map((part) => part.rect), entry.text)).filter(Boolean).join(' ');
+      const parts = entry.parts.filter((part) => !part.margin), byPage = [...new Set(parts.map((part) => part.page))];
+      const context = byPage.map((page) => pdfContext(page.items, parts.filter((part) => part.page === page).map((part) => part.rect), entry.text)).filter(Boolean).join(' ');
       // A printed address reads in one piece in its context too.
       const whole = anchorText !== entry.text && context.includes(entry.text) ? context.replace(entry.text, anchorText) : context;
       if (whole) link.context = whole.length <= MAX_CONTEXT ? whole : cut(whole, anchorText);

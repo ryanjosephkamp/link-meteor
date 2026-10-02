@@ -3,7 +3,8 @@
 // bookmarks, and a per-site grant for the fixture site), before tests/permission-browser.mjs.
 // It never shows a native prompt: every grant it uses already exists. 0.5.0: with all-sites access,
 // Save tabs as links reads each fixture tab's own citation tags into the collection's pages, without
-// asking (the fixture server serves tests/fixtures/research/). Headless unless
+// asking (the fixture server serves tests/fixtures/research/). 0.6.0: Capture this PDF on a tab whose
+// site Link Meteor already has access to, with no toolbar click on it. Headless unless
 // LINK_METEOR_HEADED=1; for a visible run, keep the pointer off the Chrome for Testing windows.
 //   LINK_METEOR_TEST_PROFILE=<all-sites profile> LINK_METEOR_FIXTURE_PORT=52481 node tests/access-granted.mjs
 // Writes access-granted-results.json to the evidence folder.
@@ -152,6 +153,37 @@ try {
   await until(async () => /37 links captured/.test(await ui.locator('#capture-report').innerText()), 'captured the never-visited origin');
   assert.deepEqual(await ui.evaluate(() => window.__requests), []);
   pass('Capture this page on a never-visited origin needs no prompt with all-sites access', {origin: second.base});
+
+  // 0.6.0: Capture this PDF where Link Meteor already has access to the PDF's site (here, all sites)
+  // and the toolbar was never clicked on its tab. The tab is known as a PDF by its address, or, for
+  // an address without ".pdf", by asking the tab; its links are previewed, then added with the PDF as
+  // their source page and what it says about itself; and nothing is asked for.
+  for (const path of ['/pdf/paper.pdf', '/pdf-plain/paper']) {
+    const pdfUrl = fixture.base + path, name = `From the PDF at ${path}`;
+    const pdfCollection = (await rpc(ui, {type: 'state.mutate', action: {type: 'collection.create', name}})).activeCollectionId;
+    await page.goto(pdfUrl); await sleep(800);
+    const pdfTab = (await rpc(ui, {type: 'tabs.list'})).tabs.find((tab) => tab.url === pdfUrl);
+    assert.ok(pdfTab, `the PDF's tab is listed with its address: ${path}`);
+    // The workbench captures the page Link Meteor was last opened from. Here that page is named
+    // directly, as the toolbar click would name it, but without the click's temporary access.
+    await ui.evaluate((target) => chrome.storage.session.set({linkMeteorTarget: target}), {tabId: pdfTab.id, windowId: pdfTab.windowId});
+    await ui.bringToFront();
+    await until(async () => (await ui.locator('#capture-label').innerText()) === 'Capture this PDF', `Capture this PDF for ${path}`, 10000);
+    assert.match(await ui.locator('#scope-preview').innerText(), /A PDF\. Link Meteor reads the links inside it and shows them before adding any\.$/, 'no request for the site is announced');
+    assert.equal(await ui.locator('#arm').isDisabled(), true, 'Select a region is off on a PDF');
+    await ui.evaluate(() => { window.__requests = []; });
+    await ui.locator('#capture').click();
+    await until(() => ui.locator('#import-plan').isVisible(), `the links of ${path} previewed`, 20000);
+    assert.equal(await ui.locator('#import-source').innerText(), `“A Small Paper About Links” · 3 pages · from this tab (${new URL(fixture.base).host})`);
+    assert.equal(await ui.locator('#import-summary-main').innerText(), 'Adds 15 links from 3 of 3 pages, and the PDF itself as a link.');
+    await ui.locator('#import-commit').click();
+    await until(async () => (await ui.locator('#notice .msg').innerText().catch(() => '')).startsWith(`Added 15 links and the PDF itself to “${name}”.`), `the links of ${path} added`);
+    const savedFromPdf = (await rpc(ui, {type: 'state.get'})).collections.find((c) => c.id === pdfCollection);
+    assert.deepEqual([savedFromPdf.links.length, savedFromPdf.links[0].url, savedFromPdf.links[1].pdfPage, new Set(savedFromPdf.links.map((link) => link.sourceUrl)).size, savedFromPdf.links[1].sourceUrl, savedFromPdf.pages[pdfUrl].source, savedFromPdf.pages[pdfUrl].pdfUrl],
+      [16, pdfUrl, 1, 1, pdfUrl, 'pdf', pdfUrl]);
+    assert.deepEqual(await ui.evaluate(() => window.__requests), [], 'nothing is asked for');
+  }
+  pass('Capture this PDF where the site is already allowed and the toolbar was not clicked: known as a PDF with or without ".pdf" in its address, previewed, added with the PDF as the source page, and no prompt');
 
   // 0.5.0: Save tabs as links reads each tab's citation tags where Link Meteor has access (here, all
   // sites), keyed by the tab's own address, and says how many; a page without tags gives none.

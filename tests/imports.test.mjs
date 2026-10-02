@@ -197,6 +197,8 @@ test('guessMapping: names first, then content; the destination’s columns by na
   assert.deepEqual(guess.fresh, [{ column: 1, name: 'Website', use: true }, { column: 4, name: 'Deadline', use: true },
     { column: 8, name: 'Source page URL', use: false }, { column: 9, name: 'Empty', use: false }], 'export-only and empty columns aren’t chosen');
   assert.equal(guess.overflow, 0);
+  // 0.6.0: an export's PDF page column is offered, but not chosen, like the other capture details.
+  assert.deepEqual(guessMapping(['Anchor text', 'URL', 'PDF page'], [['a', 'https://a.example/', '3']]).fresh, [{ column: 2, name: 'PDF page', use: false }]);
   // Without names: the column with the most addresses, and the words beside it as anchor text.
   const plain = guessMapping(['Column A', 'Column B', 'Column C'], [['Heat Lab', 'https://h.org', 'x'], ['Canopy', 'www.c.org', '']]);
   assert.deepEqual([plain.url, plain.anchorText], [1, 0]);

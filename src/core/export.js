@@ -6,7 +6,8 @@ export const COLUMNS = [
   { key: 'anchorText', label: 'Anchor text' }, { key: 'url', label: 'URL' },
   { key: 'accessibleLabel', label: 'Accessible label' }, { key: 'originalHref', label: 'Original href' },
   { key: 'sourceUrl', label: 'Source page URL' }, { key: 'sourceTitle', label: 'Source page title' },
-  { key: 'frameUrl', label: 'Frame URL' }, { key: 'capturedAt', label: 'Captured at' },
+  // 0.6.0: the page of the PDF a link was read from; empty for links from web pages.
+  { key: 'frameUrl', label: 'Frame URL' }, { key: 'pdfPage', label: 'PDF page' }, { key: 'capturedAt', label: 'Captured at' },
   { key: 'batchId', label: 'Capture batch ID' }, { key: 'id', label: 'Occurrence ID' },
   { key: 'notes', label: 'Notes' }, { key: 'tags', label: 'Tags' },
   // Research columns (0.5.0). Identifiers are derived per link, never stored.

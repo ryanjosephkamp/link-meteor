@@ -13,12 +13,13 @@ import {createMenus, menuClicked, followMenuWrites, syncMenuTitle, MENU} from '.
 import {tabsMessage} from './background/tabs.js';
 import {citationPages} from './background/citations.js';
 import {workbenchMessages as downloadMessages, pageMessages as downloadPageMessages, cancelDownloads, downloadMenuItem, downloadFromMenu, DOWNLOAD_MENU_ID} from './background/downloads.js';
+import {workbenchMessages as runMessages, pageMessages as runPageMessages, scrollCapture, useCapture} from './background/runs.js';
 
 const LAST_TARGET_KEY = 'linkMeteorTarget';
 
 // Workbench-only messages answered by area modules. A type may be claimed by one module only.
 const AREA_MESSAGES = new Map();
-for (const table of [bookmarkMessages, backupMessages, holdMessages, diagnosticsMessages, downloadMessages, importMessages, transferMessages]) {
+for (const table of [bookmarkMessages, backupMessages, holdMessages, diagnosticsMessages, downloadMessages, importMessages, transferMessages, runMessages]) {
   for (const [type, handler] of Object.entries(table)) {
     if (AREA_MESSAGES.has(type)) throw new Error(`Duplicate Link Meteor message handler: ${type}`);
     AREA_MESSAGES.set(type, handler);
@@ -86,12 +87,14 @@ async function arm(tabId, callerTabId) {
 // are left out, counted per page and kept for the workbench's Include them. With skipSaved, links
 // the collection already holds are skipped and counted. 0.5.0: each link keeps the words around it
 // (unless saveContext is off), and each page its own citation tags, keyed by its address.
-async function captureTabs(tabIds,callerTabId) {
+// 0.6.0: `run` is for a step of a run (background/runs.js): its batch and collection, and `scan`,
+// options for the page script, such as scrolling to the end first.
+async function captureTabs(tabIds,callerTabId,run={}) {
   const stateBefore = await serial(readState);
-  const collectionId = stateBefore.activeCollectionId, contentOnly = stateBefore.settings.contentOnly === true, context = stateBefore.settings.saveContext !== false;
+  const collectionId = run.collectionId || stateBefore.activeCollectionId, contentOnly = stateBefore.settings.contentOnly === true, context = stateBefore.settings.saveContext !== false;
   const ids = Array.isArray(tabIds) && tabIds.length ? [...new Set(tabIds)] : [(await resolveTarget(undefined,callerTabId)).id];
   if (ids.length > 100 || ids.some(id => !Number.isInteger(id))) throw new Error('Choose at most 100 tabs per capture. You can append another batch.');
-  const batchId = crypto.randomUUID(), results = [], leftOutLinks = [];
+  const batchId = run.batchId || crypto.randomUUID(), results = [], leftOutLinks = [];
   let state = stateBefore, capturedCount = 0, leftOutTotal = 0;
   for (const tabId of ids) {
     let tab;
@@ -104,9 +107,10 @@ async function captureTabs(tabIds,callerTabId) {
         continue;
       }
       await inject(tab);
-      const [{result}] = await chrome.scripting.executeScript({target:{tabId},func:options => globalThis.__linkMeteor.scan(options),args:[{context}]});
+      const [{result}] = await chrome.scripting.executeScript({target:{tabId},func:options => globalThis.__linkMeteor.scan(options),args:[{context,...run.scan}]});
       const after = await chrome.tabs.get(tabId);
-      if (tab.url && after.url !== tab.url) throw new Error('The tab navigated during capture; retry on the new page.');
+      // A page may change its own address as it is scrolled; a scroll's answer comes from one document.
+      if (tab.url && after.url !== tab.url && !result.scroll) throw new Error('The tab navigated during capture; retry on the new page.');
       const found = occurrences(result.links, tab, batchId);
       const pageChrome = found.map((_, i) => contentOnly && result.links[i]?.pageChrome === true);
       const links = found.filter((_, i) => !pageChrome[i]), leftOut = found.filter((_, i) => pageChrome[i]);
@@ -118,6 +122,7 @@ async function captureTabs(tabIds,callerTabId) {
       capturedCount += count;
       results.push({tabId,title:tab.title || '',url:tab.url || '',status:'success',count,leftOut:leftOut.length,skipped,
         warning:(result.warnings || []).join(' '),error:''});
+      if (result.scroll) results.at(-1).scroll = result.scroll;
       await rememberTarget(tab).catch(() => {});
     } catch (error) {
       const message = String(error.message || error);
@@ -125,10 +130,15 @@ async function captureTabs(tabIds,callerTabId) {
     }
   }
   const report = {batchId,results,capturedCount};
+  // A step of a run: the run keeps its own report, and what it left out is only counted.
+  if (run.batchId) return {state,report};
   await keepLeftOut({batchId,collectionId,links:leftOutLinks,total:leftOutTotal});
   await chrome.storage.session.set({linkMeteorCaptureReport:{report,createdAt:new Date().toISOString()}}).catch(() => {});
   return {state,report};
 }
+
+// Each page of a run is captured as Capture this page captures it.
+useCapture({captureTabs,resolveTarget});
 
 async function handle(message, sender) {
   const ui = sender.url?.startsWith(WORKBENCH);
@@ -143,6 +153,7 @@ async function handle(message, sender) {
   if (message.type === 'capture.commit') return commitCapture(message,sender,{remember:rememberTarget});
   if (Object.hasOwn(pageMessages,message.type)) return pageMessages[message.type](message,sender);
   if (Object.hasOwn(downloadPageMessages,message.type)) return downloadPageMessages[message.type](message,sender);
+  if (Object.hasOwn(runPageMessages,message.type)) return runPageMessages[message.type](message,sender);
   if (message.type === 'ui.open' && (ui || sender.tab?.id)) return openWorkbench(message);
   // A page may cancel only the opening it started from its own capture card.
   if (message.type === 'links.cancel' && !ui && sender.tab?.id) return cancelOpen(message,{senderTabId:sender.tab.id});
@@ -152,7 +163,7 @@ async function handle(message, sender) {
   switch (message.type) {
     case 'state.mutate': return mutate(message.action);
     case 'tabs.list': return inventory(sender.tab?.id);
-    case 'capture.run': return captureTabs(message.tabIds,sender.tab?.id);
+    case 'capture.run': return message.scroll === true ? scrollCapture(message,sender) : captureTabs(message.tabIds,sender.tab?.id);
     case 'capture.tabs': return tabsMessage(message,{target:() => resolveTarget(undefined,sender.tab?.id)});
     case 'capture.includeLeftOut': return includeLeftOut(message);
     case 'capture.arm': return arm(message.tabId,sender.tab?.id);

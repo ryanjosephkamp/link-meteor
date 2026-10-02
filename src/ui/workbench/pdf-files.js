@@ -25,6 +25,7 @@ let rules = null, loadingRules = null;  // core/pdf.js (the limits and their wor
 let going = null;   // the run in progress, whoever started it, as the background last described it
 let job = null;     // this view's own run of files: {kind, items, total, runId, early, answers, finish}
 let making = '';    // 'zip' or 'combine' while this view writes the file
+let reading = false; // while files from the computer are being read into the list
 let panel = null;   // Combine into one PDF…, while open: {items, left, collectionId}
 let nextKey = 1;
 
@@ -41,8 +42,10 @@ function sizeText(bytes) {
 const siteOf = (url) => { try { return new URL(url).origin; } catch { return ''; } };
 const chosen = () => pdfLinks(targetRows());
 const running = () => !!going && going.state !== 'done';
-const working = () => !!job || !!making;
+const working = () => !!job || !!making || reading;
 const total = (items, key) => items.reduce((sum, item) => sum + (item[key] || 0), 0);
+// Text is written only when it changed, so a line that is announced isn't announced again.
+function setText(element, value) { if (element.textContent !== value) element.textContent = value; }
 
 // One entry for each chosen PDF: its file name (as Download files names it, repeats numbered), its
 // link's own words, and the page it was captured from.
@@ -101,11 +104,11 @@ export function renderPdfSet(rows = targetRows()) {
   $('pdf-zip').disabled = !!problem || held;
   $('pdf-combine').disabled = working();
   const help = $('pdf-set-help');
-  help.textContent = problem ? `${problem} This view has ${count(n)} PDF links: select fewer or filter the view, or leave some out under Combine into one PDF…`
-    : !n ? NO_PDFS : `${HELP}${rules ? ` ${count(rules.MAX_PDF_SET)} PDFs at most.` : ''}${running() && !job ? ` ${BUSY}` : ''}`;
+  setText(help, problem ? `${problem} This view has ${count(n)} PDF links: select fewer or filter the view, or leave some out under Combine into one PDF…`
+    : !n ? NO_PDFS : `${HELP}${rules ? ` ${count(rules.MAX_PDF_SET)} PDFs at most.` : ''}${running() && !job ? ` ${BUSY}` : ''}`);
   help.classList.toggle('is-problem', !!problem);
   const access = n && !problem ? accessWords(links.map((link) => link.url)) : '';
-  $('pdf-access').textContent = access; $('pdf-access').hidden = !access;
+  setText($('pdf-access'), access); $('pdf-access').hidden = !access;
   renderCombineState();
 }
 
@@ -173,7 +176,7 @@ async function answerFile(mine, { runId, step, tabId, url }) {
   try { ({ taken } = await request({ type: 'run.fileDone', runId, step, ...reply })); } catch { /* the run is over */ }
   if (!reply.ok || !taken || job !== mine) return;
   item.bytes = bytes; item.size = bytes.length; mine.total += bytes.length;
-  if (mine.kind === 'combine') await readPages(item);
+  if (mine.kind === 'combine') { await readPages(item); if (item.problem) mine.total -= bytes.length; }
   renderProgress(); renderCombine();
 }
 
@@ -189,9 +192,9 @@ async function fetchFiles(kind, items) {
   const { missing } = accessPlan(wanted.map((item) => item.url));
   const asked = missing.length && chrome.permissions?.request ? chrome.permissions.request({ origins: missing.map((origin) => `${origin}/*`) }).then((ok) => ok === true, () => false) : null;
   const mine = job = { kind, items: wanted, total: total(items, 'size'), runId: '', early: [], answers: new Map(), finish: null };
-  $('pdf-result').hidden = true;
-  renderPdfSet(); renderCombine();
   try {
+    $('pdf-result').hidden = true;
+    renderPdfSet(); renderCombine();
     const allowed = asked ? await asked : true;
     // Whatever Chrome answered, what it now grants is asked of Chrome itself the next time it matters.
     for (const origin of missing) ui.originAccess.delete(origin);
@@ -211,6 +214,8 @@ async function fetchFiles(kind, items) {
     ask();
     let last;
     try { last = await finished; } finally { clearInterval(timer); }
+    // The end may have been learned by asking, with the last run.progress missed.
+    if (going?.runId === runId) going = null;
     if (!last) throw new Error('The run ended without saying how. Nothing was downloaded.');
     // A fetched file may still be having its pages counted. A file the run gave up on is not waited for.
     await Promise.all((last.results || []).filter((row) => row.status === 'got').map((row) => mine.answers.get(row.page - 1)));
@@ -315,9 +320,10 @@ function renderCombineState() {
   const { items } = panel, locked = working();
   $('combine-empty').hidden = items.length > 0;
   $('combine-add').disabled = locked;
-  const skip = $('combine-skip');
+  const skip = $('combine-skip'), leftKey = JSON.stringify(panel.left);
   skip.hidden = !panel.left.length;
-  if (panel.left.length) {
+  if (panel.left.length && skip.dataset.key !== leftKey) {
+    skip.dataset.key = leftKey;
     const lines = node('ul');
     for (const { name, why } of panel.left) { const line = node('li'); line.append(node('b', '', name), `: ${why}`); lines.append(line); }
     skip.replaceChildren(node('strong', '', 'Left out'), lines);
@@ -333,11 +339,11 @@ function renderCombineState() {
   const problem = rules && items.length ? rules.pdfSetProblem(items.map((item) => item.size || 0)) : '';
   const over = problem && rules && items.length > rules.MAX_PDF_SET ? ` Leave out ${count(items.length - rules.MAX_PDF_SET)}.` : '';
   const help = $('combine-help');
-  help.textContent = problem ? problem + over : running() && !job ? BUSY : '';
+  setText(help, problem ? problem + over : running() && !job ? BUSY : '');
   help.hidden = !help.textContent; help.classList.toggle('is-problem', !!problem);
   const access = problem ? '' : accessWords(items.filter((item) => item.url && !item.bytes).map((item) => item.url));
-  $('combine-access').textContent = access; $('combine-access').hidden = !access;
-  $('combine-apply-label').textContent = items.length ? `Combine ${plural(items.length, 'PDF')}` : 'Combine PDFs';
+  setText($('combine-access'), access); $('combine-access').hidden = !access;
+  setText($('combine-apply-label'), items.length ? `Combine ${plural(items.length, 'PDF')}` : 'Combine PDFs');
   $('combine-apply').disabled = !items.length || !!problem || locked || (running() && !job);
   $('combine-name').disabled = locked;
   $('combine-cancel').disabled = locked;
@@ -362,6 +368,7 @@ function closeCombine() {
   $('combine-panel').hidden = true;
   $('pdf-combine').setAttribute('aria-expanded', 'false');
   $('combine-list').replaceChildren();
+  delete $('combine-skip').dataset.key;
 }
 function cancelCombine() {
   if (working()) return;
@@ -372,6 +379,16 @@ function cancelCombine() {
 // PDF files from the computer, chosen or dropped: read in this page, and counted toward the limits.
 async function addFiles(files) {
   if (!panel || !files.length || working()) return;
+  reading = true;
+  renderPdfSet(); renderCombine();
+  try { await readFiles(files); }
+  finally {
+    reading = false;
+    renderPdfSet(); renderCombine();
+    if (panel) $('combine-add').focus({ preventScroll: true });
+  }
+}
+async function readFiles(files) {
   await needRules();
   const sizes = [...panel.items.map((item) => item.size || 0), ...files.map((file) => file.size)];
   if (sizes.length > rules.MAX_PDF_SET) throw new Error(`${rules.pdfSetProblem(sizes)} Nothing was added.`);
@@ -441,6 +458,14 @@ async function applyCombine() {
     renderProgress(); renderPdfSet(); renderCombine();
   }
 }
+// Combine, with focus kept in the panel when it could not finish.
+async function combine() {
+  try { await applyCombine(); }
+  catch (error) {
+    if (panel) ($('combine-apply').disabled ? $('combine-add') : $('combine-apply')).focus({ preventScroll: true });
+    throw error;
+  }
+}
 
 // An open panel follows the saved links: a link that is gone leaves the list, and another
 // collection closes it.
@@ -455,7 +480,7 @@ export function bindPdfFiles() {
   $('pdf-zip').addEventListener('click', () => action(downloadZip));
   $('pdf-combine').addEventListener('click', () => { if (panel) cancelCombine(); else openCombine(); });
   $('pdf-stop').addEventListener('click', () => action(stop));
-  $('combine-panel').addEventListener('submit', (event) => { event.preventDefault(); action(applyCombine); });
+  $('combine-panel').addEventListener('submit', (event) => { event.preventDefault(); action(combine); });
   $('combine-cancel').addEventListener('click', cancelCombine);
   $('combine-add').addEventListener('click', () => $('combine-file').click());
   $('combine-file').addEventListener('change', (event) => { const files = [...event.target.files]; event.target.value = ''; action(() => addFiles(files)); });
@@ -484,8 +509,14 @@ export function bindPdfFiles() {
   });
   onRender(followLinks);
   // The sites a start would ask for follow the person's tab: look again when they come to the section.
-  for (const type of ['pointerenter', 'focusin']) $('pdf-set').addEventListener(type, () => { if (!working()) renderPdfSet(); });
-  window.addEventListener('focus', () => { if (!working()) renderPdfSet(); });
+  const look = () => {
+    if (working()) return;
+    renderPdfSet();
+    // A run this view believes is going is asked about, in case its end was missed.
+    if (running()) request({ type: 'run.status' }).then(({ run }) => { if (!job && running() && (!run || run.state === 'done' || run.runId !== going.runId)) { going = run && run.state !== 'done' ? run : null; renderPdfSet(); } }, () => {});
+  };
+  for (const type of ['pointerenter', 'focusin']) $('pdf-set').addEventListener(type, look);
+  window.addEventListener('focus', look);
   chrome.runtime.onMessage.addListener((message) => {
     if (message?.type === 'run.progress') onProgress(message);
     // Only the page that started the run fetches its files: the files stay in that page.

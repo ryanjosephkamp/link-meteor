@@ -15,6 +15,7 @@
 // The contract is in docs/CONTRACTS.md ("Runs: auto-scroll, Follow Next and selected pages").
 import {reduceState, pageKey, MIN_FOLLOW_PAGES, MAX_FOLLOW_PAGES, MAX_CONTEXT} from '../core/model.js';
 import {pdfSetProblem, MAX_PDF_BYTES, MAX_PDF_SET_BYTES} from '../core/pdf.js';
+import {isFileLink} from '../core/files.js';
 import {serial, readState, writeState} from './store.js';
 import {WORKBENCH, appendLinks} from './card.js';
 
@@ -83,8 +84,10 @@ function pause(job, ms) {
 // page is open, none answers in time, or Stop is pressed.
 function ask(job, message, ms) {
   const key = `${message.runId}:${message.step}`;
+  if (job.stopped) return Promise.resolve(null);
   return new Promise(done => {
-    const finish = answer => { job.asks.delete(key); job.waiters.delete(stopped); done(answer); };
+    // A step may ask again (a file through another tab): an earlier question's timer must not end the later one.
+    const finish = answer => { if (job.asks.get(key) === finish) job.asks.delete(key); job.waiters.delete(stopped); done(answer); };
     const stopped = () => finish(null);
     job.asks.set(key, finish); job.waiters.add(stopped);
     clock.sleep(ms).then(stopped);
@@ -613,7 +616,9 @@ export const KINDS = {
       const queue = files.map(file => {
         const url = webAddress(file?.url), from = webAddress(file?.from);
         if (!url) throw new Error('Choose PDFs at web addresses.');
-        return {url, name: typeof file.name === 'string' ? file.name.slice(0, 200) : '', ...(from && originOf(from) === originOf(url) ? {from} : {})};
+        // The page the link came from is opened only when it is a page of the PDF's own site: not a file
+        // (a PDF's own links name that PDF as their source), which Chrome might download instead of showing.
+        return {url, name: typeof file.name === 'string' ? file.name.slice(0, 200) : '', ...(from && originOf(from) === originOf(url) && !isFileLink({url: from}) ? {from} : {})};
       });
       return {queue, ...(Number.isInteger(message.tabId) ? {own: message.tabId} : {})};
     },

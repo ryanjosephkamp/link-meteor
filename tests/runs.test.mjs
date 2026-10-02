@@ -591,8 +591,9 @@ test('PDF files: through the person’s own tab where it is on the PDF’s site,
   const tab = clicked(`${SITE}/list`), asked = [];
   fileReply = (message) => { asked.push({tabId: message.tabId, url: message.url, step: message.step, at: now}); return {ok: true, size: 1000 + message.step}; };
   // No collection is named: nothing is saved. The addresses lose their # part; the page a link was
-  // captured from is kept only where it is on the PDF's own site.
-  const {runId} = await ask({type: 'run.start', kind: 'files', tabId: tab.id, files: [{url: `${pdf('a')}#page=2`, from: `${SITE}/list`, name: 'A.pdf'}, {url: pdf('b'), from: `${OTHER}/elsewhere`, name: 'B.pdf'}, {url: pdf('c'), name: 'C.pdf'}]});
+  // captured from is kept only where it is a page of the PDF's own site, and not itself a file (a
+  // link read out of a PDF names that PDF, which Chrome might download instead of showing).
+  const {runId} = await ask({type: 'run.start', kind: 'files', tabId: tab.id, files: [{url: `${pdf('a')}#page=2`, from: `${SITE}/list`, name: 'A.pdf'}, {url: pdf('b'), from: `${OTHER}/elsewhere`, name: 'B.pdf'}, {url: pdf('c'), from: pdf('the-paper-that-cites-it'), name: 'C.pdf'}]});
   assert.deepEqual(session.linkMeteorRun.queue, [{url: pdf('a'), name: 'A.pdf', from: `${SITE}/list`}, {url: pdf('b'), name: 'B.pdf'}, {url: pdf('c'), name: 'C.pdf'}]);
   const first = (await status());
   assert.deepEqual([first.kind, first.title, first.text, first.step, first.of, first.state], ['files', 'Getting PDFs', 'Getting PDF 1 of 3', 1, 3, 'running']);
@@ -695,6 +696,24 @@ test('PDF files whose address moves to another site: opened by itself and read w
   await ask({type: 'run.start', kind: 'files', tabId: tab.id, files: [{url: pdf('moved'), name: 'Moved.pdf'}]});
   assert.deepEqual(fileRows(await toTheEnd()), [[1, 'Moved.pdf', 'no-access', 'No access: it moved to another site']]);
   assert.ok(now - began >= 2000, 'after the 2 seconds Chrome takes to close a tab it downloads from');
+});
+
+test('PDF files: a file asked for a second time, through another tab, is not cut short by the first question’s time limit', async () => {
+  await reset(); granted.add(SITE); granted.add(OTHER);
+  page(`${SITE}/list`); page(pdf('moved'), {redirect: pdf('real', OTHER)}); page(pdf('real', OTHER), {type: 'application/pdf'});
+  const tab = clicked(`${SITE}/list`), asked = [];
+  // The person's own tab fails at once; the second question, through the PDF's own tab, is answered late.
+  fileReply = (message) => { asked.push({url: message.url, at: now}); return message.url ? {reason: 'failed'} : null; };
+  const {runId} = await ask({type: 'run.start', kind: 'files', tabId: tab.id, files: [{url: pdf('moved'), name: 'Moved.pdf'}]});
+  await advance(1000);
+  assert.deepEqual(asked.map((item) => item.url), [pdf('moved'), ''], 'asked twice for the same file');
+  // Past the first question's 2 minutes, and still inside the second one's.
+  await advance(120000 - now + asked[0].at + 50);
+  assert.ok(now - asked[1].at < 120000);
+  assert.equal((await status()).state, 'running');
+  assert.deepEqual(await ask({type: 'run.fileDone', runId, step: 0, ok: true, size: 11}), {taken: true}, 'the late answer is still taken');
+  const done = await toTheEnd();
+  assert.deepEqual(done.results.map((row) => [row.status, row.how, row.size]), [['got', 'Fetched', 11]]);
 });
 
 test('PDF files: what the page that fetches one says decides its line; a set over the limit, or no answer, ends the run', async () => {

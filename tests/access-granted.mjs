@@ -401,7 +401,7 @@ try {
   assert.deepEqual([...zipMembers.keys()], ['A-small-paper-about-links.pdf', 'Field-notes.pdf', 'The-study-moved.pdf']);
   assert.ok(zipMembers.get('A-small-paper-about-links.pdf').equals(paperPdf) && zipMembers.get('Field-notes.pdf').equals(notesPdf) && zipMembers.get('The-study-moved.pdf').equals(journalPdf), 'each PDF byte for byte, from both sites');
   assert.deepEqual(await ui.evaluate(() => window.__requests), [], 'no prompt');
-  assert.equal(context.pages().length, tabsBeforeFiles, 'every background tab is closed');
+  await until(() => context.pages().length === tabsBeforeFiles, 'every background tab is closed');
   assert.deepEqual(await rpc(ui, {type: 'state.get'}), filesBefore, 'nothing is saved');
   // Background tabs: a page of each PDF's own site (the page the link came from, or the site's
   // front page), and the two addresses that move, each by itself.
@@ -428,7 +428,7 @@ try {
   const combinedHere = await readPdf(await readFile(await pdfDownload.path())), combinedInNode = await readPdf((await combinePdfs([paperPdf, notesPdf, journalPdf])).bytes);
   assert.equal(combinedHere.pageCount, 7);
   assert.deepEqual(combinedHere.links.map((link) => [link.url, link.pdfPage]), combinedInNode.links.map((link) => [link.url, link.pdfPage]), 'every page and link, in the list’s order');
-  assert.equal(context.pages().length, tabsBeforeFiles, 'every background tab is closed');
+  await until(() => context.pages().length === tabsBeforeFiles, 'every background tab is closed');
   assert.deepEqual(await ui.evaluate(() => window.__requests), [], 'no prompt');
   context.off('page', watchTabs);
   pass('PDF files with all-sites access: the PDFs of two sites combined into one PDF, in the list’s order', {name: pdfDownload.suggestedFilename(), pages: combinedHere.pageCount});

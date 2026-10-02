@@ -76,8 +76,10 @@ export function closeImport({ focus = true } = {}) {
   Object.assign(view, { kind: '', folders: null, chosen: '', returnFocus: null, busy: false });
   $('import-text').value = ''; $('import-folder-search').value = ''; $('import-file').value = '';
   $('import').hidden = true; $('main').classList.remove('is-importing');
-  if (focus) (visible(opener) ? opener : $('search')).focus();
+  if (focus) focusBack(opener);
 }
+// Focus returns to the control that opened the view, or to the search box when it can't take it.
+function focusBack(opener) { (visible(opener) && !opener.disabled ? opener : $('search')).focus(); }
 
 function cancel() { if (view.busy) return; const pdf = view.kind === 'pdf'; closeImport(); show(pdf ? 'Canceled. Nothing was added.' : 'Import canceled. Nothing was added.'); }
 
@@ -183,8 +185,8 @@ async function importFile(file, opener) {
     progress(`Reading ${file.name}…`);
     const bytes = new Uint8Array(await file.arrayBuffer());
     if (run !== view.run) return;
-    // A PDF whose name doesn't say so.
-    if (isPdfBytes(bytes)) { await readPdfFile(file, opener, bytes); return; }
+    // A PDF whose name doesn't say so. Its own reader reports what goes wrong, so it isn't awaited here.
+    if (isPdfBytes(bytes)) return readPdfFile(file, opener, bytes);
     const table = await readFileTable(file, bytes, run);
     if (run !== view.run) return;
     setTable(table, { kind: 'file', name: file.name, label: file.name, collection: file.name.replace(/\.[a-z0-9]{1,8}$/i, '') || file.name });
@@ -527,7 +529,7 @@ export function showImported(result, name, message, undone = 'Import undone') {
   ui.flashBatch = result.batchId; ui.flashStart = Date.now();
   render();
   show(message, 'notice', { actionLabel: 'Undo', onAction: () => undoImport({ ...result, name, undone }) });
-  (visible(opener) ? opener : $('search')).focus();
+  focusBack(opener);
 }
 
 async function undoImport({ collectionId, batchId, name, undone = 'Import undone' }) {

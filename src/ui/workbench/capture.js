@@ -61,6 +61,7 @@ export async function refreshOriginAccess(origins) {
 
 export function renderInventory() {
   renderCaptureButton();
+  syncPdfCapture(targetTab(), { links: captureWhat === 'links' });
   if (!ui.inventory) {
     preview(['Tab preview unavailable. Reopen Link Meteor from an ordinary page, or choose the scope again to refresh it.'], true, 'i-alert');
     $('tab-picker').hidden = ui.scope !== 'selected';
@@ -98,7 +99,6 @@ export function renderInventory() {
     else parts.push('Each tab gets its own result.');
     preview(parts, chosen.length > 100, chosen.length > 100 ? 'i-alert' : 'i-tabs');
   }
-  syncPdfCapture(target, { links: captureWhat === 'links' });
   $('tab-picker').hidden = ui.scope !== 'selected';
   if (ui.scope === 'selected') {
     const area = $('tab-options');
@@ -448,7 +448,7 @@ export async function runCapture() {
       offerAllSites.add(ui.inventory?.targetTabId);
     }
     // A PDF's links are read from its file and shown before any is added (pdf.js).
-    if (ui.scope === 'current' && await capturePdf(targetTab(), { asked: !!asking, origin: plan.origin })) return;
+    if (ui.scope === 'current' && await capturePdf(targetTab(), { declined: !!asking && reasons.has(plan.tabId), origin: plan.origin })) return;
     if (ui.scope !== 'current') {
       if (!ui.inventory) throw new Error('Tab preview is unavailable. Choose the scope again to refresh it.');
       const scope = ui.scope;

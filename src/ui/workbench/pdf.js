@@ -116,9 +116,9 @@ export function resetPdf() {
 }
 
 // Why a PDF couldn't be read, in plain words.
-async function problem(error, { asked = false, origin = '' } = {}) {
+async function problem(error, { declined = false, origin = '' } = {}) {
   if (error?.reason === 'access') {
-    return asked ? `You declined Chrome’s request for access to ${origin}, so Link Meteor could not read this PDF. Capture it again to be asked again.`
+    return declined ? `You declined Chrome’s request for access to ${origin}, so Link Meteor could not read this PDF. Capture it again to be asked again.`
       : 'Link Meteor has no access to this PDF’s tab. Click the Link Meteor toolbar icon while on the PDF, then choose Capture this PDF again.';
   }
   const { pdfProblem } = await import('./pdf-reader.js');
@@ -126,10 +126,10 @@ async function problem(error, { asked = false, origin = '' } = {}) {
 }
 
 // Capture this PDF: reads the PDF the tab shows and previews its links. Returns false when the tab
-// holds no PDF, so the page is captured as usual. `asked` says this click asked Chrome for the
-// tab's site (the answer is in by now); a tab that turns out to hold a PDF only when asked takes
-// the same path.
-export async function capturePdf(tab, { asked = false, origin = '' } = {}) {
+// holds no PDF, so the page is captured as usual. `declined` says this click asked Chrome for the
+// tab's site and the person said no. A tab that turns out to hold a PDF only when asked takes the
+// same path.
+export async function capturePdf(tab, { declined = false, origin = '' } = {}) {
   if (!tab?.id || !capturableUrl(tab.url)) return false;
   if (pdfKind(tab) !== 'web' && await tabType(tab.id) !== 'application/pdf') return false;
   const reading = startReading($('capture'), 'Getting the PDF from its tab…');
@@ -143,7 +143,7 @@ export async function capturePdf(tab, { asked = false, origin = '' } = {}) {
     showPdf(result, { kind: 'tab', address, title, host: hostOf(address) });
   } catch (error) {
     if (reading.run !== view.run) return true;
-    const words = await problem(error, { asked, origin });
+    const words = await problem(error, { declined, origin });
     closeImport();
     throw new Error(words + NOTHING);
   }

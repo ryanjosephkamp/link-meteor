@@ -268,6 +268,7 @@ try {
     [pdfPath('password.pdf'), 'This PDF needs a password. Link Meteor doesn’t ask for passwords. Nothing was added.'],
     [pdfPath('damaged.pdf'), 'This PDF is damaged, or it isn’t a PDF, so it couldn’t be read. Nothing was added.'],
     [pdfPath('not-a-pdf.pdf'), 'This file isn’t a PDF. Nothing was added.'],
+    [await made('locked-without-the-ending', await fixture('password.pdf')), 'This PDF needs a password. Link Meteor doesn’t ask for passwords. Nothing was added.'],
     [await made('too-many-pages.pdf', makePdf({pages: Array.from({length: MAX_PDF_PAGES + 1}, () => [])})), 'This PDF has 2,001 pages. Link Meteor reads PDFs of up to 2,000 pages. Nothing was added.'],
     [await made('too-large.pdf', Buffer.concat([Buffer.from('%PDF-1.4\n'), Buffer.alloc(MAX_PDF_BYTES)])), `too-large.pdf is larger than ${mb(MAX_PDF_BYTES)} MB, the most Link Meteor reads. Nothing was added.`],
   ]) {

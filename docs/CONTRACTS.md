@@ -1228,6 +1228,28 @@ Until 0.6.0 nothing leaves the browser. From 0.6.0: **nothing leaves your browse
 
 **Messages.** None are new for reading: the workbench reads the tab itself, and saving uses `import.commit`, which gains `pages` (below).
 
+**As built** (`src/ui/workbench/pdf.js`, with small hooks in `capture.js` and `imports.js`):
+- **Which tabs hold a PDF.** A web tab whose address path ends in `.pdf`, or one that answered `application/pdf` when asked for its `document.contentType`. The workbench asks the current tab whenever its tab list refreshes, where it can already read the tab, and once more in the click after access is settled. So a PDF at an address without `.pdf` reads "Capture this PDF" as soon as the tab is readable, and takes the same path even when it is found only in the click.
+- **The click** (`capturePdf`) uses `currentPagePlan` exactly as *Capture this page* does: when the site must be asked for, the same click asks. Then `readPdfTab`, then the preview. The links' source page is the tab's address at that moment, without its fragment.
+  - Declined: "You declined Chrome’s request for access to <site>, so Link Meteor could not read this PDF. Capture it again to be asked again. Nothing was added."
+  - No access: "Link Meteor has no access to this PDF’s tab. Click the Link Meteor toolbar icon while on the PDF, then choose Capture this PDF again. Nothing was added."
+  - A tab whose address ends in `.pdf` but shows a web page (a sign-in page, say) is treated as a PDF's tab, and the click ends with the words for an answer that wasn't a PDF.
+- **The Capture section on a PDF's tab:**
+  - `#capture-label`: "Capture this PDF".
+  - `#scope-preview`: the tab's title and site, then "A PDF. Link Meteor reads the links inside it and shows them before adding any.", and the usual sentence when Chrome will be asked for the site.
+  - `#arm` is disabled and described by `#pdf-note`: "Regions can’t be drawn on a PDF."
+- **A PDF opened from the computer** (a `file:` address ending in `.pdf`):
+  - `#scope-preview` has the words above, and `#capture-label` reads "Choose this PDF…".
+  - `#pdf-note`: "You can also drop the file here. It is read in this browser and never uploaded, and Link Meteor needs no access for it. Regions can’t be drawn on a PDF."
+  - The click opens the Import links file chooser, limited to PDFs for that one choice. Link Meteor asks for no access.
+- **A PDF file** is known by its name (`.pdf`), its type (`application/pdf`) or its first bytes (`%PDF-`), and may be up to `MAX_PDF_BYTES`. Other files keep the 20 MB limit. `#import-file` accepts `.pdf` and `application/pdf`.
+- **Dropped files.** A file dropped on `#import-panel` (which shows `#import-drop-hint`) or anywhere in `#main` (the list, the Capture section, an open preview) is read like one from the chooser, whatever kind of importable file it is. The place that will take it gets the class `is-drop` while the file is over it. More than one file: "Drop one file at a time. Nothing was imported." A file dropped anywhere else does nothing, and the browser doesn't open it.
+- **In the background** (`src/background/urls.js`, `src/background.js`), in place of the 0.5.0 words:
+  - *Select a region* on a PDF is refused with `PDF_REGION_REFUSAL`, "Regions can’t be drawn on a PDF. Open Link Meteor’s side panel and choose Capture this PDF." From the shortcut or the right-click menu, the PDF's own page shows those words (`content.notice`); the full view shows them only where the page script can't load. For a PDF opened from the computer the words end "…and choose the PDF’s file there." (`PDF_FILE_REGION_REFUSAL`).
+  - In `capture.run`, a PDF's tab gets a result with `status: 'pdf'`, no error, and the `warning` "A PDF: capture it by itself with Capture this PDF." (`PDF_TAB_NOTE`), or "A PDF on your computer: choose its file with Import links." (`PDF_FILE_NOTE`). The capture report lists it as "PDF". The other tabs are captured as usual.
+  - `addressKind(address)` says what an address alone tells: `'pdf'`, `'pdf-file'`, `'file'` or `''`.
+- **The reader is loaded on first use.** `ui/workbench/pdf.js` loads with the workbench; `pdf-reader.js`, `pdf-tab.js`, `core/pdf.js` and PDF.js load when the first PDF is read.
+
 ### What is read from a PDF (`src/core/pdf.js`, pure)
 
 `src/core/pdf.js` imports nothing from the reader. The workbench hands it plain data, so it is unit-tested with and without real PDFs.
@@ -1269,6 +1291,20 @@ New optional fields; absent means none, so a 0.5.0 state needs no migration.
 - **Exports** gain a `PDF page` column beside the capture details in CSV, TSV, the workbook and JSON. Citation formats use the PDF's citation like any other page citation.
 - **A link's details** show "Page 3 of the PDF" beside its source, and the *Cited from* note says "Read from the PDF itself" for `source: 'pdf'`.
 
+**As built:**
+- **From a tab**, each link is sent to `import.commit` as `{anchorText, url, originalHref, pdfPage, context?, sourceUrl, sourceTitle}`. `sourceUrl` is the PDF's address without its fragment, and `sourceTitle` is the title the PDF gave, else the tab's title. `pages[sourceUrl]` is the PDF's citation with `readAt`, when the PDF said anything about itself.
+- **From a file**, each link is `{anchorText, url, originalHref, pdfPage, context?, imported}`, with `imported` such as `paper.pdf, page 3` (a long file name is cut so the label fits).
+- **The PDF itself as a link** is the first link of the batch and has no `pdfPage`:
+  - from a tab, `{anchorText: <title>, url, originalHref, sourceUrl, sourceTitle}` with `url` and `sourceUrl` both the PDF's address. `import.commit` lets a link without a page name a source page only when that page is the link's own address, as a saved tab does;
+  - from a file, `{anchorText: <title>, url, originalHref, imported: <file name>}`, where `url` is `https://arxiv.org/abs/<id>` (the stamp's ID, without its version) or else `https://doi.org/<doi>`. The PDF's citation is saved as `pages[url]`. Without that link, a file's citation is not saved, because no link would use it.
+- **Repeats are kept.** The same address twice in a PDF is two occurrences, as on web pages; nothing is left out as a repeat.
+- **Undo** (`import.undo`) removes the batch. The citation stays until no link uses it and the saved data is next tidied, as for every import and capture.
+- **Exports:** the column key is `pdfPage`, labeled "PDF page", after Frame URL. Its cell is the page number as text, or empty. JSON rows keep `pdfPage` as stored. Importing a Link Meteor export offers "PDF page" as a new column without choosing it.
+- **A link's details:** "Page 3 of the PDF" is a line (`.pdf-page`) under *Source page*. `citationSourceNote(source)` in `src/ui/workbench/review.js` returns the words for where a citation was read: "Read from the PDF itself." for `'pdf'`, and nothing for a page's own tags. The lookup's sources get their words there. A PDF's citation with no title is shown as "Untitled PDF".
+- **Two rules of `src/core/pdf.js` were tightened** against a real book:
+  - A printed address cut off at the end of a page is one link, on the page it starts on. Some PDFs carry such a link on as a strip across the next page's running head; that strip is known by the piece below it that completes the address, and its words (the heading) are not the link's.
+  - An apostrophe typeset as ’ no longer keeps a printed address in pieces.
+
 ### Settings: additive schema-v1 fields
 
 | Field | Type and default | Meaning |
@@ -1289,6 +1325,44 @@ A PDF's links are shown before anything is saved, in the Import links view (`#im
 - `#import-commit` ("Add 18 links") saves one batch with `import.commit`. The notice has Undo (`import.undo`).
 - **Nothing to add,** each in plain words: a PDF with no links ("This PDF has no links Link Meteor can read. Scanned pages are pictures, and addresses printed without a link aren’t picked up."); a PDF that needs a password ("Link Meteor doesn’t ask for passwords."); a damaged file; a file over a limit.
 - While reading, `#import-progress` says "Reading page 12 of 244…" with Cancel.
+
+**As built** (`src/ui/workbench/pdf.js`; the view is the Import links view, with the column mapping and its options hidden):
+- `#import-title`: "Links in this PDF".
+- `#import-source`: `“<title>” · 15 pages · from this tab (<site>)`, or `<file name> · 27 pages · from a file`. For a tab, the title is the PDF's own, else the tab's.
+- `#pdf-facts` (a description list labeled "What the PDF says about itself"; each value is `.pdf-fact` and where it was read is `.pdf-how`), hidden when the PDF says nothing usable:
+  - arXiv: `arXiv:2409.11211v1 · cs.CV · 17 Sep 2024`, "from the stamp on page 1";
+  - DOI: the DOI, "from page 1" or "from the PDF’s own details";
+  - Title, with where it was read;
+  - Authors: the names, or "None read" with "PDFs rarely name them reliably.", followed by "Look up details can fill them in." when the PDF has a DOI or an arXiv ID;
+  - Journal (or Date), when the PDF's own details give them.
+- `#import-table`: Page (`p. 3`), Anchor text, Address, and a last column headed "Left out because" for screen readers. Empty anchor text shows "(no words: a picture)" in `td.empty-text` and is saved empty. Links already saved in the destination are struck through with "Already saved there". The first 100 rows are shown; `#import-table-note` says "All 17 links." or "Showing the first 100 of 117 links."
+- `#import-only-skipped`, labeled "Show what was left out" (`#import-only-skipped-label`) and shown only when something was: one row counting the links to places inside the PDF ("No address"), one counting links over the 20,000-link limit, a row for each link that isn't a web, email or phone address ("(not read)", with its page), and the links already saved there.
+- `#import-destination`: the open collection by default, any other collection, or a new one named after the PDF. *Skip links already saved there* (`#import-skip-saved`) is on by default.
+- `#pdf-self` (in `#pdf-self-row`, labeled by `#pdf-self-label`):
+  - "Also save this PDF as a link, with what it says about itself" for a tab;
+  - "Also save this paper as a link (its arXiv page), with what the PDF says about itself", or "(its DOI address)", for a file that names one. For a file that names neither, the choice isn't offered.
+  - It is on unless the destination already holds that address, and it follows the destination until the person changes it. While *Skip links already saved there* is on and the address is saved there, it is off and disabled.
+- `#import-summary-main`: "Adds 17 links from 3 of 15 pages, and the PDF itself as a link." A file's links are "marked Imported", and the paper is "the paper’s arXiv page" or "the paper’s DOI address". With no links to add: "Adds the PDF itself as a link." or "Nothing to add."
+- `#import-summary-skips`, as they apply:
+  - "This PDF has no links Link Meteor can read. Scanned pages are pictures, and addresses printed without a link aren’t picked up."
+  - "Every link in this PDF is already saved there. Untick “Skip links already saved there” to add them again."
+  - "Left out: 95 links to places inside the PDF, 2 that aren’t web, email or phone addresses, 3 already saved there."
+  - "7 links are on pictures and have no words; their anchor text stays empty."
+  - "You can undo this."
+- `#import-commit`: "Add 17 links"; "Add this PDF as a link" or "Add this paper as a link" when only the PDF itself is added; disabled as "Add links" when there is nothing to add. The count never includes the PDF itself, which the summary names.
+- **The notice:** "Added 17 links and the PDF itself to “<collection>”." with Undo, which answers "Undone: removed 18 links."
+- **Reading:** `#import-progress` (a status) says "Getting the PDF from its tab…" or "Reading <file name>…", then "Reading page 12 of 244…". Cancel, or Escape, stops the reading through an `AbortController` and says "Canceled. Nothing was added."
+- **Nothing to add,** each ending "Nothing was added." and closing the view:
+  - "This PDF needs a password. Link Meteor doesn’t ask for passwords."
+  - "This PDF is damaged, or it isn’t a PDF, so it couldn’t be read."
+  - "This file isn’t a PDF."
+  - "<file name> is larger than 50 MB, the most Link Meteor reads."
+  - "This PDF has 2,001 pages. Link Meteor reads PDFs of up to 2,000 pages."
+  - each of `PDF_TAB_REASONS`, with "Download the PDF, then choose Import links, PDF file."
+  A PDF with no links still opens the preview, so the PDF itself can be saved as a link when it has an address.
+- The preview follows what is saved: when the destination's links change while it is open, it is planned again.
+- **About and help** (`#about-pdfjs`): "Reads PDFs with PDF.js by Mozilla (Apache License 2.0), which is part of Link Meteor. PDFs are read in this browser and never uploaded."
+- **Tested** in the loaded extension by `tests/pdf-browser.mjs` (a PDF file: the chooser, drops, every refusal, Cancel, the keyboard, 320 px and contrast; it needs no toolbar action, so it also runs on the oldest supported Chrome), `tests/pdf-tab-browser.mjs` (Capture this PDF through Chrome's real toolbar action, a local PDF's tab, regions and several tabs) and `tests/imports-browser.mjs` (a PDF beside the other sources). `tests/access-granted.mjs` checks a PDF captured where the site is already allowed and the toolbar wasn't clicked.
 
 ### Runs: auto-scroll, Follow Next and selected pages
 

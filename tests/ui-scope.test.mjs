@@ -145,7 +145,7 @@ test('a PDF in the current tab is read as a PDF, with the site asked for in the 
     pagePlan: { ask: true, origin: 'https://papers.test', tabId: 7 }, pdf: 'web' });
   await web.runCapture();
   assert.deepEqual(Array.from(web.permissionCalls[0].origins), ['https://papers.test/*'], 'the same click asks for the site');
-  assert.deepEqual(JSON.parse(JSON.stringify(web.pdfCalls)), [{ tabId: 7, asked: true, origin: 'https://papers.test' }]);
+  assert.deepEqual(JSON.parse(JSON.stringify(web.pdfCalls)), [{ tabId: 7, declined: false, origin: 'https://papers.test' }], 'the site was allowed');
   assert.equal(web.messages.some((m) => m.type === 'capture.run'), false);
   assert.deepEqual([web.ui.busy, web.captureButton.disabled], [false, false]);
   // A PDF opened from the computer: the click opens the file chooser at once, and asks for nothing.

@@ -121,7 +121,8 @@ try {
     await browser.send('Input.dispatchKeyEvent', {type: 'keyDown', key: name, code: name === ' ' ? 'Space' : name, windowsVirtualKeyCode: code, modifiers, ...(name === 'Enter' ? {text: '\r'} : name === ' ' ? {text: ' '} : {})}, ui);
     await browser.send('Input.dispatchKeyEvent', {type: 'keyUp', key: name, code: name === ' ' ? 'Space' : name, windowsVirtualKeyCode: code, modifiers}, ui);
   };
-  const shot = async (name) => { const {data} = await browser.send('Page.captureScreenshot', {format: 'png'}, ui); await writeFile(resolve(evidence, name), Buffer.from(data, 'base64')); result.screenshots.push(name); };
+  // A picture is evidence, not a check: if Chrome doesn't hand one over, the suite says so and goes on.
+  const shot = async (name) => { const png = await browser.screenshot(ui, {targetId: uiTarget}); if (!png) { (result.screenshotsMissed ||= []).push(name); console.log('NOTE no screenshot', name); return; } await writeFile(resolve(evidence, name), png); result.screenshots.push(name); };
   const running = () => rpc({type: 'run.status'}).then(({run: last}) => (last && last.state !== 'done' ? last : null));
   const lastRun = () => rpc({type: 'run.status'}).then(({run: last}) => last);
   const tabCount = () => js(ui, `chrome.tabs.query({}).then((tabs) => tabs.length)`);

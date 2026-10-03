@@ -451,8 +451,12 @@ try {
   await finished();
   assert.equal(await overflow(ui), false, 'the result at 320');
   await toTop('#lookup-status'); await inBoth('lookup-done-320');
-  await row(0).locator('.row-details summary').click();
-  await row(0).locator('.cited-note').waitFor();
+  // The list can be drawn once more just after a run saves (the saved state arrives from the
+  // background), which closes details opened in that moment: open them until the note shows.
+  await until(async () => {
+    if (!(await row(0).locator('.row-details').evaluate((details) => details.open))) await row(0).locator('.row-details summary').click();
+    return row(0).locator('.cited-note').isVisible();
+  }, 'a looked-up citation shows in a link’s details at 320', 20000);
   assert.equal(await overflow(ui), false, 'a looked-up citation in a link’s details at 320');
   await row(0).locator('.row-details summary').click();
   await select(6);

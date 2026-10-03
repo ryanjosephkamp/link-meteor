@@ -1,0 +1,6 @@
+PASS The panel names exactly the two sites without access; the site already allowed is not asked for again 
+{"time":"2026-10-03T15:09:31.603Z","step":"awaiting-native-allow","origins":["http://localhost:52478/*","http://localhost:52488/*"],"via":"Capture their pages…: Allow these 2 sites","prompt":"Chrome asks to let Link Meteor read and change your data on both sites, in one prompt. Click Allow."}
+{"time":"2026-10-03T15:09:32.953Z","step":"granted","origins":["http://localhost:52478","http://localhost:52488"]}
+PASS Allow these 2 sites: one request in the click, for exactly those two sites; the panel then says access is there {"native":"the owner clicked Allow on Chrome’s prompt"}
+PASS With the two sites allowed, all three pages are read in background tabs and closed, as one batch with one Undo {"links":62}
+PASS The two grants are removed again 

@@ -1,0 +1,1692 @@
+{
+  "started": "2026-10-03T15:33:22.303Z",
+  "browser": "Chrome for Testing, headless, fresh temporary profile, real unpacked extension, no optional grants; Chrome’s real toolbar action; permission requests are stubbed",
+  "checks": [
+    {
+      "name": "Under Capture this page: Scroll to the end first and Follow Next, each with its limits in words; the number of pages takes 2 to 20"
+    },
+    {
+      "name": "Scroll to the end first: a counter with Stop in the workbench and on the page, every batch of the feed in one batch of links, and Undo",
+      "links": 61
+    },
+    {
+      "name": "Follow Next reads three pages in the same tab after one toolbar click, 1.5 seconds apart, as one batch; the report lists each page; Undo removes them together",
+      "links": 40,
+      "gapMs": 1834
+    },
+    {
+      "name": "The cap: with 2 pages set, the run stops at page 2 and says the page has a Next link; with Scroll to the end first, each page is scrolled"
+    },
+    {
+      "name": "Follow Next ends, each in its own words: a loop, a next page on a site without access (not opened), a page Chrome can’t load, and a page that doesn’t load in 30 seconds"
+    },
+    {
+      "name": "Stop in the workbench (by keyboard) and Escape on the page each end the run; what it had is kept, and the report says so",
+      "rows": 2
+    },
+    {
+      "name": "Closing the tab ends the run, with what it had kept"
+    },
+    {
+      "name": "A PDF among selected pages: the view reads it in its tab and answers with its links, their pages and what the PDF says about itself; a tab it can’t read is answered with the reason",
+      "links": 15,
+      "pages": 3
+    },
+    {
+      "name": "Capture their pages…: the panel says what will happen and which sites it needs; one request names exactly those sites; without real access every page is reported “No access” and none is opened",
+      "simulated": "Chrome’s prompt was stubbed: a decline, then a grant"
+    },
+    {
+      "name": "More than 20 pages are refused with “Choose up to 20 pages at a time.”; Escape closes the panel; a link’s details open it for that one page; a new collection needs a name"
+    },
+    {
+      "name": "At 320 px nothing overflows; text contrast is at least 4.5:1 in all 7 themes, light and dark, for the choices, the progress line, the report and the panel",
+      "measured": 406,
+      "lowest": 5.07
+    },
+    {
+      "name": "Nothing was downloaded, and nothing but the fixture server was asked",
+      "requests": 46
+    }
+  ],
+  "screenshots": [
+    "runs-pages-panel.png",
+    "runs-pages-panel-320.png",
+    "runs-report-320.png",
+    "runs-progress-320.png",
+    "runs-progress-light.png",
+    "runs-progress-dark.png",
+    "runs-report-light.png",
+    "runs-report-dark.png",
+    "runs-pages-panel-light.png",
+    "runs-pages-panel-dark.png"
+  ],
+  "contrast": [
+    {
+      "name": "meteor light Scroll to the end first, during a run",
+      "ratio": 5.42
+    },
+    {
+      "name": "meteor light its limits",
+      "ratio": 5.42
+    },
+    {
+      "name": "meteor light Follow Next, during a run",
+      "ratio": 5.42
+    },
+    {
+      "name": "meteor light pages",
+      "ratio": 16.48
+    },
+    {
+      "name": "meteor light Follow Next’s limits",
+      "ratio": 5.42
+    },
+    {
+      "name": "meteor light run title",
+      "ratio": 15.2
+    },
+    {
+      "name": "meteor light run counter",
+      "ratio": 9.6
+    },
+    {
+      "name": "meteor light Stop",
+      "ratio": 16.48
+    },
+    {
+      "name": "meteor dark Scroll to the end first, during a run",
+      "ratio": 8.07
+    },
+    {
+      "name": "meteor dark its limits",
+      "ratio": 8.07
+    },
+    {
+      "name": "meteor dark Follow Next, during a run",
+      "ratio": 8.07
+    },
+    {
+      "name": "meteor dark pages",
+      "ratio": 15.41
+    },
+    {
+      "name": "meteor dark Follow Next’s limits",
+      "ratio": 8.07
+    },
+    {
+      "name": "meteor dark run title",
+      "ratio": 13.68
+    },
+    {
+      "name": "meteor dark run counter",
+      "ratio": 10.19
+    },
+    {
+      "name": "meteor dark Stop",
+      "ratio": 15.41
+    },
+    {
+      "name": "comet light Scroll to the end first, during a run",
+      "ratio": 5.34
+    },
+    {
+      "name": "comet light its limits",
+      "ratio": 5.34
+    },
+    {
+      "name": "comet light Follow Next, during a run",
+      "ratio": 5.34
+    },
+    {
+      "name": "comet light pages",
+      "ratio": 16.33
+    },
+    {
+      "name": "comet light Follow Next’s limits",
+      "ratio": 5.34
+    },
+    {
+      "name": "comet light run title",
+      "ratio": 15.06
+    },
+    {
+      "name": "comet light run counter",
+      "ratio": 9.5
+    },
+    {
+      "name": "comet light Stop",
+      "ratio": 16.33
+    },
+    {
+      "name": "comet dark Scroll to the end first, during a run",
+      "ratio": 8.1
+    },
+    {
+      "name": "comet dark its limits",
+      "ratio": 8.1
+    },
+    {
+      "name": "comet dark Follow Next, during a run",
+      "ratio": 8.1
+    },
+    {
+      "name": "comet dark pages",
+      "ratio": 15.35
+    },
+    {
+      "name": "comet dark Follow Next’s limits",
+      "ratio": 8.1
+    },
+    {
+      "name": "comet dark run title",
+      "ratio": 13.71
+    },
+    {
+      "name": "comet dark run counter",
+      "ratio": 10.2
+    },
+    {
+      "name": "comet dark Stop",
+      "ratio": 15.35
+    },
+    {
+      "name": "aurora light Scroll to the end first, during a run",
+      "ratio": 5.37
+    },
+    {
+      "name": "aurora light its limits",
+      "ratio": 5.37
+    },
+    {
+      "name": "aurora light Follow Next, during a run",
+      "ratio": 5.37
+    },
+    {
+      "name": "aurora light pages",
+      "ratio": 16.36
+    },
+    {
+      "name": "aurora light Follow Next’s limits",
+      "ratio": 5.37
+    },
+    {
+      "name": "aurora light run title",
+      "ratio": 15.08
+    },
+    {
+      "name": "aurora light run counter",
+      "ratio": 9.53
+    },
+    {
+      "name": "aurora light Stop",
+      "ratio": 16.36
+    },
+    {
+      "name": "aurora dark Scroll to the end first, during a run",
+      "ratio": 8.08
+    },
+    {
+      "name": "aurora dark its limits",
+      "ratio": 8.08
+    },
+    {
+      "name": "aurora dark Follow Next, during a run",
+      "ratio": 8.08
+    },
+    {
+      "name": "aurora dark pages",
+      "ratio": 15.29
+    },
+    {
+      "name": "aurora dark Follow Next’s limits",
+      "ratio": 8.08
+    },
+    {
+      "name": "aurora dark run title",
+      "ratio": 13.67
+    },
+    {
+      "name": "aurora dark run counter",
+      "ratio": 10.2
+    },
+    {
+      "name": "aurora dark Stop",
+      "ratio": 15.29
+    },
+    {
+      "name": "ember light Scroll to the end first, during a run",
+      "ratio": 5.44
+    },
+    {
+      "name": "ember light its limits",
+      "ratio": 5.44
+    },
+    {
+      "name": "ember light Follow Next, during a run",
+      "ratio": 5.44
+    },
+    {
+      "name": "ember light pages",
+      "ratio": 16.51
+    },
+    {
+      "name": "ember light Follow Next’s limits",
+      "ratio": 5.44
+    },
+    {
+      "name": "ember light run title",
+      "ratio": 14.52
+    },
+    {
+      "name": "ember light run counter",
+      "ratio": 9.25
+    },
+    {
+      "name": "ember light Stop",
+      "ratio": 16.51
+    },
+    {
+      "name": "ember dark Scroll to the end first, during a run",
+      "ratio": 8.04
+    },
+    {
+      "name": "ember dark its limits",
+      "ratio": 8.04
+    },
+    {
+      "name": "ember dark Follow Next, during a run",
+      "ratio": 8.04
+    },
+    {
+      "name": "ember dark pages",
+      "ratio": 15.43
+    },
+    {
+      "name": "ember dark Follow Next’s limits",
+      "ratio": 8.04
+    },
+    {
+      "name": "ember dark run title",
+      "ratio": 13.96
+    },
+    {
+      "name": "ember dark run counter",
+      "ratio": 10.4
+    },
+    {
+      "name": "ember dark Stop",
+      "ratio": 15.43
+    },
+    {
+      "name": "nebula light Scroll to the end first, during a run",
+      "ratio": 5.45
+    },
+    {
+      "name": "nebula light its limits",
+      "ratio": 5.45
+    },
+    {
+      "name": "nebula light Follow Next, during a run",
+      "ratio": 5.45
+    },
+    {
+      "name": "nebula light pages",
+      "ratio": 16.59
+    },
+    {
+      "name": "nebula light Follow Next’s limits",
+      "ratio": 5.45
+    },
+    {
+      "name": "nebula light run title",
+      "ratio": 14.89
+    },
+    {
+      "name": "nebula light run counter",
+      "ratio": 9.48
+    },
+    {
+      "name": "nebula light Stop",
+      "ratio": 16.59
+    },
+    {
+      "name": "nebula dark Scroll to the end first, during a run",
+      "ratio": 8.01
+    },
+    {
+      "name": "nebula dark its limits",
+      "ratio": 8.01
+    },
+    {
+      "name": "nebula dark Follow Next, during a run",
+      "ratio": 8.01
+    },
+    {
+      "name": "nebula dark pages",
+      "ratio": 15.31
+    },
+    {
+      "name": "nebula dark Follow Next’s limits",
+      "ratio": 8.01
+    },
+    {
+      "name": "nebula dark run title",
+      "ratio": 13.99
+    },
+    {
+      "name": "nebula dark run counter",
+      "ratio": 10.41
+    },
+    {
+      "name": "nebula dark Stop",
+      "ratio": 15.31
+    },
+    {
+      "name": "graphite light Scroll to the end first, during a run",
+      "ratio": 5.41
+    },
+    {
+      "name": "graphite light its limits",
+      "ratio": 5.41
+    },
+    {
+      "name": "graphite light Follow Next, during a run",
+      "ratio": 5.41
+    },
+    {
+      "name": "graphite light pages",
+      "ratio": 16.48
+    },
+    {
+      "name": "graphite light Follow Next’s limits",
+      "ratio": 5.41
+    },
+    {
+      "name": "graphite light run title",
+      "ratio": 14.46
+    },
+    {
+      "name": "graphite light run counter",
+      "ratio": 9.1
+    },
+    {
+      "name": "graphite light Stop",
+      "ratio": 16.48
+    },
+    {
+      "name": "graphite dark Scroll to the end first, during a run",
+      "ratio": 8.1
+    },
+    {
+      "name": "graphite dark its limits",
+      "ratio": 8.1
+    },
+    {
+      "name": "graphite dark Follow Next, during a run",
+      "ratio": 8.1
+    },
+    {
+      "name": "graphite dark pages",
+      "ratio": 15.43
+    },
+    {
+      "name": "graphite dark Follow Next’s limits",
+      "ratio": 8.1
+    },
+    {
+      "name": "graphite dark run title",
+      "ratio": 13.28
+    },
+    {
+      "name": "graphite dark run counter",
+      "ratio": 9.91
+    },
+    {
+      "name": "graphite dark Stop",
+      "ratio": 15.43
+    },
+    {
+      "name": "contrast light Scroll to the end first, during a run",
+      "ratio": 12.13
+    },
+    {
+      "name": "contrast light its limits",
+      "ratio": 12.13
+    },
+    {
+      "name": "contrast light Follow Next, during a run",
+      "ratio": 12.13
+    },
+    {
+      "name": "contrast light pages",
+      "ratio": 21
+    },
+    {
+      "name": "contrast light Follow Next’s limits",
+      "ratio": 12.13
+    },
+    {
+      "name": "contrast light run title",
+      "ratio": 17.64
+    },
+    {
+      "name": "contrast light run counter",
+      "ratio": 16.54
+    },
+    {
+      "name": "contrast light Stop",
+      "ratio": 21
+    },
+    {
+      "name": "contrast dark Scroll to the end first, during a run",
+      "ratio": 13.67
+    },
+    {
+      "name": "contrast dark its limits",
+      "ratio": 13.67
+    },
+    {
+      "name": "contrast dark Follow Next, during a run",
+      "ratio": 13.67
+    },
+    {
+      "name": "contrast dark pages",
+      "ratio": 20.14
+    },
+    {
+      "name": "contrast dark Follow Next’s limits",
+      "ratio": 13.67
+    },
+    {
+      "name": "contrast dark run title",
+      "ratio": 15.91
+    },
+    {
+      "name": "contrast dark run counter",
+      "ratio": 13.35
+    },
+    {
+      "name": "contrast dark Stop",
+      "ratio": 20.14
+    },
+    {
+      "name": "meteor light Scroll to the end first, when it can be chosen",
+      "ratio": 14.83
+    },
+    {
+      "name": "meteor light Follow Next, when it can be chosen",
+      "ratio": 14.83
+    },
+    {
+      "name": "meteor light report head",
+      "ratio": 14.83
+    },
+    {
+      "name": "meteor light Undo",
+      "ratio": 5.1
+    },
+    {
+      "name": "meteor light report column",
+      "ratio": 9.37
+    },
+    {
+      "name": "meteor light report cell",
+      "ratio": 9.37
+    },
+    {
+      "name": "meteor light report page",
+      "ratio": 14.83
+    },
+    {
+      "name": "meteor light how it ended",
+      "ratio": 9.37
+    },
+    {
+      "name": "meteor light how it ended early",
+      "ratio": 5.13
+    },
+    {
+      "name": "meteor light report note",
+      "ratio": 9.37
+    },
+    {
+      "name": "meteor dark Scroll to the end first, when it can be chosen",
+      "ratio": 16.92
+    },
+    {
+      "name": "meteor dark Follow Next, when it can be chosen",
+      "ratio": 16.92
+    },
+    {
+      "name": "meteor dark report head",
+      "ratio": 16.92
+    },
+    {
+      "name": "meteor dark Undo",
+      "ratio": 14
+    },
+    {
+      "name": "meteor dark report column",
+      "ratio": 12.61
+    },
+    {
+      "name": "meteor dark report cell",
+      "ratio": 12.61
+    },
+    {
+      "name": "meteor dark report page",
+      "ratio": 16.92
+    },
+    {
+      "name": "meteor dark how it ended",
+      "ratio": 12.61
+    },
+    {
+      "name": "meteor dark how it ended early",
+      "ratio": 11.74
+    },
+    {
+      "name": "meteor dark report note",
+      "ratio": 12.61
+    },
+    {
+      "name": "comet light Scroll to the end first, when it can be chosen",
+      "ratio": 14.64
+    },
+    {
+      "name": "comet light Follow Next, when it can be chosen",
+      "ratio": 14.64
+    },
+    {
+      "name": "comet light report head",
+      "ratio": 14.64
+    },
+    {
+      "name": "comet light Undo",
+      "ratio": 5.07
+    },
+    {
+      "name": "comet light report column",
+      "ratio": 9.23
+    },
+    {
+      "name": "comet light report cell",
+      "ratio": 9.23
+    },
+    {
+      "name": "comet light report page",
+      "ratio": 14.64
+    },
+    {
+      "name": "comet light how it ended",
+      "ratio": 9.23
+    },
+    {
+      "name": "comet light how it ended early",
+      "ratio": 5.11
+    },
+    {
+      "name": "comet light report note",
+      "ratio": 9.23
+    },
+    {
+      "name": "comet dark Scroll to the end first, when it can be chosen",
+      "ratio": 16.95
+    },
+    {
+      "name": "comet dark Follow Next, when it can be chosen",
+      "ratio": 16.95
+    },
+    {
+      "name": "comet dark report head",
+      "ratio": 16.95
+    },
+    {
+      "name": "comet dark Undo",
+      "ratio": 13.09
+    },
+    {
+      "name": "comet dark report column",
+      "ratio": 12.6
+    },
+    {
+      "name": "comet dark report cell",
+      "ratio": 12.6
+    },
+    {
+      "name": "comet dark report page",
+      "ratio": 16.95
+    },
+    {
+      "name": "comet dark how it ended",
+      "ratio": 12.6
+    },
+    {
+      "name": "comet dark how it ended early",
+      "ratio": 11.73
+    },
+    {
+      "name": "comet dark report note",
+      "ratio": 12.6
+    },
+    {
+      "name": "aurora light Scroll to the end first, when it can be chosen",
+      "ratio": 14.74
+    },
+    {
+      "name": "aurora light Follow Next, when it can be chosen",
+      "ratio": 14.74
+    },
+    {
+      "name": "aurora light report head",
+      "ratio": 14.74
+    },
+    {
+      "name": "aurora light Undo",
+      "ratio": 5.11
+    },
+    {
+      "name": "aurora light report column",
+      "ratio": 9.31
+    },
+    {
+      "name": "aurora light report cell",
+      "ratio": 9.31
+    },
+    {
+      "name": "aurora light report page",
+      "ratio": 14.74
+    },
+    {
+      "name": "aurora light how it ended",
+      "ratio": 9.31
+    },
+    {
+      "name": "aurora light how it ended early",
+      "ratio": 5.13
+    },
+    {
+      "name": "aurora light report note",
+      "ratio": 9.31
+    },
+    {
+      "name": "aurora dark Scroll to the end first, when it can be chosen",
+      "ratio": 16.89
+    },
+    {
+      "name": "aurora dark Follow Next, when it can be chosen",
+      "ratio": 16.89
+    },
+    {
+      "name": "aurora dark report head",
+      "ratio": 16.89
+    },
+    {
+      "name": "aurora dark Undo",
+      "ratio": 13.17
+    },
+    {
+      "name": "aurora dark report column",
+      "ratio": 12.6
+    },
+    {
+      "name": "aurora dark report cell",
+      "ratio": 12.6
+    },
+    {
+      "name": "aurora dark report page",
+      "ratio": 16.89
+    },
+    {
+      "name": "aurora dark how it ended",
+      "ratio": 12.6
+    },
+    {
+      "name": "aurora dark how it ended early",
+      "ratio": 11.71
+    },
+    {
+      "name": "aurora dark report note",
+      "ratio": 12.6
+    },
+    {
+      "name": "ember light Scroll to the end first, when it can be chosen",
+      "ratio": 14.84
+    },
+    {
+      "name": "ember light Follow Next, when it can be chosen",
+      "ratio": 14.84
+    },
+    {
+      "name": "ember light report head",
+      "ratio": 14.84
+    },
+    {
+      "name": "ember light Undo",
+      "ratio": 5.32
+    },
+    {
+      "name": "ember light report column",
+      "ratio": 9.45
+    },
+    {
+      "name": "ember light report cell",
+      "ratio": 9.45
+    },
+    {
+      "name": "ember light report page",
+      "ratio": 14.84
+    },
+    {
+      "name": "ember light how it ended",
+      "ratio": 9.45
+    },
+    {
+      "name": "ember light how it ended early",
+      "ratio": 5.12
+    },
+    {
+      "name": "ember light report note",
+      "ratio": 9.45
+    },
+    {
+      "name": "ember dark Scroll to the end first, when it can be chosen",
+      "ratio": 16.87
+    },
+    {
+      "name": "ember dark Follow Next, when it can be chosen",
+      "ratio": 16.87
+    },
+    {
+      "name": "ember dark report head",
+      "ratio": 16.87
+    },
+    {
+      "name": "ember dark Undo",
+      "ratio": 10.64
+    },
+    {
+      "name": "ember dark report column",
+      "ratio": 12.56
+    },
+    {
+      "name": "ember dark report cell",
+      "ratio": 12.56
+    },
+    {
+      "name": "ember dark report page",
+      "ratio": 16.87
+    },
+    {
+      "name": "ember dark how it ended",
+      "ratio": 12.56
+    },
+    {
+      "name": "ember dark how it ended early",
+      "ratio": 11.72
+    },
+    {
+      "name": "ember dark report note",
+      "ratio": 12.56
+    },
+    {
+      "name": "nebula light Scroll to the end first, when it can be chosen",
+      "ratio": 14.89
+    },
+    {
+      "name": "nebula light Follow Next, when it can be chosen",
+      "ratio": 14.89
+    },
+    {
+      "name": "nebula light report head",
+      "ratio": 14.89
+    },
+    {
+      "name": "nebula light Undo",
+      "ratio": 5.44
+    },
+    {
+      "name": "nebula light report column",
+      "ratio": 9.48
+    },
+    {
+      "name": "nebula light report cell",
+      "ratio": 9.48
+    },
+    {
+      "name": "nebula light report page",
+      "ratio": 14.89
+    },
+    {
+      "name": "nebula light how it ended",
+      "ratio": 9.48
+    },
+    {
+      "name": "nebula light how it ended early",
+      "ratio": 5.11
+    },
+    {
+      "name": "nebula light report note",
+      "ratio": 9.48
+    },
+    {
+      "name": "nebula dark Scroll to the end first, when it can be chosen",
+      "ratio": 16.87
+    },
+    {
+      "name": "nebula dark Follow Next, when it can be chosen",
+      "ratio": 16.87
+    },
+    {
+      "name": "nebula dark report head",
+      "ratio": 16.87
+    },
+    {
+      "name": "nebula dark Undo",
+      "ratio": 11.33
+    },
+    {
+      "name": "nebula dark report column",
+      "ratio": 12.55
+    },
+    {
+      "name": "nebula dark report cell",
+      "ratio": 12.55
+    },
+    {
+      "name": "nebula dark report page",
+      "ratio": 16.87
+    },
+    {
+      "name": "nebula dark how it ended",
+      "ratio": 12.55
+    },
+    {
+      "name": "nebula dark how it ended early",
+      "ratio": 11.74
+    },
+    {
+      "name": "nebula dark report note",
+      "ratio": 12.55
+    },
+    {
+      "name": "graphite light Scroll to the end first, when it can be chosen",
+      "ratio": 14.85
+    },
+    {
+      "name": "graphite light Follow Next, when it can be chosen",
+      "ratio": 14.85
+    },
+    {
+      "name": "graphite light report head",
+      "ratio": 14.85
+    },
+    {
+      "name": "graphite light Undo",
+      "ratio": 12.24
+    },
+    {
+      "name": "graphite light report column",
+      "ratio": 9.34
+    },
+    {
+      "name": "graphite light report cell",
+      "ratio": 9.34
+    },
+    {
+      "name": "graphite light report page",
+      "ratio": 14.85
+    },
+    {
+      "name": "graphite light how it ended",
+      "ratio": 9.34
+    },
+    {
+      "name": "graphite light how it ended early",
+      "ratio": 5.14
+    },
+    {
+      "name": "graphite light report note",
+      "ratio": 9.34
+    },
+    {
+      "name": "graphite dark Scroll to the end first, when it can be chosen",
+      "ratio": 16.94
+    },
+    {
+      "name": "graphite dark Follow Next, when it can be chosen",
+      "ratio": 16.94
+    },
+    {
+      "name": "graphite dark report head",
+      "ratio": 16.94
+    },
+    {
+      "name": "graphite dark Undo",
+      "ratio": 15.18
+    },
+    {
+      "name": "graphite dark report column",
+      "ratio": 12.64
+    },
+    {
+      "name": "graphite dark report cell",
+      "ratio": 12.64
+    },
+    {
+      "name": "graphite dark report page",
+      "ratio": 16.94
+    },
+    {
+      "name": "graphite dark how it ended",
+      "ratio": 12.64
+    },
+    {
+      "name": "graphite dark how it ended early",
+      "ratio": 11.74
+    },
+    {
+      "name": "graphite dark report note",
+      "ratio": 12.64
+    },
+    {
+      "name": "contrast light Scroll to the end first, when it can be chosen",
+      "ratio": 18.76
+    },
+    {
+      "name": "contrast light Follow Next, when it can be chosen",
+      "ratio": 18.76
+    },
+    {
+      "name": "contrast light report head",
+      "ratio": 18.76
+    },
+    {
+      "name": "contrast light Undo",
+      "ratio": 8.4
+    },
+    {
+      "name": "contrast light report column",
+      "ratio": 17.58
+    },
+    {
+      "name": "contrast light report cell",
+      "ratio": 17.58
+    },
+    {
+      "name": "contrast light report page",
+      "ratio": 18.76
+    },
+    {
+      "name": "contrast light how it ended",
+      "ratio": 17.58
+    },
+    {
+      "name": "contrast light how it ended early",
+      "ratio": 7.84
+    },
+    {
+      "name": "contrast light report note",
+      "ratio": 17.58
+    },
+    {
+      "name": "contrast dark Scroll to the end first, when it can be chosen",
+      "ratio": 20.87
+    },
+    {
+      "name": "contrast dark Follow Next, when it can be chosen",
+      "ratio": 20.87
+    },
+    {
+      "name": "contrast dark report head",
+      "ratio": 20.87
+    },
+    {
+      "name": "contrast dark Undo",
+      "ratio": 16.68
+    },
+    {
+      "name": "contrast dark report column",
+      "ratio": 17.51
+    },
+    {
+      "name": "contrast dark report cell",
+      "ratio": 17.51
+    },
+    {
+      "name": "contrast dark report page",
+      "ratio": 20.87
+    },
+    {
+      "name": "contrast dark how it ended",
+      "ratio": 17.51
+    },
+    {
+      "name": "contrast dark how it ended early",
+      "ratio": 15.23
+    },
+    {
+      "name": "contrast dark report note",
+      "ratio": 17.51
+    },
+    {
+      "name": "meteor light Capture their pages…",
+      "ratio": 9.37
+    },
+    {
+      "name": "meteor light panel title",
+      "ratio": 16.48
+    },
+    {
+      "name": "meteor light fact",
+      "ratio": 10.41
+    },
+    {
+      "name": "meteor light access",
+      "ratio": 10.41
+    },
+    {
+      "name": "meteor light access heading",
+      "ratio": 16.48
+    },
+    {
+      "name": "meteor light Add to",
+      "ratio": 10.41
+    },
+    {
+      "name": "meteor light help",
+      "ratio": 6.02
+    },
+    {
+      "name": "meteor light Capture",
+      "ratio": 13.41
+    },
+    {
+      "name": "meteor light Cancel",
+      "ratio": 10.41
+    },
+    {
+      "name": "meteor light Capture its page…",
+      "ratio": 16.48
+    },
+    {
+      "name": "meteor light what it does",
+      "ratio": 6.02
+    },
+    {
+      "name": "meteor dark Capture their pages…",
+      "ratio": 12.61
+    },
+    {
+      "name": "meteor dark panel title",
+      "ratio": 15.41
+    },
+    {
+      "name": "meteor dark fact",
+      "ratio": 11.49
+    },
+    {
+      "name": "meteor dark access",
+      "ratio": 11.49
+    },
+    {
+      "name": "meteor dark access heading",
+      "ratio": 15.41
+    },
+    {
+      "name": "meteor dark Add to",
+      "ratio": 11.49
+    },
+    {
+      "name": "meteor dark help",
+      "ratio": 7.36
+    },
+    {
+      "name": "meteor dark Capture",
+      "ratio": 13.41
+    },
+    {
+      "name": "meteor dark Cancel",
+      "ratio": 11.49
+    },
+    {
+      "name": "meteor dark Capture its page…",
+      "ratio": 15.41
+    },
+    {
+      "name": "meteor dark what it does",
+      "ratio": 7.36
+    },
+    {
+      "name": "comet light Capture their pages…",
+      "ratio": 9.23
+    },
+    {
+      "name": "comet light panel title",
+      "ratio": 16.33
+    },
+    {
+      "name": "comet light fact",
+      "ratio": 10.3
+    },
+    {
+      "name": "comet light access",
+      "ratio": 10.3
+    },
+    {
+      "name": "comet light access heading",
+      "ratio": 16.33
+    },
+    {
+      "name": "comet light Add to",
+      "ratio": 10.3
+    },
+    {
+      "name": "comet light help",
+      "ratio": 5.96
+    },
+    {
+      "name": "comet light Capture",
+      "ratio": 11.76
+    },
+    {
+      "name": "comet light Cancel",
+      "ratio": 10.3
+    },
+    {
+      "name": "comet light Capture its page…",
+      "ratio": 16.33
+    },
+    {
+      "name": "comet light what it does",
+      "ratio": 5.96
+    },
+    {
+      "name": "comet dark Capture their pages…",
+      "ratio": 12.6
+    },
+    {
+      "name": "comet dark panel title",
+      "ratio": 15.35
+    },
+    {
+      "name": "comet dark fact",
+      "ratio": 11.41
+    },
+    {
+      "name": "comet dark access",
+      "ratio": 11.41
+    },
+    {
+      "name": "comet dark access heading",
+      "ratio": 15.35
+    },
+    {
+      "name": "comet dark Add to",
+      "ratio": 11.41
+    },
+    {
+      "name": "comet dark help",
+      "ratio": 7.33
+    },
+    {
+      "name": "comet dark Capture",
+      "ratio": 11.76
+    },
+    {
+      "name": "comet dark Cancel",
+      "ratio": 11.41
+    },
+    {
+      "name": "comet dark Capture its page…",
+      "ratio": 15.35
+    },
+    {
+      "name": "comet dark what it does",
+      "ratio": 7.33
+    },
+    {
+      "name": "aurora light Capture their pages…",
+      "ratio": 9.31
+    },
+    {
+      "name": "aurora light panel title",
+      "ratio": 16.36
+    },
+    {
+      "name": "aurora light fact",
+      "ratio": 10.34
+    },
+    {
+      "name": "aurora light access",
+      "ratio": 10.34
+    },
+    {
+      "name": "aurora light access heading",
+      "ratio": 16.36
+    },
+    {
+      "name": "aurora light Add to",
+      "ratio": 10.34
+    },
+    {
+      "name": "aurora light help",
+      "ratio": 5.96
+    },
+    {
+      "name": "aurora light Capture",
+      "ratio": 11.48
+    },
+    {
+      "name": "aurora light Cancel",
+      "ratio": 10.34
+    },
+    {
+      "name": "aurora light Capture its page…",
+      "ratio": 16.36
+    },
+    {
+      "name": "aurora light what it does",
+      "ratio": 5.96
+    },
+    {
+      "name": "aurora dark Capture their pages…",
+      "ratio": 12.6
+    },
+    {
+      "name": "aurora dark panel title",
+      "ratio": 15.29
+    },
+    {
+      "name": "aurora dark fact",
+      "ratio": 11.4
+    },
+    {
+      "name": "aurora dark access",
+      "ratio": 11.4
+    },
+    {
+      "name": "aurora dark access heading",
+      "ratio": 15.29
+    },
+    {
+      "name": "aurora dark Add to",
+      "ratio": 11.4
+    },
+    {
+      "name": "aurora dark help",
+      "ratio": 7.31
+    },
+    {
+      "name": "aurora dark Capture",
+      "ratio": 11.48
+    },
+    {
+      "name": "aurora dark Cancel",
+      "ratio": 11.4
+    },
+    {
+      "name": "aurora dark Capture its page…",
+      "ratio": 15.29
+    },
+    {
+      "name": "aurora dark what it does",
+      "ratio": 7.31
+    },
+    {
+      "name": "ember light Capture their pages…",
+      "ratio": 9.45
+    },
+    {
+      "name": "ember light panel title",
+      "ratio": 16.51
+    },
+    {
+      "name": "ember light fact",
+      "ratio": 10.52
+    },
+    {
+      "name": "ember light access",
+      "ratio": 10.52
+    },
+    {
+      "name": "ember light access heading",
+      "ratio": 16.51
+    },
+    {
+      "name": "ember light Add to",
+      "ratio": 10.52
+    },
+    {
+      "name": "ember light help",
+      "ratio": 6.05
+    },
+    {
+      "name": "ember light Capture",
+      "ratio": 8.04
+    },
+    {
+      "name": "ember light Cancel",
+      "ratio": 10.52
+    },
+    {
+      "name": "ember light Capture its page…",
+      "ratio": 16.51
+    },
+    {
+      "name": "ember light what it does",
+      "ratio": 6.05
+    },
+    {
+      "name": "ember dark Capture their pages…",
+      "ratio": 12.56
+    },
+    {
+      "name": "ember dark panel title",
+      "ratio": 15.43
+    },
+    {
+      "name": "ember dark fact",
+      "ratio": 11.49
+    },
+    {
+      "name": "ember dark access",
+      "ratio": 11.49
+    },
+    {
+      "name": "ember dark access heading",
+      "ratio": 15.43
+    },
+    {
+      "name": "ember dark Add to",
+      "ratio": 11.49
+    },
+    {
+      "name": "ember dark help",
+      "ratio": 7.35
+    },
+    {
+      "name": "ember dark Capture",
+      "ratio": 8.04
+    },
+    {
+      "name": "ember dark Cancel",
+      "ratio": 11.49
+    },
+    {
+      "name": "ember dark Capture its page…",
+      "ratio": 15.43
+    },
+    {
+      "name": "ember dark what it does",
+      "ratio": 7.35
+    },
+    {
+      "name": "nebula light Capture their pages…",
+      "ratio": 9.48
+    },
+    {
+      "name": "nebula light panel title",
+      "ratio": 16.59
+    },
+    {
+      "name": "nebula light fact",
+      "ratio": 10.56
+    },
+    {
+      "name": "nebula light access",
+      "ratio": 10.56
+    },
+    {
+      "name": "nebula light access heading",
+      "ratio": 16.59
+    },
+    {
+      "name": "nebula light Add to",
+      "ratio": 10.56
+    },
+    {
+      "name": "nebula light help",
+      "ratio": 6.08
+    },
+    {
+      "name": "nebula light Capture",
+      "ratio": 8.85
+    },
+    {
+      "name": "nebula light Cancel",
+      "ratio": 10.56
+    },
+    {
+      "name": "nebula light Capture its page…",
+      "ratio": 16.59
+    },
+    {
+      "name": "nebula light what it does",
+      "ratio": 6.08
+    },
+    {
+      "name": "nebula dark Capture their pages…",
+      "ratio": 12.55
+    },
+    {
+      "name": "nebula dark panel title",
+      "ratio": 15.31
+    },
+    {
+      "name": "nebula dark fact",
+      "ratio": 11.39
+    },
+    {
+      "name": "nebula dark access",
+      "ratio": 11.39
+    },
+    {
+      "name": "nebula dark access heading",
+      "ratio": 15.31
+    },
+    {
+      "name": "nebula dark Add to",
+      "ratio": 11.39
+    },
+    {
+      "name": "nebula dark help",
+      "ratio": 7.27
+    },
+    {
+      "name": "nebula dark Capture",
+      "ratio": 8.85
+    },
+    {
+      "name": "nebula dark Cancel",
+      "ratio": 11.39
+    },
+    {
+      "name": "nebula dark Capture its page…",
+      "ratio": 15.31
+    },
+    {
+      "name": "nebula dark what it does",
+      "ratio": 7.27
+    },
+    {
+      "name": "graphite light Capture their pages…",
+      "ratio": 9.34
+    },
+    {
+      "name": "graphite light panel title",
+      "ratio": 16.48
+    },
+    {
+      "name": "graphite light fact",
+      "ratio": 10.37
+    },
+    {
+      "name": "graphite light access",
+      "ratio": 10.37
+    },
+    {
+      "name": "graphite light access heading",
+      "ratio": 16.48
+    },
+    {
+      "name": "graphite light Add to",
+      "ratio": 10.37
+    },
+    {
+      "name": "graphite light help",
+      "ratio": 6.01
+    },
+    {
+      "name": "graphite light Capture",
+      "ratio": 13.01
+    },
+    {
+      "name": "graphite light Cancel",
+      "ratio": 10.37
+    },
+    {
+      "name": "graphite light Capture its page…",
+      "ratio": 16.48
+    },
+    {
+      "name": "graphite light what it does",
+      "ratio": 6.01
+    },
+    {
+      "name": "graphite dark Capture their pages…",
+      "ratio": 12.64
+    },
+    {
+      "name": "graphite dark panel title",
+      "ratio": 15.43
+    },
+    {
+      "name": "graphite dark fact",
+      "ratio": 11.51
+    },
+    {
+      "name": "graphite dark access",
+      "ratio": 11.51
+    },
+    {
+      "name": "graphite dark access heading",
+      "ratio": 15.43
+    },
+    {
+      "name": "graphite dark Add to",
+      "ratio": 11.51
+    },
+    {
+      "name": "graphite dark help",
+      "ratio": 7.38
+    },
+    {
+      "name": "graphite dark Capture",
+      "ratio": 13.45
+    },
+    {
+      "name": "graphite dark Cancel",
+      "ratio": 11.51
+    },
+    {
+      "name": "graphite dark Capture its page…",
+      "ratio": 15.43
+    },
+    {
+      "name": "graphite dark what it does",
+      "ratio": 7.38
+    },
+    {
+      "name": "contrast light Capture their pages…",
+      "ratio": 17.58
+    },
+    {
+      "name": "contrast light panel title",
+      "ratio": 21
+    },
+    {
+      "name": "contrast light fact",
+      "ratio": 19.68
+    },
+    {
+      "name": "contrast light access",
+      "ratio": 19.68
+    },
+    {
+      "name": "contrast light access heading",
+      "ratio": 21
+    },
+    {
+      "name": "contrast light Add to",
+      "ratio": 19.68
+    },
+    {
+      "name": "contrast light help",
+      "ratio": 13.58
+    },
+    {
+      "name": "contrast light Capture",
+      "ratio": 21
+    },
+    {
+      "name": "contrast light Cancel",
+      "ratio": 19.68
+    },
+    {
+      "name": "contrast light Capture its page…",
+      "ratio": 21
+    },
+    {
+      "name": "contrast light what it does",
+      "ratio": 13.58
+    },
+    {
+      "name": "contrast dark Capture their pages…",
+      "ratio": 17.51
+    },
+    {
+      "name": "contrast dark panel title",
+      "ratio": 20.14
+    },
+    {
+      "name": "contrast dark fact",
+      "ratio": 16.9
+    },
+    {
+      "name": "contrast dark access",
+      "ratio": 16.9
+    },
+    {
+      "name": "contrast dark access heading",
+      "ratio": 20.14
+    },
+    {
+      "name": "contrast dark Add to",
+      "ratio": 16.9
+    },
+    {
+      "name": "contrast dark help",
+      "ratio": 13.19
+    },
+    {
+      "name": "contrast dark Capture",
+      "ratio": 16.78
+    },
+    {
+      "name": "contrast dark Cancel",
+      "ratio": 16.9
+    },
+    {
+      "name": "contrast dark Capture its page…",
+      "ratio": 20.14
+    },
+    {
+      "name": "contrast dark what it does",
+      "ratio": 13.19
+    }
+  ],
+  "status": "PASS",
+  "finished": "2026-10-03T15:35:21.583Z"
+}

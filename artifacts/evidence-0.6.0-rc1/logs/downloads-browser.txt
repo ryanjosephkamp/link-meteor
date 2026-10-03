@@ -1,0 +1,9 @@
+PASS Download files counts the 6 file links in the view and explains Chrome’s download access next to the button {"label":"Download 6 files"}
+PASS Download files asks Chrome in the click (simulated decline) and says nothing was downloaded 
+PASS With a simulated grant the background still refuses, because Chrome granted nothing, and nothing downloads 
+PASS Download in a link’s details, for file links and any other link, asks Chrome in the click (simulated decline) 
+PASS 12 files: an inline confirmation names the folder; Escape closes it; the request comes with its click (simulated decline) 
+PASS At 320 px the Download files section fits without sideways scrolling {"button":{"x":14,"y":207.53125,"width":292,"height":34}}
+PASS Files the card left waiting show once in the next full view, focused, and ask Chrome in the click (simulated decline) 
+PASS A link the menu left waiting opens the export view at a compact width; Dismiss asks nothing 
+PASS Files left waiting more than 10 minutes ago are not shown 

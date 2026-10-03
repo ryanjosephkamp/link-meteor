@@ -1,0 +1,178 @@
+{
+  "started": "2026-10-03T15-26-13-780Z",
+  "finished": "2026-10-03T15:38:35.608Z",
+  "version": "0.6.0",
+  "platform": "darwin",
+  "arch": "arm64",
+  "node": "v25.2.1",
+  "browser": "151.0.7922.34",
+  "result": "PASS",
+  "results": [
+    {
+      "check": "build",
+      "status": "pass",
+      "exitCode": 0,
+      "seconds": 0,
+      "log": "logs/build.txt"
+    },
+    {
+      "check": "unit",
+      "status": "pass",
+      "exitCode": 0,
+      "seconds": 12,
+      "log": "logs/unit.txt"
+    },
+    {
+      "check": "access-browser",
+      "status": "pass",
+      "exitCode": 0,
+      "seconds": 60,
+      "log": "logs/access-browser.txt"
+    },
+    {
+      "check": "capture-page-access",
+      "status": "pass",
+      "exitCode": 0,
+      "seconds": 18,
+      "log": "logs/capture-page-access.txt"
+    },
+    {
+      "check": "access-content",
+      "status": "pass",
+      "exitCode": 0,
+      "seconds": 32,
+      "log": "logs/access-content.txt"
+    },
+    {
+      "check": "coverage-browser",
+      "status": "pass",
+      "exitCode": 0,
+      "seconds": 25,
+      "log": "logs/coverage-browser.txt"
+    },
+    {
+      "check": "scroll-content",
+      "status": "pass",
+      "exitCode": 0,
+      "seconds": 105,
+      "log": "logs/scroll-content.txt"
+    },
+    {
+      "check": "exports-browser",
+      "status": "pass",
+      "exitCode": 0,
+      "seconds": 14,
+      "log": "logs/exports-browser.txt"
+    },
+    {
+      "check": "backup-browser",
+      "status": "pass",
+      "exitCode": 0,
+      "seconds": 30,
+      "log": "logs/backup-browser.txt"
+    },
+    {
+      "check": "downloads-browser",
+      "status": "pass",
+      "exitCode": 0,
+      "seconds": 3,
+      "log": "logs/downloads-browser.txt"
+    },
+    {
+      "check": "reading-browser",
+      "status": "pass",
+      "exitCode": 0,
+      "seconds": 6,
+      "log": "logs/reading-browser.txt"
+    },
+    {
+      "check": "imports-browser",
+      "status": "pass",
+      "exitCode": 0,
+      "seconds": 9,
+      "log": "logs/imports-browser.txt"
+    },
+    {
+      "check": "move-browser",
+      "status": "pass",
+      "exitCode": 0,
+      "seconds": 3,
+      "log": "logs/move-browser.txt"
+    },
+    {
+      "check": "pdf-browser",
+      "status": "pass",
+      "exitCode": 0,
+      "seconds": 10,
+      "log": "logs/pdf-browser.txt"
+    },
+    {
+      "check": "pdf-tab-browser",
+      "status": "pass",
+      "exitCode": 0,
+      "seconds": 68,
+      "log": "logs/pdf-tab-browser.txt"
+    },
+    {
+      "check": "lookup-browser",
+      "status": "pass",
+      "exitCode": 0,
+      "seconds": 31,
+      "log": "logs/lookup-browser.txt"
+    },
+    {
+      "check": "runs-browser",
+      "status": "pass",
+      "exitCode": 0,
+      "seconds": 129,
+      "log": "logs/runs-browser.txt"
+    },
+    {
+      "check": "pdf-files-browser",
+      "status": "pass",
+      "exitCode": 0,
+      "seconds": 70,
+      "log": "logs/pdf-files-browser.txt"
+    },
+    {
+      "check": "audit-overlay",
+      "status": "pass",
+      "exitCode": 0,
+      "seconds": 2,
+      "log": "logs/audit-overlay.txt"
+    },
+    {
+      "check": "audit-actions",
+      "status": "pass",
+      "exitCode": 0,
+      "seconds": 2,
+      "log": "logs/audit-actions.txt"
+    },
+    {
+      "check": "audit-regressions",
+      "status": "pass",
+      "exitCode": 0,
+      "seconds": 2,
+      "log": "logs/audit-regressions.txt"
+    },
+    {
+      "check": "visual-browser",
+      "status": "pass",
+      "exitCode": 0,
+      "seconds": 20,
+      "log": "logs/visual-browser.txt"
+    },
+    {
+      "check": "site-check",
+      "status": "pass",
+      "exitCode": 0,
+      "seconds": 88,
+      "log": "logs/site-check.txt"
+    },
+    {
+      "check": "sync-site",
+      "status": "skip",
+      "reason": "no artifacts/link-meteor-0.6.0.zip yet; package this version first"
+    }
+  ]
+}

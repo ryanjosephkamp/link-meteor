@@ -1,0 +1,40 @@
+PASS Include them ticks the 10 navigation links again; Always include them saves only contentOnly: false (capture.preference) 
+PASS Filters All, Other sites, PDFs and Same site untick what doesn’t match; All ticks those again; keyboard and aria-pressed work {"chips":["All","Other sites","PDFs","Same site"]}
+PASS Skip saved starts from the setting; Make this the default saves only skipSaved (capture.preference) 
+PASS Copy as rich links (More menu and L) puts HTML and plain text on the clipboard, also through the copy-event fallback {"types":null}
+PASS Skip saved: capture.commit gets skipSaved, and the receipt says “Added 14 links …; 2 were already saved” 
+PASS After a drag, copy: copies the content links as a table at once; the notice is themed like the card (Ember light), and Show links opens the card with the same links {"notice":["oklch(1 0 0)","oklch(0.2 0.024 45)"]}
+PASS After a drag, copy in every format (URLs, Markdown, rich links); the close button and Escape close the notice 
+PASS The notice closes itself after about 8 seconds, stays while it has focus, and a new drag replaces it {"closedAfterMs":8014}
+PASS After a drag, add: commits at once with skipSaved; the notice has Undo (capture.undoAdd) and Show links; after Undo the card can add again 
+PASS Undo also works from the card after Show links; a refused Undo says why in the notice 
+PASS After release, highlights stay on their links while the page scrolls, and an unticked link is only outlined {"placed":{"hit":381,"link":381,"count":5,"off":0},"scrolled":{"hit":261,"link":261,"count":5,"off":0}}
+2026-10-03T16:01:54.610Z pw:browser [pid=64046][err] [64057:259:1003/120154.609264:ERROR:shared_image_manager.cc(267)] SharedImageManager::ProduceOverlay: Trying to Produce a Overlay representation from a non-existent mailbox.
+2026-10-03T16:01:54.610Z pw:browser [pid=64046][err] [64057:259:1003/120154.609921:ERROR:skia_output_device_buffer_queue.cc(363)] Invalid mailbox.
+2026-10-03T16:01:54.610Z pw:browser [pid=64046][err] [64057:259:1003/120154.609927:ERROR:shared_image_manager.cc(267)] SharedImageManager::ProduceOverlay: Trying to Produce a Overlay representation from a non-existent mailbox.
+2026-10-03T16:01:54.610Z pw:browser [pid=64046][err] [64057:259:1003/120154.609931:ERROR:skia_output_device_buffer_queue.cc(363)] Invalid mailbox.
+PASS Content links only keeps a post’s own header and footer links: only page-level headers and footers are page chrome {"/site":true,"/post":false,"/cited":false,"/tags":false,"/section-top":false,"/about":true}
+PASS Download 6 files in the More menu (F) sends only the file links among the ticked ones and shows what was saved {"sent":6}
+PASS The card shows download progress for its own request only, and Cancel sends downloads.cancel 
+PASS 12 files: the card asks “Download 12 files into your downloads folder?” first; Escape closes only the question 
+PASS Without download access the card says so and opens the full view, where the files wait with Chrome’s question 
+PASS After the right-click menu’s Download linked file, a notice in the card’s colors says what arrived, and closes {"marked":true,"role":"status","close":"Close notice","contrast":16.83}
+PASS On Windows and Linux the modifier is Ctrl, not Command 
+PASS content.contextLink answers the right-clicked link’s fields, or the first link with that address (page, shadow root, frame), or null 
+PASS content.selectionLinks answers every link that intersects the selection: in the page, a shadow root (also when Chrome misreports it as collapsed, as Chrome 116 does) and a same-origin frame 
+PASS content.notice after a menu save: the notice alone, the page still takes clicks, Undo sends capture.undoAdd, Show links opens the full view at that save 
+PASS content.notice after Copy link text + URL puts the two columns on the clipboard (also through the text-area fallback) and offers only Close 
+2026-10-03T16:02:43.739Z pw:browser [pid=64046] <gracefully close start>
+browserContext.newPage: Protocol error (Target.createTarget): Failed to open a new tab
+    at <repo>/tests/access-content.mjs:919:34 {
+  log: [],
+  name: 'Error'
+}
+2026-10-03T16:02:43.769Z pw:browser [pid=64046] <forcefully close>
+2026-10-03T16:02:43.769Z pw:browser [pid=64046] <kill>
+2026-10-03T16:02:43.769Z pw:browser [pid=64046] <will force kill>
+2026-10-03T16:02:43.776Z pw:browser [pid=64046][err] [1003/120243.775490:WARNING:child_port_handshake.cc(196)] no client check-in
+2026-10-03T16:02:43.778Z pw:browser [pid=64046] <process did exit: exitCode=null, signal=SIGKILL>
+2026-10-03T16:02:43.778Z pw:browser [pid=64046] starting temporary directories cleanup
+2026-10-03T16:02:43.787Z pw:browser [pid=64046] finished temporary directories cleanup
+2026-10-03T16:02:43.787Z pw:browser [pid=64046] <gracefully close end>

@@ -1,0 +1,93 @@
+{
+  "started": "2026-10-03T16:17:01.485Z",
+  "kind": "simulation: real page script, stub chrome object, in Chrome for Testing",
+  "checks": [
+    {
+      "name": "An endless feed: Scroll to the end first reads every batch once, shows its counter with Stop, and scrolls back",
+      "links": 81,
+      "screens": 10
+    },
+    {
+      "name": "A lazy feed: batches that take 900 ms and 1,500 ms to arrive are waited for"
+    },
+    {
+      "name": "A page with nothing to load ends at once; a feed that scrolls inside its own box is scrolled there"
+    },
+    {
+      "name": "A feed that removes old items as it scrolls: links the page removed are kept, none twice",
+      "links": 101
+    },
+    {
+      "name": "A feed that never ends stops at 50 screens, and says the page may have more",
+      "seconds": 30,
+      "links": 421
+    },
+    {
+      "name": "It also stops at 5,000 links, and when its time is up (2 minutes; checked here with a lowered limit)"
+    },
+    {
+      "name": "Stop on the page, Escape, and Stop from the workbench each end the scroll at once, keep what it had, and scroll back"
+    },
+    {
+      "name": "Inside a longer run the notice shows the run’s counter and keeps Stop; the background’s messages update it; Escape stops the run; afterward it closes itself"
+    },
+    {
+      "name": "Next is found as <link rel=\"next\">, <a rel=\"next\">, and a link named next by its text, aria-label or title, in 12 spellings",
+      "spellings": [
+        "rel-link",
+        "rel-a",
+        "text",
+        "text-page",
+        "raquo",
+        "arrow",
+        "arrows",
+        "aria",
+        "title",
+        "hidden",
+        "older",
+        "upper"
+      ]
+    },
+    {
+      "name": "No Next: none, a link switched off, a link to this same page, a script address, a hidden link, and words that only look like it; a button is told apart"
+    },
+    {
+      "name": "At 320 px the notice fits, and its text and Stop have at least 4.5:1 contrast in light and dark themes",
+      "lowest": 16.83
+    }
+  ],
+  "screenshots": [
+    "run-notice-320-meteor-light.png",
+    "run-notice-320-meteor-dark.png",
+    "run-notice-320-ember-light.png",
+    "run-notice-320-graphite-dark.png"
+  ],
+  "contrast": [
+    {
+      "theme": "meteor",
+      "scheme": "light",
+      "text": 18.09,
+      "stop": 18.09
+    },
+    {
+      "theme": "meteor",
+      "scheme": "dark",
+      "text": 16.83,
+      "stop": 16.83
+    },
+    {
+      "theme": "ember",
+      "scheme": "light",
+      "text": 18.15,
+      "stop": 18.15
+    },
+    {
+      "theme": "graphite",
+      "scheme": "dark",
+      "text": 17.58,
+      "stop": 17.58
+    }
+  ],
+  "result": "PASS",
+  "finished": "2026-10-03T16:18:44.820Z"
+}

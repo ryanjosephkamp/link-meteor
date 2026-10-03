@@ -1,0 +1,23 @@
+PASS Closed components: Capture this page saves the links inside closed shadow roots (nested, inside an open root, a custom element, declared in HTML, slotted, in navigation), each once, with its words around it; a hidden component gives none {"links":12}
+PASS Content links only: a link in a closed component inside navigation is left out and counted 
+AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
++ actual - expected
+
+  {
++   hits: 8,
+-   hits: 7,
+    rows: [
+      'Closed one',
+      'Closed two',
+      'Closed one, again',
+      'Outer closed link',
+
+    at file:///<repo>/tests/coverage-browser.mjs:132:10
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5) {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: [Object],
+  expected: [Object],
+  operator: 'deepStrictEqual',
+  diff: 'simple'
+}

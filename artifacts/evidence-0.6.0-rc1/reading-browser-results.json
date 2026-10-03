@@ -1,0 +1,317 @@
+{
+  "started": "2026-10-03T15:31:14.196Z",
+  "profile": "check-reading-browser-2026-10-03T15-26-13-780Z",
+  "browser": "Chrome for Testing via Playwright, headless, fresh profile, real unpacked extension, no optional grants",
+  "checks": [
+    {
+      "name": "Rows show a star, Reading or Read, the identifier kind and Imported; grouped rows combine them",
+      "rows": 12
+    },
+    {
+      "name": "Reading is a radio group and Star a toggle, both from the keyboard; each change saves at once, keeps focus and has Undo"
+    },
+    {
+      "name": "Details show the context with the anchor text marked, the DOI with Copy and a doi.org link, and the source page’s citation"
+    },
+    {
+      "name": "Identifiers show for arXiv, PubMed, ISBN and PMC; Imported from shows for imported links; parts a link lacks are left out"
+    },
+    {
+      "name": "Mark as read, Mark as unread, and Star or Unstar work on the selection; Undo sends one action per earlier value"
+    },
+    {
+      "name": "Reading (Any, Unread, Reading, Read) and Starred only filter the list as queryLinks does, shown as chips that remove them"
+    },
+    {
+      "name": "Insights totals, top sites, file types, other or same site, reading, repeats and weekly captures match insights() on the same links",
+      "total": 12,
+      "weeks": 4
+    },
+    {
+      "name": "Insights are drawn again when the collection changes, and not for other changes"
+    },
+    {
+      "name": "Choosing a site, a file type, a reading status or Starred shows exactly those links, as a view option with its chip"
+    },
+    {
+      "name": "\"/\" in Insights searches the list; an empty collection has no Insights switch and shows the title"
+    },
+    {
+      "name": "At 320 px nothing overflows: details full width above the facts, the selection actions, the view options and Insights"
+    },
+    {
+      "name": "Text contrast is at least 4.5:1 in light and dark for the badges, details, switch, selection actions, view options and Insights",
+      "measured": 64,
+      "lowest": 5.42
+    }
+  ],
+  "screenshots": [
+    "reading-details-320.png",
+    "reading-list-320.png",
+    "reading-insights-320.png",
+    "reading-details-light.png",
+    "reading-insights-light.png",
+    "reading-details-dark.png",
+    "reading-insights-dark.png"
+  ],
+  "contrast": [
+    {
+      "name": "light star badge",
+      "ratio": 13.85
+    },
+    {
+      "name": "light status badge",
+      "ratio": 10.41
+    },
+    {
+      "name": "light identifier badge",
+      "ratio": 5.66
+    },
+    {
+      "name": "light imported badge",
+      "ratio": 6.02
+    },
+    {
+      "name": "light status choice",
+      "ratio": 5.42
+    },
+    {
+      "name": "light chosen status",
+      "ratio": 16.48
+    },
+    {
+      "name": "light star",
+      "ratio": 10.41
+    },
+    {
+      "name": "light starred",
+      "ratio": 15.2
+    },
+    {
+      "name": "light details label",
+      "ratio": 6.02
+    },
+    {
+      "name": "light context",
+      "ratio": 9.37
+    },
+    {
+      "name": "light context mark",
+      "ratio": 13.85
+    },
+    {
+      "name": "light context line",
+      "ratio": 6.02
+    },
+    {
+      "name": "light identifier kind",
+      "ratio": 6.02
+    },
+    {
+      "name": "light identifier",
+      "ratio": 16.48
+    },
+    {
+      "name": "light identifier copy",
+      "ratio": 5.66
+    },
+    {
+      "name": "light cited title",
+      "ratio": 16.48
+    },
+    {
+      "name": "light cited line",
+      "ratio": 10.41
+    },
+    {
+      "name": "light cited note",
+      "ratio": 6.02
+    },
+    {
+      "name": "light imported from",
+      "ratio": 10.41
+    },
+    {
+      "name": "light Links switch",
+      "ratio": 16.48
+    },
+    {
+      "name": "light Insights switch",
+      "ratio": 5.42
+    },
+    {
+      "name": "light Mark as read",
+      "ratio": 9.97
+    },
+    {
+      "name": "light Starred only",
+      "ratio": 10.41
+    },
+    {
+      "name": "light card title",
+      "ratio": 10.41
+    },
+    {
+      "name": "light total",
+      "ratio": 16.48
+    },
+    {
+      "name": "light total label",
+      "ratio": 6.02
+    },
+    {
+      "name": "light bar label",
+      "ratio": 16.48
+    },
+    {
+      "name": "light bar count",
+      "ratio": 10.41
+    },
+    {
+      "name": "light card note",
+      "ratio": 6.02
+    },
+    {
+      "name": "light legend",
+      "ratio": 10.41
+    },
+    {
+      "name": "light chart axis",
+      "ratio": 6.02
+    },
+    {
+      "name": "light whole collection",
+      "ratio": 5.77
+    },
+    {
+      "name": "dark star badge",
+      "ratio": 11.31
+    },
+    {
+      "name": "dark status badge",
+      "ratio": 11.49
+    },
+    {
+      "name": "dark identifier badge",
+      "ratio": 12.76
+    },
+    {
+      "name": "dark imported badge",
+      "ratio": 7.36
+    },
+    {
+      "name": "dark status choice",
+      "ratio": 8.07
+    },
+    {
+      "name": "dark chosen status",
+      "ratio": 15.41
+    },
+    {
+      "name": "dark star",
+      "ratio": 11.49
+    },
+    {
+      "name": "dark starred",
+      "ratio": 13.68
+    },
+    {
+      "name": "dark details label",
+      "ratio": 7.36
+    },
+    {
+      "name": "dark context",
+      "ratio": 12.61
+    },
+    {
+      "name": "dark context mark",
+      "ratio": 11.31
+    },
+    {
+      "name": "dark context line",
+      "ratio": 7.36
+    },
+    {
+      "name": "dark identifier kind",
+      "ratio": 7.36
+    },
+    {
+      "name": "dark identifier",
+      "ratio": 15.41
+    },
+    {
+      "name": "dark identifier copy",
+      "ratio": 12.76
+    },
+    {
+      "name": "dark cited title",
+      "ratio": 15.41
+    },
+    {
+      "name": "dark cited line",
+      "ratio": 11.49
+    },
+    {
+      "name": "dark cited note",
+      "ratio": 7.36
+    },
+    {
+      "name": "dark imported from",
+      "ratio": 11.49
+    },
+    {
+      "name": "dark Links switch",
+      "ratio": 15.41
+    },
+    {
+      "name": "dark Insights switch",
+      "ratio": 8.07
+    },
+    {
+      "name": "dark Mark as read",
+      "ratio": 12.16
+    },
+    {
+      "name": "dark Starred only",
+      "ratio": 11.49
+    },
+    {
+      "name": "dark card title",
+      "ratio": 11.49
+    },
+    {
+      "name": "dark total",
+      "ratio": 15.41
+    },
+    {
+      "name": "dark total label",
+      "ratio": 7.36
+    },
+    {
+      "name": "dark bar label",
+      "ratio": 15.41
+    },
+    {
+      "name": "dark bar count",
+      "ratio": 11.49
+    },
+    {
+      "name": "dark card note",
+      "ratio": 7.36
+    },
+    {
+      "name": "dark legend",
+      "ratio": 11.49
+    },
+    {
+      "name": "dark chart axis",
+      "ratio": 7.36
+    },
+    {
+      "name": "dark whole collection",
+      "ratio": 7.78
+    }
+  ],
+  "result": "PASS",
+  "finished": "2026-10-03T15:31:20.207Z"
+}

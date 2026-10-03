@@ -1196,9 +1196,9 @@ Release candidate 2's capture gate also stopped *Add link* on PDFs, which had wo
 
 For BibTeX, RIS, CSL-JSON and the annotated bibliography, `#cite-facts` gains a line when `unauthored` is above zero: "2 with a DOI or arXiv ID but no authors yet. Capture from the paper’s own page (on arXiv, its abstract page) or save that page as a tab, and its authors and date fill in". Nothing is looked up online, so authors come only from a saved page about the paper.
 
-## Planned for 0.6.0
+## Added in 0.6.0
 
-These contracts are for 0.6.0 "Beyond one page": the links inside PDFs, capturing more than one screen or one page, frames from other sites, closed components, the PDFs behind links as one ZIP or one combined PDF, and the first optional online feature. They are a draft, written before building; each area will gain an "as built" part. Nothing here is built yet, and 0.5.0 behaves as the sections above say.
+These contracts are for 0.6.0 "Beyond one page": the links inside PDFs, capturing more than one screen or one page, frames from other sites, closed components, the PDFs behind links as one ZIP or one combined PDF, and the first optional online feature. They were written before building, and each area's "as built" part records what was settled while building; where the two differ, the "as built" part is what the code does. Release candidate 1 holds all of it.
 
 The facts they rest on were tested first, in throwaway profiles with small diagnostic extensions: which PDF reader build runs on the oldest supported Chrome, how a PDF's file can be read from its tab or from a page of its site, whether the reader can combine PDFs, how long the toolbar's temporary access lasts, and what a lookup request carries.
 

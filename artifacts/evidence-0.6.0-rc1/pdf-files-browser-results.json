@@ -1,0 +1,174 @@
+{
+  "started": "2026-10-03T15:35:31.694Z",
+  "browser": "Chrome for Testing, headless, fresh temporary profile, real unpacked extension, no optional grants; Chrome’s real toolbar action; permission requests are stubbed",
+  "checks": [
+    {
+      "name": "With no PDF links the section offers only Combine into one PDF…, and nothing of the PDF reader is loaded"
+    },
+    {
+      "name": "With PDF links: “The 9 PDFs”, both buttons, the help line, the sites a start would ask for; Download files unchanged",
+      "help": "Link Meteor gets each PDF through a page of its own site, as when you click the link, and puts them together in this browser. Nothing is uploaded. 20 PDFs at most.",
+      "access": "Needs access to 1 site: localhost:52478 (1 PDF). Chrome asks when you start. PDFs on sites you don’t allow are left out."
+    },
+    {
+      "name": "Download as one ZIP with only the toolbar’s access: same-site PDFs (one sent as a download, one that needs a password), 2 seconds apart; the rest say why; the ZIP holds the fixtures byte for byte",
+      "zip": "My-research_2026-10-03_1135.zip",
+      "entries": [
+        "A-small-paper-about-links.pdf",
+        "A-study-of-things-that-link.pdf",
+        "Field-notes.pdf",
+        "Field-notes (2).pdf",
+        "A-PDF-that-needs-a-password.pdf"
+      ],
+      "gaps": [
+        2021,
+        2019,
+        2026,
+        2019,
+        2024,
+        2023,
+        2025
+      ],
+      "lines": [
+        "A-small-paper-about-links.pdf: In the ZIP · 7 KB",
+        "A-study-of-things-that-link.pdf: In the ZIP · 2 KB",
+        "Field-notes.pdf: In the ZIP · 1 KB",
+        "Field-notes (2).pdf: In the ZIP · 1 KB",
+        "The-study-moved.pdf: Not fetched: the address may move to another site, which Link Meteor has no access to",
+        "A-paper-behind-a-sign-in-page.pdf: Not a PDF: the site asked to sign in, or the address has expired.",
+        "A-PDF-that-needs-a-password.pdf: In the ZIP · 1 KB",
+        "The-study-on-another-site.pdf: No access",
+        "A-PDF-that-is-gone.pdf: The site answered with an error instead of the PDF."
+      ]
+    },
+    {
+      "name": "Combine into one PDF… opens a list of the PDFs with their file names and anchor text, labeled buttons, a file name and a summary"
+    },
+    {
+      "name": "The list is reordered and PDFs are left out from the keyboard, with focus kept on the moved PDF’s button",
+      "order": [
+        "A-study-of-things-that-link.pdf",
+        "Field-notes.pdf",
+        "A-small-paper-about-links.pdf",
+        "A-paper-behind-a-sign-in-page.pdf",
+        "A-PDF-that-needs-a-password.pdf",
+        "The-study-on-another-site.pdf"
+      ]
+    },
+    {
+      "name": "PDF files from the computer join the list through the chooser and by a drop, with their pages and sizes; a file that can’t be combined is left out by name",
+      "leftOut": [
+        "password.pdf: Needs a password, so it can’t be combined",
+        "not-a-pdf.pdf: Not a PDF",
+        "damaged.pdf: Damaged, so it couldn’t be read"
+      ]
+    },
+    {
+      "name": "Combine fetches the PDFs still missing; a sign-in page, a PDF that needs a password and a site without access are left out by name, and nothing is made yet",
+      "leftOut": [
+        "A-paper-behind-a-sign-in-page.pdf: Not a PDF: the site asked to sign in, or the address has expired.",
+        "A-PDF-that-needs-a-password.pdf: Needs a password, so it can’t be combined",
+        "The-study-on-another-site.pdf: No access"
+      ]
+    },
+    {
+      "name": "Reading-list-combined.pdf",
+      "pages": 11,
+      "links": 21,
+      "bytes": 8159
+    },
+    {
+      "name": "My-research_2026-10-03_1136.pdf",
+      "pages": 5
+    },
+    {
+      "name": "The limits are said before anything starts: more than 20 PDFs, a PDF over 50 MB, and more than 200 MB together; Escape and Cancel close the panel"
+    },
+    {
+      "name": "Stop, from the keyboard, in the middle of a run: the file in hand and the rest are not read, no ZIP is made, and a file that arrives later is not taken"
+    },
+    {
+      "name": "At 320 px nothing overflows, and every part’s text has a contrast of at least 4.5:1 in every theme, light and dark",
+      "themes": 7,
+      "measured": [
+        {
+          "state": "a run in progress",
+          "parts": 5,
+          "lowest": {
+            "name": "help",
+            "ratio": 5.72,
+            "theme": "aurora",
+            "scheme": "light"
+          }
+        },
+        {
+          "state": "a report",
+          "parts": 5,
+          "lowest": {
+            "name": "how it ended",
+            "ratio": 9.23,
+            "theme": "comet",
+            "scheme": "light"
+          }
+        },
+        {
+          "state": "the panel",
+          "parts": 17,
+          "lowest": {
+            "name": "anchor text",
+            "ratio": 5.96,
+            "theme": "comet",
+            "scheme": "light"
+          }
+        },
+        {
+          "state": "over the limit",
+          "parts": 2,
+          "lowest": {
+            "name": "the limit",
+            "ratio": 5.31,
+            "theme": "nebula",
+            "scheme": "light"
+          }
+        },
+        {
+          "state": "nothing to combine yet",
+          "parts": 3,
+          "lowest": {
+            "name": "no PDF links",
+            "ratio": 5.72,
+            "theme": "aurora",
+            "scheme": "light"
+          }
+        }
+      ]
+    },
+    {
+      "name": "While another run is going, both actions wait for it, and say so"
+    },
+    {
+      "name": "Every file made landed in the profile’s own folder; nothing reached any other site; no access was gained",
+      "downloads": [
+        "My-research_2026-10-03_1135.zip",
+        "Reading-list-combined.pdf",
+        "My-research_2026-10-03_1136.pdf"
+      ],
+      "requests": 13
+    }
+  ],
+  "screenshots": [
+    "pdf-files-zip-1280.png",
+    "pdf-files-combine-1280.png",
+    "pdf-files-limits-1280.png",
+    "pdf-files-run-320-light.png",
+    "pdf-files-run-320-dark.png",
+    "pdf-files-report-320-light.png",
+    "pdf-files-report-320-dark.png",
+    "pdf-files-panel-320-light.png",
+    "pdf-files-panel-320-dark.png",
+    "pdf-files-empty-320-light.png",
+    "pdf-files-empty-320-dark.png"
+  ],
+  "status": "PASS",
+  "finished": "2026-10-03T15:36:24.668Z"
+}

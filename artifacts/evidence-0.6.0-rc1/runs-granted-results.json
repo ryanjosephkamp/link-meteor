@@ -1,0 +1,41 @@
+{
+  "started": "2026-10-03T15:09:30.666Z",
+  "profile": "r060-rc1-site",
+  "browser": "Chrome for Testing via Playwright, real unpacked extension, one native prompt answered by the owner",
+  "checks": [
+    {
+      "name": "The panel names exactly the two sites without access; the site already allowed is not asked for again"
+    },
+    {
+      "name": "Allow these 2 sites: one request in the click, for exactly those two sites; the panel then says access is there",
+      "native": "the owner clicked Allow on Chrome’s prompt"
+    },
+    {
+      "name": "With the two sites allowed, all three pages are read in background tabs and closed, as one batch with one Undo",
+      "links": 62
+    },
+    {
+      "name": "The two grants are removed again"
+    }
+  ],
+  "grantsBefore": {
+    "origins": [
+      "http://127.0.0.1:52478/*",
+      "http://127.0.0.1:52488/*"
+    ],
+    "permissions": [
+      "activeTab",
+      "bookmarks",
+      "clipboardWrite",
+      "contextMenus",
+      "downloads",
+      "storage",
+      "tabs",
+      "unlimitedStorage",
+      "scripting",
+      "sidePanel"
+    ]
+  },
+  "result": "PASS",
+  "finished": "2026-10-03T15:09:38.595Z"
+}

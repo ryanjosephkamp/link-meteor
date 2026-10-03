@@ -1,0 +1,55 @@
+PASS Plain Command-click on a link passes through to the page untouched 
+PASS A Command-press that moves 5 px stays a click and starts no selection 
+PASS A drag without the modifier does nothing 
+PASS Command-drag of 6 px or more starts selection; the ending click is suppressed once {"pageTextSelected":0}
+PASS Only one click is suppressed; the next click reaches the page 
+PASS Command-drag that starts on a link selects instead of dragging the link 
+PASS A Command-drag that starts in a text field starts no selection 
+PASS content.configure switches off, then to the letter Q, without a reload 
+PASS Unticking a link in the preview leaves it out of every action {"sent":4}
+PASS Shortcuts U and K copy URLs and Markdown while focus is in the card {"shortcuts":"CAORNMWGUKLDFB"}
+PASS Typing in the page does not trigger card shortcuts 
+PASS The More menu lists eight actions (Download 1 file counts the one ticked file address), moves with the arrow keys and closes on Escape {"items":["Open in a new window","Open as a tab group","Copy URLs","Copy as Markdown","Copy as rich links","Download this selection","Download 1 file","Bookmark this selection"]}
+PASS The destination picker sends collectionId and the receipt names that collection 
+PASS Review after saving opens the full view at that capture (ui.open with view and batchId) 
+PASS Open 3 in tabs opens at once, with no confirmation 
+PASS Download this selection saves the file name the background chose {"file":"My-research_2026-09-26_1432.csv"}
+PASS Bookmark without access explains it and offers the full view at the export panel 
+PASS 45 links: the card confirms (Open 45, New window, Cancel) before opening 
+PASS 150 links: stronger wording; Escape cancels only the confirmation 
+PASS 520 links: refused before anything is sent 
+PASS The card shows progress and cancels its own opening 
+PASS Content links only: header, nav (with its shadow root), role=navigation, aside (with its same-origin frame), contentinfo and footer links start unticked, and the card says how many {"leftOut":10}
+PASS Already saved: capture.saved is asked for the destination when the card opens and when it changes; matching rows say Saved {"checks":10}
+PASS Include them ticks the 10 navigation links again; Always include them saves only contentOnly: false (capture.preference) 
+PASS Filters All, Other sites, PDFs and Same site untick what doesn’t match; All ticks those again; keyboard and aria-pressed work {"chips":["All","Other sites","PDFs","Same site"]}
+PASS Skip saved starts from the setting; Make this the default saves only skipSaved (capture.preference) 
+PASS Copy as rich links (More menu and L) puts HTML and plain text on the clipboard, also through the copy-event fallback {"types":["text/plain","text/html"]}
+PASS Skip saved: capture.commit gets skipSaved, and the receipt says “Added 14 links …; 2 were already saved” 
+PASS After a drag, copy: copies the content links as a table at once; the notice is themed like the card (Ember light), and Show links opens the card with the same links {"notice":["oklch(1 0 0)","oklch(0.2 0.024 45)"]}
+PASS After a drag, copy in every format (URLs, Markdown, rich links); the close button and Escape close the notice 
+PASS The notice closes itself after about 8 seconds, stays while it has focus, and a new drag replaces it {"closedAfterMs":8005}
+PASS After a drag, add: commits at once with skipSaved; the notice has Undo (capture.undoAdd) and Show links; after Undo the card can add again 
+PASS Undo also works from the card after Show links; a refused Undo says why in the notice 
+PASS After release, highlights stay on their links while the page scrolls, and an unticked link is only outlined {"placed":{"hit":380,"link":380,"count":5,"off":0},"scrolled":{"hit":260,"link":260,"count":5,"off":0}}
+PASS Content links only keeps a post’s own header and footer links: only page-level headers and footers are page chrome {"/site":true,"/post":false,"/cited":false,"/tags":false,"/section-top":false,"/about":true}
+PASS Download 6 files in the More menu (F) sends only the file links among the ticked ones and shows what was saved {"sent":6}
+PASS The card shows download progress for its own request only, and Cancel sends downloads.cancel 
+PASS 12 files: the card asks “Download 12 files into your downloads folder?” first; Escape closes only the question 
+PASS Without download access the card says so and opens the full view, where the files wait with Chrome’s question 
+PASS After the right-click menu’s Download linked file, a notice in the card’s colors says what arrived, and closes {"marked":true,"role":"status","close":"Close notice","contrast":16.83}
+PASS On Windows and Linux the modifier is Ctrl, not Command 
+PASS content.contextLink answers the right-clicked link’s fields, or the first link with that address (page, shadow root, frame), or null 
+PASS content.selectionLinks answers every link that intersects the selection: in the page, a shadow root (also when Chrome misreports it as collapsed, as Chrome 116 does) and a same-origin frame 
+PASS content.notice after a menu save: the notice alone, the page still takes clicks, Undo sends capture.undoAdd, Show links opens the full view at that save 
+PASS content.notice after Copy link text + URL puts the two columns on the clipboard (also through the text-area fallback) and offers only Close 
+PASS Context: the nearest block (p, li, td, a heading, blockquote, figcaption, or the parent), spaces between blocks and line breaks, no script text or hidden anchor text, empty when the block holds only the link, and long paragraphs cut at word boundaries within 400 characters {"long":394,"start":400}
+PASS Page citations: Highwire (several authors, a relative PDF address), PRISM with Dublin Core’s title, JSON-LD ScholarlyArticle (DOI from identifier, after bad JSON-LD), Dublin Core in any case, none, and odd tags cut or skipped; both readers agree {"fixtures":6}
+PASS The card’s commit sends each ticked link’s context and the page citation (page); content.contextLink and content.selectionLinks answer them too 
+PASS saveContext off: scan, the card’s commit and the menus’ answers carry no context; the page citation still goes 
+PASS 20,000 links: every link gets its context, at most 400 characters, in one scan {"links":20000,"withoutMs":148,"withMs":436,"longest":400,"empty":0}
+PASS Closed shadow roots: scan reads the links inside them (one, nested, inside an open root, a custom element, a slotted link once, one in navigation as page chrome), with their context; without chrome.dom only open roots are read {"withDom":11,"without":3,"asked":{"calls":33,"drawn":1,"hosts":29}}
+PASS Closed shadow roots: a hold-key region selects their links, highlights each where it is drawn, and commits them with their context {"rows":["Closed one","Closed two","Closed one, again","Outer closed link","Inner closed link","Open link","Closed inside open"]}
+PASS Closed shadow roots: content.contextLink answers the link under the pointer inside a closed root (also a nested one, and a slotted link), and content.selectionLinks the links a selection inside one touches 
+PASS Frames: a frame its parent can read holds no copy of the script; a frame from another site holds one that only scans (no settings request, no message listener, no citation); each says where it sits, and the top document lists the frames it couldn’t read with their sites {"places":[["localhost/inner.html?other","1"],["/leaf.html?other-nested-this","1.0"],["localhost/leaf.html?same-nested-other","0.1"],["third.localhost/leaf.html?third","2"],["localhost/leaf.html?aside","3"],["localhost/leaf.html?component",null],["/leaf.html?sandboxed","4"],["localhost/leaf.html?hidden","6"]]}
+PASS Frames joined: with all sites every frame is read once (nested, in a closed component, sandboxed, in a sidebar as page chrome) and a hidden frame not at all; with the toolbar’s access only the top document, and each unread frame’s site; with one site allowed, its frames and those inside them; a frame inside an unread frame is left out {"all":12,"toolbar":4,"oneSite":10,"fresh":6}

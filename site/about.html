@@ -95,7 +95,7 @@
             <li>The steps you took, what you expected, and what happened instead.</li>
           </ul>
           <div class="note warn"><svg aria-hidden="true"><use href="assets/img/icons.svg#alert"/></svg><div><p><strong>Issues are public.</strong> Leave out private or work URLs, your collections, notes, screenshots of private pages and anything like a password or token. If you can, reproduce the problem on the <a href="practice.html">practice page</a> and describe that instead.</p></div></div>
-          <p>Before reporting missing links, check <a href="guide.html#limits">limits and coverage</a>. Some parts of pages, such as frames from other sites, can't be read by any extension.</p>
+          <p>Before reporting missing links, check <a href="guide.html#limits">limits and coverage</a>. Chrome's own pages and the Chrome Web Store can't be read by any extension, and frames from other sites are read only where Link Meteor has access to their sites.</p>
         </section>
 
         <section aria-labelledby="support">
@@ -121,7 +121,8 @@
         <section aria-labelledby="credits">
           <h2 id="credits">License and credits</h2>
           <dl class="defs">
-            <dt>Link Meteor</dt><dd>MIT license, © 2026 Ryan Kamp. The code, interface, mark and artwork are original. See the <a href="https://github.com/ryanjosephkamp/link-meteor/blob/main/LICENSE">license</a>.</dd>
+            <dt>Link Meteor</dt><dd>MIT license, © 2026 Ryan Kamp. The code, interface, mark and artwork are original, apart from the PDF reader below. See the <a href="https://github.com/ryanjosephkamp/link-meteor/blob/main/LICENSE">license</a>.</dd>
+            <dt>PDF reader</dt><dd>Link Meteor reads and combines PDFs with <a href="https://mozilla.github.io/pdf.js/">PDF.js</a> by Mozilla, under the Apache License 2.0. It is shipped unmodified inside the extension, with its license, and runs only in your browser.</dd>
             <dt>Fonts</dt><dd>Atkinson Hyperlegible Next and Atkinson Hyperlegible Mono by the Braille Institute, under the SIL Open Font License 1.1. Served from this site with their license files.</dd>
             <dt>Platform icons</dt><dd>The GitHub, LinkedIn, X and YouTube marks are based on <a href="https://simpleicons.org/">Simple Icons</a> (CC0 1.0). They are trademarks of their owners and are used only to link to profiles.</dd>
             <dt>Videos</dt><dd>Original recordings, captions and illustrations made for this site, with the Link Meteor artwork. No stock footage, sound or music. See <a href="#videos">how the videos were made</a>.</dd>

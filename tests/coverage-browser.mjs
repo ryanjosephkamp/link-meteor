@@ -268,7 +268,13 @@ try {
     // From the top of the page, stopping short of the window's edge, where the drag would scroll it.
     const box = await js(frames.session, `(() => { scrollTo(0, 0); const a = document.querySelector(${JSON.stringify(from)}).getBoundingClientRect(), b = document.querySelector(${JSON.stringify(to)}).getBoundingClientRect(); return {from: {x: a.left + 2, y: Math.max(2, a.top + 2)}, to: {x: b.right - 2, y: Math.min(innerHeight - 60, b.bottom - 2)}}; })()`);
     await drag(frames.session, box.from, box.to);
-    await until(() => js(frames.session, `/links? selected$/.test(${card(`.querySelector('.count')?.textContent`)} || '')`), 'a region on the frames page');
+    try { await until(() => js(frames.session, `/links? selected$/.test(${card(`.querySelector('.count')?.textContent`)} || '')`), 'a region on the frames page'); }
+    catch (error) {
+      // What the card showed instead, and a picture, for a failure on another system.
+      const seen = await js(frames.session, `(() => { const root = ${card('')}; return {count: root?.querySelector('.count')?.textContent, status: root?.querySelector('.status')?.textContent, warning: root?.querySelector('.warning')?.textContent, size: [innerWidth, innerHeight]}; })()`).catch(() => null);
+      await shot(frames.session, 'coverage-region-failed.png').catch(() => {});
+      throw new Error(`${error.message}; from ${JSON.stringify(box)}; the card showed ${JSON.stringify(seen)}`);
+    }
     const shown = await js(frames.session, `(() => { const root = ${card('')}; return {rows: [...root.querySelectorAll('.preview .t')].map((row) => row.textContent), warning: root.querySelector('.warning').textContent}; })()`);
     await js(frames.session, `${card(`.querySelector('.dismiss')`)}.click(); true`);
     await until(() => js(frames.session, `!${card('')}`), 'the card closed');

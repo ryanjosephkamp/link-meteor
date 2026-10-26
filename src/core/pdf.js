@@ -3,7 +3,7 @@
 // module its pages (pdfPages takes any object shaped like a PDF.js document), so everything here
 // is tested in Node with and without real PDFs. The contract is in docs/CONTRACTS.md
 // ("What is read from a PDF").
-import { MAX_AUTHORS, MAX_CONTEXT, MAX_PDF_PAGES } from './model.js';
+import { MAX_AUTHORS, MAX_CONTEXT, MAX_PDF_PAGES, MAX_PDF_URL } from './model.js';
 import { MAX_IMPORT_LINKS, importAddress } from './imports.js';
 import { doiIn } from './identifiers.js';
 
@@ -462,7 +462,8 @@ export function pdfCitation({ info = {}, xmp = {}, firstPage = null, links = [],
   const journal = meta('prism:publicationname'); if (journal && journal.length <= 300) citation.journal = journal;
   const published = meta('prism:publicationdate') || meta('prism:coverdate'); if (!citation.date && published && published.length <= 40) citation.date = published;
   if (!citation.title && !citation.arxiv && !citation.doi) return null;
-  try { const parsed = new URL(address); if (['http:', 'https:'].includes(parsed.protocol)) { parsed.hash = ''; citation.pdfUrl = parsed.href; } } catch { /* a file has no address */ }
+  // A longer address is left out, as a web page's PDF address is; the citation is still kept under it.
+  try { const parsed = new URL(address); parsed.hash = ''; if (['http:', 'https:'].includes(parsed.protocol) && parsed.href.length <= MAX_PDF_URL) citation.pdfUrl = parsed.href; } catch { /* a file has no address */ }
   return { ...citation, source: 'pdf' };
 }
 // Where each part of a PDF's citation was read, for the preview: {arxiv?, doi?, title?, authors?}.

@@ -51,9 +51,12 @@ export const MAX_PDF_PAGES = 2000;
 export const MIN_FOLLOW_PAGES = 2, MAX_FOLLOW_PAGES = 20;
 const LINK_STATUSES = new Set(['reading', 'read']);
 const STATUS_FILTERS = new Set(['any', 'unread', 'reading', 'read']);
+// A citation's PDF address. A longer one is left out of the citation, as a page's own
+// citation_pdf_url is; the page's address itself has no limit.
+export const MAX_PDF_URL = 2000;
 // A page citation's text fields and their limits; authors is a list of names as printed.
 const PAGE_TEXT = { title: 300, date: 40, journal: 300, publisher: 300, volume: 300, issue: 300, firstPage: 300, lastPage: 300,
-  doi: 300, pmid: 300, arxiv: 300, isbn: 300, pdfUrl: 2000, readAt: 40, arxivVersion: 8, arxivCategory: 40, source: 20 };
+  doi: 300, pmid: 300, arxiv: 300, isbn: 300, pdfUrl: MAX_PDF_URL, readAt: 40, arxivVersion: 8, arxivCategory: 40, source: 20 };
 // Where a citation was read (0.6.0): the PDF itself, or a lookup service. Absent means the page's own citation tags.
 export const CITATION_SOURCES = Object.freeze(['pdf', 'crossref', 'datacite', 'pubmed']);
 export const MAX_AUTHORS = 50, MAX_AUTHOR = 200;

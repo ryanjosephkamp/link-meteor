@@ -238,3 +238,17 @@ test('import.commit saves a PDF’s links (0.6.0): their pages, the PDF as their
   await ok({type: 'import.undo', collectionId: home.id, batchId: fromFile.batchId});
   assert.equal(collection(home.id).links.length, count - 1);
 });
+
+test('import.commit saves a PDF read from a long signed address, as a captured page with that address is saved', async () => {
+  // A signed CDN address runs past 2,000 characters. The citation is kept under it, without
+  // pdfUrl, as a web page's own long citation_pdf_url is left out (core/pdf.js says the same).
+  const pdf = `https://cdn.example.org/paper.pdf?X-Amz-Signature=${'a1'.repeat(1100)}`;
+  const saved = await ok({type: 'import.commit', newCollection: 'Signed', pages: {[pdf]: {title: 'A Signed Paper', source: 'pdf', readAt: '2026-10-26T10:00:00.000Z'}}, links: [
+    {anchorText: 'A Signed Paper', url: pdf, originalHref: pdf, sourceUrl: pdf, sourceTitle: 'A Signed Paper'},
+    {anchorText: 'the code', url: 'https://code.example.org/', originalHref: 'https://code.example.org/', sourceUrl: pdf, sourceTitle: 'A Signed Paper', pdfPage: 2},
+  ]});
+  const home = collection(saved.collectionId);
+  assert.ok(pdf.length > 2000);
+  assert.deepEqual([home.links.map((link) => link.sourceUrl), Object.keys(home.pages)], [[pdf, pdf], [pdf]]);
+  await refused({type: 'import.commit', collectionId: home.id, pages: {[pdf]: {pdfUrl: pdf, source: 'pdf'}}, links: [{anchorText: 'x', url: 'https://x.example/', originalHref: 'x', sourceUrl: pdf, pdfPage: 1}]}, /pdfUrl can be at most 2000 characters/);
+});

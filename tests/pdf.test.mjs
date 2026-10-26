@@ -199,6 +199,9 @@ test('what a PDF says about itself is believed only where the first page agrees'
   assert.equal(pdfCitation({ info: { CreationDate: "D:20240917120000Z" }, firstPage: page([item('same size text only', 72, { y: 700 })], []) }), null);
   assert.equal(pdfCitation({}), null);
   assert.equal(pdfCitation({ firstPage: one, address: 'file:///Users/someone/paper.pdf' }).pdfUrl, undefined);
+  // A signed address over 2,000 characters: the citation without it, as for a web page's PDF address.
+  const signed = `https://cdn.example.org/paper.pdf?X-Amz-Signature=${'a1'.repeat(1100)}`;
+  assert.deepEqual([pdfCitation({ firstPage: one, address: signed }).pdfUrl, pdfCitation({ firstPage: one, address: 'https://cdn.example.org/paper.pdf?s=1#page=2' }).pdfUrl], [undefined, 'https://cdn.example.org/paper.pdf?s=1']);
 });
 
 test('combining PDFs: every page in order, with its links and text, readable again', async () => {

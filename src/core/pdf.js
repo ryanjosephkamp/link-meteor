@@ -254,15 +254,18 @@ function runAround(pieces, x1, x2) {
 // 12.) or is set out to the left of the lines under it, and a list is known by two such references
 // in a row; anywhere else this is null, and the link's own lines are its context.
 const MAX_REFERENCE_LINES = 16;
-function reference(group, run) {
+function reference(pageLines, run) {
   const x1 = Math.min(...run.map((item) => item.x)), x2 = Math.max(...run.map((item) => item.x + item.w));
-  const column = lines(group).map((line) => runAround(line.pieces, x1, x2)).filter((items) => items.length)
-    .map((items) => ({ items, y: items[0].y, left: items[0].x, text: joinLine(items) }));
+  // Only the lines near the link's can be in its reference or the ones beside it.
+  const at = pageLines.findIndex((line) => line.pieces.includes(run[0])), near = 4 * MAX_REFERENCE_LINES;
+  if (at < 0) return null;
+  const column = pageLines.slice(Math.max(0, at - near), at + near + 1).map((line) => runAround(line.pieces, x1, x2)).filter((items) => items.length)
+    .map((items) => ({ items, y: items[0].y, left: items[0].x }));
   const k = column.findIndex((line) => line.items.includes(run[0]));
   if (k < 0) return null;
   const h = Math.max(...run.map((item) => item.h || 1));
   const gap = (j) => j === 0 || column[j - 1].y - column[j].y > 1.5 * h;
-  const label = (j) => /^(\[[^\]\s]{1,8}\]|\(?\d{1,4}[.)])\s/u.test(column[j].text);
+  const label = (j) => /^(\[[^\]\s]{1,8}\]|\(?\d{1,4}[.)])\s/u.test((column[j].text ??= joinLine(column[j].items)));
   const outdented = (j, other) => column[j].left < column[other].left - 0.5 * h;
   const hangs = (j) => j + 1 < column.length && !gap(j + 1) && outdented(j, j + 1);
   const starts = (j) => label(j) || gap(j) || outdented(j, j - 1) || hangs(j);
@@ -283,14 +286,21 @@ function reference(group, run) {
 // until a gap wider than a column gutter; in a reference list, the whole reference. Cut around the
 // link's words to MAX_CONTEXT characters. `rects` are on the page; `turn` is the way the link's
 // text runs.
+// A page's text in one frame, the items with a width and their lines, kept for its other links.
+const measured = new WeakMap();
+function textLines(items, turn) {
+  const frame = inFrame(items, turn);
+  if (!measured.has(frame)) { const group = frame.filter((item) => item.w); measured.set(frame, { group, all: lines(group) }); }
+  return measured.get(frame);
+}
 export function pdfContext(items, rects, anchorText = '', turn = 0) {
-  const group = inFrame(items, turn).filter((item) => item.w), kept = [];
+  const { group, all } = textLines(items, turn), kept = [];
   for (const rect of rects) {
     const [x1, y1, x2, y2] = turnBox(rect, turn);
     for (const line of lines(group.filter((item) => overlapsLine(item, y1, y2)))) {
       const run = runAround(line.pieces, x1, x2);
       if (!run.length) continue;
-      for (const item of reference(group, run) || run) if (!kept.includes(item)) kept.push(item);
+      for (const item of reference(all, run) || run) if (!kept.includes(item)) kept.push(item);
     }
   }
   const text = joined(kept);

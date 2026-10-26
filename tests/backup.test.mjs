@@ -94,7 +94,7 @@ test('readers keep only contract fields and fill settings missing from older bac
   assert.deepEqual(read.state.settings, { ...createState().settings, holdKey: 'q', holdOrigins: ['https://a.example'], theme: 'ember' });
 });
 
-test('backup format 4 (0.6.0) still reads format 1 files from 0.3.0, format 2 from 0.4.0 and format 3 from 0.5.0, filling the new settings', () => {
+test('backup format 4 (1.0.0) still reads format 1 files from 0.3.0, format 2 from 0.4.0 and format 3 from 0.5.0, filling the new settings', () => {
   const one = structuredClone(createBackup(machineA(), { extensionVersion: '0.3.0' }));
   one.formatVersion = 1;
   for (const key of ['theme', 'appearance', 'afterDrag', 'afterDragFormat', 'contentOnly', 'skipSaved', 'saveContext', 'followPages', 'lookupDetails']) delete one.state.settings[key];

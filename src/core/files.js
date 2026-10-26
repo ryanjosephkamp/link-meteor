@@ -89,7 +89,7 @@ export function fileLinks(links) {
   });
 }
 
-// A PDF link (0.6.0): a file link whose address ends in .pdf or is a known PDF address, or one
+// A PDF link (1.0.0): a file link whose address ends in .pdf or is a known PDF address, or one
 // labeled [PDF] whose address names no other file type.
 export function isPdfLink(link) {
   if (!isFileLink(link)) return false;

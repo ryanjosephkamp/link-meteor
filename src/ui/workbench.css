@@ -837,7 +837,7 @@ label.import-choose { display: inline-flex; cursor: pointer; }
 @media (forced-colors: active) { .import, .import-summary, .import .table-scroll { border: 1px solid CanvasText; } }
 /* End of area: imports */
 
-/* 0.6.0 lane K: PDFs. The Capture section on a PDF's tab, what a PDF says about itself above the
+/* 1.0.0 lane K: PDFs. The Capture section on a PDF's tab, what a PDF says about itself above the
    preview's table, the choice to save the PDF itself, the drop hint, and a file dragged over a
    place that takes it. */
 .pdf-note { margin-top: -2px; }
@@ -860,7 +860,7 @@ label.import-choose { display: inline-flex; cursor: pointer; }
 @media (forced-colors: active) { .pdf-facts, .drop-hint { border: 1px solid CanvasText; } .main.is-drop { outline-color: Highlight; } }
 /* End of area: PDFs */
 
-/* 0.6.0 lane N: Page details lookup (Online lookups in the rail, Look up details, its progress and its result) */
+/* 1.0.0 lane N: Page details lookup (Online lookups in the rail, Look up details, its progress and its result) */
 .online { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; }
 .online .rail-title { margin-bottom: 0; }
 .online-item { display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px; padding-top: 10px; border-top: 1px solid var(--line); }
@@ -892,7 +892,7 @@ label.import-choose { display: inline-flex; cursor: pointer; }
 }
 /* End of area: lookup */
 
-/* 0.6.0 runs: Scroll to the end first and Follow Next under Capture this page, a run's progress with Stop, its report, and Capture their pages. */
+/* 1.0.0 runs: Scroll to the end first and Follow Next under Capture this page, a run's progress with Stop, its report, and Capture their pages. */
 .capture-further { display: grid; gap: 8px; padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--r-sm); background: var(--sunken); }
 .capture-further .name-check { align-items: flex-start; font-size: var(--text-sm); font-weight: 600; }
 .capture-further .name-check > span { display: block; min-width: 0; color: var(--ink); }
@@ -946,7 +946,7 @@ label.import-choose { display: inline-flex; cursor: pointer; }
 @media (forced-colors: active) { .capture-further, .run-progress, .pages-access { border: 1px solid CanvasText; } .run-bar i { background: Highlight; } }
 /* End of area: runs */
 
-/* 0.6.0 lane O: PDF files. The PDFs behind chosen links as one ZIP, or combined into one PDF: the two buttons, the ordered list, its progress and its result. */
+/* 1.0.0 lane O: PDF files. The PDFs behind chosen links as one ZIP, or combined into one PDF: the two buttons, the ordered list, its progress and its result. */
 .pdf-set { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; margin-top: 2px; padding-top: 12px; border-top: 1px solid var(--line); }
 .pdf-set-title { margin: 0; color: var(--ink); font-size: var(--text-sm); font-weight: 700; }
 .pdf-set-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }

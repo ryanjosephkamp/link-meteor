@@ -1,4 +1,4 @@
-// Runs (0.6.0) on the loaded extension, with no optional grants: Chrome for Testing, headless, a
+// Runs (1.0.0) on the loaded extension, with no optional grants: Chrome for Testing, headless, a
 // fresh temporary profile under .scratch/ (deleted afterwards), the real unpacked build, and
 // Chrome's own toolbar action (tests/helpers/action.mjs) for temporary page access. The workbench
 // in its own window stands in for the side panel. It checks:

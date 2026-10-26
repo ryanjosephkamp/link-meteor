@@ -1,4 +1,4 @@
-// Frames from other sites (0.6.0): joining what the page script answered in each frame
+// Frames from other sites (1.0.0): joining what the page script answered in each frame
 // (background/frame-join.js), the report's words, and the background's pipeline with Chrome's APIs
 // simulated in Node: Capture this page in every frame, the fallback when the frames don't answer,
 // and Allow these sites (capture.frames). API mocks, not Chrome itself; tests/access-content.mjs

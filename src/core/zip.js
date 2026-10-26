@@ -1,5 +1,5 @@
 // A ZIP writer for stored (uncompressed) entries, pure. The workbook writer has used it since
-// 0.3.0; 0.6.0 moved it here for Download as one ZIP, where each PDF stays byte for byte what its
+// 0.3.0; 1.0.0 moved it here for Download as one ZIP, where each PDF stays byte for byte what its
 // site sent. Names are UTF-8, the date is fixed (1980-01-01), and identical input gives identical
 // bytes.
 const encoder = new TextEncoder();

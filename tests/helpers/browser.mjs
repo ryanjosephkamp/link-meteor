@@ -22,7 +22,7 @@ export const headlessArgs=(headless=true)=>headless&&process.env.LINK_METEOR_CHR
 // expected (the paywall case), the PDF at an address without an extension, the PDF sent slowly
 // (for Cancel), and a missing file.
 const FILES={'/files/paper.pdf':['files/paper.pdf','application/pdf'],'/files/figure.png':['files/figure.png','image/png'],'/files/paywalled.pdf':['files/sign-in.html','text/html;charset=utf-8'],'/files/paper':['files/paper.pdf','application/pdf'],'/files/slow.pdf':['files/paper.pdf','application/pdf']};
-// 0.6.0: the PDF fixtures (tests/fixtures/pdf), each at several kinds of address:
+// 1.0.0: the PDF fixtures (tests/fixtures/pdf), each at several kinds of address:
 //   /pdf/<name>            shown by Chrome's PDF viewer
 //   /pdf-plain/<name>      the same, at an address without ".pdf" (give the name without it)
 //   /pdf-download/<name>   sent as a download (Content-Disposition: attachment)

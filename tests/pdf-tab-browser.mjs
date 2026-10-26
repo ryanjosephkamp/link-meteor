@@ -1,4 +1,4 @@
-// Getting a PDF's file through a tab (0.6.0, src/ui/workbench/pdf-tab.js), with nothing but the
+// Getting a PDF's file through a tab (1.0.0, src/ui/workbench/pdf-tab.js), with nothing but the
 // toolbar's temporary access: Chrome for Testing, headless, a fresh temporary profile, the real
 // unpacked extension, and Chrome's real toolbar action (DevTools Extensions.triggerAction).
 // - A PDF shown in a tab is read from that tab, with or without ".pdf" in its address, and reads

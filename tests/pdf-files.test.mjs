@@ -1,4 +1,4 @@
-// PDF files (0.6.0): which links are PDFs and how their files are named (src/core/files.js), the
+// PDF files (1.0.0): which links are PDFs and how their files are named (src/core/files.js), the
 // ZIP they go into (src/core/zip.js), read back by the release ZIP reader, and a PDF combined from
 // the fixtures in an order of the person's choosing, read back with the shipped PDF.js. The run
 // that fetches the files is checked in tests/runs.test.mjs.

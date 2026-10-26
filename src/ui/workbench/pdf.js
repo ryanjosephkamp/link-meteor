@@ -1,4 +1,4 @@
-// PDFs (0.6.0): what the person sees for reading the links inside a PDF. Capture this PDF reads
+// PDFs (1.0.0): what the person sees for reading the links inside a PDF. Capture this PDF reads
 // the PDF a tab shows; Import links reads a PDF file, chosen or dropped. Either way the links are
 // shown in the Import links view before anything is saved: each with its page and its words, what
 // the PDF says about itself, what was left out and why, and Add N links, which the notice can undo.

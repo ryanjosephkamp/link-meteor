@@ -1,7 +1,7 @@
 (() => {
   if (globalThis.__linkMeteor?.alive?.()) return;
   globalThis.__linkMeteor?.dispose?.();
-  // 0.6.0: Capture this page loads this script in every frame Link Meteor may read. A frame that the
+  // 1.0.0: Capture this page loads this script in every frame Link Meteor may read. A frame that the
   // document around it can reach is read from there (see collect), so its own copy does nothing.
   // In a frame from another site the script only reads that frame's links (scan): selection, the
   // card, hold-key drag and the menus' messages stay in the top document.
@@ -213,7 +213,7 @@
     return null;
   }
 
-  /* Closed components and frames (0.6.0) -------------------------------------------------------- */
+  /* Closed components and frames (1.0.0) -------------------------------------------------------- */
   // An element's shadow root, a closed one too: chrome.dom needs no permission. Where Chrome lacks
   // it, only open roots are seen. Only these elements and custom elements can hold a shadow root,
   // and asking about any other kind (an SVG element) throws.
@@ -372,7 +372,7 @@
   }
 
   // options.context: whether to add each link's context (default: the saveContext setting).
-  // 0.6.0: also `frames` (the frames this document couldn't read, see collect), `at` (where this
+  // 1.0.0: also `frames` (the frames this document couldn't read, see collect), `at` (where this
   // document sits among the page's frames), `url` and `title`, and `malformed` and `capped` (what
   // `warnings` says, as counts), so the background can join the copies of this script that ran in
   // the page's frames (background/frames.js). Only the top document reads citation tags.
@@ -1034,7 +1034,7 @@
     document.documentElement.append(host);hold();
   }
 
-  // 0.6.0: in a frame from another site, the script stops here. It answers scan and nothing else.
+  // 1.0.0: in a frame from another site, the script stops here. It answers scan and nothing else.
   if (FRAME) { globalThis.__linkMeteor={scan,alive,dispose(){}}; return; }
 
   /* Hold-key drag ------------------------------------------------------------------------------ */
@@ -1082,7 +1082,7 @@
   // Chrome gives a menu click the link's address, not its text, so the page records the link under
   // the last right-click, and the background asks for it (content.contextLink).
   let contextAnchor=null;
-  // 0.6.0: a closed shadow root hides the link from the event, so it is found under the pointer.
+  // 1.0.0: a closed shadow root hides the link from the event, so it is found under the pointer.
   listen(document,'contextmenu',event=>{contextAnchor=event.composedPath().find(node=>node?.nodeType===1&&node.matches('a[href],a[xlink\\:href]'))||elementAt(event.clientX,event.clientY)?.closest?.('a[href],a[xlink\\:href]')||null;},true);
   // The recorded link when its address matches, otherwise the first link in the page with that address.
   function contextLink(url){
@@ -1112,7 +1112,7 @@
     try{reply?.({ok:true,data:answers[message.type]()});}catch(error){reply?.({ok:false,error:String(error.message || error)});}
   }
 
-  /* Runs (0.6.0): scrolling to the end, the page's Next link, and the run's notice --------------- */
+  /* Runs (1.0.0): scrolling to the end, the page's Next link, and the run's notice --------------- */
   // A run is a capture that takes more than one step (background/runs.js). This page's part:
   // scrollScan (Scroll to the end first), nextLink (Follow Next) and the notice with Stop.
   // The scroll's limits. A caller may lower them (options.scroll.limits), never raise them.

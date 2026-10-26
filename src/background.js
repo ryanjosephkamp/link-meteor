@@ -116,7 +116,7 @@ async function arm(tabId, callerTabId) {
 // are left out, counted per page and kept for the workbench's Include them. With skipSaved, links
 // the collection already holds are skipped and counted. 0.5.0: each link keeps the words around it
 // (unless saveContext is off), and each page its own citation tags, keyed by its address.
-// 0.6.0: the page is read in every frame Link Meteor has access to (background/frames.js); a result's
+// 1.0.0: the page is read in every frame Link Meteor has access to (background/frames.js); a result's
 // `frames` says how many frames from other sites were read and weren't, and which sites could be allowed.
 // `run` is for a step of a run (background/runs.js): its batch and collection, and `scan`, options
 // for the page script, such as scrolling to the end first.

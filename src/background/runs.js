@@ -1,4 +1,4 @@
-// Runs (0.6.0): captures that take more than one step.
+// Runs (1.0.0): captures that take more than one step.
 // - Follow Next reads a page, moves the same tab to the page's own Next link and reads that, up to
 //   settings.followPages pages.
 // - Capture selected pages opens each chosen page in a background tab, one at a time, reads it and

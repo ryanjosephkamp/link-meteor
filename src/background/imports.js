@@ -42,7 +42,7 @@ const text = (value, what) => {
 
 // An imported link as stored: only what an import may set, with a new id, the import's batch and
 // time, and new columns' keys turned into their ids. The model checks the rest when it's added.
-// 0.6.0: a link read from a PDF may hold its page and the words around it, and a PDF read from a
+// 1.0.0: a link read from a PDF may hold its page and the words around it, and a PDF read from a
 // tab is the links' source page (sourceUrl, sourceTitle) in place of an `imported` label.
 function importedLink(raw, {batchId, capturedAt, keys}) {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) throw new Error('Each imported link must be an object.');
@@ -81,7 +81,7 @@ function importedLink(raw, {batchId, capturedAt, keys}) {
 // import.commit {collectionId? | newCollection?, links, newFields?, skipSaved?, pages?}: creates the
 // new collection (or activates the chosen one), adds the new columns, and appends the links as one
 // batch, all in one write. With skipSaved, addresses the collection already holds are skipped.
-// `pages` (0.6.0) are page citations saved with the links, such as what a PDF says about itself.
+// `pages` (1.0.0) are page citations saved with the links, such as what a PDF says about itself.
 export async function commitImport(message) {
   const {collectionId, newCollection, links, newFields = [], skipSaved = false, pages} = message;
   const hasCollection = collectionId !== undefined && collectionId !== null && collectionId !== '';

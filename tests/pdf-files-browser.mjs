@@ -1,4 +1,4 @@
-// PDF files (0.6.0): the PDFs behind chosen links as one ZIP, or combined into one PDF, in the
+// PDF files (1.0.0): the PDFs behind chosen links as one ZIP, or combined into one PDF, in the
 // Export panel's Download files. On the loaded extension with no optional grants: Chrome for
 // Testing, headless, a fresh temporary profile under .scratch/ (deleted afterwards), the real
 // unpacked build, and Chrome's own toolbar action (tests/helpers/action.mjs) for temporary access

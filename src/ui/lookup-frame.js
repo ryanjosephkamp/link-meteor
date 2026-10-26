@@ -1,4 +1,4 @@
-// The only part of Link Meteor that can reach the network (0.6.0): a sandboxed page, shown in a
+// The only part of Link Meteor that can reach the network (1.0.0): a sandboxed page, shown in a
 // hidden frame while a lookup runs. Its origin is "null": it has no access to collections,
 // storage or Chrome's APIs, and its own policy lets it reach three addresses and nothing else.
 // The workbench hands it one identifier at a time; it makes the one request that identifier's

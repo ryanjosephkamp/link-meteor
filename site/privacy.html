@@ -95,7 +95,7 @@
             <li><strong>Your reading status and stars.</strong></li>
             <li><strong>For imported links,</strong> the name of the file or bookmark folder they came from.</li>
           </ul>
-          <p>From version 0.6.0, it can also hold:</p>
+          <p>From version 1.0.0, it can also hold:</p>
           <ul>
             <li><strong>For a link read from a PDF,</strong> the page of the PDF it is on.</li>
             <li><strong>What a PDF says about itself:</strong> its title, arXiv's stamp and a DOI, read from the PDF's own file.</li>
@@ -144,7 +144,7 @@
               </tbody>
             </table>
           </div>
-          <p><strong>Version 0.6.0 adds no permission and asks for no browser setting.</strong> Capturing selected pages, including a frame from another site, and getting PDF files use the site access above, asked for by name. Link Meteor does not ask for "Allow access to file URLs": that setting does not make a PDF on your computer readable, and choosing the file needs no access at all.</p>
+          <p><strong>Version 1.0.0 adds no permission and asks for no browser setting.</strong> Capturing selected pages, including a frame from another site, and getting PDF files use the site access above, asked for by name. Link Meteor does not ask for "Allow access to file URLs": that setting does not make a PDF on your computer readable, and choosing the file needs no access at all.</p>
           <p>Link Meteor does not request access to your history, cookies, passwords, network traffic or incognito windows, and it never reads your list of downloads. You can review and remove its optional access at any time from Link Meteor's card in <code>chrome://extensions</code>. Turning hold-key drag off for a site stops it there; removing the site's access in Chrome also turns it off. Removing all-sites access, with Link Meteor's <em>Remove Chrome's access</em> or Chrome's own controls, can also remove access to sites you allowed one at a time. Link Meteor then turns hold-key drag off wherever it no longer has access.</p>
         </section>
 
@@ -165,7 +165,7 @@
 
         <section aria-labelledby="beyond">
           <h2 id="beyond">PDFs, and more than one page</h2>
-          <p>From version 0.6.0, Link Meteor can read the links inside a PDF and capture more than one screen or page. Each of these happens only when you start it, shows a counter and Stop the whole time, and has a limit stated before it starts.</p>
+          <p>From version 1.0.0, Link Meteor can read the links inside a PDF and capture more than one screen or page. Each of these happens only when you start it, shows a counter and Stop the whole time, and has a limit stated before it starts.</p>
           <dl class="defs">
             <dt>PDFs</dt><dd>To read the links in a PDF that is open in a tab, Link Meteor asks Chrome for the file again from the same address, as that page. Chrome usually answers from its own cache; otherwise the site is asked again, as when you reload the tab. The PDF is read inside your browser by PDF.js, which is part of Link Meteor. It is never uploaded. A PDF you choose from your computer is read the same way, and Link Meteor needs no access for it.</dd>
             <dt>Scroll to the end first</dt><dd>Scrolls the page for you, so the page loads the rest of itself as it would if you scrolled. It stops at the end, at 50 screens, at 5,000 links, after 2 minutes, or when you press Stop.</dd>

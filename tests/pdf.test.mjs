@@ -1,4 +1,4 @@
-// PDFs (0.6.0): src/core/pdf.js on plain data, and on real PDF bytes read in Node with the
+// PDFs (1.0.0): src/core/pdf.js on plain data, and on real PDF bytes read in Node with the
 // PDF.js files Link Meteor ships. The fixtures are written by tests/fixtures/pdf/make.mjs, with
 // no packages. tests/pdf-browser.mjs reads the same fixtures inside the extension.
 import test from 'node:test';

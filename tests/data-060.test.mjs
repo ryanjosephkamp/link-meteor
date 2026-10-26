@@ -1,4 +1,4 @@
-// The data 0.6.0 adds (src/core/model.js): a link's PDF page, where a citation was read, arXiv's
+// The data 1.0.0 adds (src/core/model.js): a link's PDF page, where a citation was read, arXiv's
 // version and category, the citation restore action, two settings, and backup format 4.
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -76,14 +76,14 @@ test('a merge keeps every local page citation as it is, whatever it was read fro
     for (const extra of [[], [link('b', OTHER)]]) {
       // The backup has the same link, sometimes one more, and its own reading of the same page.
       const there = reduceState(createState(), { type: 'links.append', links: [link('a', PDF), ...extra], pages: { [PDF]: theirs } });
-      const merged = home(planRestore(here, createBackup(there, { extensionVersion: '0.6.0' }), 'merge').state);
+      const merged = home(planRestore(here, createBackup(there, { extensionVersion: '1.0.0' }), 'merge').state);
       assert.deepEqual(merged.pages, { [PDF]: local }, `local ${local.source || 'tags'} against the backup’s ${theirs.source || 'tags'}, ${extra.length ? 'with' : 'without'} a new link`);
     }
   }
   // A page only the backup knows (here, the link's source page) is added, even when nothing else changes.
   const here = reduceState(createState(), { type: 'links.append', links: [link('a', PDF, { sourceUrl: NEW })], pages: { [PDF]: lookup } });
   const there = reduceState(createState(), { type: 'links.append', links: [link('a', PDF, { sourceUrl: NEW })], pages: { [PDF]: tags, [NEW]: tags } });
-  assert.deepEqual(home(planRestore(here, createBackup(there, { extensionVersion: '0.6.0' }), 'merge').state).pages, { [NEW]: tags, [PDF]: lookup });
+  assert.deepEqual(home(planRestore(here, createBackup(there, { extensionVersion: '1.0.0' }), 'merge').state).pages, { [NEW]: tags, [PDF]: lookup });
 });
 
 test('a merge that changes only which pages are kept is saved: the pages are compared, not counted', () => {
@@ -93,7 +93,7 @@ test('a merge that changes only which pages are kept is saved: the pages are com
   const here = reduceState(createState(), { type: 'links.append', links: [link('a', PDF, { sourceUrl: NEW })], pages: full });
   // The backup holds the same link and one newer page: the oldest local reading makes room for it.
   const there = reduceState(createState(), { type: 'links.append', links: [link('a', PDF, { sourceUrl: NEW })], pages: { [NEW]: { title: 'Newer', readAt: '2026-10-25T00:00:00.000Z' } } });
-  const pages = home(planRestore(here, createBackup(there, { extensionVersion: '0.6.0' }), 'merge').state).pages;
+  const pages = home(planRestore(here, createBackup(there, { extensionVersion: '1.0.0' }), 'merge').state).pages;
   assert.equal(Object.keys(pages).length, MAX_PAGES);
   assert.equal(pages[NEW].title, 'Newer');
   assert.equal(pages['https://p.example.org/0'], undefined, 'the oldest reading made room');
@@ -102,7 +102,7 @@ test('a merge that changes only which pages are kept is saved: the pages are com
 test('backup format 4 keeps the new fields, and a restore brings them back', () => {
   let state = reduceState(createState(), { type: 'settings.update', patch: { followPages: 7, lookupDetails: true } });
   state = reduceState(state, { type: 'links.append', links: [link('a', 'https://a.example/', { pdfPage: 12, context: 'Words on the line.' })], pages: { [PDF]: fromPdf } });
-  const backup = createBackup(state, { extensionVersion: '0.6.0' });
+  const backup = createBackup(state, { extensionVersion: '1.0.0' });
   assert.equal(BACKUP_FORMAT_VERSION, 4);
   assert.equal(backup.formatVersion, 4);
   assert.equal(backup.state.collections[0].links[0].pdfPage, 12);

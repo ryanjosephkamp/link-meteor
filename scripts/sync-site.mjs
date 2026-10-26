@@ -13,7 +13,7 @@ const zipName = `link-meteor-${manifest.version}.zip`;
 const zip = await readFile(resolve(root, 'artifacts', zipName));
 await verifyPackagedSource(zip, resolve(root, 'src'));
 // The export module and everything it imports: since 0.5.0, the citation formats and identifiers;
-// since 0.6.0, the ZIP writer the workbook writer uses.
+// since 1.0.0, the ZIP writer the workbook writer uses.
 const pairs = [
   ['src/core/export.js', 'site/assets/js/core/export.js'],
   ['src/core/xlsx.js', 'site/assets/js/core/xlsx.js'],

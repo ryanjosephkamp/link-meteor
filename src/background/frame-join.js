@@ -1,4 +1,4 @@
-// Joining what the page script answered in each frame of a page (0.6.0), and the words the capture
+// Joining what the page script answered in each frame of a page (1.0.0), and the words the capture
 // report uses for the frames nobody could read. Pure: no Chrome and no page access, so the suites
 // can join real answers themselves. background/frames.js runs the script and uses these.
 // The contract is in docs/CONTRACTS.md ("Frames from other sites, and closed components").

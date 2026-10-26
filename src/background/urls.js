@@ -25,7 +25,7 @@ export function addressKind(value) {
   return pdf && ['http:', 'https:'].includes(url.protocol) ? 'pdf' : '';
 }
 
-// What Link Meteor says where a region can't be drawn or a page's links can't be read. 0.6.0: the
+// What Link Meteor says where a region can't be drawn or a page's links can't be read. 1.0.0: the
 // links inside a PDF are read in the side panel (Capture this PDF, or the file itself for a PDF
 // opened from the computer), so these say where to go.
 export const PDF_REGION_REFUSAL = 'Regions can’t be drawn on a PDF. Open Link Meteor’s side panel and choose Capture this PDF.';

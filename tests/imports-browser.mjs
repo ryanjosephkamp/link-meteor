@@ -8,7 +8,7 @@
 // refusal once links changed, the 20,000-link limit, files Link Meteor refuses, the bookmark-folder
 // path with Chrome's prompt stubbed (a simulated decline, a simulated grant the background still
 // refuses, and a simulated bookmarks tree), 320 px, and contrast in every theme, light and dark.
-// 0.6.0: a PDF file beside the other sources (its own preview in the same view; tests/pdf-browser.mjs
+// 1.0.0: a PDF file beside the other sources (its own preview in the same view; tests/pdf-browser.mjs
 // checks it in full).
 // Nothing is uploaded: no request leaves the extension while importing.
 //   npm run build && LINK_METEOR_FIXTURE_PORT=52580 node tests/imports-browser.mjs
@@ -312,7 +312,7 @@ try {
   await ui.locator('#error button', {hasText: 'Dismiss'}).click();
   pass('A Link Meteor JSON export maps every column itself; a backup, an .xls, a damaged workbook, a file with no links and one over 20 MB are refused with the reason');
 
-  /* A PDF (0.6.0), beside the other sources: the same chooser and view, its links with their pages
+  /* A PDF (1.0.0), beside the other sources: the same chooser and view, its links with their pages
      in place of a column mapping, the same destination choices, and Undo. */
   assert.match(await text('#import-panel-help'), /^From a spreadsheet, a list, a PDF, a web page or bookmarks file, pasted text or a bookmark folder\./);
   await preview(resolve(root, 'tests/fixtures/pdf/journal.pdf'));

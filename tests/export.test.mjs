@@ -123,7 +123,7 @@ test('XLSX writes U+FFFE, U+FFFF and lone surrogates as _xHHHH_, so every sheet 
   const odd = 'Figure\uffff 3 \ufffe, lone \ud800 and \udc00, a pair 𠮷 😀';
   const decode = (text) => text.replace(/_x([0-9a-fA-F]{4})_/g, (_, hex) => String.fromCharCode(parseInt(hex, 16)));
   const plain = readPackagedMembers(Buffer.from(writeXlsx(['Anchor text'], [[odd]]))).get('xl/worksheets/sheet1.xml').toString('utf8');
-  const book = readPackagedMembers(Buffer.from(makeExport([{ id: '1', anchorText: odd, url: 'https://e.org/a\uffff.pdf' }], { format: 'xlsx', columns: ['anchorText', 'url'], about: { exportedAt: new Date(2026, 9, 26), collection: 'T', version: '0.6.0' } }).data));
+  const book = readPackagedMembers(Buffer.from(makeExport([{ id: '1', anchorText: odd, url: 'https://e.org/a\uffff.pdf' }], { format: 'xlsx', columns: ['anchorText', 'url'], about: { exportedAt: new Date(2026, 9, 26), collection: 'T', version: '1.0.0' } }).data));
   const formatted = book.get('xl/worksheets/sheet1.xml').toString('utf8');
   for (const xml of [plain, formatted]) {
     assert.doesNotMatch(xml, /[\ufffe\uffff\ufffd]/u, 'no noncharacter, and no lone surrogate turned into U+FFFD');
@@ -449,7 +449,7 @@ test('research columns (0.5.0): context, reading status, star, identifiers from 
   assert.throws(() => makeExport(links, { format: 'csv', columns: keys, pages: 'x' }), /pages must be an object/);
 });
 
-test('PDF page (0.6.0): a choosable column beside the capture details, empty for links that came from no PDF', () => {
+test('PDF page (1.0.0): a choosable column beside the capture details, empty for links that came from no PDF', () => {
   const at = COLUMNS.findIndex(column => column.key === 'pdfPage');
   assert.deepEqual([COLUMNS[at - 1].key, COLUMNS[at], COLUMNS[at + 1].key], ['frameUrl', { key: 'pdfPage', label: 'PDF page' }, 'capturedAt']);
   const pdf = 'https://arxiv.org/pdf/2409.11211v1';

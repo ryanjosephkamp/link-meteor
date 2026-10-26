@@ -42,7 +42,7 @@ try {
   assert.ok(original.find(l=>l.originalHref==='/shadow'));
   assert.ok(original.every(l=>l.id&&l.batchId&&l.capturedAt&&l.sourceUrl===fixture.base+'/index.html'));
   assert.ok(!original.some(l=>l.anchorText.includes('HIDDEN SECRET')||l.originalHref==='/never'||l.url.startsWith('javascript:')));
-  // 0.6.0: the frame from localhost, a site this profile has no access to, is named in the report, which offers to allow it.
+  // 1.0.0: the frame from localhost, a site this profile has no access to, is named in the report, which offers to allow it.
   assert.match(await ui.locator('#capture-report').innerText(),/1 frame from another site wasn’t read, because Link Meteor has no access to localhost:\d+\. Allow that site to include its links\./);
   assert.equal(await ui.locator('#capture-report .report-frames-allow').innerText(),'Allow this site');
   check('37 faithful occurrences including duplicates, empty anchor, shadow root, frame provenance and explicit partial coverage');

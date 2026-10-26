@@ -1,4 +1,4 @@
-// Capture this page in every frame Link Meteor may read (0.6.0). The page script reads a document,
+// Capture this page in every frame Link Meteor may read (1.0.0). The page script reads a document,
 // its shadow roots and the frames that document can reach; a frame from another site is closed to
 // the document around it, so the script also runs inside each such frame Chrome lets it into
 // (chrome.scripting.executeScript with allFrames, which skips the others silently). joinFrames puts

@@ -1,4 +1,4 @@
-// Page details lookup (0.6.0): which request an identifier needs, and each service's answer as a
+// Page details lookup (1.0.0): which request an identifier needs, and each service's answer as a
 // page citation, from recorded answers (tests/fixtures/lookup). No test contacts a service;
 // tests/lookup-browser.mjs runs the sandboxed frame with the test answering in the services' place.
 import test from 'node:test';

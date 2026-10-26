@@ -1,4 +1,4 @@
-// Getting a PDF's file through a tab (0.6.0). An extension can't read what Chrome's PDF viewer
+// Getting a PDF's file through a tab (1.0.0). An extension can't read what Chrome's PDF viewer
 // shows, and Link Meteor's own pages can't request anything, so one small function runs in a tab
 // Link Meteor has access to and asks for the file there: the tab's own address when the tab shows
 // the PDF, or a PDF on the same site as the page in the tab. It is requested as that page, as

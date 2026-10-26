@@ -1,4 +1,4 @@
-// Runs (0.6.0): captures that take more than one step. Under Capture this page, Scroll to the end
+// Runs (1.0.0): captures that take more than one step. Under Capture this page, Scroll to the end
 // first and Follow Next; in the list, Capture their pages… for the selected links or one link.
 // A run starts only from a click, shows its counter and Stop here and on the page it is reading,
 // and ends with a report and one Undo. The background does the work (background/runs.js); this

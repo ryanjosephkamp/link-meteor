@@ -1,4 +1,4 @@
-// Runs (0.6.0, src/background/runs.js) with Chrome's APIs simulated, as tests/background.test.mjs
+// Runs (1.0.0, src/background/runs.js) with Chrome's APIs simulated, as tests/background.test.mjs
 // does: a small pretend browser (tabs that load pages of a pretend site), the real background, and
 // a clock the test moves by hand. Checked here: the queue and its order, pacing, Stop, the caps,
 // every way a run ends, the session record and a restarted worker, one batch and its Undo, and

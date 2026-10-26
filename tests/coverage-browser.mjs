@@ -1,4 +1,4 @@
-// Capture coverage (0.6.0) on the loaded extension, with no optional grants: Chrome for Testing,
+// Capture coverage (1.0.0) on the loaded extension, with no optional grants: Chrome for Testing,
 // headless, a fresh temporary profile, the real unpacked build, and Chrome's real toolbar action
 // (DevTools Extensions.triggerAction) for the temporary page access a toolbar click gives.
 // - Closed components: the links inside closed shadow roots (one, nested, inside an open one, a

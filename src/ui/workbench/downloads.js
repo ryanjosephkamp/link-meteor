@@ -44,7 +44,7 @@ export function renderDownloadTarget(rows) {
   $('downloads-access').hidden = granted;
   $('downloads-access').textContent = ACCESS_REASON;
   if (pending && pending.key !== files.map((file) => file.url).join('\n')) closeConfirm();
-  // 0.6.0: the PDFs among them as one ZIP, or combined into one PDF (pdf-files.js).
+  // 1.0.0: the PDFs among them as one ZIP, or combined into one PDF (pdf-files.js).
   renderPdfSet(rows);
 }
 

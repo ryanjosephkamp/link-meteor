@@ -1,6 +1,6 @@
 // SIMULATION: the real page script (src/content/capture.js) loaded into pages of the local fixture
 // server in Chrome for Testing, with a stub `chrome` object standing in for the extension, as
-// tests/access-content.mjs does. It checks the page's part of a run (0.6.0):
+// tests/access-content.mjs does. It checks the page's part of a run (1.0.0):
 // - Scroll to the end first: an endless feed, a lazy one, one that never ends (each cap), one that
 //   removes old items as it scrolls, a feed that scrolls inside its own box, and a page with
 //   nothing to load; the counter in the page's notice; Stop, Escape and Stop from the workbench;

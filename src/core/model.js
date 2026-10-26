@@ -30,8 +30,8 @@ export const SETTINGS_DEFAULTS = Object.freeze({
   contentOnly: false,               // leave out navigation, header, footer and sidebar links
   skipSaved: false,                 // when adding, skip URLs already in the destination collection
   saveContext: true,                // save the words around each link when capturing (0.5.0)
-  followPages: 20,                  // the most pages one Follow Next run reads, 2 to 20 (0.6.0)
-  lookupDetails: false,             // Page details lookup is on; off, nothing is requested from any service (0.6.0)
+  followPages: 20,                  // the most pages one Follow Next run reads, 2 to 20 (1.0.0)
+  lookupDetails: false,             // Page details lookup is on; off, nothing is requested from any service (1.0.0)
 });
 const HOLD_TRIGGERS = new Set(['letter', 'modifier']);
 const HOLD_SCOPES = new Set(['sites', 'all']);
@@ -46,7 +46,7 @@ const FIELD_ID = /^[a-z0-9][a-z0-9-]{0,80}$/;
 export const MAX_EXPORT_PREFIX = 40;
 // Research data (0.5.0): optional per-link and per-collection fields; absent means none.
 export const MAX_CONTEXT = 400, MAX_IMPORTED = 300, MAX_PAGES = 5000;
-// PDFs (0.6.0): a link read from a PDF holds the page it is on.
+// PDFs (1.0.0): a link read from a PDF holds the page it is on.
 export const MAX_PDF_PAGES = 2000;
 export const MIN_FOLLOW_PAGES = 2, MAX_FOLLOW_PAGES = 20;
 const LINK_STATUSES = new Set(['reading', 'read']);
@@ -57,14 +57,14 @@ export const MAX_PDF_URL = 2000;
 // A page citation's text fields and their limits; authors is a list of names as printed.
 const PAGE_TEXT = { title: 300, date: 40, journal: 300, publisher: 300, volume: 300, issue: 300, firstPage: 300, lastPage: 300,
   doi: 300, pmid: 300, arxiv: 300, isbn: 300, pdfUrl: MAX_PDF_URL, readAt: 40, arxivVersion: 8, arxivCategory: 40, source: 20 };
-// Where a citation was read (0.6.0): the PDF itself, or a lookup service. Absent means the page's own citation tags.
+// Where a citation was read (1.0.0): the PDF itself, or a lookup service. Absent means the page's own citation tags.
 export const CITATION_SOURCES = Object.freeze(['pdf', 'crossref', 'datacite', 'pubmed']);
 export const MAX_AUTHORS = 50, MAX_AUTHOR = 200;
 
 // Backup files have their own format version, independent of the storage schema.
 export const BACKUP_FORMAT = 'link-meteor-backup';
 // Format 2 (0.4.0) adds the appearance and capture settings; format 3 (0.5.0) adds context,
-// reading status, stars, imported labels and page citations; format 4 (0.6.0) adds a link's PDF
+// reading status, stars, imported labels and page citations; format 4 (1.0.0) adds a link's PDF
 // page, where a citation was read, arXiv's version and category, and two settings. Formats 1 to 3
 // still restore.
 export const BACKUP_FORMAT_VERSION = 4;
@@ -123,7 +123,7 @@ function link(value) {
    ('reading' or 'read'; absent means unread), `starred: true` and `imported` (where an imported
    link came from). A collection may hold `pages: {pageUrl: PageCitation}`, citation details read
    from pages Link Meteor had open. All optional, so a 0.4.0 state needs no migration.
-   0.6.0 adds `pdfPage`, the page of the PDF a link is on, counting from 1. */
+   1.0.0 adds `pdfPage`, the page of the PDF a link is on, counting from 1. */
 function research(item, name = 'link') {
   const kept = { ...item };
   for (const [key, max] of [['context', MAX_CONTEXT], ['imported', MAX_IMPORTED]]) {
@@ -157,7 +157,7 @@ function pageCitation(value, name = 'page citation') {
       if (authors.length) kept.authors = authors;
       continue;
     }
-    // Which source filled a field the stronger reading left empty (0.6.0): {field: source}.
+    // Which source filled a field the stronger reading left empty (1.0.0): {field: source}.
     if (key === 'filled') {
       object(text, `${name}.filled`);
       const filled = {};
@@ -192,7 +192,7 @@ function pagesMap(value, name = 'collection.pages') {
   return kept;
 }
 
-// One address's citation after a newer reading (0.6.0). A page's own citation tags come first,
+// One address's citation after a newer reading (1.0.0). A page's own citation tags come first,
 // then what a lookup service returned, then what the PDF says about itself. The stronger reading
 // keeps its fields and the weaker one only fills the fields left empty; `filled` records which
 // source gave each of those ({authors: 'crossref'}), so the details can say so. The same kind of
@@ -465,7 +465,7 @@ export function reduceState(input, action) {
       const updated = { ...current, links: [...current.links, ...appended] };
       return replaceCollection(state, index, pages && Object.keys(pages).length ? withPages(updated, mergePages(pagesMap(current.pages), pages)) : updated);
     }
-    // Sets or removes page citations exactly (0.6.0): Undo for a lookup, which keeps what each
+    // Sets or removes page citations exactly (1.0.0): Undo for a lookup, which keeps what each
     // address held before. `pages` maps an address to its citation, or to null to remove it.
     case 'pages.restore': {
       const { index, collection: current } = target(state, action.collectionId);

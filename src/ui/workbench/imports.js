@@ -3,7 +3,7 @@
 // what is skipped (and why), and one Import that the notice can undo. Nothing is added before
 // Import. Delimited text and lists are parsed in import-worker.js; workbooks and HTML are read here
 // with DecompressionStream and DOMParser. The contract is in docs/CONTRACTS.md ("Imports").
-// 0.6.0: a PDF, chosen or dropped, is read by pdf.js, which shows its links in this same view; a
+// 1.0.0: a PDF, chosen or dropped, is read by pdf.js, which shows its links in this same view; a
 // file can also be dropped on the Import links panel or on the list.
 import { MAX_IMPORT_BYTES, MAX_IMPORT_LINKS, SKIP_REASONS, decodeText, readText, readXlsx, readExportJson, detectHeader, columnNames, dataRows,
   guessMapping, planImport } from '../../core/imports.js';

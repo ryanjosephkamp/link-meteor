@@ -404,7 +404,7 @@ test('0.5.0: the citations sentence, in every case', async () => {
   assert.equal(say({tabs: 1200, read: 1000, needAccess: 0}), 'Read citation details from 1,000 of 1,200 tabs; the others didn’t answer.');
 });
 
-test('0.6.0: on a PDF, Select a region says where its links are read and a capture reports it as a PDF, not an error; a file on the computer says what works; Add link works', async () => {
+test('1.0.0: on a PDF, Select a region says where its links are read and a capture reports it as a PDF, not an error; a file on the computer says what works; Add link works', async () => {
   const {PDF_REGION_REFUSAL, PDF_FILE_REGION_REFUSAL, PDF_TAB_NOTE, PDF_FILE_NOTE, FILE_REFUSAL, addressKind, captureRefusal} = await import('../src/background/urls.js');
   assert.equal(PDF_REGION_REFUSAL, 'Regions can’t be drawn on a PDF. Open Link Meteor’s side panel and choose Capture this PDF.');
   assert.equal(PDF_TAB_NOTE, 'A PDF: capture it by itself with Capture this PDF.');

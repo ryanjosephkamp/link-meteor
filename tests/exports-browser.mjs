@@ -847,7 +847,7 @@ try {
   await ui.emulateMedia({colorScheme: 'light', reducedMotion: 'reduce'});
   await ui.setViewportSize({width: 1440, height: 1000});
   // The first entry scrolls, so it takes keyboard focus, with a visible ring, and is named by its label.
-  // 0.6.0: Look up details comes first, since this collection has papers with no authors yet.
+  // 1.0.0: Look up details comes first, since this collection has papers with no authors yet.
   await ui.locator('#format').focus(); await ui.keyboard.press('Tab');
   assert.equal(await ui.evaluate(() => document.activeElement?.id), 'lookup-authors', 'Tab reaches Look up details after the format list');
   await ui.keyboard.press('Tab');

@@ -1,4 +1,4 @@
-// PDFs (0.6.0): what Link Meteor reads from a PDF, from plain data. Pure: no Chrome, no DOM, and
+// PDFs (1.0.0): what Link Meteor reads from a PDF, from plain data. Pure: no Chrome, no DOM, and
 // no import of the PDF reader. The workbench opens a PDF with the bundled PDF.js and hands this
 // module its pages (pdfPages takes any object shaped like a PDF.js document), so everything here
 // is tested in Node with and without real PDFs. The contract is in docs/CONTRACTS.md

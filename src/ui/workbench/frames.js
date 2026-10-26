@@ -1,4 +1,4 @@
-// The capture report's frames from other sites (0.6.0). Capture this page reads every frame Link
+// The capture report's frames from other sites (1.0.0). Capture this page reads every frame Link
 // Meteor has access to; a result's `frames` ({read, unread, sites, left}) says how many frames were
 // read by their own copy of the page script and how many weren't, and its warning names the sites
 // Link Meteor has no access to. For those, the report offers Allow these sites: one Chrome request

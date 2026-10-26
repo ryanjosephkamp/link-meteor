@@ -10,7 +10,7 @@
 // 0.5.0: context snippets (every kind of block, cuts at word boundaries, saveContext off, 20,000
 // links) and page citations (Highwire, PRISM, JSON-LD, Dublin Core, none and odd tags), in scan(),
 // the card's commit and the menus' answers, read the same way as Save tabs as links reads them.
-// 0.6.0: closed shadow roots (with a stand-in for chrome.dom, and without it), in scan(), a region,
+// 1.0.0: closed shadow roots (with a stand-in for chrome.dom, and without it), in scan(), a region,
 // the right-click lookup and a selection; and frames from other sites, where the script runs in
 // every frame as Chrome would run it and the answers are joined by the background's own joinFrames.
 // Writes access-content-results.json to LINK_METEOR_EVIDENCE_DIR (default .scratch/evidence-access-capture).
@@ -29,7 +29,7 @@ let htmlUnread = 0;
 const pass = (name, data = {}) => { result.checks.push({name, ...data}); console.log('PASS', name, Object.keys(data).length ? JSON.stringify(data) : ''); };
 
 // The stub answers like the background would, and records every message.
-// With `dom`, the stub also stands in for chrome.dom.openOrClosedShadowRoot (0.6.0).
+// With `dom`, the stub also stands in for chrome.dom.openOrClosedShadowRoot (1.0.0).
 function stub({platform, trigger = 'modifier', key = 'z', dom = false}) {
   const init = ({platform, trigger, key, dom}) => {
     if (platform) {
@@ -1052,7 +1052,7 @@ try {
   assert.ok(timing.withMs < 5000, `scan with context took ${timing.withMs} ms`);
   pass('20,000 links: every link gets its context, at most 400 characters, in one scan', timing);
 
-  /* 0.6.0: closed shadow roots. */
+  /* 1.0.0: closed shadow roots. */
   const folder = '/site/coverage/', here = `${fixture.base}${folder}components.html`;
   const texts = (links) => links.map((link) => link.anchorText);
   const letter = {platform: 'MacIntel', trigger: 'letter', key: 'q'};
@@ -1117,7 +1117,7 @@ try {
   await closedPage.close();
   pass('Closed shadow roots: content.contextLink answers the link under the pointer inside a closed root (also a nested one, and a slotted link), and content.selectionLinks the links a selection inside one touches');
 
-  /* 0.6.0: frames from other sites. The script runs in every frame, as Chrome runs it where Link
+  /* 1.0.0: frames from other sites. The script runs in every frame, as Chrome runs it where Link
      Meteor has access, and the background's joinFrames joins the answers. */
   const otherSite = fixture.other, thirdSite = `http://third.localhost:${new URL(fixture.base).port}`;
   const framed = await context.newPage();
@@ -1195,7 +1195,7 @@ try {
   await framed.close();
   pass('Frames joined: with all sites every frame is read once (nested, in a closed component, sandboxed, in a sidebar as page chrome) and a hidden frame not at all; with the toolbar’s access only the top document, and each unread frame’s site; with one site allowed, its frames and those inside them; a frame inside an unread frame is left out', {all: everywhere.links.length, toolbar: toolbar.links.length, oneSite: some.links.length, fresh: fresh.links.length});
 
-  /* 0.6.0: frames at the edges. A frame the page sent to another site without an address of its
+  /* 1.0.0: frames at the edges. A frame the page sent to another site without an address of its
      own, frames with no size or placed off the page, and frames inside a closed component: a
      sandboxed one written in the page, a hidden one and a visible one from the other site. */
   const edges = await context.newPage();

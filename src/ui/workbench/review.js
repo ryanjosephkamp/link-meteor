@@ -340,7 +340,7 @@ export function renderOccurrence(link, grouped) {
   const page = node('span');
   appendTextLink(page, link.sourceUrl, link.sourceTitle || link.sourceUrl || '(unknown page)');
   if (link.sourceTitle && link.sourceUrl) { page.append(document.createElement('br')); page.append(node('span', 'exact', link.sourceUrl)); }
-  // 0.6.0: a link read from a PDF says which page of the PDF it is on.
+  // 1.0.0: a link read from a PDF says which page of the PDF it is on.
   if (link.pdfPage) { if (page.childNodes.length) page.append(document.createElement('br')); page.append(node('span', 'pdf-page', `Page ${count(link.pdfPage)} of the PDF`)); }
   fact(facts, 'Source page', page);
   if (link.frameUrl && link.frameUrl !== link.sourceUrl) {
@@ -385,7 +385,7 @@ function renderResearch(link) {
   if (cited) block.append(occBlock('Cited from', citation(cited, citedNote(cited))));
   const used = citationFor(link, pages);
   if (used && used.key !== pageKey(link.sourceUrl)) block.append(occBlock('Citation', citation(used.citation, usedNote(used))));
-  // Page details lookup (0.6.0): offered where the citation the link uses lacks something.
+  // Page details lookup (1.0.0): offered where the citation the link uses lacks something.
   const lookup = detailLookup(link);
   if (lookup) block.append(lookup);
   if (link.imported) block.append(occBlock('Imported from', node('p', 'imported-from', link.imported)));
@@ -453,7 +453,7 @@ function identifierList(ids) {
 }
 
 // Where a citation was read, when it wasn't a page's own citation tags: the words for its
-// `source` (0.6.0), or '' for tags. 'pdf' is what a PDF says about itself; a lookup's services
+// `source` (1.0.0), or '' for tags. 'pdf' is what a PDF says about itself; a lookup's services
 // have their own note (lookupNote), with the day it was looked up.
 export function citationSourceNote(source) {
   return source === 'pdf' ? 'Read from the PDF itself.' : '';

@@ -51,11 +51,11 @@ function simulate({ scope, initialTabs, afterPermissionTabs, selectedIds = [], t
     render() {},
     captureReport(report, options) { reports.push({ report, options }); },
     currentPagePlan: () => pagePlan,
-    // PDFs (0.6.0, pdf.js): `pdf` is 'local' for a PDF opened from the computer, 'web' for one on the web.
+    // PDFs (1.0.0, pdf.js): `pdf` is 'local' for a PDF opened from the computer, 'web' for one on the web.
     targetTab: () => initialTabs.find((item) => item.id === targetTabId),
     chooseLocalPdf: () => { if (pdf === 'local') pdfCalls.push('choose'); return pdf === 'local'; },
     capturePdf: async (target, options) => { if (pdf === 'web') pdfCalls.push({ tabId: target?.id, ...options }); return pdf === 'web'; },
-    // Scroll to the end first and Follow Next (0.6.0) are off here: the plain capture goes on.
+    // Scroll to the end first and Follow Next (1.0.0) are off here: the plain capture goes on.
     runFurther: async () => false,
     renderCaptureButton() {},
     $: () => captureButton,

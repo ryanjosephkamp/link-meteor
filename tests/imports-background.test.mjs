@@ -193,7 +193,7 @@ test('bookmarks.folderLinks: a folder’s bookmarks with their folder paths, wit
   assert.deepEqual([big.links.length, big.more], [50000, true]);
 });
 
-test('import.commit saves a PDF’s links (0.6.0): their pages, the PDF as their source when it was read from a tab, and its citation', async () => {
+test('import.commit saves a PDF’s links (1.0.0): their pages, the PDF as their source when it was read from a tab, and its citation', async () => {
   const pdf = 'https://arxiv.org/pdf/2409.11211v1';
   const citation = {title: 'SplatFields', arxiv: '2409.11211', arxivVersion: 'v1', arxivCategory: 'cs.CV', date: '17 Sep 2024', pdfUrl: pdf, source: 'pdf', readAt: '2026-10-02T10:00:00.000Z'};
   const fromTab = await ok({type: 'import.commit', newCollection: 'From a PDF tab', pages: {[pdf]: citation}, links: [

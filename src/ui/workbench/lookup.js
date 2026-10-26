@@ -1,4 +1,4 @@
-// Page details lookup (0.6.0): the one optional online feature. It is off unless the person turns
+// Page details lookup (1.0.0): the one optional online feature. It is off unless the person turns
 // it on under Online lookups, and then runs only on a click on Look up details: for the selected
 // links, in a link's details, or beside the Export panel's "no authors yet" line.
 // Nothing here can reach the network. The request is made by the sandboxed frame

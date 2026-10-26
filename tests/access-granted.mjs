@@ -3,7 +3,7 @@
 // bookmarks, and a per-site grant for the fixture site), before tests/permission-browser.mjs.
 // It never shows a native prompt: every grant it uses already exists. 0.5.0: with all-sites access,
 // Save tabs as links reads each fixture tab's own citation tags into the collection's pages, without
-// asking (the fixture server serves tests/fixtures/research/). 0.6.0: Capture this PDF on a tab whose
+// asking (the fixture server serves tests/fixtures/research/). 1.0.0: Capture this PDF on a tab whose
 // site Link Meteor already has access to, with no toolbar click on it; and Capture this page reads
 // every frame, from any site: each link once, with the frame it was in; and PDFs on two sites go
 // into one ZIP and one combined PDF, each fetched in a background tab on its own site (one of them
@@ -164,7 +164,7 @@ try {
   await ui.bringToFront();
   await until(async () => (await ui.locator('#scope-preview').innerText()).includes(new URL(second.base).host), 'preview names the new origin');
   await ui.locator('#capture').click();
-  // 0.6.0: 38, not 37. The page's frame from another site (localhost) is read too, so its link is
+  // 1.0.0: 38, not 37. The page's frame from another site (localhost) is read too, so its link is
   // saved beside the same link in the frame from the page's own site.
   await until(async () => /38 links captured/.test(await ui.locator('#capture-report').innerText()), 'captured the never-visited origin');
   assert.deepEqual(await ui.evaluate(() => window.__requests), []);
@@ -174,7 +174,7 @@ try {
   assert.deepEqual([visited.results[0].count, visited.results[0].warning, counted(visited.results[0].frames)], [38, '', {read: 1, unread: 0, sites: [], left: []}]);
   pass('Capture this page on a never-visited origin needs no prompt with all-sites access, and reads its frame from another site', {origin: second.base});
 
-  // 0.6.0: frames from other sites (tests/fixtures/site/coverage/frames.html: frames from this site,
+  // 1.0.0: frames from other sites (tests/fixtures/site/coverage/frames.html: frames from this site,
   // localhost and third.localhost, nested, in a sidebar, inside a closed component, sandboxed and
   // hidden). With all-sites access every frame is read: each link once, with the frame it was in,
   // and nothing is asked for.
@@ -228,7 +228,7 @@ try {
   }
   pass('Frames from other sites with all-sites access: every frame is read (nested, sidebar, inside a closed component, sandboxed), each link once with its frameUrl and context, a hidden frame not at all, with no prompt; content links only leaves the sidebar frame’s link out', {links: framed.length, frames: framesRun.results[0].frames});
 
-  // 0.6.0: Capture this PDF where Link Meteor already has access to the PDF's site (here, all sites)
+  // 1.0.0: Capture this PDF where Link Meteor already has access to the PDF's site (here, all sites)
   // and the toolbar was never clicked on its tab. The tab is known as a PDF by its address, or, for
   // an address without ".pdf", by asking the tab; its links are previewed, then added with the PDF as
   // their source page and what it says about itself; and nothing is asked for.
@@ -318,7 +318,7 @@ try {
   await page.keyboard.press('Escape');
   pass('Card: Open as a tab group is named after the destination; Bookmark this selection saves a folder');
 
-  // 0.6.0, runs. Capture their pages… with all-sites access: nothing to ask; each page is read in a
+  // 1.0.0, runs. Capture their pages… with all-sites access: nothing to ask; each page is read in a
   // background tab and closed; a PDF among them is read as a PDF by this open workbench; everything
   // is one batch with one Undo. The pages are on two sites (127.0.0.1 and localhost).
   const pagesHome = (await rpc(ui, {type: 'state.mutate', action: {type: 'collection.create', name: 'Selected pages'}})).activeCollectionId;
@@ -355,7 +355,7 @@ try {
   assert.equal((await rpc(ui, {type: 'state.get'})).collections.find((c) => c.id === pagesHome).links.length, 3);
   pass('Capture their pages with all-sites access: pages on two sites and a PDF, each in a background tab that is closed, one batch, one Undo, no prompt', {links: 39});
 
-  // 0.6.0: with all-sites access, Follow Next may cross to another site.
+  // 1.0.0: with all-sites access, Follow Next may cross to another site.
   await page.goto(`${fixture.base}/site/runs/page.html?of=1&next=text&after=other`); await sleep(800);
   const crossingTab = (await rpc(ui, {type: 'tabs.list'})).tabs.find((tab) => tab.url === page.url());
   const crossingHome = (await rpc(ui, {type: 'state.mutate', action: {type: 'collection.create', name: 'Crossing Next'}})).activeCollectionId;
@@ -366,7 +366,7 @@ try {
   assert.equal(new URL(page.url()).hostname, 'localhost', 'the tab moved to the other site');
   pass('Follow Next crosses to another site where Link Meteor has access to it');
 
-  // 0.6.0, PDF files. With all-sites access nothing is asked for. PDFs on two sites (127.0.0.1 and
+  // 1.0.0, PDF files. With all-sites access nothing is asked for. PDFs on two sites (127.0.0.1 and
   // localhost) go into one ZIP and one combined PDF: each is fetched through a page of its own site in
   // a background tab that is closed again, including one the site sends as a download, which Chrome
   // never downloads; an address that moves to the other site is opened by itself and read where it

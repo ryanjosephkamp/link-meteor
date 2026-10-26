@@ -6,7 +6,7 @@ export const COLUMNS = [
   { key: 'anchorText', label: 'Anchor text' }, { key: 'url', label: 'URL' },
   { key: 'accessibleLabel', label: 'Accessible label' }, { key: 'originalHref', label: 'Original href' },
   { key: 'sourceUrl', label: 'Source page URL' }, { key: 'sourceTitle', label: 'Source page title' },
-  // 0.6.0: the page of the PDF a link was read from; empty for links from web pages.
+  // 1.0.0: the page of the PDF a link was read from; empty for links from web pages.
   { key: 'frameUrl', label: 'Frame URL' }, { key: 'pdfPage', label: 'PDF page' }, { key: 'capturedAt', label: 'Captured at' },
   { key: 'batchId', label: 'Capture batch ID' }, { key: 'id', label: 'Occurrence ID' },
   { key: 'notes', label: 'Notes' }, { key: 'tags', label: 'Tags' },

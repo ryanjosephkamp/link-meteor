@@ -1,4 +1,4 @@
-// The PDF reader in Link Meteor's own pages (0.6.0). PDF.js is loaded the first time a PDF is
+// The PDF reader in Link Meteor's own pages (1.0.0). PDF.js is loaded the first time a PDF is
 // read, and runs in one module worker from the bundled file: never in the background worker and
 // never in a web page. Link Meteor reads annotations, text and details, and combines PDFs; it
 // never draws a page. What is read is decided in core/pdf.js. The contract is in

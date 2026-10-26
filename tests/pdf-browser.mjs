@@ -1,4 +1,4 @@
-// PDFs (0.6.0) in the real extension, with no grants: Chrome for Testing, headless, a fresh
+// PDFs (1.0.0) in the real extension, with no grants: Chrome for Testing, headless, a fresh
 // task-owned profile, the real unpacked build.
 // The reader (src/ui/workbench/pdf-reader.js), inside Link Meteor's own page with its page rules:
 // - PDF.js is not loaded until a PDF is read, then runs in a real module worker;

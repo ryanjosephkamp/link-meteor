@@ -1,4 +1,4 @@
-// The PDFs behind chosen links (0.6.0), in the Export panel's Download files: Download as one ZIP,
+// The PDFs behind chosen links (1.0.0), in the Export panel's Download files: Download as one ZIP,
 // and Combine into one PDF…, with a list the person puts in order and PDF files from the computer.
 // Each PDF's file is fetched by this page through a tab on the PDF's own site (pdf-tab.js), one at
 // a time, as a run of kind `files` (background/runs.js): the background finds or opens the tab and

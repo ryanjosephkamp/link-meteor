@@ -2,7 +2,7 @@
 
 Link Meteor processes captured links locally in Chrome. It has no account, remote service, analytics, advertisements, telemetry or paid functionality. Capturing a link does not visit its destination.
 
-**Nothing leaves your browser unless you turn on a feature that says exactly what it sends, and where.** From 0.6.0 there is one such feature, [Page details lookup](#page-details-lookup), and it is off unless you turn it on. Link Meteor's own pages still cannot contact any server: only a sealed frame can, and only for that lookup.
+**Nothing leaves your browser unless you turn on a feature that says exactly what it sends, and where.** From 1.0.0 there is one such feature, [Page details lookup](#page-details-lookup), and it is off unless you turn it on. Link Meteor's own pages still cannot contact any server: only a sealed frame can, and only for that lookup.
 
 ## What is stored
 
@@ -12,7 +12,7 @@ Named collections contain visible anchor text, separately labeled accessible tex
 - your reading status and stars;
 - for imported links, the name of the file or bookmark folder they came from.
 
-From 0.6.0 they can also hold:
+From 1.0.0 they can also hold:
 - for a link read from a PDF, the page of the PDF it is on;
 - what a PDF says about itself (its title, arXiv's stamp, a DOI), read from the PDF's own file;
 - details a lookup returned (title, authors, date, journal), when you turned Page details lookup on and asked for one. Each citation says where it was read.
@@ -53,13 +53,13 @@ Deleting a collection removes it from the saved state. Link removal keeps one un
 | `contextMenus` | Offer Link Meteor's actions in Chrome's right-click menu and the toolbar icon's menu: select a region, capture this page, save a tab as a link, add or copy a right-clicked link, capture the links in a selection, download a linked file. Chrome tells Link Meteor a right-clicked link's address; to save its exact text, the page script remembers which link was right-clicked, only until a menu item is chosen. |
 | `clipboardWrite` | Copy your selected export to the clipboard after an explicit action: a table, URLs, Markdown, rich links (HTML with plain text), or Copy diagnostics. |
 | Optional `tabs` | Preview and choose open tabs for multi-tab/window capture. |
-| Optional HTTP(S) site access | For selected tabs, Capture this page after its temporary access has ended, hold-key drag, and from 0.6.0 capturing selected pages, including a frame from another site, or getting PDF files through a page of their site, Chrome asks for access one site at a time, naming the sites. You can instead make one explicit choice, **Allow on all sites**: on the welcome card, the Site access switch, or a capture Chrome hid from Link Meteor. Hold-key drag and capture then work on every site except the ones you exclude. |
+| Optional HTTP(S) site access | For selected tabs, Capture this page after its temporary access has ended, hold-key drag, and from 1.0.0 capturing selected pages, including a frame from another site, or getting PDF files through a page of their site, Chrome asks for access one site at a time, naming the sites. You can instead make one explicit choice, **Allow on all sites**: on the welcome card, the Site access switch, or a capture Chrome hid from Link Meteor. Hold-key drag and capture then work on every site except the ones you exclude. |
 | Optional `tabGroups` | Name a tab group after your collection when you choose to open links as a group. Without it, the tabs still open in an unnamed group. |
 | Optional `downloads` | Save the files behind links you choose (a PDF, an image, a document) into your Downloads folder, as if you had clicked each link. Asked the first time you download. Chrome describes it as "Manage your downloads"; Link Meteor never reads, opens, changes or removes your other downloads. |
 | Optional `bookmarks` | Create the bookmark folder you request, or add links to a folder you choose. To show the folder picker, Link Meteor reads your bookmark folder names, and it reads the chosen folder's links to skip ones already there. It never changes or removes other bookmarks. |
 | `unlimitedStorage` | Lets large collections, and the Undo kept after a restore, grow past Chrome's default 10 MB extension storage. No prompt; the data stays in this browser. |
 
-**0.6.0 adds no permission and asks for no browser setting.** It does not ask for "Allow access to file URLs" (that setting does not make a PDF on your computer readable; choosing the file needs no access at all), and Link Meteor still does not run in incognito windows.
+**1.0.0 adds no permission and asks for no browser setting.** It does not ask for "Allow access to file URLs" (that setting does not make a PDF on your computer readable; choosing the file needs no access at all), and Link Meteor still does not run in incognito windows.
 
 Multi-tab site access and hold-mode site access are requested when needed. All-sites access is asked for only through the explained choice above, never at install; declining keeps the one-site-at-a-time route. Chrome controls the grant UI and can remove access, including through its own site-access menu. Removing all-sites access (with Link Meteor's Remove Chrome's access button or Chrome's own controls) can also remove Chrome's access to sites you allowed one at a time; Link Meteor then turns hold-key drag off wherever it no longer has access, and asks again when you next capture or turn a site on. Turning off hold mode stops its automatic content-script registration; it does not revoke the broader site permission that may also support multi-tab capture. You can manage/revoke site access through Chrome's extension controls. Revoked origins are removed from hold-mode settings when the permission event is processed.
 

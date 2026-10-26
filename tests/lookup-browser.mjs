@@ -1,4 +1,4 @@
-// Page details lookup (0.6.0) in the real extension, with no grants: Chrome for Testing, headless,
+// Page details lookup (1.0.0) in the real extension, with no grants: Chrome for Testing, headless,
 // a fresh task-owned profile, the real unpacked build. The test answers in the services' place
 // (Playwright fulfills the frame's requests with recorded answers), so nothing here ever contacts
 // Crossref, DataCite or NCBI.

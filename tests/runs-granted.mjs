@@ -1,4 +1,4 @@
-// Capture their pages… with a real grant for the sites it names (0.6.0), for the lead's owner
+// Capture their pages… with a real grant for the sites it names (1.0.0), for the lead's owner
 // session. Run it in the per-site profile prepared with tests/prepare-grants.mjs
 // (LINK_METEOR_GRANTS=site), with the same fixture port, and before tests/permission-browser.mjs.
 //

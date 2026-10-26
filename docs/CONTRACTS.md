@@ -1080,7 +1080,7 @@ The plan recommends building these later. Here is what the browser allows, so th
 - When a second computer first syncs, Chrome replaces that computer's synced settings with the account's.
 - Settings would travel through Google's Chrome Sync. Collections never would.
 
-**Frames from other sites and closed components** (recommended for 0.6.0):
+**Frames from other sites and closed components** (recommended for 1.0.0):
 - `chrome.dom.openOrClosedShadowRoot` works in the page script with no permission.
 - `scripting.executeScript` with `allFrames` reaches every frame Link Meteor has access to, and silently skips the rest.
 - Listing every frame, to say which were skipped, would need `webNavigation`, which Chrome describes as "Read your browsing history". The plan avoids it: frames that didn't answer are reported as a count.
@@ -1166,7 +1166,7 @@ After the owner's hands-on check of release candidate 1. It adds no permission a
   - for a `file:` page: "Link Meteor can’t capture from files on your computer. …", with the same advice.
 - For other web pages, it first reads `document.contentType` (a named function, `documentType`) and refuses a PDF the same way. Chrome's PDF viewer shows a PDF, and no extension can read that.
 - *Capture this page* and the capture report use the same words, in place of "Choose an ordinary HTTP or HTTPS webpage".
-- Reading the links inside PDFs is planned for 0.6.0.
+- Reading the links inside PDFs is planned for 1.0.0.
 - The right-click menu is not gated this way: see release candidate 3 below.
 
 ### The Star button
@@ -1197,15 +1197,15 @@ Release candidate 2's capture gate also stopped *Add link* on PDFs, which had wo
 
 For BibTeX, RIS, CSL-JSON and the annotated bibliography, `#cite-facts` gains a line when `unauthored` is above zero: "2 with a DOI or arXiv ID but no authors yet. Capture from the paper’s own page (on arXiv, its abstract page) or save that page as a tab, and its authors and date fill in". Nothing is looked up online, so authors come only from a saved page about the paper.
 
-## Added in 0.6.0
+## Added in 1.0.0
 
-These contracts are for 0.6.0 "Beyond one page": the links inside PDFs, capturing more than one screen or one page, frames from other sites, closed components, the PDFs behind links as one ZIP or one combined PDF, and the first optional online feature. They were written before building, and each area's "as built" part records what was settled while building; where the two differ, the "as built" part is what the code does. Release candidate 1 holds all of it.
+These contracts are for 1.0.0 "Beyond one page": the links inside PDFs, capturing more than one screen or one page, frames from other sites, closed components, the PDFs behind links as one ZIP or one combined PDF, and the first optional online feature. They were written before building, and each area's "as built" part records what was settled while building; where the two differ, the "as built" part is what the code does. Release candidate 1 holds all of it.
 
 The facts they rest on were tested first, in throwaway profiles with small diagnostic extensions: which PDF reader build runs on the oldest supported Chrome, how a PDF's file can be read from its tab or from a page of its site, whether the reader can combine PDFs, how long the toolbar's temporary access lasts, and what a lookup request carries.
 
 ### The promise, restated
 
-Until 0.6.0 nothing leaves the browser. From 0.6.0: **nothing leaves your browser unless you turn on a feature that says exactly what it sends, and where.** 0.6.0 has one such feature, [Page details lookup](#page-details-lookup), off by default. Link Meteor's own pages keep `connect-src 'none'`.
+Until 1.0.0 nothing leaves the browser. From 1.0.0: **nothing leaves your browser unless you turn on a feature that says exactly what it sends, and where.** 1.0.0 has one such feature, [Page details lookup](#page-details-lookup), off by default. Link Meteor's own pages keep `connect-src 'none'`.
 
 ### The bundled PDF reader
 
@@ -1290,7 +1290,7 @@ New optional fields; absent means none, so a 0.5.0 state needs no migration.
 - **The PDF itself as a link:** the preview's *Also save this PDF as a link* adds one link whose address is the PDF's (for a file: its arXiv abstract page or its DOI address, when the PDF names one; otherwise the choice isn't offered) and whose own citation is the PDF's.
 - `import.commit` accepts `pages: {[pageUrl]: PageCitation}` beside `links`, as `links.append` does.
 - A citation read from a page's own tags is never replaced by one read from a PDF; a PDF's citation fills only the fields the page didn't give.
-- **Backup format 4.** `BACKUP_FORMAT_VERSION` becomes 4, so 0.5.0 refuses a 0.6.0 backup with its update message instead of dropping fields. `readBackup` accepts formats 1 to 4.
+- **Backup format 4.** `BACKUP_FORMAT_VERSION` becomes 4, so 0.5.0 refuses a 1.0.0 backup with its update message instead of dropping fields. `readBackup` accepts formats 1 to 4.
 - **Exports** gain a `PDF page` column beside the capture details in CSV, TSV, the workbook and JSON. Citation formats use the PDF's citation like any other page citation.
 - **A link's details** show "Page 3 of the PDF" beside its source, and the *Cited from* note says "Read from the PDF itself" for `source: 'pdf'`.
 
@@ -1512,7 +1512,7 @@ In the Export panel's *Download files*, the PDFs among the chosen links (the fil
 - The summary says the number of PDFs, pages and megabytes, and lists what is left out with the reason: needs a password, damaged, not a PDF, no access, over a limit.
 - `#combine-apply` ("Combine 5 PDFs") gets the files still missing, then writes one PDF with the reader's `extractPages([{document: null}, {document: bytes}, …])` on the first PDF, in the list's order, and hands it to Chrome's download.
 - **What the combined PDF keeps** (tested): every page, its text, its web links, the links inside each document, and each document's bookmarks. **Not kept:** page labels (such as i, ii, iii), form fields' behavior and document-level attachments are not promised. A PDF that needs a password can't be combined, and goes into a ZIP as it is.
-- Whole PDFs only: choosing single pages is not in 0.6.0.
+- Whole PDFs only: choosing single pages is not in 1.0.0.
 
 **As built** (`src/ui/workbench/pdf-files.js`, the `files` kind in `src/background/runs.js`, and four functions in `src/core/files.js`). Where this differs from the draft above, this is what the code does.
 
@@ -1748,7 +1748,7 @@ Off by default (`lookupDetails`). It fills in a paper's title, authors, date and
 
 ### Permissions, browser settings and network requests
 
-**0.6.0 adds no permission to the manifest, asks for no browser setting, and adds one optional online feature.**
+**1.0.0 adds no permission to the manifest, asks for no browser setting, and adds one optional online feature.**
 
 | What | New? | Reason shown |
 | --- | --- | --- |
@@ -1776,13 +1776,13 @@ Off by default (`lookupDetails`). It fills in a paper's title, authors, date and
 
 ### Later, stated now so the wording is settled
 
-These are planned for 0.7.0 and are not built in 0.6.0.
+These are not built in 1.0.0. The wording is settled in case they are built later.
 
 - **Dead-link check** (optional, off by default). "When you click *Check links*, Link Meteor sends one request to each chosen link’s own site, to see whether the page still answers. Each site sees your IP address and your browser’s version, as when you visit it. No cookies are sent. Nothing is sent to anyone else." It needs all-sites access to read an answer, and `connect-src` opened to web addresses on Link Meteor's pages, which is why it is a release of its own.
 - **Wayback** (optional, off by default). "When you click *Find an archived copy*, Link Meteor sends that link’s address to the Internet Archive (archive.org) and saves the archived copy’s address and date with the link. The Internet Archive sees the address and your IP address." It never asks the Archive to save a page.
 - **Incognito session collections.** Needs the manifest's `incognito` key changed and Chrome's "Allow in Incognito" turned on by the person. Until then Link Meteor doesn't run in incognito windows.
 
-### The 0.6.0 foundation, as built
+### The 1.0.0 foundation, as built
 
 The parts every lane builds on. Where this differs from the draft above, this is what the code does.
 

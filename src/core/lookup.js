@@ -1,4 +1,4 @@
-// Page details lookup (0.6.0), pure: which request an identifier needs, and each service's answer
+// Page details lookup (1.0.0), pure: which request an identifier needs, and each service's answer
 // as a page citation. Nothing here contacts anything: the sandboxed frame (ui/lookup-frame.js)
 // makes the request, and only for the identifiers and services named here. Answers are untrusted
 // text: tags are removed and every field is cut to the model's limits. It also plans a run (which

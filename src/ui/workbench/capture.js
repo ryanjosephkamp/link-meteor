@@ -6,7 +6,7 @@ import { render, setView } from './rendering.js';
 import { renderLinks } from './review.js';
 import { renderSite } from './settings.js';
 import { ALL_SITES, grants, pageAccessPlan } from './access.js';
-// PDFs (0.6.0): on a PDF's tab the capture button reads the links inside the PDF (pdf.js).
+// PDFs (1.0.0): on a PDF's tab the capture button reads the links inside the PDF (pdf.js).
 import { targetTab, pdfCaptureLabel, previewPdfTab, syncPdfCapture, learnPdfTab, chooseLocalPdf, capturePdf } from './pdf.js';
 import { reportFrames } from './frames.js';
 import { bindRuns, renderFurther, runFurther, runReport, reportScroll } from './runs.js';
@@ -325,7 +325,7 @@ export function captureReport(report, { source = 'workbench', key = '', createdA
     if (cited) box.append(node('p', 'help report-citations', cited));
     reportTabs(box, results); syncReportAction(); return;
   }
-  // 0.6.0, Allow these sites: the same report again, with the frames' links folded in (frames.js).
+  // 1.0.0, Allow these sites: the same report again, with the frames' links folded in (frames.js).
   const again = (merged) => {
     const next = key ? JSON.stringify([createdAt, merged.batchId, merged.capturedCount]) : '';
     if (next) ui.lastContextReportKey = next;

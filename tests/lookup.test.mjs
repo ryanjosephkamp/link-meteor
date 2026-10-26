@@ -149,6 +149,12 @@ test('answers are untrusted text: tags and entities are made plain, and every fi
   assert.equal(plainText('&#0;&#xD800;&bogus;'), '&bogus;');
   assert.equal(plainText({ evil: true }), '');
   assert.equal(plainText('x'.repeat(400)).length, 300);
+  // Only real tags go: a comparison is text, and tags sent encoded are tags too.
+  assert.equal(plainText('When x < 5 and y > 3 the effect holds'), 'When x < 5 and y > 3 the effect holds');
+  assert.equal(plainText('When x&lt;y and z&gt;w, and 0<p<1'), 'When x<y and z>w, and 0<p<1');
+  assert.equal(plainText('&lt;i&gt;Drosophila&lt;/i&gt; genes'), 'Drosophila genes');
+  assert.equal(plainText('Spin <mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML"><mml:msub><mml:mi>S</mml:mi><mml:mn>z</mml:mn></mml:msub></mml:math> and H<sub>2</sub>O<br/>'), 'Spin Sz and H2O');
+  assert.equal(plainText('<jats:title>A</jats:title> <span class=x data-n=\'1\'>B</span>'), 'A B');
   const hostile = readCrossref({ message: { title: ['<b>T</b>' + 'x'.repeat(500)], author: Array.from({ length: 80 }, (_, i) => ({ family: `<i>F${i}</i>`, given: 'G'.repeat(400) })), page: '1-2', volume: { not: 'text' }, DOI: 42 } });
   assert.equal(hostile.title.length, 300);
   assert.equal(hostile.authors.length, 50);

@@ -53,16 +53,20 @@ export function linkRequests(link, pages = {}) {
 
 /* Answers ----------------------------------------------------------------------------------------- */
 const ENTITIES = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' ' };
+// A tag: < and a name (<i>, </sub>, <mml:mi>), with attributes only as name=value, so "x < 5 and
+// y > 3" and "x<y and z>w" are text.
+const TAG = /<\/?[a-z][\w:.-]*(?:\s+[\w:.-]+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s"'<>]+))*\s*\/?>/giu;
 // Text from a service, made plain: tags and entities removed, spaces collapsed, cut to a limit.
+// Tags are removed again once entities are decoded, since some titles carry them encoded (&lt;i&gt;).
 export function plainText(value, max = 300) {
   if (typeof value !== 'string' && typeof value !== 'number') return '';
-  const text = String(value).replace(/<[^>]*>/gu, '')
+  const text = String(value).replace(TAG, '')
     .replace(/&(#x[0-9a-f]{1,6}|#\d{1,7}|[a-z]+);/giu, (whole, name) => {
       if (name[0] !== '#') return ENTITIES[name.toLowerCase()] ?? whole;
       const code = name[1].toLowerCase() === 'x' ? parseInt(name.slice(2), 16) : parseInt(name.slice(1), 10);
       return code > 31 && code <= 0x10ffff && !(code >= 0xd800 && code <= 0xdfff) ? String.fromCodePoint(code) : '';
     })
-    .replace(/[\u0000-\u001f\u007f]/gu, ' ').replace(/\s+/gu, ' ').trim();
+    .replace(TAG, '').replace(/[\u0000-\u001f\u007f]/gu, ' ').replace(/\s+/gu, ' ').trim();
   return text.length <= max ? text : text.slice(0, max - 1).trimEnd() + '…';
 }
 const first = (value) => (Array.isArray(value) ? value[0] : value);

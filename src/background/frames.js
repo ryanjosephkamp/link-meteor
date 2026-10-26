@@ -93,6 +93,8 @@ async function captureFrames(message) {
   const stored = (await chrome.storage.session.get(REPORT_KEY))[REPORT_KEY];
   const kept = stored?.report?.batchId === message.batchId ? (stored.report.results || []).find(result => result.tabId === message.tabId && result.status === 'success') : null;
   if (!kept) throw new Error('That capture’s report is no longer kept. Capture the page again to include its frames.');
+  // A run that was undone (Scroll to the end first has Undo) has no batch left to add them to.
+  if (stored.report.undone !== undefined) throw new Error('That capture was undone, so its frames weren’t added. Capture the page again to include them.');
   if (!kept.frames?.left?.length) throw new Error('That capture left no frames unread, so there is nothing to add.');
   // The kept report as it is now, or why it is no longer this one (a newer capture, or this
   // capture's frames added meanwhile from another view).

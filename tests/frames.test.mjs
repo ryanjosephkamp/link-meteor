@@ -400,6 +400,12 @@ test('capture.frames refuses what it can’t do, in plain words', async () => {
   await ok({type: 'state.mutate', action: {type: 'collection.create', name: 'Replacement'}});
   await ok({type: 'state.mutate', action: {type: 'collection.delete', id: home.id}});
   await refused(good, /went to no longer exists/);
+  // A run that was undone (run.undo marks its kept report) has no batch to add to.
+  await reset();
+  const undone = (await ok({type: 'capture.run', tabIds: [1]})).report;
+  session.linkMeteorCaptureReport.report.undone = undone.capturedCount;
+  page.allowed = new Set([B]);
+  await refused({type: 'capture.frames', tabId: 1, batchId: undone.batchId}, /That capture was undone, so its frames weren’t added/);
   // A capture of several tabs: only the asked tab's result changes.
   await reset();
   tabs.push({id: 2, windowId: 1, url: 'https://a.test/second', title: 'Page A2'});

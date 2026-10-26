@@ -7,8 +7,8 @@ import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { readdir } from 'node:fs/promises';
 import { createState, mergeCitation, reduceState } from '../src/core/model.js';
-import { citeFacts } from '../src/core/cite.js';
-import { LOOKUP_SERVICES, MAX_LOOKUPS, filled, lookupAllowed, lookupMissing, lookupOutcome, lookupPlan, lookupReport, lookupRequests, lookupUrl, missingWords, plainText, readAnswer, readCrossref, readDatacite, readPubmed, sameCitation, unauthored } from '../src/core/lookup.js';
+import { citations, citeFacts } from '../src/core/cite.js';
+import { LOOKUP_SERVICES, MAX_LOOKUPS, filled, linkRequests, lookupAllowed, lookupMissing, lookupOutcome, lookupPlan, lookupReport, lookupRequests, lookupUrl, missingWords, plainText, readAnswer, readCrossref, readDatacite, readPubmed, sameCitation, unauthored } from '../src/core/lookup.js';
 
 const root = resolve(import.meta.dirname, '..');
 const recorded = (name) => readFile(resolve(root, 'tests/fixtures/lookup', name), 'utf8');
@@ -25,6 +25,21 @@ test('each identifier goes to one service, with nothing but the identifier in th
   assert.deepEqual(lookupRequests({ pmid: '16060722' }), [{ service: 'pubmed', identifier: '16060722', url: 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?db=pubmed&retmode=json&id=16060722' }]);
   assert.deepEqual(lookupRequests({ isbn: '9780262033848', pmcid: 'PMC1182327' }), [], 'nothing to look up without a DOI, an arXiv ID or a PubMed ID');
   assert.deepEqual(lookupRequests(), []);
+});
+
+test('a link to arXiv is asked about by the arXiv ID in its address, not by a DOI its PDF named', () => {
+  const PDF = 'https://arxiv.org/pdf/2409.11211v1';
+  const link = (url) => ({ id: url, url, originalHref: url, anchorText: 'Paper' });
+  // The PDF reader keeps the one DOI on page 1 besides arXiv's own: here, the paper's code on Zenodo.
+  const pages = { [PDF]: { title: 'SplatFields', authors: ['Mihajlovic, Marko'], doi: '10.5281/zenodo.1234567', arxiv: '2409.11211', source: 'pdf', readAt: '2026-10-26T00:00:00.000Z' } };
+  assert.deepEqual(linkRequests(link(PDF), pages).map((request) => `${request.service} ${request.identifier}`), ['datacite 10.48550/arXiv.2409.11211']);
+  assert.deepEqual(lookupPlan([link(PDF)], pages).asks.map((ask) => ask.key), ['datacite:10.48550/arxiv.2409.11211']);
+  assert.deepEqual(linkRequests(link('https://doi.org/10.48550/arXiv.2409.11211'), {}).map((request) => request.identifier), ['10.48550/arXiv.2409.11211']);
+  // Any other link is asked about by its identifiers as before: a DOI its own citation names, too.
+  const page = 'https://journal.example/article/7';
+  assert.deepEqual(linkRequests(link(page), { [page]: { title: 'T', doi: '10.1371/journal.pmed.0020124' } }).map((request) => request.service), ['crossref', 'datacite']);
+  assert.deepEqual(linkRequests(link('https://pubmed.ncbi.nlm.nih.gov/16060722/')).map((request) => request.service), ['pubmed']);
+  assert.deepEqual(linkRequests(link('https://example.org/notes')), []);
 });
 
 test('only the three services, and only identifiers of the right shape', () => {
@@ -81,6 +96,44 @@ test('PubMed: names read as family and initials, the date as printed', async () 
   assert.equal(readPubmed(await json('pubmed-article.json'), '999'), null, 'the answer must be for the ID asked');
 });
 
+test('PubMed: a short last page in full, extras after the range left out, and a suffix after the initials', () => {
+  const read = (pages, names = []) => readPubmed({ result: { 1: { title: 'T.', pages, authors: names.map((name) => ({ name })) } } }, '1');
+  const range = (pages) => { const { firstPage = '', lastPage = '' } = read(pages); return [firstPage, lastPage]; };
+  assert.deepEqual(range('1123-9'), ['1123', '1129'], 'MEDLINE’s 1123-9 is 1123 to 1129');
+  assert.deepEqual(range('1123-9; quiz 1130'), ['1123', '1129']);
+  assert.deepEqual(range('1199-203'), ['1199', '1203']);
+  assert.deepEqual(range('12-4, 16'), ['12', '14']);
+  assert.deepEqual(range('S12-5'), ['S12', 'S15']);
+  assert.deepEqual(range('45-52'), ['45', '52']);
+  assert.deepEqual(range('e124'), ['e124', '']);
+  assert.deepEqual(range('iii-iv'), ['iii', 'iv'], 'anything else stays as printed');
+  assert.deepEqual(range(''), ['', '']);
+  assert.deepEqual(read('1', ['de Azevedo WF Jr', 'Bitencourt-Ferreira G', 'Gates WH 3rd', 'Smith J II', 'Van Der Berg JA', 'World Health Organization']).authors,
+    ['de Azevedo, WF, Jr', 'Bitencourt-Ferreira, G', 'Gates, WH, 3rd', 'Smith, J, II', 'Van Der Berg, JA', 'World Health Organization']);
+  // The same rule for Crossref's pages, which are usually printed in full.
+  assert.deepEqual(['firstPage', 'lastPage'].map((key) => readCrossref({ message: { title: ['T'], page: '1123-9' } })[key]), ['1123', '1129']);
+  assert.deepEqual(['firstPage', 'lastPage'].map((key) => readCrossref({ message: { title: ['T'], page: '1123-1129' } })[key]), ['1123', '1129']);
+});
+
+test('Crossref: a whole book has no journal (its last container title is its series), and books keep their ISBN', async () => {
+  for (const type of ['book', 'edited-book', 'monograph', 'reference-book']) {
+    const book = readCrossref({ message: { type, title: ['A Book'], 'container-title': ['Lecture Notes in Computer Science'], ISBN: ['9780306406157'], publisher: 'Springer' } });
+    assert.deepEqual([book.journal, book.isbn, book.publisher], [undefined, '9780306406157', 'Springer'], type);
+  }
+  for (const type of ['book-chapter', 'book-part', 'reference-entry']) {
+    const part = readCrossref({ message: { type, title: ['A Chapter'], 'container-title': ['Lecture Notes in Computer Science', 'The Book'], ISBN: ['9780306406157'] } });
+    assert.deepEqual([part.journal, part.isbn], ['The Book', '9780306406157'], type);
+  }
+  const article = readCrossref(await json('crossref-article.json'));
+  assert.deepEqual([article.journal, article.isbn], ['PLoS Medicine', undefined]);
+  // An edited book exports as a book's details, not as an article in its series.
+  const pages = { 'https://doi.org/10.1007/x': readCrossref({ message: { type: 'edited-book', title: ['A Book'], 'container-title': ['Lecture Notes in Computer Science'], ISBN: ['9780306406157'] } }) };
+  const bibtex = citations([{ id: 'a', url: 'https://doi.org/10.1007/x', anchorText: 'A Book', accessibleLabel: '', capturedAt: '2026-10-26T12:00:00.000Z', notes: '', tags: [] }], { format: 'bibtex', pages });
+  assert.match(bibtex, /^@misc\{/);
+  assert.doesNotMatch(bibtex, /journal|Lecture Notes/);
+  assert.match(bibtex, /isbn\s+= \{9780306406157\}/);
+});
+
 test('an answer is a citation, a miss, or a reason to stop', async () => {
   assert.equal(readAnswer('crossref', '10.1371/journal.pmed.0020124', { status: 200, body: await recorded('crossref-article.json') }).citation.title, 'Why Most Published Research Findings Are False');
   assert.deepEqual(readAnswer('crossref', '10.5555/none', { status: 404, body: await recorded('crossref-missing.txt') }), { missing: true });
@@ -96,6 +149,12 @@ test('answers are untrusted text: tags and entities are made plain, and every fi
   assert.equal(plainText('&#0;&#xD800;&bogus;'), '&bogus;');
   assert.equal(plainText({ evil: true }), '');
   assert.equal(plainText('x'.repeat(400)).length, 300);
+  // Only real tags go: a comparison is text, and tags sent encoded are tags too.
+  assert.equal(plainText('When x < 5 and y > 3 the effect holds'), 'When x < 5 and y > 3 the effect holds');
+  assert.equal(plainText('When x&lt;y and z&gt;w, and 0<p<1'), 'When x<y and z>w, and 0<p<1');
+  assert.equal(plainText('&lt;i&gt;Drosophila&lt;/i&gt; genes'), 'Drosophila genes');
+  assert.equal(plainText('Spin <mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML"><mml:msub><mml:mi>S</mml:mi><mml:mn>z</mml:mn></mml:msub></mml:math> and H<sub>2</sub>O<br/>'), 'Spin Sz and H2O');
+  assert.equal(plainText('<jats:title>A</jats:title> <span class=x data-n=\'1\'>B</span>'), 'A B');
   const hostile = readCrossref({ message: { title: ['<b>T</b>' + 'x'.repeat(500)], author: Array.from({ length: 80 }, (_, i) => ({ family: `<i>F${i}</i>`, given: 'G'.repeat(400) })), page: '1-2', volume: { not: 'text' }, DOI: 42 } });
   assert.equal(hostile.title.length, 300);
   assert.equal(hostile.authors.length, 50);

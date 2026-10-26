@@ -2,7 +2,7 @@
 // version and category, the citation restore action, two settings, and backup format 4.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { BACKUP_FORMAT_VERSION, CITATION_SOURCES, MAX_PDF_PAGES, SETTINGS_DEFAULTS, createBackup, createState, migrateState, planRestore, readBackup, reduceState, transferLinks } from '../src/core/model.js';
+import { BACKUP_FORMAT_VERSION, CITATION_SOURCES, MAX_PAGES, MAX_PDF_PAGES, SETTINGS_DEFAULTS, createBackup, createState, migrateState, planRestore, readBackup, reduceState, transferLinks } from '../src/core/model.js';
 
 const link = (id, url, extra = {}) => ({ id, anchorText: id, accessibleLabel: '', url, originalHref: url, sourceUrl: 'https://arxiv.org/pdf/2409.11211v1', sourceTitle: 'SplatFields', frameUrl: '', capturedAt: '2026-10-02T10:00:00.000Z', batchId: 'b1', notes: '', tags: [], ...extra });
 const PDF = 'https://arxiv.org/pdf/2409.11211v1';
@@ -64,6 +64,39 @@ test('two settings: how far Follow Next goes, and the lookup, which is off', () 
   assert.equal(set({ lookupDetails: true }).lookupDetails, true);
   for (const followPages of [1, 21, 2.5, '5', null]) assert.throws(() => set({ followPages }), /followPages must be a whole number from 2 to 20/, String(followPages));
   assert.throws(() => set({ lookupDetails: 'yes' }), /lookupDetails must be true or false/);
+});
+
+test('a merge keeps every local page citation as it is, whatever it was read from, and adds only the backup’s other pages', () => {
+  const lookup = { title: 'Looked Up', authors: ['Mihajlovic, Marko'], source: 'datacite', readAt: '2026-10-20T00:00:00.000Z' };
+  const tags = { title: 'From the Page’s Tags', journal: 'ECCV', readAt: '2026-10-01T00:00:00.000Z' };
+  const OTHER = 'https://b.example/', NEW = 'https://c.example/';
+  // [local, backup] for the PDF's address: a weaker local reading, the same kind of reading, and a stronger one.
+  for (const [local, theirs] of [[fromPdf, tags], [fromPdf, lookup], [lookup, tags], [lookup, { ...lookup, title: 'Their Lookup', journal: 'J' }], [tags, { ...tags, title: 'Their Tags' }], [tags, fromPdf]]) {
+    const here = reduceState(createState(), { type: 'links.append', links: [link('a', PDF)], pages: { [PDF]: local } });
+    for (const extra of [[], [link('b', OTHER)]]) {
+      // The backup has the same link, sometimes one more, and its own reading of the same page.
+      const there = reduceState(createState(), { type: 'links.append', links: [link('a', PDF), ...extra], pages: { [PDF]: theirs } });
+      const merged = home(planRestore(here, createBackup(there, { extensionVersion: '0.6.0' }), 'merge').state);
+      assert.deepEqual(merged.pages, { [PDF]: local }, `local ${local.source || 'tags'} against the backup’s ${theirs.source || 'tags'}, ${extra.length ? 'with' : 'without'} a new link`);
+    }
+  }
+  // A page only the backup knows (here, the link's source page) is added, even when nothing else changes.
+  const here = reduceState(createState(), { type: 'links.append', links: [link('a', PDF, { sourceUrl: NEW })], pages: { [PDF]: lookup } });
+  const there = reduceState(createState(), { type: 'links.append', links: [link('a', PDF, { sourceUrl: NEW })], pages: { [PDF]: tags, [NEW]: tags } });
+  assert.deepEqual(home(planRestore(here, createBackup(there, { extensionVersion: '0.6.0' }), 'merge').state).pages, { [NEW]: tags, [PDF]: lookup });
+});
+
+test('a merge that changes only which pages are kept is saved: the pages are compared, not counted', () => {
+  const at = (i) => new Date(Date.UTC(2026, 9, 1) + i * 1000).toISOString();
+  const full = Object.fromEntries(Array.from({ length: MAX_PAGES }, (_, i) => [`https://p.example.org/${i}`, { title: `P${i}`, readAt: at(i) }]));
+  const NEW = 'https://new.example/';
+  const here = reduceState(createState(), { type: 'links.append', links: [link('a', PDF, { sourceUrl: NEW })], pages: full });
+  // The backup holds the same link and one newer page: the oldest local reading makes room for it.
+  const there = reduceState(createState(), { type: 'links.append', links: [link('a', PDF, { sourceUrl: NEW })], pages: { [NEW]: { title: 'Newer', readAt: '2026-10-25T00:00:00.000Z' } } });
+  const pages = home(planRestore(here, createBackup(there, { extensionVersion: '0.6.0' }), 'merge').state).pages;
+  assert.equal(Object.keys(pages).length, MAX_PAGES);
+  assert.equal(pages[NEW].title, 'Newer');
+  assert.equal(pages['https://p.example.org/0'], undefined, 'the oldest reading made room');
 });
 
 test('backup format 4 keeps the new fields, and a restore brings them back', () => {

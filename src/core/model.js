@@ -924,9 +924,11 @@ export function planRestore(input, backupInput, mode) {
     }
     const joined = fresh.map(item => item.fields ? withFields(item, Object.fromEntries(Object.entries(item.fields).filter(([key]) => remap.has(key)).map(([key, text]) => [remap.get(key), text]))) : item);
     const fieldsChanged = fields.length !== fieldDefs(current.fields).length;
-    // Page citations join too; a page already known here keeps its local reading.
-    const localPages = pagesMap(current.pages), pages = mergePages(source.pages || {}, localPages);
-    const pagesChanged = Object.keys(pages).length !== Object.keys(localPages).length;
+    // Page citations join too; a page already known here keeps its local reading as it is, so only
+    // the backup's other pages are added (the oldest readings go first past MAX_PAGES).
+    const localPages = pagesMap(current.pages);
+    const pages = mergePages(Object.fromEntries(Object.entries(source.pages || {}).filter(([url]) => !Object.hasOwn(localPages, url))), localPages);
+    const pagesChanged = Object.keys(pages).length !== Object.keys(localPages).length || Object.entries(pages).some(([url, citation]) => JSON.stringify(citation) !== JSON.stringify(localPages[url]));
     if (fresh.length || notes !== current.notes || tags.length !== current.tags.length || fieldsChanged || pagesChanged) {
       collections[at] = withPages({ ...current, notes, tags, ...(fields.length ? { fields } : {}), links: [...current.links, ...joined], updatedAt: now }, pages);
     }

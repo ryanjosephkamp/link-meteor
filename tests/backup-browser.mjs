@@ -115,7 +115,7 @@ try {
   await rpc(A.ui, {type: 'state.mutate', action: {type: 'collection.create', name: 'Admin'}});
   await rpc(A.ui, {type: 'state.mutate', action: {type: 'links.append', links: [link('b1', {url: 'https://admin.example/tickets/1'}), link('b2', {url: 'https://admin.example/tickets/2'})]}});
   await rpc(A.ui, {type: 'state.mutate', action: {type: 'collection.activate', id: first}});
-  await rpc(A.ui, {type: 'state.mutate', action: {type: 'settings.update', patch: {holdKey: 'q', holdExceptions: ['https://maps.example'], welcomeSeen: true, exportPrefix: 'link-meteor-research', exportTimestamp: false, exportTimestampFormat: 'date'}}});
+  await rpc(A.ui, {type: 'state.mutate', action: {type: 'settings.update', patch: {holdKey: 'q', holdExceptions: ['https://maps.example'], welcomeSeen: true, exportPrefix: 'link-meteor-research', exportTimestamp: false, exportTimestampFormat: 'date', followPages: 7, lookupDetails: true}}});
   await A.ui.waitForTimeout(300);
   const savedA = await state(A.ui);
   // 0.5.0 RC2: the date of the last backup, and what removing Link Meteor does.
@@ -179,9 +179,11 @@ try {
   for (const phrase of [fileName, 'Made ', `with Link Meteor ${VERSION}`, '2 collections · 6 links',
     'Merge', 'Adds 6 links', '1 new collection, 1 joined with a collection here', 'Never on these sites: adds maps.example',
     'Replace', 'Removes 1 empty collection here', 'Restores 2 collections and 6 links from the backup',
-    'Hold key: Z → Q', 'Export name prefix: none → link-meteor-research', 'Date in export names: on → off', 'Export date format: date and time → date only', 'Welcome card: not answered → answered']) {
+    'Hold key: Z → Q', 'Export name prefix: none → link-meteor-research', 'Date in export names: on → off', 'Export date format: date and time → date only', 'Welcome card: not answered → answered',
+    'Pages to follow: 20 → 7', 'Page details lookup: off → on']) {
     assert.ok(shown.includes(phrase), `preview shows “${phrase}”:\n${shown}`);
   }
+  assert.doesNotMatch(shown, /followPages|lookupDetails/, 'every setting by its name in the workbench');
   assert.equal(await B.ui.evaluate(() => document.activeElement?.id), 'restore-title', 'the preview takes focus');
   await B.ui.locator('#restore-cancel').click();
   await until(async () => !(await B.ui.locator('#restore-preview').isVisible()), 'Cancel closes the preview');
@@ -267,6 +269,7 @@ try {
   await preview(B.ui, backupPath);
   await B.ui.locator('#restore-replace').click();
   await noticeIncludes(B.ui, 'Replaced everything with the backup: 2 collections and 6 links. Removed 3 collections and 6 links that were here.');
+  await noticeIncludes(B.ui, ', pages to follow, page details lookup.');
   const replaced = await state(B.ui);
   assert.deepEqual(replaced.collections, backup.state.collections);
   assert.deepEqual(replaced.settings, backup.state.settings);

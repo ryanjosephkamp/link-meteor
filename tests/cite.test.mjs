@@ -183,6 +183,20 @@ test('BibTeX titles brace words with a capital after the first letter, and nothi
   for (const text of ['A {B} C', 'ABC{DEF}', 'x}{Y']) assert.ok(balanced(title(text)), text);
 });
 
+test('a name printed "Family, Given, Jr" keeps its suffix in every format; other names with two commas stay whole', () => {
+  const url = 'https://pubmed.ncbi.nlm.nih.gov/31452104/';
+  const pages = { [url]: { title: 'Machine learning in docking', authors: ['de Azevedo, WF, Jr', 'Bitencourt-Ferreira, G', 'Gates, WH, 3rd', 'Smith, Jr., John', 'Doe, Jane, PhD'], date: '2019', firstPage: '1123', lastPage: '1129', source: 'pubmed' } };
+  const link = { id: 'a', url, anchorText: 'Docking' };
+  const bib = one('bibtex', link, pages);
+  assert.match(bib, /^@misc\{deazevedo2019,$/m, 'the key is the family name');
+  assert.match(bib, /^ {2}author {7}= \{de Azevedo, Jr, WF and Bitencourt-Ferreira, G and Gates, 3rd, WH and \{Smith, Jr\., John\} and \{Doe, Jane, PhD\}\},$/m, 'BibTeX’s order is Last, Jr, First');
+  assert.match(bib, /^ {2}pages {8}= \{1123--1129\},$/m);
+  assert.ok(balanced(bib));
+  const ris = one('ris', link, pages).split('\r\n');
+  assert.deepEqual(ris.filter((line) => line.startsWith('AU')), ['AU  - de Azevedo, WF, Jr', 'AU  - Bitencourt-Ferreira, G', 'AU  - Gates, WH, 3rd', 'AU  - Smith, Jr., John', 'AU  - Doe, Jane, PhD'], 'RIS’s own order is Last, First, Suffix');
+  assert.deepEqual(JSON.parse(one('csl', link, pages))[0].author, [{ family: 'de Azevedo', given: 'WF', suffix: 'Jr' }, { family: 'Bitencourt-Ferreira', given: 'G' }, { family: 'Gates', given: 'WH', suffix: '3rd' }, { literal: 'Smith, Jr., John' }, { literal: 'Doe, Jane, PhD' }]);
+});
+
 test('RIS writes an ISBN as SN', () => {
   assert.match(one('ris', { anchorText: 'A book', url: 'https://books.example/isbn/9780306406157' }), /\r\nSN {2}- 9780306406157\r\n/);
   assert.doesNotMatch(one('ris', { anchorText: 'No book', url: 'https://example.org/' }), /\r\nSN {2}- /);

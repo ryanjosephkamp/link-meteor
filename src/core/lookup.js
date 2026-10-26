@@ -43,18 +43,30 @@ export function lookupRequests(ids = {}) {
   return requests;
 }
 
+// The requests for a link: lookupRequests for identifiersOf(link, pages), except that a link to
+// arXiv is asked about by the arXiv ID in its address, never by a DOI its citation names: a PDF's
+// first page can name another work's DOI (its code's, say), whose answer would replace the paper's.
+export function linkRequests(link, pages = {}) {
+  const address = identifiersOf(link);
+  return lookupRequests(address.arxiv ? { arxiv: address.arxiv } : identifiersOf(link, pages));
+}
+
 /* Answers ----------------------------------------------------------------------------------------- */
 const ENTITIES = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' ' };
+// A tag: < and a name (<i>, </sub>, <mml:mi>), with attributes only as name=value, so "x < 5 and
+// y > 3" and "x<y and z>w" are text.
+const TAG = /<\/?[a-z][\w:.-]*(?:\s+[\w:.-]+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s"'<>]+))*\s*\/?>/giu;
 // Text from a service, made plain: tags and entities removed, spaces collapsed, cut to a limit.
+// Tags are removed again once entities are decoded, since some titles carry them encoded (&lt;i&gt;).
 export function plainText(value, max = 300) {
   if (typeof value !== 'string' && typeof value !== 'number') return '';
-  const text = String(value).replace(/<[^>]*>/gu, '')
+  const text = String(value).replace(TAG, '')
     .replace(/&(#x[0-9a-f]{1,6}|#\d{1,7}|[a-z]+);/giu, (whole, name) => {
       if (name[0] !== '#') return ENTITIES[name.toLowerCase()] ?? whole;
       const code = name[1].toLowerCase() === 'x' ? parseInt(name.slice(2), 16) : parseInt(name.slice(1), 10);
       return code > 31 && code <= 0x10ffff && !(code >= 0xd800 && code <= 0xdfff) ? String.fromCodePoint(code) : '';
     })
-    .replace(/[\u0000-\u001f\u007f]/gu, ' ').replace(/\s+/gu, ' ').trim();
+    .replace(TAG, '').replace(/[\u0000-\u001f\u007f]/gu, ' ').replace(/\s+/gu, ' ').trim();
   return text.length <= max ? text : text.slice(0, max - 1).trimEnd() + '…';
 }
 const first = (value) => (Array.isArray(value) ? value[0] : value);
@@ -72,9 +84,13 @@ function fields(entries) {
   }
   return citation;
 }
+// A range as its first and last page. MEDLINE prints the last page short ("1123-9" is 1123 to 1129)
+// and may add more after it ("1123-9; quiz 1130"): the range is its first part, both pages in full.
 function pages(value) {
-  const [firstPage, lastPage] = plainText(value, 80).split(/\s*[-–—]\s*/u);
-  return { firstPage: firstPage || '', lastPage: lastPage && lastPage !== firstPage ? lastPage : '' };
+  const [firstPage = '', lastPage = ''] = plainText(value, 80).split(/[;,]/u)[0].trim().split(/\s*[-–—]\s*/u);
+  const start = /^(\D*)(\d+)$/u.exec(firstPage);
+  const last = start && /^\d+$/u.test(lastPage) && lastPage.length < start[2].length ? start[1] + start[2].slice(0, -lastPage.length) + lastPage : lastPage;
+  return { firstPage, lastPage: last && last !== firstPage ? last : '' };
 }
 
 // Crossref's answer for a DOI ({message}), as a page citation, or null when it names no work.
@@ -84,13 +100,15 @@ export function readCrossref(answer) {
   const date = (work.issued || work.published || work['published-print'] || work['published-online'])?.['date-parts']?.[0];
   const [year, month, day] = Array.isArray(date) ? date.map(Number) : [];
   const range = pages(work.page);
-  const book = /^book/u.test(String(work.type || ''));
+  // A whole book's container title is its series, which is no journal. Books and their parts have an ISBN.
+  const type = String(work.type || ''), whole = /^(?:book|edited-book|monograph|reference-book|book-set|book-series)$/u.test(type);
+  const book = whole || /^(?:book-|reference-entry$)/u.test(type);
   return { ...fields([
     ['title', first(work.title)],
     ['authors', names(work.author, (author) => (author?.family && author?.given ? `${author.family}, ${author.given}` : author?.family || author?.name || ''))],
     ['date', year >= 1000 ? [year, month >= 1 && month <= 12 ? pad(month) : '', month && day >= 1 && day <= 31 ? pad(day) : ''].filter(Boolean).join('-') : '', 40],
     // A chapter's book is its last container title; a journal article has one.
-    ['journal', Array.isArray(work['container-title']) ? work['container-title'].at(-1) : work['container-title']],
+    ['journal', whole ? '' : Array.isArray(work['container-title']) ? work['container-title'].at(-1) : work['container-title']],
     ['publisher', work.publisher], ['volume', work.volume], ['issue', work.issue], ['firstPage', range.firstPage], ['lastPage', range.lastPage],
     ['doi', work.DOI], ['isbn', book ? first(work.ISBN) : ''],
   ]), source: 'crossref' };
@@ -125,8 +143,9 @@ export function readPubmed(answer, pmid) {
   const doi = (Array.isArray(work.articleids) ? work.articleids : []).find((item) => item?.idtype === 'doi')?.value;
   return { ...fields([
     ['title', String(work.title).replace(/\.$/u, '')],
-    // PubMed prints "Family Initials": the same name with a comma, which citations read as family and given.
-    ['authors', names(work.authors, (author) => { const name = plainText(author?.name, MAX_AUTHOR), cut = /^(.+) (\p{Lu}{1,4})$/u.exec(name); return cut ? `${cut[1]}, ${cut[2]}` : name; })],
+    // PubMed prints "Family Initials" or "Family Initials Jr": the same name with commas, "Family,
+    // Initials, Jr", which citations read as family, given and suffix.
+    ['authors', names(work.authors, (author) => { const name = plainText(author?.name, MAX_AUTHOR), cut = /^(.+?) (\p{Lu}{1,4})(?: (Jr|Sr|II|III|IV|[2-9](?:nd|rd|th)))?$/u.exec(name); return cut ? [cut[1], cut[2], cut[3]].filter(Boolean).join(', ') : name; })],
     ['date', work.pubdate, 40], ['journal', work.fulljournalname || work.source], ['volume', work.volume], ['issue', work.issue],
     ['firstPage', range.firstPage], ['lastPage', range.lastPage], ['doi', DOI.test(String(doi || '')) ? doi : ''], ['pmid', PMID.test(String(pmid)) ? String(pmid) : ''],
   ]), source: 'pubmed' };
@@ -170,7 +189,7 @@ export function sameCitation(a, b) {
 }
 
 // The run for these links (or rows): one ask per identifier, however many links share it.
-// - `asks`: [{key, requests, targets, links}], at most MAX_LOOKUPS. `requests` are lookupRequests'
+// - `asks`: [{key, requests, targets, links}], at most MAX_LOOKUPS. `requests` are linkRequests'
 //   for the identifier, tried in order. `targets` are the addresses the answer is saved under: for
 //   each link, the citation it already uses (citationFor: its own page's, or one borrowed from a
 //   saved page about the same work), otherwise the link's own address.
@@ -182,7 +201,7 @@ export function lookupPlan(links, pages = {}, { seen } = {}) {
   const asks = new Map();
   let without = 0, complete = 0;
   for (const link of links) {
-    const requests = lookupRequests(identifiersOf(link, pages));
+    const requests = linkRequests(link, pages);
     const used = citationFor(link, pages);
     const target = used?.key || pageKey(link?.url);
     if (!requests.length || !target) { without++; continue; }

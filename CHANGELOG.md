@@ -1,5 +1,46 @@
 # Changelog
 
+## 1.0.0 (unreleased)
+
+"Beyond one page": Link Meteor now reads the links inside PDFs and captures more than one screen or one page, each time you ask and within a stated limit, and it can fill in a paper's details online if you turn that on:
+- the links inside PDFs, from a tab or a file;
+- scrolling a page to its end, following its Next link, and capturing the pages behind chosen links;
+- links inside closed components and frames from other sites;
+- an optional page details lookup;
+- the PDFs behind chosen links as one ZIP, or combined into one PDF.
+
+### Extension
+
+- **Capture this PDF.** On a PDF's tab, the capture button reads the links inside the PDF: each with the words under it, the page it is on and the words around it, and in a reference list, its whole reference as context. A preview shows every link before anything is saved, says what was left out and why, and lists what the PDF says about itself (arXiv's stamp, a DOI, the title). Adding saves one batch with Undo, with the PDF itself as a link. The PDF's own site needs no new permission: the toolbar's temporary access covers it.
+- **Import links from a PDF file,** chosen or dropped, the same way, without any access at all. PDFs up to 50 MB and 2,000 pages. A PDF opened from your computer can't be read from its tab, so the panel offers *Choose this PDF…*.
+- **Scroll to the end first,** under *Capture this page*: for pages that load more as you scroll. It stops at the end, at 50 screens, at 5,000 links or after 2 minutes, with a counter and Stop on the page and in the panel.
+- **Follow Next, up to 20 pages:** moves the tab to the page's own Next link and captures each page, 1.5 seconds apart. It stops when there is no Next link, or when the next page is on a site Link Meteor can't read.
+- **Capture their pages…** for up to 20 chosen links: each opens in a background tab, is captured and closed, one at a time. It reads one level deep and never follows the links it finds. Sites Link Meteor can't read yet are named, with one *Allow these N sites*.
+- Each run is one batch with one Undo, and a report of every page and how it ended.
+- **Closed components and frames.** Links inside closed shadow roots are read. *Capture this page* reads frames from other sites that Link Meteor has access to; the report names the sites of the frames it couldn't read and offers *Allow these sites*, which adds their links to the same capture. Frames that hadn't loaded yet are counted and said to be loading.
+- **Page details lookup** (off by default, under *Online lookups*). *Look up details* sends a paper's DOI, arXiv ID or PubMed ID, and nothing else, to Crossref, DataCite or NCBI, and fills in the title, authors, date and journal where they are missing. It says what it filled in and has Undo. It runs from a sandboxed frame, so Link Meteor's own pages still can't reach the network.
+- **The PDFs behind chosen links,** in Export › Download files: *Download as one ZIP*, or *Combine into one PDF…* in an order you choose, with PDF files from your computer added if you want. Up to 20 PDFs and 200 MB; a combined PDF keeps each part's links and bookmarks, up to 5,000 pages. Each PDF is fetched through a page of its own site, as when you click it, and nothing is uploaded.
+- **A PDF page column** for exports, for links read from a PDF.
+- **Backups** use format 4, which adds a link's PDF page and where each citation was read. 1.0.0 restores 0.3.0, 0.4.0 and 0.5.0 backups; 0.5.0 and earlier can't restore a 1.0.0 backup.
+
+### Fixed
+
+- **File names.** A downloaded file whose link text is only a generic word ("pdf", "Download PDF", "Full text") is named after its address instead, so arXiv's PDFs save as `2409.11211v1.pdf`, not `pdf.pdf`. Japanese and Korean names keep their marks, and every name fits in 255 bytes.
+- **Download linked file** in the right-click menu names the file after the link's text again.
+- **One PDF linked at several of its pages** (`#page=3`, `#page=9`) downloads once.
+- **Merge restore** keeps your own citations for addresses you already have, as it did in 0.5.0.
+- **DOIs read from publishers' addresses** leave out the page names they add (`/full`, `/abstract`, bioRxiv's `v1.full`).
+- **Workbooks** stay valid when a cell holds an unusual character (U+FFFE, U+FFFF).
+
+### Permissions
+
+**1.0.0 adds no permission and asks for no browser setting.** Capturing selected pages and frames from other sites uses the optional site access that 0.3.0 added, asked for in that click. The lookup's three services are reached only from its sandboxed frame, only while the setting is on, and only when you click *Look up details*.
+
+### Website
+
+- The download is now 1.0.0.
+- The guide covers PDFs, the three bounded captures, frames, the lookup and the PDFs as one ZIP or one PDF; the home and install pages cover the new features; the privacy page says what the lookup sends and where.
+
 ## 0.5.0 (2026-10-01)
 
 "Research tools": Link Meteor now keeps what a research workflow needs around each link, and gets links in and out in more ways:

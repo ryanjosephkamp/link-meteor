@@ -902,3 +902,23 @@ test('Stop before a page starts scrolling: the page hears it when it says how fa
   await toTheEnd();
 });
 
+test('the first run after the worker restarts is not refused while the worker looks for a run it left', async () => {
+  await reset(); page(`${SITE}/list`);
+  const tab = clicked(`${SITE}/list`);
+  // A new worker: its module starts by looking for a run it left, while run.start is already in hand.
+  const original = chrome.storage.session.get;
+  let release, worker;
+  chrome.storage.session.get = async (key) => { if (key === runs.RUN_KEY && !release) await new Promise((done) => { release = done; }); return original(key); };
+  // The answer goes to the new worker's own module, which this check holds.
+  fileReply = (message) => { setImmediate(() => worker.workbenchMessages['run.fileDone']({type: 'run.fileDone', runId: message.runId, step: message.step, ok: true, size: 1})); return null; };
+  worker = await import('../src/background/runs.js?restarted');
+  worker.useClock({now: () => now, sleep: (ms) => new Promise((done) => timers.push({at: now + ms, done}))});
+  const started = worker.startRun({kind: 'files', tabId: tab.id, files: [{url: pdf('a'), name: 'A.pdf'}]}, ui);
+  await settle();
+  release();
+  chrome.storage.session.get = original;
+  const {runId} = await started;
+  assert.match(runId, /^[0-9a-f-]{36}$/);
+  assert.deepEqual(fileRows(await toTheEnd()), [[1, 'A.pdf', 'got', 'Fetched']]);
+});
+

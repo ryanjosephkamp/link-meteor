@@ -243,8 +243,10 @@ async function finish(job) {
 }
 
 // Only one run at a time. Claims the right to start one; the caller sets `starting` back to false.
-// A run the last worker left unfinished is picked up first (see adopt).
+// A run the last worker left unfinished is picked up first (see adopt). A worker woken by this very
+// request is still looking for such a run: that is waited for, not taken for a run in progress.
 async function claim() {
+  await woke;
   if (going || starting) throw new Error(BUSY);
   starting = true;
   try {

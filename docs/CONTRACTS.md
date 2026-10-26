@@ -1465,7 +1465,7 @@ Where this differs from the draft above, this is what the code does.
 - With *New collection…*, the workbench creates the collection first and keeps the open one open. Undo removes the links, not the collection.
 
 **One run at a time, and a restarted worker:**
-- A second `run.start`, or `capture.run` with `scroll`, is refused while one is going.
+- A second `run.start`, or `capture.run` with `scroll`, is refused while one is going. A worker that a `run.start` wakes first finishes looking for a run the last worker left (below), so the request isn't refused for that.
 - While a run is going, the background makes a small call every 20 seconds, so Chrome doesn't stop it between pages.
 - When the worker starts and finds `linkMeteorRun` still `'running'`, no worker is driving that run. The step it was on is reported as "Interrupted: Chrome stopped Link Meteor’s background worker", and a background tab it had opened is closed. A run of selected pages then goes on with the rest of its queue. Follow Next ends there, because the tab may be anywhere, and says "Chrome stopped Link Meteor’s background worker, so the run ended early." A scroll's own answer is lost with the worker; its record is closed. What was saved stays in every case.
 

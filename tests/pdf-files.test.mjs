@@ -6,7 +6,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { isPdfLink, pdfLinks, pdfFileName, uniqueNames, fileLinks, downloadName } from '../src/core/files.js';
 import { zip } from '../src/core/zip.js';
-import { pdfSetProblem, MAX_PDF_SET, MAX_PDF_BYTES, MAX_PDF_SET_BYTES } from '../src/core/pdf.js';
+import { pdfSetProblem, combinedPagesProblem, combinePdfs as combinePdfsWith, MAX_PDF_SET, MAX_PDF_BYTES, MAX_PDF_SET_BYTES, MAX_COMBINED_PAGES } from '../src/core/pdf.js';
 import { readPackagedMembers } from '../scripts/verify-package.mjs';
 import { fixture, readPdf, combinePdfs } from './helpers/pdf.mjs';
 
@@ -39,13 +39,24 @@ test('the PDFs among the chosen links: one per address, in the list’s order, o
   ];
   assert.deepEqual(pdfLinks(links).map((item) => item.anchorText), ['Second', 'First', '[PDF] third']);
   assert.equal(fileLinks(links).length, 4, 'Download files still takes every file');
+  // A report linked at two of its pages is fetched, zipped and combined once.
+  assert.deepEqual(pdfLinks([link('Chapter 2', 'https://example.org/report-2025.pdf#page=12'), link('Chapter 5', 'https://example.org/report-2025.pdf#page=40')]).map((item) => item.anchorText), ['Chapter 2']);
+});
+
+test('arXiv’s “pdf” links make a ZIP of the papers’ own names, not pdf.pdf, pdf (2).pdf', () => {
+  const listing = ['2409.11211v1', '2409.11212v1', '2409.11213v2'].map((id) => link('pdf', `https://arxiv.org/pdf/${id}`));
+  assert.deepEqual(uniqueNames(pdfLinks(listing).map(pdfFileName)), ['2409.11211v1.pdf', '2409.11212v1.pdf', '2409.11213v2.pdf']);
 });
 
 test('a PDF’s file name is the one Download files gives it, always ending .pdf', () => {
   const cases = [
     [link('A small paper about links', 'https://example.org/x/paper.pdf'), 'A-small-paper-about-links.pdf'],
-    [link('[PDF] arxiv.org', 'https://arxiv.org/pdf/2409.11211v1'), 'arxiv.org.pdf'],
+    [link('[PDF] arxiv.org', 'https://arxiv.org/pdf/2409.11211v1'), '2409.11211v1.pdf'],
     [link('', 'https://arxiv.org/pdf/2409.11211v1'), '2409.11211v1.pdf'],
+    [link('pdf', 'https://arxiv.org/pdf/2409.11212v1'), '2409.11212v1.pdf'],
+    [link('Download PDF', 'https://openreview.net/pdf?id=abc123'), 'abc123.pdf'],
+    [link('データ分析ガイド', 'https://example.org/a.pdf'), 'データ分析ガイド.pdf'],
+    [link('한국어 자료', 'https://example.org/a.pdf'), '한국어-자료.pdf'],
     [link('', 'https://example.org/files/Field%20notes%20(final).pdf'), 'Field-notes-final.pdf'],
     [link('report.pdf', 'https://example.org/get?id=7', { anchorText: '[PDF] report.pdf' }), 'report.pdf'],
     [link('Größe: “Über/Unter” — 50%?', 'https://example.org/a.pdf'), 'Große-Uber-Unter-50.pdf'],
@@ -125,4 +136,18 @@ test('the limits, in the words the panel uses', () => {
   assert.equal(pdfSetProblem(Array(4).fill(MAX_PDF_BYTES)), '');
   assert.equal(pdfSetProblem([...Array(4).fill(MAX_PDF_BYTES), 1]), 'These PDFs are more than 200 MB together. Choose fewer.');
   assert.equal(MAX_PDF_SET_BYTES, 4 * MAX_PDF_BYTES);
+  assert.equal(combinedPagesProblem(MAX_COMBINED_PAGES), '');
+  assert.equal(combinedPagesProblem(26460), 'A combined PDF can have at most 5,000 pages, and these have 26,460. Leave some out.');
+});
+
+test('a combined PDF of more than 5,000 pages is refused before anything is written', async () => {
+  const paper = new Uint8Array(await fixture('paper.pdf'));
+  let writes = 0;
+  // Parts that say they have 2,501 pages each: the counts are read, and nothing is written.
+  const withDocument = async (bytes, fn) => fn({ numPages: 2501, extractPages: async () => { writes++; return bytes; } });
+  await assert.rejects(combinePdfsWith([paper, paper], withDocument), { message: 'A combined PDF can have at most 5,000 pages, and these have 5,002. Leave some out.' });
+  assert.equal(writes, 0);
+  const written = new Uint8Array(8);
+  const made = await combinePdfsWith([paper, paper], async (bytes, fn) => fn({ numPages: bytes === written ? 5000 : 2500, extractPages: async () => { writes++; return written; } }));
+  assert.deepEqual([made.pages, writes], [5000, 1], 'exactly 5,000 pages are combined');
 });

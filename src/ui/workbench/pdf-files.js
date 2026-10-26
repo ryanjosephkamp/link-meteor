@@ -336,7 +336,8 @@ function renderCombineState() {
   else if (!rest) sum.append(node('strong', '', `${plural(items.length, 'PDF')} · ${facts}.`), ' Pages keep their links and bookmarks.');
   else sum.append(node('strong', '', `${plural(items.length, 'PDF')}.`), ready.length ? ` ${count(ready.length)} ${ready.length === 1 ? 'is' : 'are'} ready (${facts}).` : '',
     ` Link Meteor fetches the ${rest === 1 ? (ready.length ? 'other one' : 'PDF') : `${ready.length ? 'other ' : ''}${count(rest)}`} when you press Combine; ${rest === 1 ? 'its pages and size' : 'their pages and sizes'} show then. Pages keep their links and bookmarks.`);
-  const problem = rules && items.length ? rules.pdfSetProblem(items.map((item) => item.size || 0)) : '';
+  // The pages in all are known for the files that are here.
+  const problem = rules && items.length ? rules.pdfSetProblem(items.map((item) => item.size || 0)) || rules.combinedPagesProblem(total(items, 'pages')) : '';
   const over = problem && rules && items.length > rules.MAX_PDF_SET ? ` Leave out ${count(items.length - rules.MAX_PDF_SET)}.` : '';
   const help = $('combine-help');
   setText(help, problem ? problem + over : running() && !job ? BUSY : '');
@@ -352,9 +353,11 @@ function renderCombineState() {
 function openCombine() {
   const collection = currentCollection();
   if (!collection) return;
-  panel = { items: itemsFor(chosen()), left: [], collectionId: collection.id };
+  // The name filled in is the pattern's: unless the person changes it, Combine names the PDF by
+  // the pattern at that moment (the time, the collection's name then).
+  panel = { items: itemsFor(chosen()), left: [], collectionId: collection.id, filled: fileName('pdf') };
   if (panel.items.length) needRules();
-  $('combine-name').value = fileName('pdf');
+  $('combine-name').value = panel.filled;
   $('combine-panel').hidden = false;
   $('pdf-combine').setAttribute('aria-expanded', 'true');
   $('pdf-result').hidden = true;
@@ -433,6 +436,9 @@ async function applyCombine() {
     }
   }
   const items = mine.items;
+  await needRules();
+  const tooLong = rules.combinedPagesProblem(total(items, 'pages'));
+  if (tooLong) throw new Error(tooLong);
   making = 'combine'; renderProgress(); renderPdfSet(); renderCombine();
   try {
     await Promise.all([needRules(), new Promise((done) => setTimeout(done, 30))]);
@@ -445,7 +451,8 @@ async function applyCombine() {
       leaveOut(part, pdfProblem(error));
       throw new Error(`${part.name} couldn’t be combined, so it was left out. Press Combine again to make the PDF without it.`);
     }
-    const name = fileName('pdf', $('combine-name').value);
+    const typed = $('combine-name').value;
+    const name = fileName('pdf', typed.trim() === mine.filled ? '' : typed);
     save(made.bytes, name, 'application/pdf');
     const head = `Downloaded ${name}: ${plural(items.length, 'PDF')}, ${plural(made.pages, 'page')}, ${sizeText(made.bytes.length)}.`;
     renderResult(head, [...items.map((item, index) => [item.name, `${plural(made.counts[index], 'page')}, from page ${count(made.counts.slice(0, index).reduce((sum, pages) => sum + pages, 1))}`]), ...mine.left.map(({ name: left, why }) => [left, `Left out: ${why}`])]);

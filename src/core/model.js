@@ -364,7 +364,8 @@ function settingsField(key, value, name = key) {
       if (!Number.isInteger(value) || value < MIN_FOLLOW_PAGES || value > MAX_FOLLOW_PAGES) throw new Error(`${name} must be a whole number from ${MIN_FOLLOW_PAGES} to ${MAX_FOLLOW_PAGES}`);
       return value;
     case 'exportPrefix':
-      if (typeof value !== 'string' || value.length > MAX_EXPORT_PREFIX || fileNamePart(value, MAX_EXPORT_PREFIX) !== value) {
+      // Compared composed: earlier versions stored a Korean prefix as separate jamo.
+      if (typeof value !== 'string' || value.length > MAX_EXPORT_PREFIX || fileNamePart(value, MAX_EXPORT_PREFIX) !== value.normalize('NFC')) {
         throw new Error(`${name} must be at most ${MAX_EXPORT_PREFIX} letters, digits, dots, underscores or hyphens, without a leading or trailing dot or hyphen`);
       }
       return value;

@@ -37,6 +37,10 @@ test('unsafe or repeated names and other content are refused', () => {
   assert.throws(() => zip([['a.pdf', 'x'], ['a.pdf', 'y']]), /twice/);
   assert.throws(() => zip([['a.pdf', 42]]), /text or bytes/);
   assert.throws(() => zip(Array.from({ length: MAX_ZIP_ENTRIES + 1 }, (_, i) => [`${i}`, ''])), /at most 65,535 files/);
+  // A name, or a folder in it, of more than 255 UTF-8 bytes can't be extracted on Linux, macOS or ChromeOS.
+  assert.throws(() => zip([[`${'研'.repeat(84)}.pdf`, 'x']]), /longer than 255 bytes/);
+  assert.throws(() => zip([[`${'x'.repeat(256)}/a.pdf`, 'x']]), /longer than 255 bytes/);
+  assert.doesNotThrow(() => zip([[`${'研'.repeat(83)}.pdf`, 'x'], [`${'x'.repeat(255)}/${'y'.repeat(255)}`, 'x']]));
 });
 
 test('the workbook writer still writes the same workbook through it', () => {

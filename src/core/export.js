@@ -98,12 +98,27 @@ function normalizeLabel(value) { return String(value || '').replace(/\s+/gu, ' '
 
 const WINDOWS_RESERVED = /^(con|prn|aux|nul|com[1-9]|lpt[1-9])$/i;
 
-// One file-name part: accents folded to plain letters, any other run of characters outside
-// letters, digits, dot, underscore and hyphen becomes one hyphen, with no leading or trailing
-// dot or hyphen (hidden files and Windows trailing dots).
-export function fileNamePart(value, max = 80) {
-  return String(value ?? '').normalize('NFKD').replace(/\p{M}+/gu, '')
-    .replace(/[^\p{L}\p{N}._-]+/gu, '-').replace(/^[.-]+/, '').slice(0, max).replace(/[.-]+$/, '');
+// One file-name part: accents folded off Latin letters only (Café → Cafe; データ and 한국어 keep
+// their marks, recomposed), any other run of characters outside letters, marks, digits, dot,
+// underscore and hyphen becomes one hyphen, with no leading or trailing dot or hyphen (hidden
+// files and Windows trailing dots). It is cut to at most max UTF-16 units and maxBytes UTF-8
+// bytes, never inside a character.
+export function fileNamePart(value, max = 80, maxBytes = Infinity) {
+  const part = String(value ?? '').normalize('NFKD').replace(/(^|\p{Script=Latin}|[^\p{L}\p{M}])\p{M}+/gu, '$1').normalize('NFC')
+    .replace(/[^\p{L}\p{M}\p{N}._-]+/gu, '-').replace(/^[.-]+/, '');
+  return fitText(part, max, maxBytes).replace(/[.-]+$/, '');
+}
+const characters = new Intl.Segmenter('en', { granularity: 'grapheme' }), utf8 = new TextEncoder();
+// The longest start of text, in whole characters (a letter and its marks, a surrogate pair).
+function fitText(text, max, maxBytes) {
+  if (text.length <= max && text.length * 3 <= maxBytes) return text;
+  let fit = '', bytes = 0;
+  for (const { segment } of characters.segment(text)) {
+    bytes += utf8.encode(segment).length;
+    if (fit.length + segment.length > max || bytes > maxBytes) break;
+    fit += segment;
+  }
+  return fit;
 }
 
 function pad(n) { return String(n).padStart(2, '0'); }

@@ -30,6 +30,7 @@ import {promisify} from 'node:util';
 import {fixtureServer, evidence, root} from './helpers/browser.mjs';
 import {launchWithAction} from './helpers/action.mjs';
 import {fixture as pdfFixture, readPdf, combinePdfs} from './helpers/pdf.mjs';
+import {makePdf} from './fixtures/pdf/make.mjs';
 import {readPackagedMembers} from '../scripts/verify-package.mjs';
 import {THEME_IDS} from '../src/core/themes.js';
 
@@ -391,16 +392,23 @@ try {
   assert.deepEqual([await visible('combine-empty'), await text('combine-total'), (await js(ui, `${$('combine-apply')}.innerText`)).trim(), await js(ui, `${$('combine-access')}.hidden`)],
     [false, `2 PDFs · ${pages.paper + pages.journal} pages · ${sizeText(paper.length + journal.length)}. Pages keep their links and bookmarks.`, 'Combine 2 PDFs', true]);
   const localRun = (await lastRun()).runId, localAsked = requests.length;
+  // The name filled in when the panel opened is the pattern's: the PDF is named by the pattern when
+  // it is written, here after the collection was renamed.
+  const filled = await js(ui, `${$('combine-name')}.value`), collectionId = (await state()).activeCollectionId;
+  await rpc({type: 'state.mutate', action: {type: 'collection.update', id: collectionId, patch: {name: 'Renamed research'}}});
+  await until(async () => /Renamed research/.test(await text('collection-heading')), 'the collection renamed');
+  assert.equal(await js(ui, `${$('combine-name')}.value`), filled, 'the field keeps what it showed');
   await press('combine-apply');
   const local = await download(3);
-  assert.match(local.name, /^My-research_\d{4}-\d{2}-\d{2}_\d{4}\.pdf$/);
+  assert.match(local.name, /^Renamed-research_\d{4}-\d{2}-\d{2}_\d{4}\.pdf$/, 'named by the pattern when it was written');
+  await rpc({type: 'state.mutate', action: {type: 'collection.update', id: collectionId, patch: {name: 'My research'}}});
   const localRead = await readPdf(local.bytes);
   assert.deepEqual([localRead.pageCount, localRead.links.length], [pages.paper + pages.journal, (await readPdf((await combinePdfs([paper, journal])).bytes)).links.length]);
   assert.deepEqual([(await lastRun()).runId, requests.length, (await prompts()).length], [localRun, localAsked, 0], 'no run, no request to any site, no access asked for');
   await until(async () => (await focused()) === 'pdf-combine', 'the panel closed');
   await js(ui, `(() => { const row = [...document.querySelectorAll('.link-row')].find((item) => /This page/.test(item.innerText)); row.querySelector('input[type=checkbox]').click(); return true; })()`);
   await until(async () => (await section()).title === 'The 9 PDFs', 'the selection cleared');
-  pass('With no PDF link chosen, the panel combines PDF files from the computer: no run, no request, no access', {name: local.name, pages: localRead.pageCount});
+  pass('With no PDF link chosen, the panel combines PDF files from the computer: no run, no request, no access; a name left as filled follows the pattern when the PDF is written', {name: local.name, filled, pages: localRead.pageCount});
 
   /* 10. The limits, said before anything starts. */
   await quiet();
@@ -431,6 +439,16 @@ try {
   await until(async () => (await error()) === 'These PDFs are more than 200 MB together. Choose fewer. Nothing was added.', 'the refusal of 225 MB');
   assert.equal((await names()).length, 14);
   await quiet();
+  // More than 5,000 pages in all can't be combined: said once the pages are counted, and Combine waits.
+  const thick = resolve(files, 'thick.pdf');
+  await writeFile(thick, makePdf({pages: Array.from({length: 5001}, (_, index) => [{parts: [`Page ${index + 1}`]}])}));
+  await choose([thick]);
+  await until(async () => (await names()).length === 15, 'the 5,001-page PDF joins the list');
+  assert.deepEqual([await text('combine-help'), await js(ui, `${$('combine-help')}.classList.contains('is-problem')`), await disabled('combine-apply')],
+    ['A combined PDF can have at most 5,000 pages, and these have 5,001. Leave some out.', true, true]);
+  await js(ui, `${control('Leave out thick.pdf')}.click()`);
+  assert.deepEqual([(await names()).length, await js(ui, `${$('combine-help')}.hidden`), await disabled('combine-apply')], [14, true, false]);
+  await quiet();
   await shot('pdf-files-limits-1280.png');
   // Escape closes the panel and returns focus; Cancel does the same.
   await js(ui, `${$('combine-name')}.focus()`);
@@ -438,7 +456,7 @@ try {
   assert.deepEqual([await visible('combine-panel'), await focused()], [false, 'pdf-combine']);
   await click('pdf-combine'); await click('combine-cancel');
   assert.deepEqual([await visible('combine-panel'), await focused(), await js(ui, `${$('pdf-combine')}.getAttribute('aria-expanded')`)], [false, 'pdf-combine', 'false']);
-  pass('The limits are said before anything starts: more than 20 PDFs, a PDF over 50 MB, and more than 200 MB together; Escape and Cancel close the panel');
+  pass('The limits are said before anything starts: more than 20 PDFs, a PDF over 50 MB, more than 200 MB together, and more than 5,000 pages to combine; Escape and Cancel close the panel');
 
   /* 11. At 320 px: Stop in the middle, by keyboard; and the layout and contrast of every part. */
   await rpc({type: 'import.commit', newCollection: 'Three to stop', links: [

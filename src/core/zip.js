@@ -17,13 +17,19 @@ export function crc32(bytes) {
   return (crc ^ 0xffffffff) >>> 0;
 }
 
+// A name's parts, between slashes, can't be longer than this many UTF-8 bytes: Linux, macOS and
+// ChromeOS can't extract a longer one.
+export const MAX_ZIP_NAME_BYTES = 255;
+
 // files: [[name, content]], content a string (written as UTF-8) or a Uint8Array. Returns the
-// archive as one Uint8Array. Refuses repeated or unsafe names, so a caller names repeats first.
+// archive as one Uint8Array. Refuses repeated, overlong or unsafe names, so a caller names
+// repeats and cuts names first.
 export function zip(files) {
   if (files.length > MAX_ZIP_ENTRIES) throw new Error(`A ZIP file can hold at most ${MAX_ZIP_ENTRIES.toLocaleString('en-US')} files`);
   const seen = new Set();
   const entries = files.map(([filename, content]) => {
     if (typeof filename !== 'string' || !filename || filename.startsWith('/') || filename.endsWith('/') || filename.split('/').includes('..') || /[\u0000-\u001f\\]/u.test(filename)) throw new Error(`Unsafe name for a ZIP entry: ${filename}`);
+    if (filename.split('/').some((part) => encoder.encode(part).length > MAX_ZIP_NAME_BYTES)) throw new Error(`The name of a ZIP entry is longer than ${MAX_ZIP_NAME_BYTES} bytes: ${filename}`);
     if (seen.has(filename)) throw new Error(`The ZIP would hold ${filename} twice`);
     seen.add(filename);
     const name = encoder.encode(filename), data = typeof content === 'string' ? encoder.encode(content) : content;

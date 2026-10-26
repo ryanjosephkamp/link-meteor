@@ -313,10 +313,19 @@ export async function readPdfDocument(doc, { address = '', saveContext = true, o
   return { pageCount: doc.numPages, links, internal, skipped, capped, linkPages: new Set(links.map((link) => link.pdfPage)).size, citation, notes: pdfCitationNotes(citation, { info, xmp }) };
 }
 
+// The most pages one combined PDF can have. The reader holds every page of every part while it
+// writes, about 200 KB a page: 5,000 pages took 1.2 GB in Node, and 26,000 took 4.5 GB.
+export const MAX_COMBINED_PAGES = 5000;
+// Why PDFs of this many pages in all can't be combined, in plain words, or ''.
+export function combinedPagesProblem(pages) {
+  return pages > MAX_COMBINED_PAGES ? `A combined PDF can have at most ${MAX_COMBINED_PAGES.toLocaleString('en-US')} pages, and these have ${pages.toLocaleString('en-US')}. Leave some out.` : '';
+}
+
 // One PDF from several, in the order given. `withDocument(bytes, fn)` opens a PDF with PDF.js, runs
 // fn on the document and closes it. Every part is opened first, so one that needs a password or is
-// damaged is refused by name before anything is written; and the result is opened again, because
-// the writer returns an empty file instead of failing. Returns {bytes, pages, counts}.
+// damaged is refused by name, and too many pages in all are refused, before anything is written;
+// and the result is opened again, because the writer returns an empty file instead of failing.
+// Returns {bytes, pages, counts}.
 export async function combinePdfs(list, withDocument) {
   if (!list.length) throw new Error('Choose at least one PDF to combine.');
   const problem = pdfSetProblem(list.map((bytes) => bytes.length));
@@ -327,6 +336,8 @@ export async function combinePdfs(list, withDocument) {
     catch (error) { throw Object.assign(new Error(error?.message || String(error)), { name: error?.name || 'Error', part: index }); }
   }
   const pages = counts.reduce((sum, count) => sum + count, 0);
+  const tooMany = combinedPagesProblem(pages);
+  if (tooMany) throw new Error(tooMany);
   const bytes = list.length === 1 ? list[0] : await withDocument(list[0], (doc) => doc.extractPages([{ document: null }, ...list.slice(1).map((part) => ({ document: part.slice() }))]));
   const written = bytes?.length ? await withDocument(bytes, (doc) => doc.numPages).catch(() => 0) : 0;
   if (written !== pages) throw new Error(`The combined PDF came out with ${written} of ${pages} pages, so it was not saved.`);

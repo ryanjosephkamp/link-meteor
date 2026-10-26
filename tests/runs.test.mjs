@@ -872,3 +872,23 @@ test('Follow Next: a page that changes its own address (a # part, or history.rep
   assert.equal(report().ended.text, 'The tab went to another page.');
 });
 
+test('Scroll to the end first: Include them and Undo work together', async () => {
+  // Include them, then Undo: Undo removes the navigation links too.
+  await reset({settings: {contentOnly: true}}); page(`${SITE}/feed`, {title: 'Feed', links: 4, chrome: 3});
+  let tab = clicked(`${SITE}/feed`);
+  let {report: answer} = await ask({type: 'capture.run', tabIds: [tab.id], scroll: true});
+  assert.deepEqual([answer.capturedCount, answer.results[0].leftOut], [4, 3]);
+  assert.equal((await ask({type: 'capture.includeLeftOut', batchId: answer.batchId})).count, 3);
+  assert.equal(home().links.length, 7);
+  let undone = await ask({type: 'run.undo', collectionId: answer.collectionId, batchId: answer.batchId});
+  assert.deepEqual([undone.count, home().links.length], [7, 0]);
+  // Undo, then Include them: nothing is added to a capture that was undone.
+  await reset({settings: {contentOnly: true}}); page(`${SITE}/feed`, {title: 'Feed', links: 4, chrome: 3});
+  tab = clicked(`${SITE}/feed`);
+  ({report: answer} = await ask({type: 'capture.run', tabIds: [tab.id], scroll: true}));
+  undone = await ask({type: 'run.undo', collectionId: answer.collectionId, batchId: answer.batchId});
+  assert.equal(undone.count, 4);
+  assert.equal((await call({type: 'capture.includeLeftOut', batchId: answer.batchId})).error, 'Those navigation links are no longer kept. Capture the page again to include them.');
+  assert.equal(home().links.length, 0);
+});
+

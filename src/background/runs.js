@@ -17,7 +17,7 @@ import {reduceState, pageKey, MIN_FOLLOW_PAGES, MAX_FOLLOW_PAGES, MAX_CONTEXT} f
 import {pdfSetProblem, MAX_PDF_BYTES, MAX_PDF_SET_BYTES} from '../core/pdf.js';
 import {isFileLink} from '../core/files.js';
 import {serial, readState, writeState} from './store.js';
-import {WORKBENCH, appendLinks} from './card.js';
+import {WORKBENCH, LEFT_OUT_KEY, appendLinks} from './card.js';
 
 // Session key: the run in progress, or the last one that ended (for its report and its Undo). It
 // holds the queue, counts, each page's outcome and the batch, never a page's links.
@@ -323,17 +323,22 @@ export function undoRun(message) {
     const home = previous.collections.find(c => c.id === run.collectionId);
     if (!home) throw new Error('The collection this run saved to no longer exists, so there is nothing to undo.');
     const batch = home.links.filter(link => link.batchId === run.batchId);
-    if (batch.length !== run.count || batch.some(touched)) throw new Error('These links changed since the run, so Undo is no longer possible. Remove them in the list instead.');
+    // Scroll to the end first is one page with the usual report: what that report added to the
+    // batch since (Include them, frames from Allow these sites) is the run's too.
+    const kept = (await chrome.storage.session.get(REPORT_KEY).catch(() => ({})))[REPORT_KEY];
+    const count = run.kind === 'scroll' && kept?.report?.batchId === run.batchId ? (kept.report.capturedCount || 0) + (kept.report.leftOutIncluded || 0) : run.count;
+    if (batch.length !== count || batch.some(touched)) throw new Error('These links changed since the run, so Undo is no longer possible. Remove them in the list instead.');
     let state = previous;
     if (batch.length) {
       state = {...reduceState(previous, {type: 'links.remove', collectionId: home.id, ids: batch.map(link => link.id)}), undo: previous.undo};
       try { await writeState(previous, state); } catch { throw new Error('Could not undo the run. Nothing was changed.'); }
     }
     await save({...run, undone: true});
-    // The kept report remembers it, so a view that shows the report later doesn't offer Undo again.
+    // The kept report remembers it, so a view that shows the report later doesn't offer Undo again,
+    // and the navigation links it left out can no longer be included.
     try {
-      const kept = (await chrome.storage.session.get(REPORT_KEY))[REPORT_KEY];
       if (kept?.report?.batchId === run.batchId) await chrome.storage.session.set({[REPORT_KEY]: {...kept, report: {...kept.report, undone: batch.length}}});
+      if ((await chrome.storage.session.get(LEFT_OUT_KEY))[LEFT_OUT_KEY]?.batchId === run.batchId) await chrome.storage.session.remove(LEFT_OUT_KEY);
     } catch { /* the notice still says it */ }
     return {state, count: batch.length, name: home.name};
   });

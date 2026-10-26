@@ -913,7 +913,8 @@ try {
   await menuShadow.getByRole('button', {name: 'Close notice', exact: true}).click();
   assert.equal(await card(menuPage).count(), 0);
   pass('content.notice after Copy link text + URL puts the two columns on the clipboard (also through the text-area fallback) and offers only Close');
-  await menuPage.close();
+  // Chrome 116 accepts closing this page and then never closes it, so the wait is bounded.
+  await Promise.race([menuPage.close(), sleep(8000)]);
 
   /* 0.5.0: context snippets in every kind of block. */
   const research = await context.newPage();

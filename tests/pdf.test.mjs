@@ -6,7 +6,7 @@ import assert from 'node:assert/strict';
 import { MAX_CONTEXT } from '../src/core/model.js';
 import { MAX_IMPORT_LINKS } from '../src/core/imports.js';
 import { isPdf, pdfCitation, pdfContext, pdfLinks, pdfPages, pdfSetProblem, MAX_PDF_BYTES, MAX_PDF_PAGES, MAX_PDF_SET, MAX_PDF_SET_BYTES } from '../src/core/pdf.js';
-import { FIXTURES, makePdf } from './fixtures/pdf/make.mjs';
+import { FACES, FIXTURES, makePdf } from './fixtures/pdf/make.mjs';
 import { combinePdfs, fixture, readPdf, withPdf } from './helpers/pdf.mjs';
 
 const rows = (links) => links.map((link) => [link.pdfPage, link.anchorText, link.url]);
@@ -94,12 +94,13 @@ test('context is left out when the setting is off, and cut at word boundaries wh
   assert.ok(!/…\S*\bwor$|^…ord/.test(context), 'whole words only');
 });
 
-// Plain data: one page, 10-point text on one baseline unless a test says otherwise.
-const item = (str, x, extra = {}) => ({ str, x, y: 100, w: str.length * 6, h: 10, rotated: false, ...extra });
+// Plain data: one page, 10-point text on one baseline unless a test says otherwise, in a
+// typewriter face (every character 6 points wide).
+const item = (str, x, extra = {}) => ({ str, x, y: 100, w: str.length * 6, h: 10, rotated: false, mono: true, ...extra });
 const linkAt = (x1, x2, url, extra = {}) => ({ rect: [x1, 98, x2, 110], url, unsafeUrl: url, internal: false, ...extra });
 const page = (items, annotations, number = 1) => ({ number, width: 612, height: 792, items, annotations });
 
-test('words under a link: characters whose centers are inside, never a neighbor’s stray letters', () => {
+test('words under a link: whole words, never a neighbor’s stray letters', () => {
   // "preprint arXiv:1610.10099," is one run; the rectangle starts inside the t of preprint and ends before the comma.
   const run = item('preprint arXiv:1610.10099, 2016.', 0);
   assert.equal(pdfLinks([page([run], [linkAt(45, 150, 'http://arxiv.org/abs/1610.10099')])]).links[0].anchorText, 'arXiv:1610.10099');
@@ -221,3 +222,115 @@ test('combining PDFs: every page in order, with its links and text, readable aga
   // A PDF built on the spot, to show the generator is usable from a test.
   assert.equal((await readPdf(makePdf({ pages: [[{ parts: ['Only ', { text: 'this', url: 'https://only.example/' }] }]] }))).links[0].anchorText, 'this');
 });
+
+// Lines in a proportional face, as TeX sets them: one text run per line, spaces as gaps, justified
+// to a column. The reader gives a run's width, not each character's.
+const typeset = (face, sentences, width = 468) => makePdf({ pages: [sentences.map((parts) => ({ face, size: 10, width, leading: 1.5, parts }))] });
+const anchors = async (bytes) => (await readPdf(bytes, { saveContext: false })).links.map((link) => link.anchorText);
+
+test('anchor text in proportional type: the link’s whole words, without a letter more or less', async () => {
+  const sentences = [
+    ['The code, the data and the trained weights are on our ', { text: 'project page', url: 'https://p.example/' }, ', which we keep up to date.'],
+    ['These languages are documented in the ', { text: 'supplemental material', url: 'https://github.com/openai/gpt-3' }, '. In order to better understand translation capability, we'],
+    [{ text: 'Mamba', url: 'https://github.com/state-spaces/mamba' }, ' is a selective state space model with linear time scaling in the length of the sequence.'],
+    ['We illustrate it with a minimal iterative jitter ', { text: 'in', url: 'https://in.example/' }, ' the attention maps of a large Transformer model.'],
+  ];
+  for (const face of Object.keys(FACES)) {
+    assert.deepEqual(await anchors(typeset(face, sentences, 520)), ['project page', 'supplemental material', 'Mamba', 'in'], face);
+    assert.deepEqual(await anchors(typeset(face, sentences, 0)), ['project page', 'supplemental material', 'Mamba', 'in'], `${face}, not justified`);
+  }
+  // Many sentences, each with a link over one to four of its words, in two column widths.
+  let seed = 11;
+  const random = (n) => { seed = (seed * 1103515245 + 12345) % 2147483648; return Math.floor((seed / 2147483648) * n); };
+  const words = 'the of and a to in is we our model project page code data results see method this paper with for at on by from available Section Table Figure GitHub repository released Python implementation dataset benchmark training evaluation arXiv large small mini fast slow simple in-context learning Transformer attention BERT GPT-3 LLaMA ImageNet COCO Wikipedia 2023 12 3.5 multi-task zero-shot fine-tuned We It All illustrated minimal iterative jitter'.split(' ');
+  for (const face of Object.keys(FACES)) {
+    for (const width of [468, 240]) {
+      const expected = [], lines = [];
+      while (lines.length < 30) {
+        const sentence = Array.from({ length: 4 + random(10) }, () => words[random(words.length)]);
+        if ([...sentence.join(' ')].reduce((sum, char) => sum + FACES[face].widths[char.charCodeAt(0) - 32] / 100, 0) > width * 0.95) continue;
+        const from = random(sentence.length), to = from + 1 + random(Math.min(4, sentence.length - from));
+        const before = sentence.slice(0, from).join(' '), after = sentence.slice(to).join(' ');
+        lines.push([before && `${before} `, { text: sentence.slice(from, to).join(' '), url: `https://x.example/${lines.length}` }, `${after && ` ${after}`}.`].filter(Boolean));
+        expected.push(sentence.slice(from, to).join(' '));
+      }
+      assert.deepEqual(await anchors(typeset(face, lines, width)), expected, `${face}, ${width} points`);
+    }
+  }
+});
+
+test('a printed address in a typewriter face, wrapped after its dot, reads in one piece', () => {
+  // As GPT-4's references have it: the link's first rectangle stops short of the dot that ends its line.
+  const url = 'https://github.com/inverse-scaling/prize', at = (str, x, y, w, mono) => ({ str, x, y, w, h: 10, rotated: false, mono });
+  const items = [at('Sam Bowman, and Ethan Perez. The Inverse Scaling Prize, 2022. URL', 129.579, 151.755, 296.7, false), at('https://github.', 429.224, 151.755, 78.441, true),
+    at('com/inverse-scaling/prize', 129.579, 140.846, 131.222, true), at('.', 260.8, 140.846, 2.5, false)];
+  const read = pdfLinks([page(items, [{ rect: [428.227, 148.545, 504.996, 159.668], url, unsafeUrl: url, internal: false }, { rect: [128.583, 137.636, 261.801, 148.759], url, unsafeUrl: url, internal: false }])]);
+  assert.deepEqual(rows(read.links), [[1, url, url]]);
+  assert.equal(read.links[0].context, `Sam Bowman, and Ethan Perez. The Inverse Scaling Prize, 2022. URL ${url}.`);
+  // Punctuation around a printed address isn't the address's.
+  const wrapped = pdfLinks([page([item('see (https://x.example/a).', 0)], [linkAt(29, 145, 'https://x.example/a')])]);
+  assert.equal(wrapped.links[0].anchorText, 'https://x.example/a');
+});
+
+test('words that spell the end of an address keep their spaces; only an address split across lines is joined', () => {
+  const url = 'https://example.org/linkmeteor';
+  assert.equal(pdfLinks([page([item('Read about Link Meteor here.', 0)], [linkAt(66, 132, url)])]).links[0].anchorText, 'Link Meteor');
+  // Wrapped onto the next line, still two words.
+  const wrapped = pdfLinks([page([item('Read about Link', 300), item('Meteor here.', 0, { y: 86 })], [linkAt(366, 390, url), { ...linkAt(0, 36, url), rect: [0, 84, 36, 96] }])]);
+  assert.deepEqual(rows(wrapped.links), [[1, 'Link Meteor', url]]);
+});
+
+test('the same address on lines one under the other is each line’s own link: a mirror, a table’s rows', () => {
+  const url = 'https://x.example/file';
+  const mirrors = pdfLinks([page([item('Download: https://x.example/file', 0), item('Mirror: https://x.example/file', 0, { y: 86 })],
+    [linkAt(60, 192, url), { ...linkAt(48, 180, url), rect: [48, 84, 180, 96] }])]);
+  assert.deepEqual(rows(mirrors.links), [[1, url, url], [1, url, url]]);
+  // A table whose first column links "UCI" to one address on every row.
+  const uci = 'https://archive.ics.uci.edu/';
+  const table = pdfLinks([page([0, 1, 2].flatMap((row) => [item('UCI', 0, { y: 100 - 14 * row }), item(`${48842 + row}`, 200, { y: 100 - 14 * row }), item('14', 300, { y: 100 - 14 * row })]),
+    [0, 1, 2].map((row) => ({ ...linkAt(0, 18, uci), rect: [0, 98 - 14 * row, 18, 110 - 14 * row] })))]);
+  assert.deepEqual(rows(table.links), [[1, 'UCI', uci], [1, 'UCI', uci], [1, 'UCI', uci]]);
+});
+
+test('an address cut off at the foot of a column goes on at the top of the next: one link', () => {
+  const url = 'https://example.org/a/very/long/path';
+  const read = pdfLinks([page([item('the code is at https://example.org/a/very/', 72, { y: 80 }), item('long/path and the rest of the words.', 320, { y: 700 })],
+    [{ ...linkAt(0, 0, url), rect: [156, 78, 324, 90] }, { ...linkAt(0, 0, url), rect: [320, 698, 374, 710] }])]);
+  assert.deepEqual(rows(read.links), [[1, url, url]]);
+  // Words alone don't join across a column break.
+  const two = pdfLinks([page([item('see example.org', 72, { y: 80 }), item('example.org again', 320, { y: 700 })],
+    [{ ...linkAt(0, 0, 'https://example.org/'), rect: [96, 78, 162, 90] }, { ...linkAt(0, 0, 'https://example.org/'), rect: [320, 698, 386, 710] }])]);
+  assert.equal(two.links.length, 2);
+});
+
+test('a link over two lines, given as one rectangle per line, takes only those lines’ words', async () => {
+  // Courier at 11 points: 6.6 points a character. "see the project" / "page for details".
+  const bytes = makePdf({ pages: [[{ parts: ['see the project'] }, { parts: ['page for details'] },
+    { area: 'https://q.example/', boxes: [[98.4, 717, 171, 731], [72, 699, 98.4, 713]] }]] });
+  const { links } = await readPdf(bytes);
+  assert.deepEqual(rows(links), [[1, 'the project page', 'https://q.example/']]);
+  // Its one rectangle alone covers both lines whole.
+  assert.equal(pdfLinks([page([item('see the project', 0), item('page for details', 0, { y: 86 })], [{ ...linkAt(0, 0, 'https://q.example/'), rect: [0, 84, 96, 110] }])]).links[0].anchorText, 'see the project page for details');
+});
+
+test('text turned sideways, as on a landscape page, is read as the link’s words', async () => {
+  const bytes = makePdf({ pages: [[{ rotate: 'example.org/data', x: 300, y: 200, url: 'https://example.org/data' }, { rotate: 'the downward words', x: 400, y: 600, turn: 270, url: 'https://down.example/' }]] });
+  const { links } = await readPdf(bytes);
+  assert.deepEqual(rows(links), [[1, 'example.org/data', 'https://example.org/data'], [1, 'the downward words', 'https://down.example/']]);
+});
+
+test('in a reference list, a link’s context is the whole reference; elsewhere, its line', () => {
+  const ref = (str, x, y) => item(str, x, { y });
+  const labeled = [ref('[1] A. Author and B. Author. A first title that runs on', 72, 700), ref('over two lines. In Proc. Things, 2020.', 96, 689),
+    ref('[2] C. Writer. A second title, with its code at', 72, 678), ref('https://code.example/two and more words. 2021.', 96, 667), ref('[3] D. Person. The third one. 2022.', 72, 656)];
+  const url = 'https://code.example/two', at = { ...linkAt(0, 0, url), rect: [96, 665, 240, 677] };
+  assert.equal(pdfLinks([page(labeled, [at])]).links[0].context, '[2] C. Writer. A second title, with its code at https://code.example/two and more words. 2021.');
+  // Without labels: each reference set out to the left of its other lines, with gaps between.
+  const hanging = [ref('Ada Example. A first title that runs on', 72, 700), ref('over two lines. 2020.', 82, 689),
+    ref('Ben Sample. A second title, with its code at', 72, 671), ref('https://code.example/two and more words. 2021.', 82, 660), ref('Carl Third. The third one,', 72, 642), ref('on two lines. 2022.', 82, 631)];
+  assert.equal(pdfLinks([page(hanging, [{ ...at, rect: [82, 658, 226, 670] }])]).links[0].context, 'Ben Sample. A second title, with its code at https://code.example/two and more words. 2021.');
+  // A paragraph of prose (its first line set in, not out) keeps the line the link is on.
+  const prose = [ref('A paragraph begins here, set in from the left as paragraphs are,', 90, 700), ref('and its code is at https://code.example/two for anyone', 72, 689), ref('who wants it, and then it goes on to its end.', 72, 678)];
+  assert.equal(pdfLinks([page(prose, [{ ...at, rect: [186, 687, 330, 699] }])]).links[0].context, 'and its code is at https://code.example/two for anyone');
+});
+

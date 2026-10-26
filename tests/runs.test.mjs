@@ -228,7 +228,8 @@ test('selected pages: a PDF is read by an open Link Meteor page, or reported whe
   assert.equal(new Set(home().links.map((item) => item.batchId)).size, 1);
   assert.equal(tabs.size, 0);
 
-  // No Link Meteor page is open: said at once. A page that is open but silent: after 60 seconds.
+  // No Link Meteor page is open: said at once. A page that is open but silent (a slow PDF): after
+  // 60 seconds, and said as that.
   await reset(); granted.add(SITE); pagesOpen = false;
   page(`${SITE}/paper.pdf`, {title: 'paper.pdf', type: 'application/pdf'});
   await ask({type: 'run.start', kind: 'pages', collectionId: state().activeCollectionId, urls: [`${SITE}/paper.pdf`]});
@@ -239,7 +240,7 @@ test('selected pages: a PDF is read by an open Link Meteor page, or reported whe
   page(`${SITE}/paper.pdf`, {title: 'paper.pdf', type: 'application/pdf'});
   await ask({type: 'run.start', kind: 'pages', collectionId: state().activeCollectionId, urls: [`${SITE}/paper.pdf`]});
   await toTheEnd();
-  assert.deepEqual(rows(), [[1, 'pdf-unread', 0, 0, 'A PDF: keep Link Meteor open during the run to read PDFs.']]);
+  assert.deepEqual(rows(), [[1, 'pdf-unread', 0, 0, 'A PDF: reading it took more than 60 seconds, so its links weren’t saved. Capture it by itself to read them.']]);
   assert.ok(calls.removed[0].at - calls.created[0].at >= 60000, 'an open page gets 60 seconds to answer');
 });
 
@@ -746,14 +747,14 @@ test('PDF files: what the page that fetches one says decides its line; a set ove
   done = await toTheEnd();
   assert.deepEqual(fileRows(done), [[1, 'A.pdf', 'no-answer', UNANSWERED], [2, '', 'not-read', 'Not read']]);
   assert.deepEqual([done.ended.reason, done.ended.text], ['no-answer', UNANSWERED]);
-  // A page that is open but never answers gets 2 minutes.
+  // A page that is open but never answers gets 2 minutes for the file, which is then left out.
   await reset(); page(`${SITE}/list`); tab = clicked(`${SITE}/list`);
   fileReply = () => null;
   await ask({type: 'run.start', kind: 'files', tabId: tab.id, files: [{url: pdf('a'), name: 'A.pdf'}]});
   await advance(119000);
   assert.equal((await status()).state, 'running');
   await advance(2000);
-  assert.deepEqual([(await status()).state, (await status()).ended.reason], ['done', 'no-answer']);
+  assert.deepEqual([(await status()).state, (await status()).ended.reason, (await status()).results[0].status], ['done', 'finished', 'timeout']);
 
   // Stop, while a file is being fetched: it and the rest are not read, and an answer that comes later is not taken.
   await reset(); page(`${SITE}/list`); tab = clicked(`${SITE}/list`);
@@ -891,6 +892,28 @@ test('selected pages: a tab closed before it was read says so as the contract do
   await toTheEnd();
   const CLOSED = 'The tab closed before it was read. Chrome may have downloaded this address as a file instead of showing it.';
   assert.deepEqual(rows(), [[1, 'closed', 0, 0, CLOSED], [2, 'closed', 0, 0, CLOSED]]);
+});
+
+test('PDF files: one that takes more than 2 minutes is left out and the run goes on; the page that started it gone ends the run', async () => {
+  const SLOW = 'Not fetched within 2 minutes, so it was left out. Download files saves it by itself.';
+  // Started from the full view (a tab, named by its documentId) or the side panel (whose messages name no document).
+  const fullView = {...ui, documentId: 'workbench-document'}, sidePanel = {url: WORKBENCH};
+  for (const [sender, open] of [[fullView, {documentId: 'workbench-document', contextType: 'TAB'}], [sidePanel, {documentId: 'panel-document', contextType: 'SIDE_PANEL'}]]) {
+    await reset(); page(`${SITE}/list`);
+    let tab = clicked(`${SITE}/list`);
+    fileReply = (message) => message.step === 0 ? null : {ok: true, size: 5};
+    contexts = [open];
+    await ask({type: 'run.start', kind: 'files', tabId: tab.id, files: [{url: pdf('slow'), name: 'Slow.pdf'}, {url: pdf('b'), name: 'B.pdf'}]}, sender);
+    let done = await toTheEnd();
+    assert.deepEqual(fileRows(done), [[1, 'Slow.pdf', 'timeout', SLOW], [2, 'B.pdf', 'got', 'Fetched']], open.contextType);
+    assert.deepEqual([done.ended.reason, done.summary], ['finished', 'Fetched 1 of 2 PDFs.']);
+    // The page that started the run closed while another Link Meteor page stays open.
+    await reset(); page(`${SITE}/list`); tab = clicked(`${SITE}/list`);
+    fileReply = () => null; contexts = [{documentId: 'another-view', contextType: 'TAB'}];
+    await ask({type: 'run.start', kind: 'files', tabId: tab.id, files: [{url: pdf('a'), name: 'A.pdf'}, {url: pdf('b'), name: 'B.pdf'}]}, sender);
+    done = await toTheEnd();
+    assert.deepEqual(fileRows(done), [[1, 'A.pdf', 'no-answer', UNANSWERED], [2, '', 'not-read', 'Not read']], open.contextType);
+  }
 });
 
 test('Scroll to the end first: Include them and Undo work together', async () => {

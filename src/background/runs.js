@@ -83,7 +83,8 @@ function pause(job, ms) {
 }
 // Asks Link Meteor's own pages to do part of a step the background can't (reading a PDF), and
 // waits for the answer: a message of a type in ANSWERS with the same runId and step. Null when no
-// page is open, none answers in time, or Stop is pressed.
+// page is open or Stop is pressed; LATE when a page is open but none answers in time.
+const LATE = Object.freeze({late: true});
 function ask(job, message, ms) {
   const key = `${message.runId}:${message.step}`;
   if (job.stopped) return Promise.resolve(null);
@@ -92,7 +93,7 @@ function ask(job, message, ms) {
     const finish = answer => { if (job.asks.get(key) === finish) job.asks.delete(key); job.waiters.delete(stopped); done(answer); };
     const stopped = () => finish(null);
     job.asks.set(key, finish); job.waiters.add(stopped);
-    clock.sleep(ms).then(stopped);
+    clock.sleep(ms).then(() => finish(LATE));
     try { chrome.runtime.sendMessage(message).then(() => {}, stopped); } catch { stopped(); }
   });
 }
@@ -121,6 +122,14 @@ async function loaded(job, tabId, started = false) {
 // Whether Link Meteor has access to pages of this address's site: all sites, or that site.
 async function hasAccess(url) {
   try { return await chrome.permissions.contains({origins: [`${new URL(url).origin}/*`]}); } catch { return false; }
+}
+// Whether the Link Meteor page that started a run (run.owner) is still open, as Chrome's list of
+// the extension's pages says: a tab by its documentId; a side panel, whose messages name no
+// document, as any side panel. Without either, it is taken as open.
+const SIDE_PANEL = 'side-panel';
+async function ownerOpen(run) {
+  if (!run.owner || typeof chrome.runtime.getContexts !== 'function') return true;
+  try { return (await chrome.runtime.getContexts(run.owner === SIDE_PANEL ? {contextTypes: ['SIDE_PANEL']} : {documentIds: [run.owner]})).length > 0; } catch { return true; }
 }
 // What kind of document a tab shows ('application/pdf', 'text/html', …) and which document it is
 // (Chrome's documentId), or {error} where Chrome won't run a script (no access, or an error page).
@@ -445,7 +454,7 @@ function pdfOccurrences(raw, tab, batchId) {
 async function readPdf(job, item, tab) {
   const {run} = job, row = {...unread(item, ''), url: tab.url || item.url, title: tab.title || ''};
   const reply = await ask(job, {type: 'run.pdf', runId: run.runId, step: run.at, tabId: tab.id, url: tab.url, title: tab.title || ''}, PDF_WAIT_MS);
-  if (!reply) return {...row, status: job.stopped ? 'not-read' : 'pdf-unread', how: job.stopped ? STOPPED : 'A PDF: keep Link Meteor open during the run to read PDFs.'};
+  if (!reply || reply === LATE) return {...row, status: job.stopped ? 'not-read' : 'pdf-unread', how: job.stopped ? STOPPED : reply ? PDF_SLOW : 'A PDF: keep Link Meteor open during the run to read PDFs.'};
   if (typeof reply.error === 'string' && reply.error) return {...row, status: 'error', how: `A PDF: ${reply.error}`};
   let links;
   try { links = pdfOccurrences(reply.links, tab, run.batchId); } catch (error) { return {...row, status: 'error', how: `A PDF that couldn’t be saved: ${error.message}`}; }
@@ -471,7 +480,11 @@ const DOWNLOADED = 'Chrome downloaded this one instead of showing it. It is in y
 // A selected page's tab that closed before it was read: the person closed it, or the site sent the
 // address as a download, which Chrome saves and then closes the tab. Which one isn't known.
 const PAGE_CLOSED = 'The tab closed before it was read. Chrome may have downloaded this address as a file instead of showing it.';
+// A PDF among selected pages that an open Link Meteor page didn't read within PDF_WAIT_MS.
+const PDF_SLOW = `A PDF: reading it took more than ${PDF_WAIT_MS / 1000} seconds, so its links weren’t saved. Capture it by itself to read them.`;
 const FILE_UNANSWERED = 'The Link Meteor page that started this didn’t answer, so the run ended. Keep it open until the PDFs are fetched.';
+// A PDF's file not fetched within FILE_WAIT_MS (a large file, a slow connection): it alone is left out.
+const FILE_SLOW = `Not fetched within ${FILE_WAIT_MS / 60000} minutes, so it was left out. Download files saves it by itself.`;
 
 const followCap = state => { const value = state.settings.followPages; return Number.isInteger(value) && value >= MIN_FOLLOW_PAGES && value <= MAX_FOLLOW_PAGES ? value : MAX_FOLLOW_PAGES; };
 const addedTo = (run) => run.count ? `added ${plural(run.count, 'link')} to “${run.name}”` : `no links were added to “${run.name}”`;
@@ -649,7 +662,7 @@ export const KINDS = {
   // Background tabs are opened only on sites Link Meteor has access to, and closed afterward.
   files: {
     title: 'Getting PDFs', saves: false, report: false, resumes: true, pause: FILES_PAUSE_MS,
-    begin(message) {
+    begin(message, sender) {
       const files = Array.isArray(message.files) ? message.files : [];
       if (!files.length) throw new Error('Choose at least one PDF.');
       const problem = pdfSetProblem(files.map(() => 0));
@@ -661,7 +674,9 @@ export const KINDS = {
         // (a PDF's own links name that PDF as their source), which Chrome might download instead of showing.
         return {url, name: typeof file.name === 'string' ? file.name.slice(0, 200) : '', ...(from && originOf(from) === originOf(url) && !isFileLink({url: from}) ? {from} : {})};
       });
-      return {queue, ...(Number.isInteger(message.tabId) ? {own: message.tabId} : {})};
+      // `owner` is the page that started the run, which alone fetches the files (see ownerOpen).
+      const owner = typeof sender?.documentId === 'string' && sender.documentId ? sender.documentId : !sender?.tab && sender?.url?.startsWith(WORKBENCH) ? SIDE_PANEL : '';
+      return {queue, ...(Number.isInteger(message.tabId) ? {own: message.tabId} : {}), ...(owner ? {owner} : {})};
     },
     counter: run => { const step = Math.min(run.at + 1, run.queue.length); return {step, of: run.queue.length, links: 0, text: `Getting PDF ${n(step)} of ${n(run.queue.length)}`}; },
     async step(job, item) {
@@ -674,6 +689,9 @@ export const KINDS = {
         const reply = await ask(job, {type: 'run.file', runId: run.runId, step: index, tabId, url}, FILE_WAIT_MS);
         why = typeof reply?.reason === 'string' ? reply.reason : '';
         if (!reply) return job.stopped ? ended('not-read', STOPPED) : ended('no-answer', FILE_UNANSWERED, {end: {reason: 'no-answer'}});
+        // No answer in time: a slow file is left out and the run goes on, unless the page that
+        // started the run is gone (another Link Meteor page heard the question in its place).
+        if (reply === LATE) return await ownerOpen(run) ? ended('timeout', FILE_SLOW) : ended('no-answer', FILE_UNANSWERED, {end: {reason: 'no-answer'}});
         if (reply.ok === true) return ended('got', 'Fetched', {row: {size: Number.isInteger(reply.size) && reply.size > 0 ? reply.size : 0}});
         if (reply.reason === 'set-size') return ended('too-large', FILE_REASONS['set-size'], {end: {reason: 'too-large'}});
         return Object.hasOwn(FILE_REASONS, reply.reason) ? ended(reply.reason === 'size' ? 'too-large' : reply.reason, FILE_REASONS[reply.reason]) : null;
@@ -743,7 +761,7 @@ export const KINDS = {
 // fetching a PDF's file.
 const ANSWERS = ['run.pdfLinks', 'run.fileDone'];
 // For a kind added later: the engine's tools.
-export const engine = {pause, ask, loaded, hasAccess, documentType, tellPage, closeTab, capturePage, rowOf, unread, save, progress, plural, hostOf};
+export const engine = {pause, ask, LATE, loaded, hasAccess, documentType, tellPage, closeTab, capturePage, rowOf, unread, save, progress, plural, hostOf};
 
 // Messages this module answers, accepted only from the workbench.
 export const workbenchMessages = {

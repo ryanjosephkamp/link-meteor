@@ -14,7 +14,8 @@
 //   the chooser and by a drop, the file name, what is left out with its reason, and the combined
 //   PDF's pages in the list's order, read back with the shipped PDF.js; files from the computer
 //   alone, with no PDF link chosen;
-// - the limits (20 PDFs, 50 MB each, 200 MB together), Stop in the middle, and a run started elsewhere;
+// - the limits (20 PDFs, 50 MB each, 200 MB together), Stop in the middle, a PDF slower than its
+//   2 minutes (left out alone), and a run started elsewhere;
 // - that the PDF reader loads only when a PDF is read (a ZIP never loads PDF.js);
 // - the 320 px layout and text contrast in every theme, light and dark;
 // - that nothing is saved, every download lands in the profile's own folder, and nothing but the
@@ -492,6 +493,26 @@ try {
   await everyTheme('a report', [['report', '#pdf-result p'], ['file name', '#pdf-result li b'], ['how it ended', '#pdf-result li'], ['Download as one ZIP', '#pdf-zip span'], ['Combine into one PDF…', '#pdf-combine span']], 'pdf-files-report-320');
   pass('Stop, from the keyboard, in the middle of a run: the file in hand and the rest are not read, no ZIP is made, and a file that arrives later is not taken');
 
+  /* 11b. A PDF the site is slow to send: after its 2 minutes it alone is left out, and the ZIP holds the others. */
+  const releaseLate = hold();
+  await quiet();
+  await press('pdf-zip');
+  await until(() => running(), 'the run with a slow PDF');
+  await until(async () => !(await running()) && !!(await outcome()), 'the run past the slow PDF’s 2 minutes', 200000);
+  const slowZip = await download(4);
+  const slowLine = 'A-slow-paper.pdf: Not fetched within 2 minutes, so it was left out. Download files saves it by itself.';
+  assert.deepEqual(await outcome(), {head: `Downloaded ${slowZip.name} with 2 of 3 PDFs, ${sizeText(journal.length + paper.length)}.`,
+    lines: [`A-study-of-things-that-link.pdf: In the ZIP · ${sizeText(journal.length)}`, slowLine, `A-small-paper-about-links.pdf: In the ZIP · ${sizeText(paper.length)}`]});
+  const slowMembers = readPackagedMembers(slowZip.bytes);
+  assert.deepEqual([...slowMembers.keys()], ['A-study-of-things-that-link.pdf', 'A-small-paper-about-links.pdf']);
+  assert.ok(slowMembers.get('A-study-of-things-that-link.pdf').equals(journal) && slowMembers.get('A-small-paper-about-links.pdf').equals(paper), 'the others, byte for byte');
+  const lateRun = await lastRun();
+  assert.deepEqual([lateRun.ended.reason, lateRun.results.map((row) => row.status), lateRun.summary], ['finished', ['got', 'timeout', 'got'], 'Fetched 2 of 3 PDFs.']);
+  releaseLate();
+  await sleep(1500);
+  assert.deepEqual([saved.length, await visible('pdf-progress')], [4, false], 'the slow file, sent at last, changes nothing');
+  pass('A PDF the site takes more than 2 minutes to send is left out by itself, said as that; the ZIP holds the others byte for byte', {zip: slowZip.name});
+
   // The panel: its list (a link's PDF and a file from the computer), what was left out, the name, the summary.
   await quiet();
   await js(ui, `(() => { window.__answer = false; return true; })()`);
@@ -540,7 +561,7 @@ try {
   pass('While another run is going, both actions wait for it, and say so');
 
   /* 13. Where everything landed, and who was asked. */
-  assert.deepEqual((await readdir(downloads)).sort(), [zipped.name, combined.name, local.name].sort(), 'the three files made, in the profile’s own folder');
+  assert.deepEqual((await readdir(downloads)).sort(), [zipped.name, combined.name, local.name, slowZip.name].sort(), 'the four files made, in the profile’s own folder');
   assert.deepEqual(await readdir(home).catch(() => []), [], 'nothing in the Downloads folder');
   assert.ok(saved.every((item) => item.url.startsWith(`blob:${browser.extensionUrl('').slice(0, -1)}`)), 'each download is a file Link Meteor made in its own page');
   assert.ok(requests.length > 0 && requests.every((request) => [site, otherSite].includes(request.host)), 'only the fixture server was asked');

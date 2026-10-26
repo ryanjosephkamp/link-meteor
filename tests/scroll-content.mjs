@@ -29,7 +29,8 @@ function stub() {
   let listener = null;
   window.chrome = {
     runtime: {
-      sendMessage: async (message) => { sent.push(JSON.parse(JSON.stringify(message))); return {ok: true, data: message.type === 'settings.get' ? {holdKey: 'z', holdTrigger: 'letter', holdScope: 'sites', holdOrigins: [], holdExceptions: []} : {}}; },
+      // A check may set __stub.halt: the background's answer to a scroll's counter once Stop was pressed.
+      sendMessage: async (message) => { sent.push(JSON.parse(JSON.stringify(message))); return {ok: true, data: message.type === 'settings.get' ? {holdKey: 'z', holdTrigger: 'letter', holdScope: 'sites', holdOrigins: [], holdExceptions: []} : message.type === 'run.scroll' && window.__stub.halt ? {halt: true} : {}}; },
       onMessage: {addListener: (fn) => { listener = fn; }, removeListener() {}},
     },
     storage: {onChanged: {addListener() {}, removeListener() {}}},
@@ -174,6 +175,30 @@ try {
     await page.close();
   }
   pass('Stop on the page, Escape, and Stop from the workbench each end the scroll at once, keep what it had, and scroll back');
+
+  /* Stop that comes before the scroll begins: it is not lost. */
+  for (const how of ['Stop in the workbench, before the scroll began', 'Escape between pages', 'Stop the page missed']) {
+    page = await open(context, feed('batches=inf'));
+    await page.evaluate(() => scrollTo(0, 90));
+    if (how === 'Escape between pages') {
+      await page.evaluate(() => window.__stub.deliver({type: 'content.run', runId: 'run-early', text: 'Following Next: page 2 of up to 20 · 40 links'}));
+      await page.keyboard.press('Escape');
+      assert.deepEqual(await sent(page, 'run.stop'), [{type: 'run.stop', runId: 'run-early'}]);
+    } else if (how === 'Stop in the workbench, before the scroll began') await page.evaluate(() => window.__stub.deliver({type: 'content.run', runId: 'run-early', halt: true}));
+    // The background tells a scroll that began after Stop, in its answer to the scroll's first counter.
+    else await page.evaluate(() => { window.__stub.halt = true; });
+    began = Date.now();
+    answer = await scan(page, {runId: 'run-early', lead: how === 'Escape between pages' ? 'Following Next: page 2 of up to 20 · ' : undefined, links: 40});
+    assert.equal(answer.scroll.ended, 'stopped', how);
+    assert.ok(answer.scroll.screens <= 2 && Date.now() - began < 5000, `${how}: ${answer.scroll.screens} screens in ${Date.now() - began} ms`);
+    assert.equal(await page.evaluate(() => scrollY), 90, 'scrolled back');
+    // A Stop is for its own run: the next run's scroll goes on as usual.
+    await page.evaluate(() => { window.__stub.halt = false; window.__answer = undefined; });
+    answer = await scan(page, {runId: 'run-later', limits: {ms: 1500}});
+    assert.equal(answer.scroll.ended, 'time', `${how}: another run`);
+    await page.close();
+  }
+  pass('Stop that comes before a scroll begins (from the workbench, by Escape between pages, or told in the answer to the scroll’s counter) ends it at once; the next run is not affected');
 
   /* Inside a longer run: the run's own counter leads, and the notice stays for the next page. */
   page = await open(context, feed('batches=2'));

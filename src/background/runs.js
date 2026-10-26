@@ -295,9 +295,12 @@ export async function stopRun(message, sender = {}) {
 }
 
 // run.scroll {runId, screen, of, links} from the page that is scrolling: its counter, passed on.
+// The answer says {halt: true} once Stop was pressed, for a page that missed it (a scroll that
+// began just after Stop, or a page that had no script yet when Stop was sent).
 function scrolled(message, sender = {}) {
   const run = going?.run;
   if (!run || run.runId !== message.runId || sender.tab?.id !== run.tabId) return {};
+  if (going.stopped) return {halt: true};
   const number = (value, most) => Number.isInteger(value) && value >= 0 ? Math.min(value, most) : 0;
   run.live = {screen: number(message.screen, SCROLL_SCREENS), of: number(message.of, SCROLL_SCREENS) || SCROLL_SCREENS, links: number(message.links, MAX_LINKS)};
   progress(run);

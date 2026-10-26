@@ -892,3 +892,13 @@ test('Scroll to the end first: Include them and Undo work together', async () =>
   assert.equal(home().links.length, 0);
 });
 
+test('Stop before a page starts scrolling: the page hears it when it says how far it is', async () => {
+  await reset(); paged(2);
+  const tab = clicked(listing(1));
+  const {runId} = await ask({type: 'run.start', kind: 'next', tabId: tab.id, collectionId: state().activeCollectionId, scroll: true});
+  await ask({type: 'run.stop', runId});
+  assert.deepEqual(await ask({type: 'run.scroll', runId, screen: 1, of: 50, links: 3}, {url: listing(1), tab: {id: tab.id}}), {halt: true}, 'a scroll that began after Stop is told to end');
+  assert.deepEqual(await ask({type: 'run.scroll', runId, screen: 1, of: 50, links: 3}, {url: `${OTHER}/x`, tab: {id: 77}}), {}, 'only the page the run reads');
+  await toTheEnd();
+});
+

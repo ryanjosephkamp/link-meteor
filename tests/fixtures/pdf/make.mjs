@@ -9,18 +9,39 @@ const CHAR = 0.6, LEFT = 72, TOP = 720, PAGE = [612, 792];
 const esc = (text) => text.replace(/[\\()]/g, '\\$&');
 const hex = (bytes) => `<${Buffer.from(bytes).toString('hex')}>`;
 
+// Proportional faces, for lines typeset as TeX does: each character's width (thousandths of the
+// font size, printable ASCII) is written into the PDF, so the reader places the text exactly by
+// them, and a link's rectangle is computed from the same widths.
+const widths = (text) => text.split(' ').map(Number);
+export const FACES = {
+  Times: { font: 'Times-Roman', widths: widths('250 333 408 500 500 833 778 180 333 333 500 564 250 333 250 278 500 500 500 500 500 500 500 500 500 500 278 278 564 564 564 444 921 722 667 667 722 611 556 722 722 333 389 722 611 889 722 722 556 722 667 556 611 722 722 944 722 722 611 333 278 333 469 500 333 444 500 444 500 444 333 500 500 278 278 500 278 778 500 500 500 500 333 389 278 500 500 722 500 500 444 480 200 480 541') },
+  Helvetica: { font: 'Helvetica', widths: widths('278 278 355 556 556 889 667 191 333 333 389 584 278 333 278 278 556 556 556 556 556 556 556 556 556 556 278 278 584 584 584 556 1015 667 667 722 722 667 611 778 722 278 500 667 556 833 722 778 667 778 722 667 611 722 667 944 667 667 611 278 278 278 469 556 333 556 556 500 556 556 278 556 556 222 222 500 222 833 556 556 556 556 333 500 278 556 500 722 500 500 500 334 260 334 584') },
+  // Computer Modern's proportions, as most papers from TeX have them.
+  Modern: { font: 'Times-Roman', widths: widths('333 278 500 833 500 833 778 278 389 389 500 778 278 333 278 500 500 500 500 500 500 500 500 500 500 500 278 278 778 778 778 472 778 750 708 722 764 681 653 785 750 361 514 778 625 917 750 778 681 778 736 556 722 750 750 1028 750 750 611 278 500 278 500 500 278 500 556 444 556 444 306 500 556 278 306 528 278 833 556 500 556 528 392 394 389 556 528 722 528 528 444 500 1000 500 500') },
+};
+
 /* makePdf({pages, info, xmp, encrypt}) returns a Buffer.
    pages: [[line]], top to bottom. A line is one of:
    - {size?, x?, parts: [part]}: one run of text. A part is a string or {text, url | goto | script | file,
      pad?: [left, right] in characters, perChar?: true (one text item per character), at?: x (start a
      new run at that x, as a second column does)};
-   - {rotate: text, x, y, size?}: text turned a quarter turn, as arXiv's stamp is;
+   - {face, size?, x?, width?, margin?, parts: [string | {text, url}]}: one line in a FACES face, set as
+     TeX sets it, with the spaces as gaps rather than characters, and stretched to `width` points
+     when given. A link's rectangle covers its words, `margin` points wider on every side;
+   - {rotate: text, x, y, size?, turn?: 90 | 270}: text turned a quarter turn, as arXiv's stamp is;
    - {icon: url, x, y, w, h}: a link over no text, as a small picture is;
+   - {area: url, boxes: [[x1, y1, x2, y2], …]}: one link over several rectangles, given as its QuadPoints;
    - {skip: points}: extra space before the next line. */
 export function makePdf({ pages, info = {}, xmp = '', encrypt = false }) {
   const objects = [];
   const add = (body) => objects.push(body);
   const font = add('<< /Type /Font /Subtype /Type1 /BaseFont /Courier /Encoding /WinAnsiEncoding >>');
+  // The faces the lines use, only those, so a PDF without them is as it always was.
+  const faces = new Map();
+  for (const name of new Set(pages.flat().map((line) => line.face).filter(Boolean))) {
+    faces.set(name, add(`<< /Type /Font /Subtype /Type1 /BaseFont /${FACES[name].font} /Encoding /WinAnsiEncoding /FirstChar 32 /LastChar 126 /Widths [${FACES[name].widths.join(' ')}] >>`));
+  }
+  const fontNames = `/F1 ${font} 0 R${[...faces].map(([name, id]) => ` /${name} ${id} 0 R`).join('')}`;
   const pagesId = add(null);
   const kids = [], firstPage = objects.length + 1;
   const pageIds = pages.map((_, i) => 0); // filled below, for links inside the document
@@ -30,8 +51,37 @@ export function makePdf({ pages, info = {}, xmp = '', encrypt = false }) {
     let stream = '', y = TOP; const annotations = [];
     for (const line of lines) {
       if (line.skip) { y -= line.skip; continue; }
-      if (line.rotate) { stream += `BT /F1 ${line.size || 9} Tf 0 1 -1 0 ${line.x} ${line.y} Tm (${esc(line.rotate)}) Tj ET\n`; continue; }
+      if (line.rotate) {
+        const size = line.size || 9, down = line.turn === 270, length = line.rotate.length * CHAR * size;
+        stream += `BT /F1 ${size} Tf ${down ? '0 -1 1 0' : '0 1 -1 0'} ${line.x} ${line.y} Tm (${esc(line.rotate)}) Tj ET\n`;
+        // A link over the turned text: its rectangle on the page, the glyphs' tops toward the turn.
+        if (line.url) annotations.push({ rect: down ? [line.x - 0.25 * size, line.y - length, line.x + 0.85 * size, line.y] : [line.x - 0.85 * size, line.y, line.x + 0.25 * size, line.y + length], url: line.url });
+        continue;
+      }
       if (line.icon) { annotations.push({ rect: [line.x, line.y, line.x + line.w, line.y + line.h], url: line.icon }); continue; }
+      if (line.area) { const [x1, y1, x2, y2] = [0, 1, 2, 3].map((i) => (i < 2 ? Math.min : Math.max)(...line.boxes.map((box) => box[i]))); annotations.push({ rect: [x1, y1, x2, y2], url: line.area, quads: line.boxes }); continue; }
+      if (line.face) {
+        const face = FACES[line.face], size = line.size || 10, left = line.x ?? LEFT, margin = line.margin ?? 1;
+        const text = line.parts.map((part) => (typeof part === 'string' ? part : part.text)).join(''), words = text.split(' ');
+        const glyph = (char) => (face.widths[char.charCodeAt(0) - 32] ?? 500) * size / 1000;
+        const inked = [...text].filter((char) => char !== ' ').reduce((sum, char) => sum + glyph(char), 0);
+        const gap = line.width && words.length > 1 ? (line.width - inked) / (words.length - 1) : glyph(' ');
+        // Each character's left edge, and where the line ends.
+        const at = [];
+        let x = left;
+        for (const char of text) { at.push(x); x += char === ' ' ? gap : glyph(char); }
+        at.push(x);
+        stream += `BT /${line.face} ${size} Tf 1 0 0 1 ${left.toFixed(2)} ${y} Tm [${words.map((word) => `(${esc(word)})`).join(` ${(-gap * 1000 / size).toFixed(1)} `)}] TJ ET\n`;
+        let index = 0;
+        for (const part of line.parts) {
+          const item = typeof part === 'string' ? { text: part } : part;
+          const from = index + item.text.length - item.text.trimStart().length, to = index + item.text.trimEnd().length;
+          if (item.url) annotations.push({ rect: [at[from] - margin, y - 0.22 * size - margin, at[to] + margin, y + 0.78 * size + margin], url: item.url });
+          index += item.text.length;
+        }
+        y -= Math.round(size * (line.leading || 1.6));
+        continue;
+      }
       const size = line.size || 11, width = CHAR * size;
       let x = line.x ?? LEFT, run = '', runX = x;
       const flush = () => { if (run) stream += `BT /F1 ${size} Tf 1 0 0 1 ${runX.toFixed(2)} ${y} Tm (${esc(run)}) Tj ET\n`; run = ''; };
@@ -60,10 +110,11 @@ export function makePdf({ pages, info = {}, xmp = '', encrypt = false }) {
       const rect = `[${item.rect.map((n) => Number(n.toFixed(2))).join(' ')}]`;
       const action = item.url ? `/A << /S /URI /URI (${esc(item.url)}) >>` : item.goto ? `/Dest [${pageIds[item.goto - 1]} 0 R /Fit]`
         : item.script ? `/A << /S /JavaScript /JS (${esc(item.script)}) >>` : `/A << /S /GoToR /F (${esc(item.file)}) /D [0 /Fit] >>`;
-      return add(`<< /Type /Annot /Subtype /Link /Rect ${rect} /Border [0 0 0] ${action} >>`);
+      const quads = item.quads ? ` /QuadPoints [${item.quads.flatMap(([x1, y1, x2, y2]) => [x1, y2, x2, y2, x1, y1, x2, y1]).join(' ')}]` : '';
+      return add(`<< /Type /Annot /Subtype /Link /Rect ${rect}${quads} /Border [0 0 0] ${action} >>`);
     });
     const content = add(`<< /Length ${plan.stream.length} >>\nstream\n${plan.stream}endstream`);
-    const id = add(`<< /Type /Page /Parent ${pagesId} 0 R /MediaBox [0 0 ${PAGE[0]} ${PAGE[1]}] /Resources << /Font << /F1 ${font} 0 R >> >> /Contents ${content} 0 R /Annots [${ids.map((n) => `${n} 0 R`).join(' ')}] >>`);
+    const id = add(`<< /Type /Page /Parent ${pagesId} 0 R /MediaBox [0 0 ${PAGE[0]} ${PAGE[1]}] /Resources << /Font << ${fontNames} >> >> /Contents ${content} 0 R /Annots [${ids.map((n) => `${n} 0 R`).join(' ')}] >>`);
     if (id !== pageIds[i]) throw new Error('page numbering is off');
     kids.push(id);
   }

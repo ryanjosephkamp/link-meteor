@@ -13,13 +13,14 @@
 //   details, the PDF page export column, and Undo;
 // - a PDF dropped on the Import links panel or on the list, and a drop anywhere else doing nothing;
 // - PDFs with nothing to add, each in plain words: a password, damaged, not a PDF, too large, too
-//   many pages, no links, no text; a PDF over the 20 MB that other files may have;
+//   many pages, no links, no text; a PDF over the 20 MB that other files may have, also when its
+//   name doesn't say PDF, and one whose %PDF- comes after other bytes;
 // - Cancel while a long PDF is read;
 // - the keyboard alone, 320 px, labels, and text contrast in every theme, light and dark.
 // On an older Chrome (LINK_METEOR_CHROME_PATH), the same checks prove the shims.
 //   npm run build && node tests/pdf-browser.mjs
 import assert from 'node:assert/strict';
-import {mkdir, writeFile, rm} from 'node:fs/promises';
+import {mkdir, readFile, writeFile, rm} from 'node:fs/promises';
 import {resolve} from 'node:path';
 import {launch, rpc, until, evidence, root} from './helpers/browser.mjs';
 import {fixture, readPdf, combinePdfs} from './helpers/pdf.mjs';
@@ -290,6 +291,14 @@ try {
   await ui.locator('#import-cancel').click();
   await preview(await made('paper-without-the-ending', await fixture('paper.pdf')));
   assert.deepEqual([await text('#import-source'), await text('#import-table-note')], ['paper-without-the-ending · 3 pages · from a file', 'All 15 links.']);
+  await ui.locator('#import-cancel').click();
+  // Over 20 MB with a name that doesn't say PDF: known by its first bytes, before the limit for other files.
+  await preview(await made('large-without-the-ending', await readFile(large)), 60000);
+  assert.deepEqual([await text('#import-source'), await tableRows()], ['large-without-the-ending · 1 page · from a file', [['p. 1', 'this', 'https://large.example/', '']]]);
+  await ui.locator('#import-cancel').click();
+  // %PDF- after other bytes, within the first 1,024, as the reader allows.
+  await preview(await made('after-a-preamble', Buffer.concat([Buffer.from(`${'#'.repeat(200)}\n`), await fixture('notes.pdf')])));
+  assert.deepEqual([await text('#import-source'), await text('#import-table-note')], ['after-a-preamble · 2 pages · from a file', 'The only link.']);
   await ui.locator('#import-cancel').click();
   pass('pdf-file-nothing-to-add-in-plain-words', {largeBytes: MAX_PDF_BYTES});
 

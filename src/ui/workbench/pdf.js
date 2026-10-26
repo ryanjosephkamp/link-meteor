@@ -91,8 +91,12 @@ export function chooseLocalPdf(tab = targetTab()) {
 
 /* Reading ---------------------------------------------------------------------------------------- */
 export function isPdfFile(file) { return /\.pdf$/i.test(file.name) || file.type === 'application/pdf'; }
-// The first bytes of every PDF.
-export function isPdfBytes(bytes) { return bytes[0] === 0x25 && bytes[1] === 0x50 && bytes[2] === 0x44 && bytes[3] === 0x46 && bytes[4] === 0x2d; }
+// A PDF starts with %PDF- within its first 1,024 bytes, as the reader checks (core/pdf.js isPdf,
+// which loads only with the reader).
+export function isPdfBytes(bytes) {
+  for (let i = 0; i + 4 < Math.min(bytes.length, 1024); i++) if (bytes[i] === 0x25 && bytes[i + 1] === 0x50 && bytes[i + 2] === 0x44 && bytes[i + 3] === 0x46 && bytes[i + 4] === 0x2d) return true;
+  return false;
+}
 
 // Opens the view for a PDF being read: the page counter, and Cancel, which stops the reading.
 function startReading(opener, text) {
@@ -150,14 +154,13 @@ export async function capturePdf(tab, { declined = false, origin = '' } = {}) {
   return true;
 }
 
-// Import links, PDF file: a PDF chosen or dropped, read in this page. `bytes` are given when the
-// file was already read.
-export async function readPdfFile(file, opener, bytes = null) {
+// Import links, PDF file: a PDF chosen or dropped, read in this page.
+export async function readPdfFile(file, opener) {
   const reading = startReading(opener, `Reading ${file.name}…`);
   try {
     const { MAX_PDF_BYTES } = await import('../../core/pdf.js');
     if (file.size > MAX_PDF_BYTES) throw new Error(`${file.name} is larger than ${MAX_PDF_BYTES / 1024 / 1024} MB, the most Link Meteor reads.`);
-    const data = bytes || new Uint8Array(await file.arrayBuffer());
+    const data = new Uint8Array(await file.arrayBuffer());
     const { readPdf } = await import('./pdf-reader.js');
     if (reading.run !== view.run) return;
     const result = await readPdf(data, { saveContext: reading.saveContext, onProgress: reading.onProgress, signal: reading.signal });

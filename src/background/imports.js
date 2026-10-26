@@ -50,7 +50,8 @@ function importedLink(raw, {batchId, capturedAt, keys}) {
   // Only a link read from a PDF in a tab names a source page; a file's links never do. The PDF
   // itself, saved as a link beside them, is its own source page, as a saved tab is.
   const sourceUrl = !imported && (raw.pdfPage !== undefined || (raw.sourceUrl && raw.sourceUrl === raw.url)) ? text(raw.sourceUrl, 'source page') : '';
-  if (sourceUrl && (pageKey(sourceUrl) === '' || sourceUrl.length > 2000)) throw new Error("A link's source page must be a web address.");
+  // As for a captured page, the address has no length limit (a signed address can be long).
+  if (sourceUrl && pageKey(sourceUrl) === '') throw new Error("A link's source page must be a web address.");
   if ((!imported && !sourceUrl) || imported.length > MAX_IMPORTED) throw new Error(`Each imported link needs where it came from, in at most ${MAX_IMPORTED} characters.`);
   if (raw.tags !== undefined && (!Array.isArray(raw.tags) || raw.tags.some(tag => typeof tag !== 'string'))) throw new Error("Each imported link's tags must be a list of text.");
   const link = {id: crypto.randomUUID(), anchorText: text(raw.anchorText, 'anchor text'), accessibleLabel: '', url: text(raw.url, 'address'),

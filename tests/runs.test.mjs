@@ -740,6 +740,13 @@ test('PDF files: what the page that fetches one says decides its line; a set ove
     [6, '', 'not-read', 'Not read']]);
   assert.deepEqual([done.ended.reason, done.ended.text, done.summary], ['too-large', SET_WORDS, 'Fetched 1 of 6 PDFs.']);
   assert.equal(calls.created.length, 0, 'a file the site refused is not tried again in a tab');
+  // A site that stops sending the file partway: said as that, not tried another way, and the run goes on.
+  await reset(); page(`${SITE}/list`); tab = clicked(`${SITE}/list`);
+  fileReply = (message) => message.step === 0 ? {reason: 'stalled'} : {ok: true, size: 3};
+  await ask({type: 'run.start', kind: 'files', tabId: tab.id, files: [{url: pdf('stuck'), name: 'stuck.pdf'}, {url: pdf('fine'), name: 'fine.pdf'}]});
+  done = await toTheEnd();
+  assert.deepEqual(fileRows(done), [[1, 'stuck.pdf', 'stalled', 'The site stopped sending the PDF.'], [2, 'fine.pdf', 'got', 'Fetched']]);
+  assert.deepEqual([done.ended.reason, calls.created.length], ['finished', 0]);
 
   // The page that started the run is gone: the first file ends the run.
   await reset(); page(`${SITE}/list`); tab = clicked(`${SITE}/list`); pagesOpen = false;

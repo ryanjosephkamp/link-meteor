@@ -476,6 +476,8 @@ const FILE_REASONS = {
   'not-pdf': 'Not a PDF: the site asked to sign in, or the address has expired.',
   size: pdfSetProblem([MAX_PDF_BYTES + 1]),
   status: 'The site answered with an error instead of the PDF.',
+  // The site sent part of the file, then nothing more for a while (pdf-tab.js gives up on it).
+  stalled: 'The site stopped sending the PDF.',
   'set-size': pdfSetProblem(Array(Math.floor(MAX_PDF_SET_BYTES / MAX_PDF_BYTES) + 1).fill(MAX_PDF_BYTES)),
 };
 const DOWNLOADED = 'Chrome downloaded this one instead of showing it. It is in your Downloads folder, not in this file.';

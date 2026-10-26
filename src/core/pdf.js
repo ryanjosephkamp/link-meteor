@@ -399,6 +399,9 @@ export function pdfLinks(pages, { saveContext = true } = {}) {
 /* What the PDF says about itself ------------------------------------------------------------------ */
 const STAMP = /arXiv:\s*(\d{4}\.\d{4,5}|[a-z-]+(?:\.[A-Z]{2})?\/\d{7})(v\d+)?\s*\[([\w.-]+)\]\s*(\d{1,2}\s+[A-Z][a-z]{2}\s+\d{4})/u;
 const DOIS = /10\.\d{4,9}\/[-._;()/:a-z0-9]+/giu;
+// DOIs of data and code repositories (Zenodo, figshare, Dryad, OSF projects, Mendeley Data,
+// Dataverse, Code Ocean, PANGAEA): on a first page they name the paper's code or data, not the paper.
+const REPOSITORY_DOI = /^10\.(5281|6084|5061|17605|17632|7910|24433|1594)\//u;
 const FILE_NAME = /\.(indd|docx?|tex|dvi|pdf|qxd|ps|rtf|pages|fm|wpd|odt)$|^(untitled|microsoft word\b|document\d*$)/iu;
 const text = (value) => (Array.isArray(value) ? value.join('; ') : typeof value === 'string' ? value : '').replace(/\s+/gu, ' ').trim();
 
@@ -445,8 +448,9 @@ export function pdfCitation({ info = {}, xmp = {}, firstPage = null, links = [],
   if (fromMeta) citation.doi = fromMeta;
   else {
     const onPage = new Set([...(page.upright.match(DOIS) || []), ...links.filter((link) => link.pdfPage === 1).map((link) => link.url)].map(doiIn).filter(Boolean).map((doi) => doi.toLowerCase()));
-    // arXiv's own DOI names the same paper as the stamp, not a second one.
-    const others = [...onPage].filter((doi) => !(citation.arxiv && doi === `10.48550/arxiv.${citation.arxiv.toLowerCase()}`));
+    // arXiv's own DOI names the same paper as the stamp, not a second one, and a repository's
+    // DOI names its code or data.
+    const others = [...onPage].filter((doi) => !(citation.arxiv && doi === `10.48550/arxiv.${citation.arxiv.toLowerCase()}`) && !REPOSITORY_DOI.test(doi));
     if (others.length === 1) citation.doi = doiIn([...(page.upright.match(DOIS) || []), ...links.map((link) => link.url)].find((value) => doiIn(value).toLowerCase() === others[0]));
   }
   // A title: the metadata's when it is printed on the first page and isn't a file name; else the largest text.

@@ -334,3 +334,9 @@ test('in a reference list, a link’s context is the whole reference; elsewhere,
   assert.equal(pdfLinks([page(prose, [{ ...at, rect: [186, 687, 330, 699] }])]).links[0].context, 'and its code is at https://code.example/two for anyone');
 });
 
+test('a DOI on page 1 is the paper’s own only when it isn’t a repository’s code or data', () => {
+  const first = (line) => page([item('A Paper With Code And Data', 72, { y: 700, h: 18 }), item(line, 72, { y: 640 }), item('arXiv:2409.11211v1 [cs.CV] 17 Sep 2024', 20, { rotated: true })], []);
+  const zenodo = pdfCitation({ firstPage: first('Code and weights: https://doi.org/10.5281/zenodo.5371628 (archived).') });
+  assert.deepEqual([zenodo.arxiv, zenodo.doi], ['2409.11211', undefined], 'the code’s DOI is not the paper’s');
+  assert.equal(pdfCitation({ firstPage: first('Published as doi:10.5555/journal.1, data at doi:10.6084/m9.figshare.42.') }).doi, '10.5555/journal.1');
+});

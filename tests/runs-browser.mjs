@@ -260,6 +260,17 @@ try {
   for (const res of hanging) res.destroy();
   pass('Follow Next ends, each in its own words: a loop, a next page on a site without access (not opened), a page Chrome can’t load, and a page that doesn’t load in 30 seconds');
 
+  /* 5b. Pages that change their own address after loading (a # part, history.replaceState) haven't moved. */
+  for (const own of ['hash', 'replace']) {
+    // The last run's notice ends the same way, so it is put away first.
+    await quiet();
+    shown = await follow(`of=3&next=text&own=${own}`, `Own address ${own}`, 'Page 3 has no Next link.');
+    assert.deepEqual(shown.rows.map((row) => [row[0], row[4]]), [['1', 'Captured'], ['2', 'Captured'], ['3', 'Captured']], own);
+    assert.equal((await collection(`Own address ${own}`)).links.length, 40, own);
+    assert.match(await js(page, 'location.href'), own === 'hash' ? /p=3.*#results$/ : /p=3.*&sort=new$/, 'the page did change its own address');
+  }
+  pass('Follow Next reads pages that change their own address after loading, with a # part or history.replaceState, as the same pages');
+
   /* 6. Stop in the workbench, and Escape on the page. */
   await go(listing('of=12&next=text-page'), `document.title === 'Listing, page 1'`);
   await fresh('Stopped');

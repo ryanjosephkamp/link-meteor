@@ -60,7 +60,14 @@ async function inventory(callerTabId) {
 // and Copy link work on a PDF and on a file too, where the script can show a notice but read no links.
 async function injectScript(tab) {
   if (tab.incognito) throw new Error('Incognito collection is not enabled in this release.');
-  await chrome.scripting.executeScript({target:{tabId:tab.id},files:['content/capture.js']});
+  return chrome.scripting.executeScript({target:{tabId:tab.id},files:['content/capture.js']});
+}
+
+// Whether the tab still shows this document (Chrome's documentId): a page that changes its own
+// address (a # part, history.replaceState) has not navigated.
+async function sameDocument(tabId, documentId) {
+  if (!documentId) return false;
+  try { return (await chrome.scripting.executeScript({target:{tabId},func:() => true}))[0]?.documentId === documentId; } catch { return false; }
 }
 
 // Whether the tab shows a PDF on the web: by its address, or by asking the tab, for a PDF whose
@@ -136,15 +143,16 @@ async function captureTabs(tabIds,callerTabId,run={}) {
         continue;
       }
       // The tab was asked once what it shows, just above; inject() would ask again.
-      await injectScript(tab);
+      const [injected] = await injectScript(tab) || [];
       // Scroll to the end first: the top document scrolls in its own call (it may take 2 minutes);
       // the frames are then read as usual and joined to it.
       const top = run.scan?.scroll ? (await chrome.scripting.executeScript({target:{tabId},func:options => globalThis.__linkMeteor.scan(options),args:[{context,...run.scan}]}))[0].result : undefined;
       const result = await scanTab(tabId,{context},top ? {top} : undefined);
       if (top?.scroll && !result.scroll) result.scroll = top.scroll;
       const after = await chrome.tabs.get(tabId);
-      // A page may change its own address as it is scrolled; a scroll's answer comes from one document.
-      if (tab.url && after.url !== tab.url && !result.scroll) throw new Error('The tab navigated during capture; retry on the new page.');
+      // A page may change its own address as it is read or scrolled; only another document is a move.
+      // A scroll's answer comes from one document.
+      if (tab.url && after.url !== tab.url && !result.scroll && !(await sameDocument(tabId,injected?.documentId))) throw new Error('The tab navigated during capture; retry on the new page.');
       const found = occurrences(result.links, tab, batchId);
       const pageChrome = found.map((_, i) => contentOnly && result.links[i]?.pageChrome === true);
       const links = found.filter((_, i) => !pageChrome[i]), leftOut = found.filter((_, i) => pageChrome[i]);

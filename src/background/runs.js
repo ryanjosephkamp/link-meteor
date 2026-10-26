@@ -122,10 +122,10 @@ async function loaded(job, tabId, started = false) {
 async function hasAccess(url) {
   try { return await chrome.permissions.contains({origins: [`${new URL(url).origin}/*`]}); } catch { return false; }
 }
-// What kind of document a tab shows ('application/pdf', 'text/html', …), or {error} where Chrome
-// won't run a script (no access, or an error page).
+// What kind of document a tab shows ('application/pdf', 'text/html', …) and which document it is
+// (Chrome's documentId), or {error} where Chrome won't run a script (no access, or an error page).
 async function documentType(tabId) {
-  try { const [probe] = await chrome.scripting.executeScript({target: {tabId}, func: function documentType() { return document.contentType; }}); return {type: String(probe?.result || '')}; }
+  try { const [probe] = await chrome.scripting.executeScript({target: {tabId}, func: function documentType() { return document.contentType; }}); return {type: String(probe?.result || ''), documentId: probe?.documentId || ''}; }
   catch (error) { return {error: String(error?.message || error)}; }
 }
 // The run's notice on the page it is reading, with Stop. A page without the page script hears nothing.
@@ -521,10 +521,12 @@ export const KINDS = {
         await showOnPage(run, `${lead}${plural(run.links, 'link')}`);
         await pause(job, NEXT_PAUSE_MS);
         if (job.stopped) return {row: unread(item, STOPPED)};
-        // The person may have moved or closed the tab meanwhile.
+        // The person may have moved or closed the tab meanwhile. A page that changes its own address
+        // (a # part, history.replaceState) is the same document, which has not moved.
         let now;
         try { now = await chrome.tabs.get(run.tabId); } catch { return closed; }
-        if ((now.url || '') !== (tab.url || '')) return {row: unread(item, 'Not read: the tab went to another page', 'moved'), end: {reason: 'tab-moved'}};
+        const after = (now.url || '') === (tab.url || '') ? null : await documentType(run.tabId);
+        if (after && !(type.documentId && after.documentId === type.documentId)) return {row: unread(item, 'Not read: the tab went to another page', 'moved'), end: {reason: 'tab-moved'}};
       } else await showOnPage(run, `${lead}${plural(run.links, 'link')}`);
       const result = await capturePage(job, run.tabId, run.scroll ? {scroll: {runId: run.runId, lead, links: run.links}} : {});
       let row = rowOf(result, item);

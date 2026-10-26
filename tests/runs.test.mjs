@@ -841,3 +841,34 @@ test('selected pages: a background tab Chrome won’t close at first (a tab bein
   refuseRemoves = 0;
 });
 
+test('Follow Next: a page that changes its own address (a # part, or history.replaceState) has not moved', async () => {
+  // During the pause on page 2, the page adds a # part to its address.
+  await reset(); paged(3);
+  let tab = clicked(listing(1));
+  await ask({type: 'run.start', kind: 'next', tabId: tab.id, collectionId: state().activeCollectionId});
+  await advance(700);
+  assert.equal(tabs.get(tab.id).url, listing(2));
+  tabs.get(tab.id).url = `${listing(2)}#results`;
+  await toTheEnd();
+  assert.deepEqual(rows().map((row) => [row[1], row[4]]), [['captured', 'Captured'], ['captured', 'Captured'], ['captured', 'Captured']]);
+  assert.equal(report().ended.reason, 'no-next');
+  // While it is read, a page replaces its own address: its links are kept.
+  await reset(); paged(3); site.get(listing(2)).rewrite = `${SITE}/list?page=2&sort=new`;
+  tab = clicked(listing(1));
+  await ask({type: 'run.start', kind: 'next', tabId: tab.id, collectionId: state().activeCollectionId});
+  await toTheEnd();
+  assert.deepEqual(rows().map((row) => [row[1], row[3]]), [['captured', 3], ['captured', 3], ['captured', 3]]);
+  // In a run of selected pages too.
+  await reset(); granted.add(SITE); page(`${SITE}/p1`, {title: 'Paper 1', rewrite: `${SITE}/p1#top`});
+  await ask({type: 'run.start', kind: 'pages', collectionId: state().activeCollectionId, urls: [`${SITE}/p1`]});
+  await toTheEnd();
+  assert.deepEqual(rows(), [[1, 'captured', 2, 2, 'Captured']]);
+  // Another document is still a move.
+  await reset(); paged(3); page(`${SITE}/somewhere-else`, {title: 'Somewhere else'});
+  tab = clicked(listing(1));
+  await ask({type: 'run.start', kind: 'next', tabId: tab.id, collectionId: state().activeCollectionId});
+  await advance(700); load(tabs.get(tab.id), `${SITE}/somewhere-else`);
+  await toTheEnd();
+  assert.equal(report().ended.text, 'The tab went to another page.');
+});
+

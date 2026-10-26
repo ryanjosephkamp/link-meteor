@@ -16,11 +16,22 @@ function pdfjs() {
   return loading;
 }
 
+// What a canceled reading rejects with, as soon as `signal` aborts.
+export const canceled = () => Object.assign(new Error('Reading the PDF was canceled.'), { reason: 'canceled' });
+export function whenAborted(signal) {
+  return new Promise((_, reject) => { if (signal.aborted) reject(canceled()); else signal.addEventListener('abort', () => reject(canceled()), { once: true }); });
+}
+
 // Runs fn on an open PDF and closes it. PDF.js takes the bytes it is given, so it gets a copy.
-export async function withPdf(bytes, fn) {
+// With `signal`, Cancel closes the PDF at once, while it opens or is read, and fn's result is
+// no longer waited for.
+export async function withPdf(bytes, fn, signal = null) {
+  if (signal?.aborted) throw canceled();
   const { library, worker } = await pdfjs();
   const task = library.getDocument({ data: bytes.slice(), worker, ...OPTIONS });
-  try { return await fn(await task.promise); } finally { await task.destroy().catch(() => {}); }
+  const work = task.promise.then(fn);
+  work.catch(() => {}); // a reading stopped by Cancel fails later, unheard
+  try { return await (signal ? Promise.race([work, whenAborted(signal)]) : work); } finally { await task.destroy().catch(() => {}); }
 }
 
 // Everything Link Meteor reads from one PDF's bytes (core/pdf.js, readPdfDocument). Options:
@@ -28,7 +39,7 @@ export async function withPdf(bytes, fn) {
 export async function readPdf(bytes, options = {}) {
   if (bytes.length > MAX_PDF_BYTES) throw new Error(`This PDF is larger than ${MAX_PDF_BYTES / 1024 / 1024} MB, the most Link Meteor reads.`);
   if (!isPdf(bytes)) throw new Error('This file isn’t a PDF.');
-  return withPdf(bytes, (doc) => readPdfDocument(doc, options));
+  return withPdf(bytes, (doc) => readPdfDocument(doc, options), options.signal);
 }
 
 // One PDF from several, in order: {bytes, pages, counts} (core/pdf.js, combinePdfs).

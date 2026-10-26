@@ -18,6 +18,8 @@
 //   password, are damaged, have no links or no text, and a PDF opened from the computer (the words,
 //   and Choose this PDF…, which opens the file chooser).
 // - Select a region on a PDF: refused in the workbench, and said on the page from the shortcut.
+// - Cancel while the PDF's site has stopped sending it: the request in the tab ends, and the
+//   capture button is ready again at once; a site that sends nothing for a while is given up on.
 // - A PDF among the tabs of a capture is reported as a PDF, not as an error.
 // - 320 px and text contrast, light and dark.
 // - Nothing is downloaded, and nothing is requested from anywhere but the fixture server.
@@ -39,7 +41,22 @@ const sha256 = (bytes) => createHash('sha256').update(bytes).digest('hex');
 const plain = (value) => JSON.parse(JSON.stringify(value));
 
 const requests = [];
-const fixture = await fixtureServer({routes: (req) => { requests.push(`${req.headers.host}${req.url}`); return false; }});
+// /pdf-stall/paper.pdf shows the paper in its tab, but a request for it from the page itself gets
+// the start of the file and then nothing: a site that has stopped sending. Each such request is
+// kept, with whether its connection was closed.
+const stalls = [];
+const stall = async (req, res) => {
+  const paper = await pdfFixture('paper.pdf');
+  if (req.headers['sec-fetch-dest'] !== 'empty' || req.headers['sec-fetch-site'] !== 'same-origin') { res.writeHead(200, {'Content-Type': 'application/pdf', 'Content-Length': paper.length, 'Cache-Control': 'no-store'}); res.end(paper); return; }
+  const kept = {closed: false};
+  stalls.push(kept); req.on('close', () => { kept.closed = true; });
+  res.writeHead(200, {'Content-Type': 'application/pdf', 'Content-Length': paper.length, 'Cache-Control': 'no-store'}); res.write(paper.subarray(0, 64));
+};
+const fixture = await fixtureServer({routes: async (req, res, url) => {
+  requests.push(`${req.headers.host}${req.url}`);
+  if (url.pathname !== '/pdf-stall/paper.pdf') return false;
+  await stall(req, res); return true;
+}});
 const browser = await launchWithAction({profilePrefix: 'pdf-tab-profile-'});
 try {
   await mkdir(evidence, {recursive: true});
@@ -280,6 +297,29 @@ try {
   home = await active();
   assert.deepEqual([home.links.at(-1).url, home.links.at(-1).sourceUrl, home.links.at(-1).pdfPage, home.pages[`${fixture.base}/pdf/empty.pdf`]], [`${fixture.base}/pdf/empty.pdf`, `${fixture.base}/pdf/empty.pdf`, undefined, undefined]);
   pass('capture-this-pdf-nothing-to-add-in-plain-words');
+
+  // 10b. Cancel while the site has stopped sending the PDF: the request in the tab is ended, the
+  // capture button is ready again at once, and the next capture isn't held up. With nothing
+  // pressed, a site that sends nothing for a while is given up on (here after 1.5 seconds).
+  const stalledUrl = `${fixture.base}/pdf-stall/paper.pdf`;
+  await show(stalledUrl);
+  await press('capture');
+  await until(async () => stalls.length === 1 && (await text('import-progress')) === 'Getting the PDF from its tab…', 'the request in the tab is waiting');
+  assert.deepEqual(await js(`[document.getElementById('capture').disabled, document.getElementById('capture-label').textContent]`), [true, 'Capturing…']);
+  await press('import-cancel');
+  await notice('Canceled. Nothing was added.');
+  await until(async () => (await js(`[document.getElementById('capture').disabled, document.getElementById('capture-label').textContent].join(' ')`)) === 'false Capture this PDF', 'the capture button is ready again');
+  await until(() => stalls[0].closed, 'the request in the tab was ended');
+  assert.equal(await shown('error'), false, 'Cancel shows no error');
+  await press('capture');
+  await until(() => stalls.length === 2, 'a second capture starts at once');
+  await press('import-cancel');
+  await until(() => stalls[1].closed, 'and is canceled too');
+  const quiet = await inWorkbench(`async (tab, sha, tabId) => { const started = Date.now(); try { await tab.pdfThroughTab(tabId, '', {quiet: 1500}); return {}; } catch (error) { return {refused: error.message, reason: error.reason, seconds: (Date.now() - started) / 1000}; } }`, [current.tabId]);
+  assert.deepEqual([quiet.refused, quiet.reason], ['The site stopped sending the PDF. Download the PDF, then choose Import links, PDF file.', 'stalled']);
+  assert.ok(quiet.seconds < 10, `given up on after ${quiet.seconds} seconds`);
+  await until(() => stalls[2]?.closed, 'the stalled request was ended');
+  pass('capture-this-pdf-cancel-and-a-stalled-site', {stalls: stalls.length, givenUpAfter: quiet.seconds});
 
   // 11. A PDF opened from the computer: the words, and Choose this PDF…, which opens the file
   // chooser (for PDFs only) and reads the chosen file.

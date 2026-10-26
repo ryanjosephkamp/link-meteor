@@ -144,8 +144,29 @@ test('typed file names and collection names become safe file names', () => {
   assert.equal(exportFileName({ collection: '..\\..\\secret', extension: 'json', date, settings: { exportTimestamp: false } }), 'secret.json');
   assert.equal(fileNamePart('雪 研究'), '雪-研究');
   assert.equal(fileNamePart('x'.repeat(200)).length, 80);
+  assert.equal(exportFileName({ collection: 'データ分析ガイド', extension: 'csv', date, settings: { exportTimestamp: false } }), 'データ分析ガイド.csv');
   assert.throws(() => exportFileName({ collection: 'x', extension: '.xlsx', date }), /extension/);
   assert.throws(() => exportFileName({ collection: 'x', extension: 'xlsx', date: new Date('nope') }), /valid date/);
+});
+
+test('file-name parts fold accents off Latin letters only, and are cut between characters', () => {
+  // Kana keep their voicing marks, Hangul stays in syllables, Cyrillic й and Greek accents stay.
+  for (const [text, part] of [['データ分析', 'データ分析'], ['ガイド', 'ガイド'], ['ｶﾞｲﾄﾞ', 'ガイド'], ['한국어 자료', '한국어-자료'], ['Привет йод', 'Привет-йод'], ['Ελληνικά άρθρα', 'Ελληνικά-άρθρα'], ['हिन्दी लेख', 'हिन्दी-लेख']]) {
+    assert.equal(fileNamePart(text), part, text);
+  }
+  // Latin letters lose their accents, as before, also when the text arrives decomposed; full-width letters are plain.
+  for (const [text, part] of [['Café résumé', 'Cafe-resume'], ['Cafe\u0301', 'Cafe'], ['Ｒｅｐｏｒｔ ２０２６', 'Report-2026'], ['Việt Nam', 'Viet-Nam'], ['Größe', 'Große'], ['\u0301Orphan mark', 'Orphan-mark']]) {
+    assert.equal(fileNamePart(text), part, text);
+  }
+  for (const text of ['한'.repeat(100), 'ガ'.repeat(100), `a${'𠮷'.repeat(50)}`, 'कि'.repeat(50)]) {
+    const part = fileNamePart(text, 80);
+    assert.ok(part.length <= 80 && text.startsWith(part) && part.isWellFormed() && !/^\p{M}/u.test(text.slice(part.length)), part);
+  }
+  assert.equal(fileNamePart('한'.repeat(100), 80), '한'.repeat(80));
+  assert.equal(fileNamePart('é'.repeat(100), 80, 30), 'e'.repeat(30), 'and to a number of UTF-8 bytes');
+  assert.equal(fileNamePart('ガ'.repeat(100), 80, 31), 'ガ'.repeat(10));
+  // A part made by fileNamePart is made again unchanged, so a saved prefix stays valid.
+  for (const text of ['データ分析', '한국어 자료', 'Café résumé', 'हिन्दी लेख', 'Ελληνικά άρθρα', 'ｶﾞｲﾄﾞ']) assert.equal(fileNamePart(fileNamePart(text)), fileNamePart(text), text);
 });
 
 /* 0.3.0: about blocks, formatted workbooks and compatibility with 0.2.2 ------------------- */

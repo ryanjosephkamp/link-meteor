@@ -4,7 +4,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
-import { FILE_TYPES, FILE_KINDS, isFileLink, fileLinks, urlFileType, knownPdf, isWebPage, downloadExtension, downloadName, downloadFolder, downloadPath, folderLabel, menuPatterns, DOWNLOAD_LIMIT, DOWNLOAD_CONFIRM_ABOVE, DOWNLOAD_PARALLEL } from '../src/core/files.js';
+import { FILE_TYPES, FILE_KINDS, isFileLink, fileLinks, urlFileType, knownPdf, isWebPage, downloadExtension, downloadName, downloadFolder, downloadPath, folderLabel, menuPatterns, uniqueNames, DOWNLOAD_LIMIT, DOWNLOAD_CONFIRM_ABOVE, DOWNLOAD_PARALLEL } from '../src/core/files.js';
+import { fileNamePart } from '../src/core/export.js';
+import { zip } from '../src/core/zip.js';
 
 const root = resolve(import.meta.dirname, '..');
 const link = (url, anchorText = '', accessibleLabel = '') => ({ url, anchorText, accessibleLabel });
@@ -113,8 +115,8 @@ test('names come from the anchor text, made safe, with one extension', () => {
   assert.equal(downloadName(link('https://lab.test/x/2301.pdf', 'Attention in small systems')), 'Attention-in-small-systems.pdf');
   assert.equal(downloadName(link('https://lab.test/x/2301.pdf', 'Geometry, “frames” & 雪: part 2/3')), 'Geometry-frames-雪-part-2-3.pdf');
   assert.equal(downloadName(link('https://lab.test/x/2301.pdf', 'Café résumé')), 'Cafe-resume.pdf');
-  assert.equal(downloadName(link('https://lab.test/x/2301.pdf', 'paper.PDF')), 'paper.pdf', 'no doubled extension');
-  assert.equal(downloadName(link('https://scholar.example/download?id=7', '[PDF] arxiv.org'), { mime: 'application/pdf' }), 'arxiv.org.pdf', 'the [PDF] label comes off');
+  assert.equal(downloadName(link('https://lab.test/x/2301.pdf', 'report.PDF')), 'report.pdf', 'no doubled extension');
+  assert.equal(downloadName(link('https://lab.test/x/2301.pdf', '[PDF] Attention in small systems')), 'Attention-in-small-systems.pdf', 'the [PDF] label comes off');
   assert.equal(downloadName(link('https://lab.test/x/2301.pdf', '', 'Open the appendix')), 'Open-the-appendix.pdf', 'the accessible label next');
   assert.equal(downloadName(link('https://lab.test/x/Report%20Final.pdf', '   ')), 'Report-Final.pdf', 'then the address’s own name');
   assert.equal(downloadName(link('https://arxiv.org/pdf/2301.00001v2', ''), { mime: 'application/pdf' }), '2301.00001v2.pdf');
@@ -127,6 +129,53 @@ test('names come from the anchor text, made safe, with one extension', () => {
   assert.equal(downloadName(link('https://lab.test/a.pdf', '=SUM(1,2)')), 'SUM-1-2.pdf');
   const long = downloadName(link('https://lab.test/a.pdf', 'x'.repeat(300)));
   assert.equal(long, `${'x'.repeat(100)}.pdf`);
+});
+
+test('generic anchor text doesn’t name a file: the accessible label, the address’s name or its id does', () => {
+  const pdf = { mime: 'application/pdf' };
+  // arXiv's listing says "pdf" for every paper.
+  assert.equal(downloadName(link('https://arxiv.org/pdf/2409.11211v1', 'pdf'), pdf), '2409.11211v1.pdf');
+  assert.equal(downloadName(link('https://arxiv.org/pdf/2409.11211v1', 'PDF', 'Download PDF'), pdf), '2409.11211v1.pdf');
+  for (const words of ['pdf', 'PDF', 'download', 'Download PDF', 'View PDF', 'full text', 'Full text (PDF)', 'Full-text PDF (1.2 MB)', 'PDF, 12 pages', 'here', 'Click here', 'link', 'file', 'open', 'view', 'Get the PDF', 'Download chapter PDF', 'Paper', '[PDF]', '  pdf.pdf ']) {
+    assert.equal(downloadName(link('https://lab.test/files/annual-report.pdf', words)), 'annual-report.pdf', words);
+  }
+  // Google Scholar's [PDF] label names the site, not the file; a file name after the label still names it.
+  assert.equal(downloadName(link('https://arxiv.org/pdf/2409.11211v1', '[PDF] arxiv.org'), pdf), '2409.11211v1.pdf');
+  assert.equal(downloadName(link('https://lab.test/x/7', '[PDF] from www.lab.test'), pdf), '7.pdf');
+  assert.equal(downloadName(link('https://lab.test/get?id=7', '[PDF] report.pdf'), pdf), 'report.pdf');
+  // The accessible label next, when it isn't generic too.
+  assert.equal(downloadName(link('https://lab.test/x/2301.pdf', 'PDF', 'Annual report 2025')), 'Annual-report-2025.pdf');
+  // An address whose own name is generic: its id= value (OpenReview's /pdf?id=…).
+  assert.equal(downloadName(link('https://openreview.net/pdf?id=rJXMpikCZ', 'Download PDF'), pdf), 'rJXMpikCZ.pdf');
+  assert.equal(downloadName(link('https://scholar.example/download?id=7', '[PDF] arxiv.org'), pdf), '7.pdf');
+  // The generic words only when nothing else names the file.
+  assert.equal(downloadName(link('https://lab.test/download', 'Full text'), pdf), 'Full-text.pdf');
+  assert.equal(downloadName(link('https://lab.test/', '[PDF] arxiv.org'), pdf), 'arxiv.org.pdf');
+  assert.equal(downloadName(link('https://lab.test/files/pdf', ''), pdf), 'pdf.pdf');
+  // Words beside the generic ones, or a number, make a name.
+  for (const [words, name] of [['Chapter 3', 'Chapter-3'], ['Version 2', 'Version-2'], ['Paper A', 'Paper-A'], ['Download the dataset', 'Download-the-dataset'], ['Open access policy', 'Open-access-policy']]) {
+    assert.equal(downloadName(link('https://lab.test/files/annual-report.pdf', words)), `${name}.pdf`, words);
+  }
+});
+
+test('names fit in 255 UTF-8 bytes with room for a repeat’s number, cut between characters', () => {
+  const ja = '機械学習を用いた大規模言語モデルの推論能力に関する実証的研究：数学的推論、常識推論、および多段階の論理的推論タスクにおける性能評価と、その限界についての包括的な分析と今後の展望';
+  const ko = '대규모 언어 모델의 추론 능력에 관한 실증적 연구 수학적 추론 상식 추론 및 다단계 논리적 추론 과제에서의 성능 평가와 그 한계에 대한 포괄적인 분석';
+  for (const [words, ext] of [[ja, 'pdf'], [ko, 'pdf'], [`a${'𠮷'.repeat(80)}`, 'pdf'], ['कि'.repeat(80), 'pdf'], ['ガ'.repeat(99), 'markdown'], ['é'.repeat(200), 'docx']]) {
+    const name = downloadName(link(`https://lab.test/a.${ext}`, words)), stem = name.slice(0, -ext.length - 1);
+    assert.ok(name.endsWith(`.${ext}`), name);
+    assert.ok(Buffer.byteLength(`${stem} (100).${ext}`) <= 255, `${Buffer.byteLength(name)} bytes: ${name}`);
+    assert.ok(stem.length <= 100);
+    // A start of the whole name, ending between two characters.
+    const whole = fileNamePart(words, 1000), rest = whole.slice(stem.length);
+    assert.ok(whole.startsWith(stem) && !/^[\p{M}\udc00-\udfff]/u.test(rest), `${stem} | ${rest.slice(0, 4)}`);
+    assert.equal(name, name.normalize('NFC'));
+  }
+  assert.equal(downloadName(link('https://lab.test/a.pdf', 'कि'.repeat(80))), `${'कि'.repeat(40)}.pdf`, '6 bytes a character, 245 bytes at most');
+  assert.equal(downloadName(link('https://lab.test/a.pdf', `a${'𠮷'.repeat(80)}`)), `a${'𠮷'.repeat(49)}.pdf`, 'a pair of surrogates is one character');
+  assert.equal(downloadName(link('https://lab.test/a.pdf', 'x'.repeat(300))), `${'x'.repeat(100)}.pdf`, 'and 100 characters at most, as before');
+  // The ZIP of such names can be extracted.
+  assert.doesNotThrow(() => zip(uniqueNames([ja, ja, ko].map((words) => downloadName(link('https://lab.test/a.pdf', words)))).map((name) => [name, '%PDF-1.4'])));
 });
 
 test('folders: Link Meteor/<collection name>, made safe', () => {

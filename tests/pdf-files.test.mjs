@@ -44,8 +44,12 @@ test('the PDFs among the chosen links: one per address, in the list’s order, o
 test('a PDF’s file name is the one Download files gives it, always ending .pdf', () => {
   const cases = [
     [link('A small paper about links', 'https://example.org/x/paper.pdf'), 'A-small-paper-about-links.pdf'],
-    [link('[PDF] arxiv.org', 'https://arxiv.org/pdf/2409.11211v1'), 'arxiv.org.pdf'],
+    [link('[PDF] arxiv.org', 'https://arxiv.org/pdf/2409.11211v1'), '2409.11211v1.pdf'],
     [link('', 'https://arxiv.org/pdf/2409.11211v1'), '2409.11211v1.pdf'],
+    [link('pdf', 'https://arxiv.org/pdf/2409.11212v1'), '2409.11212v1.pdf'],
+    [link('Download PDF', 'https://openreview.net/pdf?id=abc123'), 'abc123.pdf'],
+    [link('データ分析ガイド', 'https://example.org/a.pdf'), 'データ分析ガイド.pdf'],
+    [link('한국어 자료', 'https://example.org/a.pdf'), '한국어-자료.pdf'],
     [link('', 'https://example.org/files/Field%20notes%20(final).pdf'), 'Field-notes-final.pdf'],
     [link('report.pdf', 'https://example.org/get?id=7', { anchorText: '[PDF] report.pdf' }), 'report.pdf'],
     [link('Größe: “Über/Unter” — 50%?', 'https://example.org/a.pdf'), 'Große-Uber-Unter-50.pdf'],

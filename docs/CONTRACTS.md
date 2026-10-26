@@ -600,7 +600,7 @@ Chrome shows several items from one extension under a "Link Meteor" submenu, so 
 
 **Names and folders:**
 - The folder is `Link Meteor/<fileNamePart(collection name, 80)>`, or `Link Meteor/links` without a name.
-- The file is `fileNamePart(anchor text, 100)`, without a leading `[PDF]`, `[HTML]`, `[DOC]`, `[DOCX]`, `[PS]`, `[BOOK]` or `[CITATION]` label; else the accessible label; else the address's own file name; else `file`. An anchor that already ends in the extension isn't doubled. Windows device names get `_` (`CON_.pdf`).
+- The file is `fileNamePart(anchor text, 100)`, without a leading `[PDF]`, `[HTML]`, `[DOC]`, `[DOCX]`, `[PS]`, `[BOOK]` or `[CITATION]` label; else the accessible label; else the address's own file name; else, when that is generic too (OpenReview's `/pdf?id=…`), the address's `id` value; else `file`. Generic text doesn't name a file: words that only say it is one (arXiv's "pdf", "Download PDF", "View PDF", "Full text (PDF, 1.2 MB)", "click here", "link", "file", "open", "view", "Paper", "Slides" and the like, with sizes and page counts), and a `[PDF]` label's host name (Google Scholar's "[PDF] arxiv.org"). It is used only when nothing else is there: arXiv's "pdf" link to `https://arxiv.org/pdf/2409.11211v1` saves `2409.11211v1.pdf`. An anchor that already ends in the extension isn't doubled. Windows device names get `_` (`CON_.pdf`). The name, with ` (100)` and its extension, fits in 255 UTF-8 bytes, cut between characters.
 - The extension (`downloadExtension`): **a web page is saved as `.html`**, so a sign-in page never becomes a fake PDF; otherwise the address's file type, then the type Chrome reports, then the extension of the name Chrome suggests, then `pdf` for a known PDF address.
 - Chrome names the file through `onDeterminingFilename`, once it knows the type, with `conflictAction: 'uniquify'` (Chrome adds " (1)"). `download()` also gets `saveAs: false` and a fallback name from the address alone.
 
@@ -1497,7 +1497,7 @@ In the Export panel's *Download files*, the PDFs among the chosen links (the fil
 
 **Download as one ZIP** (`#pdf-zip`):
 - `src/core/zip.js` (pure) holds the ZIP writer the workbook writer has used since 0.3.0 (`zip(files)` and `crc32`, moved from `src/core/xlsx.js`, which imports it). Entries are stored, not compressed: PDFs are compressed already, and each file's bytes stay exactly what the site sent.
-- Entry names come from `downloadName` in `src/core/files.js`, as *Download files* names them; repeats get ` (2)`, ` (3)`.
+- Entry names come from `downloadName` in `src/core/files.js`, as *Download files* names them; repeats get ` (2)`, ` (3)`. Each fits in 255 UTF-8 bytes, so it can be extracted on Linux, macOS and ChromeOS; `zip()` refuses a longer name part.
 - The ZIP is named like an export, `<collection>_<date>_<time>.zip`, and is handed to Chrome's download as exports are. It holds no index and nothing but the PDFs.
 
 **Combine into one PDF…** (`#pdf-combine`, opening `#combine-panel`):

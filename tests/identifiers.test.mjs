@@ -18,6 +18,40 @@ test('DOIs from doi.org, /doi/ paths, doi= values and publisher paths, tidied', 
   assert.deepEqual(of('mailto:someone@example.org'), {});
 });
 
+test('DOIs from bioRxiv, medRxiv and publisher addresses leave out the version and the page’s name', () => {
+  for (const [url, doi] of [
+    ['https://www.biorxiv.org/content/10.1101/2020.03.15.992883v1', '10.1101/2020.03.15.992883'],
+    ['https://www.biorxiv.org/content/10.1101/2020.03.15.992883v1.full', '10.1101/2020.03.15.992883'],
+    ['https://www.biorxiv.org/content/10.1101/2020.03.15.992883v1.full.pdf', '10.1101/2020.03.15.992883'],
+    ['https://www.biorxiv.org/content/10.1101/2020.03.15.992883v3.supplementary-material', '10.1101/2020.03.15.992883'],
+    ['https://www.biorxiv.org/content/10.1101/2020.03.15.992883v1.full.pdf+html', '10.1101/2020.03.15.992883'],
+    ['https://www.biorxiv.org/content/10.1101/087114v2', '10.1101/087114'],
+    ['https://www.medrxiv.org/content/10.1101/2020.04.01.20050443v2.full-text', '10.1101/2020.04.01.20050443'],
+    ['https://www.frontiersin.org/articles/10.3389/fpsyg.2020.01234/full', '10.3389/fpsyg.2020.01234'],
+    ['https://www.frontiersin.org/journals/psychology/articles/10.3389/fpsyg.2020.01234/pdf', '10.3389/fpsyg.2020.01234'],
+    ['https://onlinelibrary.wiley.com/doi/10.1002/anie.201000001/abstract', '10.1002/anie.201000001'],
+    ['https://onlinelibrary.wiley.com/doi/10.1111/j.1365-2958.2006.05172.x/full', '10.1111/j.1365-2958.2006.05172.x'],
+    ['https://onlinelibrary.wiley.com/doi/10.1002/anie.201000001/epdf', '10.1002/anie.201000001'],
+    ['https://iopscience.iop.org/article/10.1088/1742-6596/1234/1/012001/pdf', '10.1088/1742-6596/1234/1/012001'],
+    ['https://iopscience.iop.org/article/10.1088/1742-6596/1234/1/012001/meta', '10.1088/1742-6596/1234/1/012001'],
+    ['https://www.emerald.com/insight/content/doi/10.1108/JD-01-2020-0001/full/html', '10.1108/JD-01-2020-0001'],
+    ['https://www.degruyter.com/document/doi/10.1515/9783110000000/html', '10.1515/9783110000000'],
+  ]) assert.equal(of(url).doi, doi, url);
+  // That DOI matches the page's own citation_doi, so the page's citation and the lookup agree.
+  const url = 'https://www.biorxiv.org/content/10.1101/2020.03.15.992883v1.full';
+  assert.equal(of(url, {}, { [url]: { title: 'T', doi: '10.1101/2020.03.15.992883' } }).doi, '10.1101/2020.03.15.992883');
+  assert.equal(doiIn('https://doi.org/10.1101/2020.03.15.992883v2'), '10.1101/2020.03.15.992883', 'a version is never part of bioRxiv’s DOI');
+});
+
+test('real DOIs keep their own slashes, dots and endings', () => {
+  for (const doi of ['10.1088/1742-6596/1234/1/012001', '10.1101/gr.123456.111', '10.1101/cshperspect.a012345', '10.1093/acprof:oso/9780199231768.001.0001', '10.1007/978-3-031-72627-9_18', '10.5281/zenodo.1234567', '10.1234/full']) {
+    assert.equal(of(`https://doi.org/${doi}`).doi, doi, doi);
+    assert.equal(doiIn(doi), doi, doi);
+  }
+  assert.equal(of('https://example.org/files/10.1234/pdf').doi, '10.1234/pdf', 'a DOI that would be left without a suffix keeps it');
+  assert.equal(doiIn('doi:10.3389/fpsyg.2020.01234/full'), '10.3389/fpsyg.2020.01234/full', 'outside an address, a DOI is read as written');
+});
+
 test('arXiv IDs, new and old style, from abs, pdf and html addresses and arXiv DOIs', () => {
   assert.equal(of('https://arxiv.org/abs/1706.03762').arxiv, '1706.03762');
   assert.equal(of('https://arxiv.org/pdf/2401.12345v2').arxiv, '2401.12345v2');

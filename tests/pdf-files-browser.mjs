@@ -392,16 +392,23 @@ try {
   assert.deepEqual([await visible('combine-empty'), await text('combine-total'), (await js(ui, `${$('combine-apply')}.innerText`)).trim(), await js(ui, `${$('combine-access')}.hidden`)],
     [false, `2 PDFs · ${pages.paper + pages.journal} pages · ${sizeText(paper.length + journal.length)}. Pages keep their links and bookmarks.`, 'Combine 2 PDFs', true]);
   const localRun = (await lastRun()).runId, localAsked = requests.length;
+  // The name filled in when the panel opened is the pattern's: the PDF is named by the pattern when
+  // it is written, here after the collection was renamed.
+  const filled = await js(ui, `${$('combine-name')}.value`), collectionId = (await state()).activeCollectionId;
+  await rpc({type: 'state.mutate', action: {type: 'collection.update', id: collectionId, patch: {name: 'Renamed research'}}});
+  await until(async () => /Renamed research/.test(await text('collection-heading')), 'the collection renamed');
+  assert.equal(await js(ui, `${$('combine-name')}.value`), filled, 'the field keeps what it showed');
   await press('combine-apply');
   const local = await download(3);
-  assert.match(local.name, /^My-research_\d{4}-\d{2}-\d{2}_\d{4}\.pdf$/);
+  assert.match(local.name, /^Renamed-research_\d{4}-\d{2}-\d{2}_\d{4}\.pdf$/, 'named by the pattern when it was written');
+  await rpc({type: 'state.mutate', action: {type: 'collection.update', id: collectionId, patch: {name: 'My research'}}});
   const localRead = await readPdf(local.bytes);
   assert.deepEqual([localRead.pageCount, localRead.links.length], [pages.paper + pages.journal, (await readPdf((await combinePdfs([paper, journal])).bytes)).links.length]);
   assert.deepEqual([(await lastRun()).runId, requests.length, (await prompts()).length], [localRun, localAsked, 0], 'no run, no request to any site, no access asked for');
   await until(async () => (await focused()) === 'pdf-combine', 'the panel closed');
   await js(ui, `(() => { const row = [...document.querySelectorAll('.link-row')].find((item) => /This page/.test(item.innerText)); row.querySelector('input[type=checkbox]').click(); return true; })()`);
   await until(async () => (await section()).title === 'The 9 PDFs', 'the selection cleared');
-  pass('With no PDF link chosen, the panel combines PDF files from the computer: no run, no request, no access', {name: local.name, pages: localRead.pageCount});
+  pass('With no PDF link chosen, the panel combines PDF files from the computer: no run, no request, no access; a name left as filled follows the pattern when the PDF is written', {name: local.name, filled, pages: localRead.pageCount});
 
   /* 10. The limits, said before anything starts. */
   await quiet();

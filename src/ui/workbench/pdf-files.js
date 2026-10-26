@@ -353,9 +353,11 @@ function renderCombineState() {
 function openCombine() {
   const collection = currentCollection();
   if (!collection) return;
-  panel = { items: itemsFor(chosen()), left: [], collectionId: collection.id };
+  // The name filled in is the pattern's: unless the person changes it, Combine names the PDF by
+  // the pattern at that moment (the time, the collection's name then).
+  panel = { items: itemsFor(chosen()), left: [], collectionId: collection.id, filled: fileName('pdf') };
   if (panel.items.length) needRules();
-  $('combine-name').value = fileName('pdf');
+  $('combine-name').value = panel.filled;
   $('combine-panel').hidden = false;
   $('pdf-combine').setAttribute('aria-expanded', 'true');
   $('pdf-result').hidden = true;
@@ -449,7 +451,8 @@ async function applyCombine() {
       leaveOut(part, pdfProblem(error));
       throw new Error(`${part.name} couldn’t be combined, so it was left out. Press Combine again to make the PDF without it.`);
     }
-    const name = fileName('pdf', $('combine-name').value);
+    const typed = $('combine-name').value;
+    const name = fileName('pdf', typed.trim() === mine.filled ? '' : typed);
     save(made.bytes, name, 'application/pdf');
     const head = `Downloaded ${name}: ${plural(items.length, 'PDF')}, ${plural(made.pages, 'page')}, ${sizeText(made.bytes.length)}.`;
     renderResult(head, [...items.map((item, index) => [item.name, `${plural(made.counts[index], 'page')}, from page ${count(made.counts.slice(0, index).reduce((sum, pages) => sum + pages, 1))}`]), ...mine.left.map(({ name: left, why }) => [left, `Left out: ${why}`])]);

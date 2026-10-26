@@ -31,6 +31,8 @@ export const MAX_RUN_PAGES = 20, LOAD_MS = 30000, NEXT_PAUSE_MS = 1500, PAGES_PA
 // PDF files are fetched FILES_PAUSE_MS apart; the page that fetches one gets FILE_WAIT_MS to answer.
 // A tab opened at an address the site sends as a download is closed by Chrome within CLOSING_MS.
 export const FILES_PAUSE_MS = 2000, FILE_WAIT_MS = 120000, CLOSING_MS = 2000;
+// Chrome won't close a tab while the person drags one: a run's tab is tried again for CLOSE_MS.
+const CLOSE_MS = 10000;
 const POLL_MS = 250, LOAD_GRACE_MS = 1000, KEEP_AWAKE_MS = 20000, SCROLL_SCREENS = 50, MAX_LINKS = 20000;
 const SCHEMES = ['http:', 'https:', 'mailto:', 'tel:'];
 const BUSY = 'Link Meteor is already running a capture. Stop it, or wait for it to finish.';
@@ -129,6 +131,18 @@ async function documentType(tabId) {
 // The run's notice on the page it is reading, with Stop. A page without the page script hears nothing.
 async function tellPage(tabId, message) {
   try { await chrome.tabs.sendMessage(tabId, {type: 'content.run', ...message}, {frameId: 0}); } catch { /* no page script there */ }
+}
+// Closes a run's background tab. Chrome refuses while the person drags a tab ("Tabs cannot be
+// edited right now"), so it is tried again for a while. A tab that still won't close is told the
+// run is done there, so its notice shows no Stop and Escape is the page's again.
+async function closeTab(run, tabId) {
+  for (let waited = 0; ; waited += POLL_MS) {
+    try { await chrome.tabs.remove(tabId); return; }
+    catch (error) { if (/No tab with id/i.test(String(error?.message || error))) return; }
+    if (waited >= CLOSE_MS) break;
+    await clock.sleep(POLL_MS);
+  }
+  await tellPage(tabId, {runId: run.runId, done: true});
 }
 async function showOnPage(run, text, tabId = run.tabId) {
   try { await chrome.scripting.executeScript({target: {tabId}, files: ['content/capture.js']}); } catch { return; }
@@ -338,7 +352,7 @@ async function adopt(run) {
   const kind = KINDS[run.kind] || {};
   const job = hold(run);
   if (run.doing) {
-    if (run.doing.tabId !== undefined) await chrome.tabs.remove(run.doing.tabId).catch(() => {});
+    if (run.doing.tabId !== undefined) await closeTab(run, run.doing.tabId);
     if (run.queue?.[run.at]) { run.results.push({page: run.at + 1, ...unread(run.queue[run.at], 'Interrupted: Chrome stopped Link Meteor’s background worker', 'interrupted')}); run.at++; }
     run.doing = null; run.live = null;
   }
@@ -596,7 +610,7 @@ export const KINDS = {
         if (type.type === 'application/pdf') return {row: await readPdf(job, item, now)};
         return {row: rowOf(await capturePage(job, tab.id), item)};
       } finally {
-        await chrome.tabs.remove(tab.id).catch(() => {});
+        await closeTab(run, tab.id);
         run.doing = {index: run.at};
       }
     },
@@ -656,7 +670,7 @@ export const KINDS = {
           if (state === 'stopped') return ended('not-read', STOPPED);
           return await use(tab.id, state);
         } finally {
-          await chrome.tabs.remove(tab.id).catch(() => {});
+          await closeTab(run, tab.id);
           run.doing = {index};
         }
       };
@@ -711,7 +725,7 @@ export const KINDS = {
 // fetching a PDF's file.
 const ANSWERS = ['run.pdfLinks', 'run.fileDone'];
 // For a kind added later: the engine's tools.
-export const engine = {pause, ask, loaded, hasAccess, documentType, tellPage, capturePage, rowOf, unread, save, progress, plural, hostOf};
+export const engine = {pause, ask, loaded, hasAccess, documentType, tellPage, closeTab, capturePage, rowOf, unread, save, progress, plural, hostOf};
 
 // Messages this module answers, accepted only from the workbench.
 export const workbenchMessages = {

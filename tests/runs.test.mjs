@@ -14,17 +14,17 @@ const SITE = 'https://papers.test', OTHER = 'https://other.test', WORKBENCH = 'c
 // Each page: its title, links, Next, what kind of document it is, and how it behaves.
 const site = new Map();
 const link = (anchorText, url, extra = {}) => ({anchorText, url, originalHref: url, frameUrl: '', ...extra});
-function page(url, {title = '', links = 2, next = null, type = 'text/html', loadMs = 100, redirect = '', never = false, scroll = null, chrome = 0, download = false} = {}) {
+function page(url, {title = '', links = 2, next = null, type = 'text/html', loadMs = 100, redirect = '', never = false, scroll = null, chrome = 0, download = false, rewrite = ''} = {}) {
   const made = typeof links === 'number' ? [...Array.from({length: links}, (_, i) => link(`${title || url} link ${i + 1}`, `${url}#link-${i + 1}`)), ...Array.from({length: chrome}, (_, i) => link(`Menu ${i + 1}`, `${SITE}/menu/${i + 1}`, {pageChrome: true}))] : links;
-  site.set(url, {title, links: made, next, type, loadMs, redirect, never, scroll, download});
+  site.set(url, {title, links: made, next, type, loadMs, redirect, never, scroll, download, rewrite});
 }
 const tabs = new Map();
-let nextTabId = 10, now = 0;
+let nextTabId = 10, now = 0, docs = 0;
 const timers = [];
 const granted = new Set();          // origins Link Meteor has site access to
 const active = new Set();           // tabs with the toolbar's temporary access
-let pagesOpen = true, pdfReply = null, fileReply = null, failScripts = false;
-const calls = {created: [], removed: [], updated: [], scans: [], frames: [], toPage: [], broadcasts: []};
+let pagesOpen = true, pdfReply = null, fileReply = null, failScripts = false, refuseRemoves = 0, contexts = null;
+const calls = {created: [], removed: [], refused: [], updated: [], scans: [], frames: [], toPage: [], broadcasts: []};
 const origin = (url) => { try { return new URL(url).origin; } catch { return ''; } };
 const readable = (tab) => granted.has(origin(tab.url)) || (active.has(tab.id) && origin(tab.url) === tab.access);
 const visible = (tab) => ({id: tab.id, windowId: 1, status: tab.status, ...(readable(tab) ? {url: tab.url, title: tab.title} : {})});
@@ -41,7 +41,7 @@ function load(tab, url) {
     // The tab says "complete", with no address, for a moment first, unless it is closed at once.
     if (shown.download === 'at once') { tabs.delete(tab.id); return; }
     if (shown.download) { Object.assign(tab, {status: 'complete', url: '', title: ''}); timers.push({at: now + 300, done: () => tabs.delete(tab.id)}); return; }
-    Object.assign(tab, {status: 'complete', url: landed, title: shown.title, document: shown});
+    Object.assign(tab, {status: 'complete', url: landed, title: shown.title, document: shown, documentId: `doc-${++docs}`});
     // The toolbar's temporary access ends when the tab leaves its site.
     if (origin(landed) !== tab.access) active.delete(tab.id);
   }});
@@ -51,6 +51,8 @@ globalThis.chrome = {
     local: {async get(key) { return {[key]: structuredClone(local[key])}; }, async set(value) { Object.assign(local, structuredClone(value)); }},
     session: {async get(key) { return {[key]: structuredClone(session[key])}; }, async set(value) { Object.assign(session, structuredClone(value)); }, async remove(key) { delete session[key]; }}},
   runtime: {getURL: (path) => 'chrome-extension://meteor/' + path, onMessage: event(), onInstalled: event(), onStartup: event(), getPlatformInfo() {},
+    // Chrome 116's list of the extension's open documents; set by a check that needs it.
+    get getContexts() { return contexts ? async ({documentIds, contextTypes} = {}) => contexts.filter((context) => (!documentIds || documentIds.includes(context.documentId)) && (!contextTypes || contextTypes.includes(context.contextType))) : undefined; },
     async sendMessage(message) {
       calls.broadcasts.push(structuredClone(message));
       if (!pagesOpen) throw new Error('Could not establish connection. Receiving end does not exist.');
@@ -62,7 +64,8 @@ globalThis.chrome = {
     async get(id) { const tab = tabs.get(id); if (!tab) throw new Error(`No tab with id: ${id}.`); return visible(tab); },
     async create({url, active: front}) { const tab = {id: nextTabId++, access: ''}; tabs.set(tab.id, tab); calls.created.push({id: tab.id, url, active: front, at: now}); load(tab, url); return visible(tab); },
     async update(id, {url} = {}) { const tab = tabs.get(id); if (!tab) throw new Error(`No tab with id: ${id}.`); if (url) { calls.updated.push({id, url, at: now}); load(tab, url); } return visible(tab); },
-    async remove(id) { if (!tabs.delete(id)) throw new Error(`No tab with id: ${id}.`); calls.removed.push({id, at: now}); },
+    // Chrome refuses to close a tab while the person drags one.
+    async remove(id) { if (refuseRemoves > 0) { refuseRemoves--; calls.refused.push({id, at: now}); throw new Error('Tabs cannot be edited right now (user may be dragging a tab).'); } if (!tabs.delete(id)) throw new Error(`No tab with id: ${id}.`); calls.removed.push({id, at: now}); },
     async sendMessage(id, message) { calls.toPage.push({id, ...structuredClone(message)}); },
   },
   windows: {getAll: async () => [{id: 1, focused: true, tabs: [...tabs.values()].map(visible)}], update: async () => {}},
@@ -72,11 +75,13 @@ globalThis.chrome = {
       const tab = tabs.get(spec.target.tabId);
       if (!tab) throw new Error(`No tab with id: ${spec.target.tabId}`);
       if (!readable(tab) || failScripts) throw new Error('Cannot access contents of the page. Extension manifest must request permission to access the respective host.');
-      if (spec.files) return [];
+      // Each answer names the document it came from, as Chrome's does.
+      const documentId = tab.documentId;
+      if (spec.files) return [{frameId: 0, documentId}];
       const source = String(spec.func), shown = tab.document || {links: [], type: 'text/html'};
       if (shown.type === 'error') throw new Error('Frame with ID 0 is showing error page');
-      if (source.includes('contentType')) return [{result: shown.type}];
-      if (source.includes('.next')) return [{result: shown.next ? (shown.next === 'button' ? {button: true} : {url: shown.next, how: 'label'}) : null}];
+      if (source.includes('contentType')) return [{result: shown.type, documentId}];
+      if (source.includes('.next')) return [{result: shown.next ? (shown.next === 'button' ? {button: true} : {url: shown.next, how: 'label'}) : null, documentId}];
       if (source.includes('.scan')) {
         // After Scroll to the end first, the frames are read in a second call (background/frames.js),
         // which keeps the scrolled top document's answer: it is not another scan of the page.
@@ -84,9 +89,11 @@ globalThis.chrome = {
         if (afterScroll) calls.frames.push({id: tab.id, url: tab.url, at: now});
         else calls.scans.push({id: tab.id, url: tab.url, at: now, options: structuredClone(spec.args[0])});
         const wanted = spec.args[0].scroll;
-        return [{result: {links: structuredClone(shown.links), warnings: [], inaccessibleFrames: 0, page: null, ...(wanted ? {scroll: shown.scroll || {screens: 4, of: 50, ended: 'end', text: 'Reached the end after 4 screens.'}} : {})}}];
+        // A page may change its own address while it is read (a # part, or history.replaceState).
+        if (shown.rewrite) tab.url = shown.rewrite;
+        return [{result: {links: structuredClone(shown.links), warnings: [], inaccessibleFrames: 0, page: null, ...(wanted ? {scroll: shown.scroll || {screens: 4, of: 50, ended: 'end', text: 'Reached the end after 4 screens.'}} : {})}, documentId}];
       }
-      return [{result: true}];
+      return [{result: true, documentId}];
     },
     async getRegisteredContentScripts() { return []; }, async unregisterContentScripts() {}, async registerContentScripts() {},
   },
@@ -127,11 +134,11 @@ async function reset({settings = {}} = {}) {
   for (const key of Object.keys(session)) delete session[key];
   for (const list of Object.values(calls)) list.length = 0;
   tabs.clear(); site.clear(); granted.clear(); active.clear(); timers.length = 0;
-  pagesOpen = true; pdfReply = null; fileReply = null; failScripts = false;
+  pagesOpen = true; pdfReply = null; fileReply = null; failScripts = false; refuseRemoves = 0; contexts = null;
 }
 // The tab the person is looking at, after one toolbar click on it.
 function clicked(url) {
-  const tab = {id: nextTabId++, access: origin(url), url, title: site.get(url)?.title || '', status: 'complete', document: site.get(url)};
+  const tab = {id: nextTabId++, access: origin(url), url, title: site.get(url)?.title || '', status: 'complete', document: site.get(url), documentId: `doc-${++docs}`};
   tabs.set(tab.id, tab); active.add(tab.id);
   return tab;
 }
@@ -793,3 +800,44 @@ test('PDF files are refused before a run starts: none, more than 20, and address
   assert.deepEqual(fileRows(done), [[1, 'a.pdf', 'got', 'Fetched'], [2, '', 'interrupted', 'Interrupted: Chrome stopped Link Meteor’s background worker'], [3, 'c.pdf', 'got', 'Fetched']]);
   assert.deepEqual([done.runId, done.summary, done.ended.reason], ['files-left', 'Fetched 2 of 3 PDFs.', 'finished']);
 });
+
+/* What a run leaves behind, and how it says it ended --------------------------------------------- */
+test('selected pages: a background tab never becomes the tab This page, Select a region and Follow Next use', async () => {
+  await reset(); granted.add(SITE);
+  page(`${SITE}/list`, {title: 'Papers'});
+  for (const n of [1, 2]) page(`${SITE}/p${n}`, {title: `Paper ${n}`});
+  // The person's tab, after a toolbar click on it: the full view uses it while the view itself is in front.
+  const own = clicked(`${SITE}/list`);
+  for (const listener of chrome.action.onClicked.listeners) listener(visible(own));
+  await settle();
+  assert.equal(session.linkMeteorTarget?.tabId, own.id);
+  await ask({type: 'run.start', kind: 'pages', collectionId: state().activeCollectionId, urls: [`${SITE}/p1`, `${SITE}/p2`]});
+  const during = [];
+  for (let i = 0; i < 400 && session.linkMeteorRun.state === 'running'; i++) { await advance(250); during.push(session.linkMeteorTarget?.tabId); }
+  assert.deepEqual(rows().map((row) => row[1]), ['captured', 'captured']);
+  assert.ok(during.every((id) => id === own.id), 'the target stays the person’s tab during the run');
+  assert.deepEqual(session.linkMeteorTarget, {tabId: own.id, windowId: 1}, 'and afterward');
+  assert.equal(tabs.size, 1, 'the background tabs are closed');
+});
+
+test('selected pages: a background tab Chrome won’t close at first (a tab being dragged) is closed when it can be', async () => {
+  await reset(); granted.add(SITE);
+  for (const n of [1, 2]) page(`${SITE}/p${n}`, {title: `Paper ${n}`});
+  refuseRemoves = 3;
+  await ask({type: 'run.start', kind: 'pages', collectionId: state().activeCollectionId, urls: [`${SITE}/p1`, `${SITE}/p2`]});
+  await toTheEnd();
+  assert.deepEqual(rows().map((row) => row[1]), ['captured', 'captured']);
+  assert.equal(calls.refused.length, 3);
+  assert.deepEqual(calls.removed.map((tab) => tab.id), calls.created.map((tab) => tab.id), 'each tab is closed in the end');
+  assert.equal(tabs.size, 0);
+  // A tab that can't be closed at all is left with no Stop on it: its page is told the run is done there.
+  await reset(); granted.add(SITE); page(`${SITE}/p1`, {title: 'Paper 1'});
+  refuseRemoves = 1000;
+  await ask({type: 'run.start', kind: 'pages', collectionId: state().activeCollectionId, urls: [`${SITE}/p1`]});
+  await toTheEnd();
+  const left = calls.created[0].id;
+  assert.equal(tabs.has(left), true);
+  assert.deepEqual(calls.toPage.filter((message) => message.id === left && message.done).map(({done, runId}) => [done, runId]), [[true, session.linkMeteorRun.runId]]);
+  refuseRemoves = 0;
+});
+

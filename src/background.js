@@ -157,7 +157,9 @@ async function captureTabs(tabIds,callerTabId,run={}) {
       results.push({tabId,title:tab.title || '',url:tab.url || '',status:'success',count,leftOut:leftOut.length,skipped,
         warning:(result.warnings || []).join(' '),error:'',...(result.frames ? {frames:result.frames} : {})});
       if (result.scroll) results.at(-1).scroll = result.scroll;
-      await rememberTarget(tab).catch(() => {});
+      // A tab a run reads never becomes the target: a run's background tab is closed afterward, and
+      // Follow Next's tab already is the target.
+      if (!run.batchId) await rememberTarget(tab).catch(() => {});
     } catch (error) {
       const message = String(error.message || error);
       results.push({tabId,title:tab?.title || 'Unavailable page',url:tab?.url || '',status:/permission|access.*contents|host permission/i.test(message)?'denied':'error',count:0,leftOut:0,skipped:0,warning:'',error:message});

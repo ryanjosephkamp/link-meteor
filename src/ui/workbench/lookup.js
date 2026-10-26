@@ -10,6 +10,7 @@
 // each address held before, with pages.restore.
 import { LOOKUP_PAUSE_MS, LOOKUP_SERVICES, MAX_LOOKUP_FAILURES, linkRequests, lookupMissing, lookupOutcome, lookupPlan, lookupReport, missingWords, readAnswer, sameCitation, unauthored } from '../../core/lookup.js';
 import { citationFor } from '../../core/identifiers.js';
+import { mergeCitation } from '../../core/model.js';
 import { CITE_FORMATS } from '../../core/export.js';
 import { $, node, button, count, labelFor } from './helpers.js';
 import { ui, request, action, show, currentCollection } from './state.js';
@@ -20,7 +21,7 @@ import { targetRows } from './review.js';
 const FRAME_READY_MS = 10000, ANSWER_MS = 20000;
 let run = null;   // the run in progress: {collectionId, total, at, ended, reason, last, wake, frame}
 let starting = false; // a click is being checked against the saved setting: a second one waits its turn
-let done = null;  // the last run's result, for its line and Undo: {collectionId, text, before, after, focus}
+let done = null;  // the last run's result, for its line and Undo: {collectionId, text, before, after, mixed, focus}
 let host = 'toolbar'; // where the progress and the result show: with the list, or in the Export panel
 // Identifiers asked about since the workbench opened that had nothing to add: asked last when a
 // selection is over the limit, so another click reaches the rest.
@@ -180,17 +181,23 @@ async function start(links, where, back) {
     if (!home) throw new Error('The collection was removed while the lookup ran, so nothing was saved.');
     const outcome = lookupOutcome(results, home.pages || {}, new Date().toISOString());
     const changed = Object.keys(outcome.pages);
-    let after = null;
+    let after = null, mixed = 0;
     ui.state = fresh;
     if (changed.length) {
       ui.state = await request({ type: 'state.mutate', action: { type: 'links.append', collectionId: home.id, links: [], pages: outcome.pages } });
       const pages = ui.state.collections.find((item) => item.id === home.id)?.pages || {};
-      after = Object.fromEntries(changed.map((key) => [key, pages[key] ?? null]));
+      after = {};
+      for (const key of changed) {
+        // An address saved again between the read above and this save (a capture, say) holds more
+        // than the lookup gave, and what it held before is unknown: Undo leaves it as it is.
+        if (sameCitation(pages[key], mergeCitation(home.pages?.[key], outcome.pages[key]))) after[key] = pages[key] ?? null;
+        else { delete outcome.before[key]; mixed++; }
+      }
     }
     for (const { ask, citation } of results) {
       if (citation && ask.targets.some((key) => key in outcome.pages)) seen.delete(ask.key); else seen.add(ask.key);
     }
-    report = { collectionId: home.id, before: after ? outcome.before : null, after, focus: back,
+    report = { collectionId: home.id, before: after && Object.keys(after).length ? outcome.before : null, after, mixed, focus: back,
       text: lookupReport({ ...outcome, asked: results.length, left: plan.asks.length - results.length, ended: run.ended, reason: run.reason, without: plan.without, complete: plan.complete, over: plan.over }) };
   } finally {
     run.frame?.close();
@@ -214,7 +221,7 @@ async function undo() {
   const home = fresh.collections.find((item) => item.id === record.collectionId);
   const pages = home?.pages || {}, restore = {};
   for (const [key, was] of Object.entries(record.before)) if (sameCitation(pages[key], record.after[key])) restore[key] = was;
-  const back = Object.keys(restore).length, kept = Object.keys(record.before).length - back;
+  const back = Object.keys(restore).length, kept = Object.keys(record.before).length - back + (record.mixed || 0);
   ui.state = home && back ? await request({ type: 'state.mutate', action: { type: 'pages.restore', collectionId: home.id, pages: restore } }) : fresh;
   const left = kept ? ` ${count(kept)} ${kept === 1 ? 'citation' : 'citations'} changed since and ${kept === 1 ? 'was' : 'were'} left as ${kept === 1 ? 'it is' : 'they are'}.` : '';
   done = { collectionId: record.collectionId, before: null, after: null, focus: record.focus,

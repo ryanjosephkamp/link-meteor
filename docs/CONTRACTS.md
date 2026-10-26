@@ -1718,7 +1718,7 @@ Off by default (`lookupDetails`). It fills in a paper's title, authors, date and
 - "Not looked up: 3 links with no DOI, arXiv ID or PubMed ID, and 2 links that already have these details." When nothing was asked, it starts "Nothing to look up:".
 - "Link Meteor looks up 200 papers at a time. 14 more are waiting: click Look up details again."
 
-**Undo** sends `pages.restore` with what each address held before (`null` where it held nothing), for the addresses that still hold what the lookup left; one that changed again since is left alone, and the result says so. "Lookup undone: the details are as they were before." Undo requests nothing.
+**Undo** sends `pages.restore` with what each address held before (`null` where it held nothing), for the addresses that still hold what the lookup left; one that changed again since is left alone, and the result says so. So is one saved again between the run's last read and its save (a capture, say): it holds more than the lookup gave, and what it held before isn't known. "Lookup undone: the details are as they were before." Undo requests nothing.
 
 **In a link's details,** a citation with `source` `crossref`, `datacite` or `pubmed` has the note "From Crossref, looked up on Oct 2, 2026. Citation exports use it. Saved in this browser." (`lookupNote`; "From DataCite", "From NCBI"; the date in the browser's own format; "Citation exports use it." only for the citation the link uses).
 

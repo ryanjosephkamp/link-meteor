@@ -17,7 +17,7 @@
 //   names them, at least 350 ms apart, and the frame removed afterward; a link to arXiv asked
 //   about by its arXiv ID, never by another DOI its PDF named;
 // - what is saved: a page's own tags are never replaced, a title guessed from a PDF is, and Undo
-//   puts every citation back exactly;
+//   puts every citation back exactly, except one a capture saved in the middle, which it keeps;
 // - Look up details in a link's details and beside the Export panel's "no authors yet" line, and
 //   BibTeX with the looked-up authors;
 // - Stop in the middle, "too many requests", an answer that isn't JSON, three failures in a row,
@@ -414,6 +414,34 @@ try {
   assert.deepEqual(await pagesNow(), seeded);
   for (const [url, answer] of RECORDED) answers.set(url, answer);
   pass('lookup-three-failures-in-a-row-end-the-run');
+
+  /* A capture saved between the run's last read and its save: Undo leaves that citation as it is. */
+  const CAPTURED = {title: 'Captured In Between', journal: 'From The Page', readAt: '2026-10-26T09:00:00.000Z'};
+  await ui.evaluate(({url, citation, collectionId}) => {
+    // The page's own messages, with one capture slipped in just before the run's save.
+    const send = chrome.runtime.sendMessage;
+    chrome.runtime.sendMessage = async (message) => {
+      if (message?.type === 'state.mutate' && message.action?.type === 'links.append' && !message.action.links.length && message.action.pages?.[url]) {
+        chrome.runtime.sendMessage = send;
+        await send.call(chrome.runtime, {type: 'state.mutate', action: {type: 'links.append', collectionId, links: [], pages: {[url]: citation}}});
+      }
+      return send.call(chrome.runtime, message);
+    };
+  }, {url: P1, citation: CAPTURED, collectionId: home});
+  await select(0, 2);
+  await startFromKeyboard();
+  assert.equal(await finished(), 'Filled in titles for 2 papers, authors for 2, dates for 2, journals for 2.');
+  await frameGone();
+  const between = await pagesNow();
+  assert.deepEqual(between[P1], mergeCitation(CAPTURED, {...cited('crossref', DOI), readAt: between[P3].readAt}), 'the capture’s tags, with what the lookup filled in');
+  assert.equal(await focused(), 'lookup-undo');
+  await ui.keyboard.press('Enter');
+  await until(async () => (await ui.locator('#lookup-done-text').innerText()) === 'Lookup undone: the details are as they were before. 1 citation changed since and was left as it is.', 'the Undo result');
+  const undone = await pagesNow();
+  assert.deepEqual(undone[P1], between[P1], 'the capture saved in between is kept');
+  assert.equal(undone[P3], undefined, 'the other citation is undone');
+  await reset();
+  pass('lookup-undo-keeps-a-capture-saved-in-between');
 
   /* Turned off while a run is going (here, as another Link Meteor page would): it stops, and the frame goes. */
   await select(0, 2);

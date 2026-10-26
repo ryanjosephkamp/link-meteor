@@ -54,8 +54,8 @@ export async function hasAccess() {
   try { return await chrome.permissions.contains({permissions: ['downloads']}) && !!chrome.downloads; } catch { return false; }
 }
 
-// Web links to download, one per address, with the fields that name each file. Throws a readable
-// error unless the request may start; nothing is downloaded before this passes.
+// Web links to download, one per address (the fragment doesn't count), with the fields that name
+// each file. Throws a readable error unless the request may start; nothing is downloaded before this passes.
 export function checkDownloads({links, confirmed, requestId, collectionName}) {
   if (!Array.isArray(links) || !links.length || links.length > MAX_LINKS) throw new Error('Choose at least one link to download.');
   const seen = new Set(), picked = [];
@@ -63,8 +63,9 @@ export function checkDownloads({links, confirmed, requestId, collectionName}) {
     let url = null;
     try { url = new URL(String(link?.url)); } catch { /* refused below */ }
     if (!url || !['http:', 'https:'].includes(url.protocol)) throw new Error('Only web links (HTTP or HTTPS) can be downloaded. Nothing was downloaded.');
-    if (seen.has(url.href)) continue;
-    seen.add(url.href);
+    const file = url.href.split('#')[0];
+    if (seen.has(file)) continue;
+    seen.add(file);
     const text = (key) => typeof link[key] === 'string' ? link[key] : '';
     picked.push({url: url.href, anchorText: text('anchorText'), accessibleLabel: text('accessibleLabel')});
   }

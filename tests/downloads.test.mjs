@@ -173,8 +173,8 @@ test('the links are checked before anything downloads', async () => {
   await refused({type: 'downloads.start', links: [link('/a.pdf')], requestId: 'x'.repeat(101)}, /request ID/);
   await refused({type: 'downloads.start', links: [link('/a.pdf')], collectionName: 7}, /collection name must be text/);
   assert.equal(calls.download.length, 0, 'nothing downloaded');
-  // One file per address: twelve links to ten addresses need no confirmation.
-  const repeated = [...many.slice(0, 10), many[0], many[1]];
+  // One file per address, whatever the fragment: twelve links to ten addresses need no confirmation.
+  const repeated = [...many.slice(0, 10), many[0], {...many[1], url: `${many[1].url}#page=4`}];
   const result = await ok({type: 'downloads.start', links: repeated, collectionName: 'Repeats'});
   assert.equal(result.total, 10); assert.equal(calls.download.length, 10);
 });

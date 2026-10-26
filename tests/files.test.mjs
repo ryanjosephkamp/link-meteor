@@ -92,9 +92,22 @@ test('the capture card’s copy of the rule decides exactly as core/files.js', a
   }
 });
 
-test('fileLinks keeps one link per address, in order', () => {
+test('fileLinks keeps one link per address, in order, whatever the fragment', () => {
   const links = [link('https://lab.test/a.pdf', 'A'), link('https://lab.test/page'), link('https://lab.test/b.png', 'B'), link('https://lab.test/a.pdf', 'A again'), link('HTTPS://LAB.TEST/b.png', 'B again')];
   assert.deepEqual(fileLinks(links).map((item) => item.anchorText), ['A', 'B']);
+  // One report linked at two pages is one file, kept with the first link's address.
+  const pages = [link('https://lab.test/report-2025.pdf#page=12', 'Chapter 2'), link('https://lab.test/report-2025.pdf#page=40', 'Chapter 5'), link('https://lab.test/report-2025.pdf?v=2#page=1', 'Version 2')];
+  assert.deepEqual(fileLinks(pages).map((item) => item.url), ['https://lab.test/report-2025.pdf#page=12', 'https://lab.test/report-2025.pdf?v=2#page=1']);
+});
+
+test('the capture card counts its file links one per address, whatever the fragment, as fileLinks does', async () => {
+  const script = await readFile(resolve(root, 'src/content/capture.js'), 'utf8');
+  const [rule, line] = ['const FILE_TYPES=', 'function tickedFiles(){'].map((start) => script.split('\n').find((text) => text.trim().startsWith(start)));
+  assert.ok(rule && line, 'the card defines fileLink and tickedFiles on one line each');
+  const tickedFiles = new Function('tickedLinks', `${rule}\n${line}\nreturn tickedFiles();`);
+  const links = [link('https://lab.test/a.pdf#page=1', 'A'), link('https://lab.test/a.pdf#page=9', 'A, page 9'), link('https://lab.test/b.png', 'B'), link('https://lab.test/page'), link('https://lab.test/b.png#top', 'B again')];
+  assert.deepEqual(tickedFiles(() => links), fileLinks(links));
+  assert.equal(fileLinks(links).length, 2);
 });
 
 test('extensions: web pages save as .html; otherwise the address, then the type Chrome reports, then Chrome’s name', () => {

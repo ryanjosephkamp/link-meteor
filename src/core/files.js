@@ -75,14 +75,16 @@ export function isFileLink(link) {
   return !!webUrl(url) && (!!urlFileType(url) || PDF_LABEL.test(String(link.anchorText ?? '')) || knownPdf(url));
 }
 
-// The file links among these links, one per address, in order.
+// The file links among these links, one per address, in order. The fragment doesn't count:
+// a.pdf#page=3 and a.pdf#page=9 are one file.
 export function fileLinks(links) {
   const seen = new Set();
   return links.filter((link) => {
     if (!isFileLink(link)) return false;
-    const url = webUrl(link.url).href;
-    if (seen.has(url)) return false;
-    seen.add(url);
+    const url = webUrl(link.url);
+    url.hash = '';
+    if (seen.has(url.href)) return false;
+    seen.add(url.href);
     return true;
   });
 }

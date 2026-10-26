@@ -39,6 +39,13 @@ test('the PDFs among the chosen links: one per address, in the list’s order, o
   ];
   assert.deepEqual(pdfLinks(links).map((item) => item.anchorText), ['Second', 'First', '[PDF] third']);
   assert.equal(fileLinks(links).length, 4, 'Download files still takes every file');
+  // A report linked at two of its pages is fetched, zipped and combined once.
+  assert.deepEqual(pdfLinks([link('Chapter 2', 'https://example.org/report-2025.pdf#page=12'), link('Chapter 5', 'https://example.org/report-2025.pdf#page=40')]).map((item) => item.anchorText), ['Chapter 2']);
+});
+
+test('arXiv’s “pdf” links make a ZIP of the papers’ own names, not pdf.pdf, pdf (2).pdf', () => {
+  const listing = ['2409.11211v1', '2409.11212v1', '2409.11213v2'].map((id) => link('pdf', `https://arxiv.org/pdf/${id}`));
+  assert.deepEqual(uniqueNames(pdfLinks(listing).map(pdfFileName)), ['2409.11211v1.pdf', '2409.11212v1.pdf', '2409.11213v2.pdf']);
 });
 
 test('a PDF’s file name is the one Download files gives it, always ending .pdf', () => {

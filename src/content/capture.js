@@ -870,7 +870,7 @@
 
     /* Download N files (0.4.0): the file links among the ticked ones, saved by Chrome's own downloads. */
     let downloading=null,fileAsk=0;
-    function tickedFiles(){const seen=new Set();return tickedLinks().filter(link=>{if(!fileLink(link))return false;const url=new URL(link.url).href;if(seen.has(url))return false;seen.add(url);return true;});}
+    function tickedFiles(){const seen=new Set();return tickedLinks().filter(link=>{if(!fileLink(link))return false;const url=new URL(link.url).href.split('#')[0];if(seen.has(url))return false;seen.add(url);return true;});}
     function setupFiles(){
       const item=document.createElement('button');item.type='button';item.setAttribute('role','menuitem');item.className='m-files';item.dataset.key='f';item.setAttribute('aria-keyshortcuts','F');item.title='Download the files behind the ticked file links, such as PDFs (F)';
       item.innerHTML='<span class="m-files-label">Download files</span><kbd aria-hidden="true">F</kbd>';$('.m-download').after(item);

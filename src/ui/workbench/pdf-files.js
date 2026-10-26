@@ -336,7 +336,8 @@ function renderCombineState() {
   else if (!rest) sum.append(node('strong', '', `${plural(items.length, 'PDF')} · ${facts}.`), ' Pages keep their links and bookmarks.');
   else sum.append(node('strong', '', `${plural(items.length, 'PDF')}.`), ready.length ? ` ${count(ready.length)} ${ready.length === 1 ? 'is' : 'are'} ready (${facts}).` : '',
     ` Link Meteor fetches the ${rest === 1 ? (ready.length ? 'other one' : 'PDF') : `${ready.length ? 'other ' : ''}${count(rest)}`} when you press Combine; ${rest === 1 ? 'its pages and size' : 'their pages and sizes'} show then. Pages keep their links and bookmarks.`);
-  const problem = rules && items.length ? rules.pdfSetProblem(items.map((item) => item.size || 0)) : '';
+  // The pages in all are known for the files that are here.
+  const problem = rules && items.length ? rules.pdfSetProblem(items.map((item) => item.size || 0)) || rules.combinedPagesProblem(total(items, 'pages')) : '';
   const over = problem && rules && items.length > rules.MAX_PDF_SET ? ` Leave out ${count(items.length - rules.MAX_PDF_SET)}.` : '';
   const help = $('combine-help');
   setText(help, problem ? problem + over : running() && !job ? BUSY : '');
@@ -433,6 +434,9 @@ async function applyCombine() {
     }
   }
   const items = mine.items;
+  await needRules();
+  const tooLong = rules.combinedPagesProblem(total(items, 'pages'));
+  if (tooLong) throw new Error(tooLong);
   making = 'combine'; renderProgress(); renderPdfSet(); renderCombine();
   try {
     await Promise.all([needRules(), new Promise((done) => setTimeout(done, 30))]);

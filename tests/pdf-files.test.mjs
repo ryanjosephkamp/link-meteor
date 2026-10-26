@@ -6,7 +6,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { isPdfLink, pdfLinks, pdfFileName, uniqueNames, fileLinks, downloadName } from '../src/core/files.js';
 import { zip } from '../src/core/zip.js';
-import { pdfSetProblem, MAX_PDF_SET, MAX_PDF_BYTES, MAX_PDF_SET_BYTES } from '../src/core/pdf.js';
+import { pdfSetProblem, combinedPagesProblem, combinePdfs as combinePdfsWith, MAX_PDF_SET, MAX_PDF_BYTES, MAX_PDF_SET_BYTES, MAX_COMBINED_PAGES } from '../src/core/pdf.js';
 import { readPackagedMembers } from '../scripts/verify-package.mjs';
 import { fixture, readPdf, combinePdfs } from './helpers/pdf.mjs';
 
@@ -136,4 +136,18 @@ test('the limits, in the words the panel uses', () => {
   assert.equal(pdfSetProblem(Array(4).fill(MAX_PDF_BYTES)), '');
   assert.equal(pdfSetProblem([...Array(4).fill(MAX_PDF_BYTES), 1]), 'These PDFs are more than 200 MB together. Choose fewer.');
   assert.equal(MAX_PDF_SET_BYTES, 4 * MAX_PDF_BYTES);
+  assert.equal(combinedPagesProblem(MAX_COMBINED_PAGES), '');
+  assert.equal(combinedPagesProblem(26460), 'A combined PDF can have at most 5,000 pages, and these have 26,460. Leave some out.');
+});
+
+test('a combined PDF of more than 5,000 pages is refused before anything is written', async () => {
+  const paper = new Uint8Array(await fixture('paper.pdf'));
+  let writes = 0;
+  // Parts that say they have 2,501 pages each: the counts are read, and nothing is written.
+  const withDocument = async (bytes, fn) => fn({ numPages: 2501, extractPages: async () => { writes++; return bytes; } });
+  await assert.rejects(combinePdfsWith([paper, paper], withDocument), { message: 'A combined PDF can have at most 5,000 pages, and these have 5,002. Leave some out.' });
+  assert.equal(writes, 0);
+  const written = new Uint8Array(8);
+  const made = await combinePdfsWith([paper, paper], async (bytes, fn) => fn({ numPages: bytes === written ? 5000 : 2500, extractPages: async () => { writes++; return written; } }));
+  assert.deepEqual([made.pages, writes], [5000, 1], 'exactly 5,000 pages are combined');
 });

@@ -130,14 +130,18 @@ export function exportFileName({ collection = '', extension, settings = {}, date
   if (!(date instanceof Date) || Number.isNaN(date.valueOf())) throw new Error('Export time must be a valid date');
   const { exportPrefix = '', exportTimestamp = true, exportTimestampFormat = 'datetime' } = settings;
   const typed = String(override ?? '').trim().replace(new RegExp(`\\.${extension}$`, 'i'), '');
-  let stem = fileNamePart(typed, 150);
+  // The whole name fits in 255 UTF-8 bytes with room for Chrome's " (100)": a long name in Japanese
+  // or Korean takes three bytes a character. The collection's name gives way first.
+  const budget = 255 - ' (100)'.length - extension.length - 1;
+  let stem = fileNamePart(typed, 150, budget);
   if (!stem) {
-    const parts = [fileNamePart(exportPrefix, 40), fileNamePart(collection) || 'links'];
+    const prefix = fileNamePart(exportPrefix, 40), stamp = [];
     if (exportTimestamp) {
-      parts.push(`${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`);
-      if (exportTimestampFormat !== 'date') parts.push(`${pad(date.getHours())}${pad(date.getMinutes())}`);
+      stamp.push(`${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`);
+      if (exportTimestampFormat !== 'date') stamp.push(`${pad(date.getHours())}${pad(date.getMinutes())}`);
     }
-    stem = parts.filter(Boolean).join('_');
+    const room = budget - utf8.encode([prefix, ...stamp].filter(Boolean).map((part) => `${part}_`).join('')).length;
+    stem = [prefix, fileNamePart(collection, 80, room) || 'links', ...stamp].filter(Boolean).join('_');
   }
   if (WINDOWS_RESERVED.test(stem)) stem += '_';
   return `${stem}.${extension}`;

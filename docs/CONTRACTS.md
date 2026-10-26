@@ -136,6 +136,7 @@ planRestore(state, backup, 'merge'|'replace')     // {state, summary}; saves not
 
 - The default is `<prefix_><collection>_<YYYY-MM-DD>_<HHmm>.<ext>` in local time with no colons, for example `Urban-heat-islands-sources_2026-09-26_1432.xlsx`. With `exportPrefix` set to `link-meteor-research`, that becomes `link-meteor-research_Urban-heat-islands-sources_2026-09-26_1432.xlsx`. `exportTimestamp: false` drops the date and time; `exportTimestampFormat: 'date'` drops the time.
 - `override` is the Export panel's File name field for one export. When it contains anything usable, it replaces the pattern, and a typed matching extension is not doubled.
+- The whole name fits in 255 UTF-8 bytes with room for Chrome's ` (100)`: a typed name is cut to fit, and in the pattern the collection's name gives way, so the prefix and the date and time stay.
 - `fileNamePart` folds accents off Latin letters (`Café résumé` gives `Cafe-resume`), keeps every other script's marks, in composed form (`データ分析`, `한국어`, `й`), and turns every run of other characters outside letters, marks, digits, `.`, `_` and `-` into one hyphen. It removes leading and trailing dots and hyphens and cuts to `max` UTF-16 units and `maxBytes` UTF-8 bytes, never inside a character. An empty collection name becomes `links`, and Windows device names (`CON`, `NUL`, `COM1` and so on) get a trailing underscore.
 - The Export panel and the capture card's download both use this function.
 

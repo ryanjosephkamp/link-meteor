@@ -162,6 +162,13 @@ test('typed file names and collection names become safe file names', () => {
   assert.equal(fileNamePart('雪 研究'), '雪-研究');
   assert.equal(fileNamePart('x'.repeat(200)).length, 80);
   assert.equal(exportFileName({ collection: 'データ分析ガイド', extension: 'csv', date, settings: { exportTimestamp: false } }), 'データ分析ガイド.csv');
+  // 80 Japanese characters are 240 bytes: the name gives way so the whole file name, with room for
+  // " (100)", fits in 255 bytes, and the date stays.
+  const bytes = (text) => new TextEncoder().encode(text).length;
+  const long = exportFileName({ collection: 'データ'.repeat(30), extension: 'xlsx', date, settings: { exportPrefix: '研究ノート' } });
+  assert.match(long, /^研究ノート_(データ)+デ?_2026-09-26_0905\.xlsx$/);
+  assert.ok(bytes(long) + ' (100)'.length <= 255, `${bytes(long)} bytes`);
+  assert.ok(bytes(exportFileName({ collection: 'x', extension: 'md', date, override: '한국어'.repeat(60) })) + 6 <= 255, 'a typed name too');
   assert.throws(() => exportFileName({ collection: 'x', extension: '.xlsx', date }), /extension/);
   assert.throws(() => exportFileName({ collection: 'x', extension: 'xlsx', date: new Date('nope') }), /valid date/);
 });

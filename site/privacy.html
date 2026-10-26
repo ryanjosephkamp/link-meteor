@@ -55,7 +55,7 @@
     <section class="page-hero night" aria-labelledby="page-title">
       <div class="wrap">
         <h1 id="page-title">Privacy</h1>
-        <p>Link Meteor works entirely inside your browser. It has no account, no servers, no analytics and no advertising, and it never sends your links anywhere.</p>
+        <p>Link Meteor works inside your browser. It has no account, no servers, no analytics and no advertising, and it never sends your links anywhere. Its one online feature, Page details lookup, is off unless you turn it on, and sends only a paper's identifier.</p>
       </div>
     </section>
 
@@ -136,7 +136,7 @@
                 <tr><td>contextMenus</td><td>Always</td><td>Adds Link Meteor's actions to the right-click menu and the toolbar icon's menu, such as adding a right-clicked link or saving a tab as a link. To save a right-clicked link's exact text, the page remembers which link it was, only until you choose a menu item.</td></tr>
                 <tr><td>clipboardWrite</td><td>Always</td><td>Copies what you choose to the clipboard: tables, URLs, Markdown, rich links, or diagnostics for a bug report. Link Meteor never reads your clipboard.</td></tr>
                 <tr><td>tabs</td><td>Optional, when asked</td><td>Lists your open tabs so you can choose which to capture.</td></tr>
-                <tr><td>Site access</td><td>Optional, one site at a time</td><td>Needed to capture tabs other than the one you invoked it on, to capture a page again after its temporary access ended, and for hold-key drag on the sites you choose.</td></tr>
+                <tr><td>Site access</td><td>Optional, one site at a time</td><td>Needed to capture tabs other than the one you invoked it on, to capture a page again after its temporary access ended, and for hold-key drag on the sites you choose. Also to capture the pages behind links you chose, to read frames from other sites, and to get PDFs through a page of their own site, each asked for by name in the click.</td></tr>
                 <tr><td>All sites</td><td>Optional, only if you choose it</td><td>One choice, <em>Allow on all sites</em>: on the welcome card, the Site access switch, or a capture Chrome hid from Link Meteor. Hold-key drag and capture then work on every site except the ones you list under <em>Never on these sites</em>. It is never asked for at install, and declining keeps the one-site-at-a-time route.</td></tr>
                 <tr><td>tabGroups</td><td>Optional, when asked</td><td>Names a tab group after your collection when you open links as a group. Without it, the tabs still open in an unnamed group.</td></tr>
                 <tr><td>downloads</td><td>Optional, when asked</td><td>Saves the files behind links you choose, such as PDFs, images and documents, into your Downloads folder, as if you had clicked each link. Chrome calls this "Manage your downloads"; Link Meteor never reads, opens, changes or removes your other downloads.</td></tr>
@@ -144,7 +144,7 @@
               </tbody>
             </table>
           </div>
-          <p><strong>Version 1.0.0 adds no permission and asks for no browser setting.</strong> Capturing selected pages, including a frame from another site, and getting PDF files use the site access above, asked for by name. Link Meteor does not ask for "Allow access to file URLs": that setting does not make a PDF on your computer readable, and choosing the file needs no access at all.</p>
+          <p><strong>Version 1.0.0 adds no permission and asks for no browser setting.</strong> Capturing chosen pages, reading frames from other sites, and getting PDF files use the site access above, asked for by name. Links inside closed components are read with no permission at all. Link Meteor does not ask for "Allow access to file URLs": that setting does not make a PDF on your computer readable, and choosing the file needs no access at all.</p>
           <p>Link Meteor does not request access to your history, cookies, passwords, network traffic or incognito windows, and it never reads your list of downloads. You can review and remove its optional access at any time from Link Meteor's card in <code>chrome://extensions</code>. Turning hold-key drag off for a site stops it there; removing the site's access in Chrome also turns it off. Removing all-sites access, with Link Meteor's <em>Remove Chrome's access</em> or Chrome's own controls, can also remove access to sites you allowed one at a time. Link Meteor then turns hold-key drag off wherever it no longer has access.</p>
         </section>
 

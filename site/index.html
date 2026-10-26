@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Link Meteor · Capture links with their real labels and sources</title>
-  <meta name="description" content="A free Chrome extension for researchers: drag across a page to collect links with their real anchor text, exact URLs and source pages, then export to Excel, CSV, Markdown or JSON. No account, no tracking.">
+  <meta name="description" content="A free Chrome extension for researchers: drag across a page or read a PDF to collect links with their real anchor text, exact URLs and source pages, then export to Excel, CSV, Markdown, JSON or BibTeX. No account, no tracking.">
   <meta name="color-scheme" content="light dark">
   <meta name="theme-color" content="#0e1526">
   <meta property="og:title" content="Link Meteor">
@@ -110,7 +110,7 @@
               <p class="demo-status" id="demo-status" role="status"></p>
             </div>
           </div>
-          <figcaption class="demo-caption" id="demo-caption"><strong>Interactive demo.</strong> It runs entirely in this page and sends nothing anywhere. The extension does the same thing on real sites, including links inside scrolling areas and same-origin frames.</figcaption>
+          <figcaption class="demo-caption" id="demo-caption"><strong>Interactive demo.</strong> It runs entirely in this page and sends nothing anywhere. The extension does the same thing on real sites, including links inside scrolling areas, same-origin frames and closed components.</figcaption>
         </figure>
       </div>
     </section>
@@ -177,7 +177,7 @@
               <div class="key"><dt>URL</dt><dd class="exact">https://journal.example.org/articles/uhi-2024-0142.pdf</dd></div>
               <div><dt>Original href</dt><dd class="exact">/articles/uhi-2024-0142.pdf</dd></div>
               <div><dt>Source page</dt><dd>Reading list: urban heat islands<br><span class="muted exact" style="font-family:var(--mono);font-size:.84rem">journal.example.org/reading-lists/uhi</span></dd></div>
-              <div><dt>Captured</dt><dd>25 Sep 2026, 14:12 · with its capture batch</dd></div>
+              <div><dt>Captured</dt><dd>Sep 25, 2026, 2:12 PM · with its capture batch</dd></div>
               <div><dt>Your notes</dt><dd class="muted">Notes and tags you add, kept apart from what was captured</dd></div>
             </dl>
           </div>
@@ -232,13 +232,23 @@
             </li>
             <li class="scope-item" data-scope="page" tabindex="0">
               <span class="ico"><svg aria-hidden="true"><use href="assets/img/icons.svg#page"/></svg></span>
-              <div><h3>This page</h3><p>Every loaded link on the page, including links inside open shadow roots and same-origin frames.</p>
-              <p class="perm"><svg aria-hidden="true"><use href="assets/img/icons.svg#lock"/></svg>Uses temporary access to the page you invoke it on.</p></div>
+              <div><h3>This page</h3><p>Every loaded link on the page, including links inside closed components and frames. Tick <em>Scroll to the end first</em> for pages that load more as you scroll, or <em>Follow Next</em> to capture up to 20 pages in a row.</p>
+              <p class="perm"><svg aria-hidden="true"><use href="assets/img/icons.svg#lock"/></svg>Uses temporary access to the page you invoke it on. Frames from other sites need those sites' access, asked for by name.</p></div>
+            </li>
+            <li class="scope-item" data-scope="page" tabindex="0">
+              <span class="ico"><svg aria-hidden="true"><use href="assets/img/icons.svg#page"/></svg></span>
+              <div><h3>A PDF</h3><p>On a PDF's tab, <em>Capture this PDF</em> reads the links inside it, each with the words under it and its page, and shows them before anything is saved. Or import a PDF file.</p>
+              <p class="perm"><svg aria-hidden="true"><use href="assets/img/icons.svg#lock"/></svg>Uses temporary access to the PDF's tab. A PDF file from your computer needs none.</p></div>
             </li>
             <li class="scope-item" data-scope="tabs" tabindex="0">
               <span class="ico"><svg aria-hidden="true"><use href="assets/img/icons.svg#tabs"/></svg></span>
               <div><h3>Tabs you pick</h3><p>Choose exact open tabs from a list grouped by window. Tabs opened after you start are left out.</p>
               <p class="perm"><svg aria-hidden="true"><use href="assets/img/icons.svg#lock"/></svg>Optional. Asks to see your tab list, and for access to the sites you pick.</p></div>
+            </li>
+            <li class="scope-item" data-scope="tabs" tabindex="0">
+              <span class="ico"><svg aria-hidden="true"><use href="assets/img/icons.svg#external"/></svg></span>
+              <div><h3>The pages behind links</h3><p>Select up to 20 saved links, and <em>Capture their pages…</em> opens each one in a background tab, one at a time, captures it and closes it. It goes one level deep and never follows the links it finds.</p>
+              <p class="perm"><svg aria-hidden="true"><use href="assets/img/icons.svg#lock"/></svg>Optional. Asks for access to those sites by name, in one click.</p></div>
             </li>
             <li class="scope-item" data-scope="window" tabindex="0">
               <span class="ico"><svg aria-hidden="true"><use href="assets/img/icons.svg#windows"/></svg></span>
@@ -264,10 +274,10 @@
         <div>
           <div class="section-head" style="margin-bottom:0">
             <h2 id="report-title">When a page can't be read, it says so</h2>
-            <p>A multi-tab capture reports every page separately. A page with no links is not the same as a page Link Meteor wasn't allowed to read, and it never pretends otherwise.</p>
+            <p>A multi-tab capture reports every page separately, and so does a capture that goes from page to page. A page with no links is not the same as a page Link Meteor wasn't allowed to read, and it never pretends otherwise.</p>
           </div>
           <ul class="statuses">
-            <li class="ok"><svg aria-hidden="true"><use href="assets/img/icons.svg#check"/></svg><div><strong>Captured</strong><span>With the exact count, plus any coverage notes such as frames it could not enter.</span></div></li>
+            <li class="ok"><svg aria-hidden="true"><use href="assets/img/icons.svg#check"/></svg><div><strong>Captured</strong><span>With the exact count, plus any coverage notes, such as frames from sites it has no access to, with <em>Allow these sites</em> to include them.</span></div></li>
             <li class="none"><svg aria-hidden="true"><use href="assets/img/icons.svg#minus"/></svg><div><strong>No links</strong><span>The page loaded and genuinely has no links it can read.</span></div></li>
             <li class="warn"><svg aria-hidden="true"><use href="assets/img/icons.svg#ban"/></svg><div><strong>Access denied or unsupported</strong><span>Site access was declined, or Chrome doesn't allow extensions there.</span></div></li>
             <li class="bad"><svg aria-hidden="true"><use href="assets/img/icons.svg#alert"/></svg><div><strong>Failed</strong><span>The tab closed or changed during capture. Everything that succeeded is still kept.</span></div></li>
@@ -294,9 +304,11 @@
             <li><svg aria-hidden="true"><use href="assets/img/icons.svg#check"/></svg><span>Open any link to see its full provenance and add notes and tags.</span></li>
             <li><svg aria-hidden="true"><use href="assets/img/icons.svg#check"/></svg><span>Add your own columns, such as a deadline or a contact, and fill one in for many links at once.</span></li>
             <li><svg aria-hidden="true"><use href="assets/img/icons.svg#check"/></svg><span>Mark links Unread, Reading or Read, star the ones that matter, and see a collection at a glance in Insights.</span></li>
-            <li><svg aria-hidden="true"><use href="assets/img/icons.svg#check"/></svg><span>Keep the citation details pages publish about themselves, and the DOI or arXiv ID in a link's address.</span></li>
-            <li><svg aria-hidden="true"><use href="assets/img/icons.svg#check"/></svg><span>Move or copy links between collections, and import them from spreadsheets, bookmarks or pasted text.</span></li>
-            <li><svg aria-hidden="true"><use href="assets/img/icons.svg#check"/></svg><span>Download the files behind links, such as PDFs and images, named after their anchor text.</span></li>
+            <li><svg aria-hidden="true"><use href="assets/img/icons.svg#check"/></svg><span>Keep the citation details pages and PDFs give about themselves, and the DOI or arXiv ID in a link's address.</span></li>
+            <li><svg aria-hidden="true"><use href="assets/img/icons.svg#check"/></svg><span>Fill in a paper's missing authors, date and journal with Page details lookup, off unless you turn it on. It sends only the DOI, arXiv ID or PubMed ID.</span></li>
+            <li><svg aria-hidden="true"><use href="assets/img/icons.svg#check"/></svg><span>Move or copy links between collections, and import them from spreadsheets, PDFs, bookmarks or pasted text.</span></li>
+            <li><svg aria-hidden="true"><use href="assets/img/icons.svg#check"/></svg><span>Download the files behind links, such as PDFs and images, named after their anchor text, or their address when the text just says “PDF”.</span></li>
+            <li><svg aria-hidden="true"><use href="assets/img/icons.svg#check"/></svg><span>Get the PDFs behind chosen links as one ZIP, or combine them into one PDF in the order you choose.</span></li>
             <li><svg aria-hidden="true"><use href="assets/img/icons.svg#check"/></svg><span>Remove what you don't need, with undo that restores the original order.</span></li>
           </ul>
         </div>
@@ -332,7 +344,7 @@
           </div>
         </div>
         <ul class="formats" aria-label="All output options">
-          <li>Excel .xlsx</li><li>CSV</li><li>TSV</li><li>Markdown links</li><li>HTML table</li><li>JSON with full provenance</li><li>BibTeX, RIS and CSL-JSON</li><li>Annotated bibliography</li><li>Obsidian note</li><li>URL list</li><li>Clipboard</li><li>Rich links for Docs, Word or Notion</li><li>Chrome bookmark folder, new or existing</li><li>Open up to 500 in tabs, a window or a tab group</li><li>The linked files themselves</li>
+          <li>Excel .xlsx</li><li>CSV</li><li>TSV</li><li>Markdown links</li><li>HTML table</li><li>JSON with full provenance</li><li>BibTeX, RIS and CSL-JSON</li><li>Annotated bibliography</li><li>Obsidian note</li><li>URL list</li><li>Clipboard</li><li>Rich links for Docs, Word or Notion</li><li>Chrome bookmark folder, new or existing</li><li>Open up to 500 in tabs, a window or a tab group</li><li>The linked files themselves</li><li>Their PDFs as one ZIP or one PDF</li>
         </ul>
       </div>
     </section>
@@ -341,7 +353,7 @@
       <div class="wrap">
         <div class="section-head">
           <h2 id="privacy-title">Private by construction</h2>
-          <p>Link Meteor has no server to send anything to. Your collections are stored by Chrome on your computer, and the extension's security policy forbids its pages from making network requests. It visits a site only when you ask it to open a link or download a file.</p>
+          <p>Link Meteor has no server to send anything to. Your collections are stored by Chrome on your computer, and the extension's security policy forbids its pages from making network requests. It visits a site only when you ask it to: to open a link, download a file, read a PDF or capture pages. One optional feature, Page details lookup, sends a paper's DOI, arXiv ID or PubMed ID to Crossref, DataCite or NCBI, and only after you turn it on and click.</p>
         </div>
         <ul class="never">
           <li><strong>No account</strong><span>Nothing to sign up for, nothing to sign in to.</span></li>
@@ -360,11 +372,11 @@
           <p>Plain limits, so you know what to expect before you rely on it.</p>
         </div>
         <ul class="limits">
-          <li><svg aria-hidden="true"><use href="assets/img/icons.svg#minus"/></svg><div><strong>Only what's loaded</strong><span>It doesn't scroll infinite feeds, follow pagination or crawl sites. Links that haven't loaded yet aren't there to capture.</span></div></li>
-          <li><svg aria-hidden="true"><use href="assets/img/icons.svg#minus"/></svg><div><strong>Some parts of pages are closed to it</strong><span>Frames from other sites and closed shadow roots can't be read. Captures say when frames were skipped.</span></div></li>
-          <li><svg aria-hidden="true"><use href="assets/img/icons.svg#minus"/></svg><div><strong>No PDF text or button scripts</strong><span>A link to a PDF is captured. Links inside a PDF can be saved one at a time by right-clicking them, not selected in bulk. JavaScript-only buttons without a real link aren't links.</span></div></li>
+          <li><svg aria-hidden="true"><use href="assets/img/icons.svg#minus"/></svg><div><strong>No crawling</strong><span>It scrolls, follows Next or opens chosen pages only when you start it, and stops at a stated limit: 50 screens, or 20 pages. It goes one level deep and never follows the links it finds.</span></div></li>
+          <li><svg aria-hidden="true"><use href="assets/img/icons.svg#minus"/></svg><div><strong>Frames need their site's access</strong><span>A frame from another site is read only where Link Meteor has access to that site. The report names those sites, and a region can't reach into them.</span></div></li>
+          <li><svg aria-hidden="true"><use href="assets/img/icons.svg#minus"/></svg><div><strong>Only real links</strong><span>In a PDF, scanned pages are pictures, and an address printed without a link isn't picked up. PDFs are read up to 50 MB and 2,000 pages. JavaScript-only buttons without a real link aren't links.</span></div></li>
           <li><svg aria-hidden="true"><use href="assets/img/icons.svg#minus"/></svg><div><strong>Desktop Chrome only, for now</strong><span>There's no Firefox, Safari or mobile version. Chrome's own pages, the Web Store and incognito are off limits.</span></div></li>
-          <li><svg aria-hidden="true"><use href="assets/img/icons.svg#minus"/></svg><div><strong>Nothing looked up online</strong><span>Authors, dates and DOIs come only from what the pages you had open published, or from a link's address. A paper has authors once you capture from its own page or save it as a tab.</span></div></li>
+          <li><svg aria-hidden="true"><use href="assets/img/icons.svg#minus"/></svg><div><strong>Nothing looked up unless you ask</strong><span>Authors, dates and DOIs come from what pages and PDFs say about themselves, or from a link's address. Page details lookup fills in the rest only after you turn it on and click <em>Look up details</em>.</span></div></li>
           <li><svg aria-hidden="true"><use href="assets/img/icons.svg#minus"/></svg><div><strong>No cloud copy</strong><span>Collections live in this browser profile. Download a backup file to keep a copy or move them to another computer.</span></div></li>
         </ul>
       </div>

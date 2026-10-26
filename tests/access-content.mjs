@@ -1149,10 +1149,14 @@ try {
     'third.localhost/leaf.html?third': '2', 'localhost/leaf.html?aside': '3', 'localhost/leaf.html?component': null, '/leaf.html?sandboxed': '4', 'localhost/leaf.html?hidden': '6'});
   await framed.keyboard.down('q'); await framed.keyboard.up('q');
   assert.equal(await card(framed).count(), 0);
-  // What the top document says about the frames it couldn't read: each one's site, place and whether it is page chrome.
+  // What the top document says about the frames it couldn't read: each one's site, place and whether
+  // it is page chrome; a sealed one and the address of one without a place; each with its own key and its area.
   const topAnswer = byUrl['/frames.html'].result;
-  assert.deepEqual(topAnswer.frames, [{site: otherSite, at: '0.1', chrome: false}, {site: otherSite, at: '1', chrome: false}, {site: thirdSite, at: '2', chrome: false}, {site: otherSite, at: '3', chrome: true},
-    {site: otherSite, at: null, chrome: false}, {site: fixture.base, at: '4', chrome: false}]);
+  const listed = (frames) => frames.map(({key, area, ...rest}) => rest);
+  assert.deepEqual(listed(topAnswer.frames), [{site: otherSite, at: '0.1', chrome: false}, {site: otherSite, at: '1', chrome: false}, {site: thirdSite, at: '2', chrome: false}, {site: otherSite, at: '3', chrome: true},
+    {site: otherSite, at: null, chrome: false, url: `${otherSite}${folder}leaf.html?component`}, {site: fixture.base, at: '4', chrome: false, sealed: true}]);
+  assert.ok(topAnswer.frames.every((frame) => /^[a-z0-9]+\.\d+$/.test(frame.key) && frame.area > 1000), 'each frame has a key and covers part of the page');
+  assert.equal(new Set(topAnswer.frames.map((frame) => frame.key)).size, 6);
   assert.deepEqual([texts(topAnswer.links), topAnswer.at, topAnswer.inaccessibleFrames, topAnswer.url, topAnswer.title], [['Top link', 'Inner link same', 'Leaf link same-nested-this', 'Written link'], '', 6, `${fixture.base}${folder}frames.html`, 'Frames from other sites — coverage fixture']);
   pass('Frames: a frame its parent can read holds no copy of the script; a frame from another site holds one that only scans (no settings request, no message listener, no citation); each says where it sits, and the top document lists the frames it couldn’t read with their sites', {places: alone.map((name) => [name, byUrl[name].result.at])});
 
@@ -1171,23 +1175,69 @@ try {
   // The toolbar's temporary access: the top document alone.
   const toolbar = joinFor(() => false);
   const LEFT = [{site: otherSite, at: '0.1'}, {site: otherSite, at: '1'}, {site: thirdSite, at: '2'}, {site: otherSite, at: '3'}, {site: otherSite, at: null}, {site: fixture.base, at: '4'}];
-  assert.deepEqual([named(toolbar), toolbar.read, toolbar.unread], [TOP, 0, LEFT]);
+  const places = (frames) => frames.map(({site, at}) => ({site, at}));
+  assert.deepEqual([named(toolbar), toolbar.read, places(toolbar.unread)], [TOP, 0, LEFT]);
   // The other site allowed (and the page's own, as the toolbar gives it, which doesn't reach its sandboxed frame).
   const some = joinFor((answer) => !answer.url.startsWith(thirdSite) && !answer.url.includes('?sandboxed'));
-  assert.deepEqual([named(some), some.read, some.unread], [[...TOP, ...OTHER, ['Leaf link aside', 'localhost/leaf.html?aside'], ['Leaf link component', 'localhost/leaf.html?component']], 5, [LEFT[2], LEFT[5]]]);
+  assert.deepEqual([named(some), some.read, places(some.unread)], [[...TOP, ...OTHER, ['Leaf link aside', 'localhost/leaf.html?aside'], ['Leaf link component', 'localhost/leaf.html?component']], 5, [LEFT[2], LEFT[5]]]);
   // Allow these sites, after the toolbar's reading: only the links in the frames that reading left
   // unread and that are read now, and in the frames inside them.
   const fresh = joinFor((answer) => !answer.url.startsWith(thirdSite) && !answer.url.includes('?sandboxed'), {left: toolbar.unread});
   assert.deepEqual([named(fresh), fresh.fresh, fresh.read], [[...OTHER, ['Leaf link aside', 'localhost/leaf.html?aside'], ['Leaf link component', 'localhost/leaf.html?component']], 5, 5]);
   // Then the page's own site, for its sandboxed frame: that frame alone is new. The frame of the
   // page's own site inside the other site's frame was read before, and is not read twice.
-  const sealed = joinFor((answer) => !answer.url.startsWith(thirdSite), {left: some.unread});
-  assert.deepEqual([named(sealed), sealed.fresh, sealed.unread], [[['Leaf link', '/leaf.html?sandboxed']], 1, [LEFT[2]]]);
+  const sealed = joinFor((answer) => !answer.url.startsWith(thirdSite), {left: some.unread, seen: some.seen});
+  assert.deepEqual([named(sealed), sealed.fresh, places(sealed.unread)], [[['Leaf link', '/leaf.html?sandboxed']], 1, [LEFT[2]]]);
   // A frame inside a frame that wasn't read is left out, even where Link Meteor could read it.
   const inside = joinFor((answer) => answer.url.includes('?other-nested-this'));
   assert.deepEqual([named(inside), inside.read, inside.unread.length], [TOP, 0, 6]);
   await framed.close();
   pass('Frames joined: with all sites every frame is read once (nested, in a closed component, sandboxed, in a sidebar as page chrome) and a hidden frame not at all; with the toolbar’s access only the top document, and each unread frame’s site; with one site allowed, its frames and those inside them; a frame inside an unread frame is left out', {all: everywhere.links.length, toolbar: toolbar.links.length, oneSite: some.links.length, fresh: fresh.links.length});
+
+  /* 0.6.0: frames at the edges. A frame the page sent to another site without an address of its
+     own, frames with no size or placed off the page, and frames inside a closed component: a
+     sandboxed one written in the page, a hidden one and a visible one from the other site. */
+  const edges = await context.newPage();
+  await load(edges, `${folder}edges.html`, {...letter, dom: true});
+  await edges.waitForFunction(() => window.fixtureFramesLoaded());
+  for (const frame of edges.frames()) await frame.waitForLoadState('load');
+  await sleep(400);
+  // Every frame's answer, as Chrome would gather them where Link Meteor has access to every site.
+  const gather = async () => {
+    const all = [];
+    for (const [index, frame] of edges.frames().entries()) {
+      const top = frame === edges.mainFrame();
+      if (!top) {
+        if (!await frame.evaluate(() => !!window.__stub)) await frame.evaluate(frameInit, frameArg);
+        await frame.evaluate(source);
+      }
+      all.push({frameId: top ? 0 : index + 1, url: frame.url(), result: await frame.evaluate(() => globalThis.__linkMeteor?.scan?.({context: false}) ?? null)});
+    }
+    return all;
+  };
+  const edgeAnswers = await gather();
+  const edgeTop = edgeAnswers[0].result;
+  assert.deepEqual(listed(edgeTop.frames), [{site: otherSite, at: '0', chrome: false}, {site: otherSite, at: '1', chrome: false}, {site: '', at: '2', chrome: false},
+    {site: fixture.base, at: null, chrome: false, sealed: true, url: 'about:srcdoc'}, {site: otherSite, at: null, chrome: false, url: `${otherSite}${folder}leaf.html?edges-visible`}],
+    'the frame sent away has no site to name; the frames with no size or off the page and the hidden one are not listed; the sandboxed one is sealed');
+  const edgeJoin = (answers, allowed, options) => joinFrames(answers.filter((answer) => answer.frameId === 0 || allowed(answer)).map(({frameId, result}) => ({frameId, result})), options);
+  const allEdges = edgeJoin(edgeAnswers, () => true);
+  assert.deepEqual([named(allEdges), allEdges.unread], [[['Edges top link', '/edges.html'], ['Leaf link edges-notice', 'localhost/leaf.html?edges-notice'], ['Leaf link edges-other', 'localhost/leaf.html?edges-other'], ['Leaf link edges-away', 'localhost/leaf.html?edges-away'],
+    ['Sealed srcdoc link', 'about:srcdoc'], ['Leaf link edges-visible', 'localhost/leaf.html?edges-visible']], []], 'with every site: the sealed frame inside the component is paired by its address, and the visible one gets its own answer, not the hidden one’s');
+  // The toolbar's access; then, before Allow these sites, the page removes the notice, so the frames
+  // after it move up a place, and adds a frame. The frames left unread are still known by their
+  // keys, and the added frame isn't one of them.
+  const firstEdges = edgeJoin(edgeAnswers, () => false);
+  await edges.evaluate(() => window.fixtureChange());
+  await edges.waitForFunction(() => window.fixtureFramesLoaded() && document.querySelector('iframe[title="Added later"]').contentDocument === null);
+  await sleep(300);
+  const shifted = await gather();
+  assert.deepEqual(listed(shifted[0].result.frames).map((frame) => frame.at), ['4', '0', '1', null, null], 'the frames after the notice moved up; the added frame comes after the others');
+  const allowedEdges = edgeJoin(shifted, () => true, {left: firstEdges.unread, seen: firstEdges.seen});
+  assert.deepEqual([named(allowedEdges), allowedEdges.fresh], [[['Leaf link edges-other', 'localhost/leaf.html?edges-other'], ['Leaf link edges-away', 'localhost/leaf.html?edges-away'],
+    ['Sealed srcdoc link', 'about:srcdoc'], ['Leaf link edges-visible', 'localhost/leaf.html?edges-visible']], 4]);
+  await edges.close();
+  pass('Frames at the edges: a frame sent to another site without an address has no site to name; frames with no size, off the page or hidden are neither read nor listed; inside a closed component a sandboxed frame is paired by its address and a visible frame gets its own answer; after the page removes a frame ahead of them, the frames left unread are known again by their keys', {before: places(firstEdges.unread), fresh: allowedEdges.fresh});
 
   if (htmlUnread) result.limits = [`This Chrome's headless clipboard can't be read with navigator.clipboard.read(): ${htmlUnread} clipboard reads checked the plain text only, not the HTML.`];
   result.result = 'PASS';

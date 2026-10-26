@@ -237,11 +237,38 @@
   function frameIndex(parent,child) { try { for (let i=0,n=Math.min(parent.length,MAX_FRAMES);i<n;i++) if (parent[i]===child) return i; } catch { /* the frame is gone */ } return -1; }
   function framePath(win) { const path=[]; try { for (let w=win;w!==w.top;w=w.parent) { const i=frameIndex(w.parent,w); if (i<0) return null; path.unshift(i); } } catch { return null; } return path.join('.'); }
   function pathBelow(at,parent,child) { const i=at===null||!parent||!child?-1:frameIndex(parent,child); return i<0?null:at?`${at}.${i}`:String(i); }
-  // The site a frame belongs to: the one its src names, when that is a web address; otherwise the
-  // site of the document it sits in (a frame written in the page, or one with no address, is that
-  // page's own). '' when neither is a web address.
+  // Each frame element keeps one key while this copy of the script runs, so a later reading (Allow
+  // these sites) knows a frame again when its place has changed, as it does when the page removes
+  // a frame before it.
+  const frameKeys=new WeakMap(),KEYS=Math.random().toString(36).slice(2,8);let keyCount=0;
+  const frameKey=element=>{let key=frameKeys.get(element);if(!key)frameKeys.set(element,key=`${KEYS}.${++keyCount}`);return key;};
+  // The site a frame belongs to: the one its src names, when that is a web address. A frame of the
+  // site of the document it sits in (or with no web address) is that document's own only when the
+  // page seals it off (`sealed`) or it hasn't loaded yet; any other such frame that can't be read
+  // has gone to a site that can't be told, ''.
   const webSite=value=>{ try { const url=new URL(value); return url.protocol==='http:'||url.protocol==='https:'?url.origin:''; } catch { return ''; } };
-  function frameSite(element) { const src=element.hasAttribute('srcdoc')?'':element.getAttribute('src'); let named=''; try { named=src?webSite(new URL(src,element.baseURI).href):''; } catch { /* not an address */ } return named||webSite(element.ownerDocument.URL)||webSite(location.href); }
+  function srcSite(element) { const src=element.hasAttribute('srcdoc')?'':element.getAttribute('src'); try { return src?webSite(new URL(src,element.baseURI).href):''; } catch { return ''; } }
+  function frameSite(element,own) { const named=srcSite(element),here=webSite(element.ownerDocument.URL)||webSite(location.href); return own?named||here:named!==here?named:''; }
+  // Frames the page seals off from itself: sandboxed without allow-same-origin, at a data: address,
+  // or inside a document that is sandboxed itself.
+  function sealedFrame(element) {
+    const src=element.hasAttribute('srcdoc')?'':String(element.getAttribute('src')||'').trim();
+    return (element.hasAttribute('sandbox')&&!element.sandbox?.contains?.('allow-same-origin'))||/^data:/i.test(src)||element.ownerDocument.defaultView?.origin==='null';
+  }
+  // The address a frame was sent to (about:srcdoc for one written in the page): what pairs a frame
+  // without a place with the copy of this script inside it, unless it has moved on since.
+  function frameAddress(element) { if (element.hasAttribute('srcdoc')) return 'about:srcdoc'; try { const url=new URL(element.getAttribute('src')||'about:blank',element.baseURI).href; return url.length<=2048?url:''; } catch { return ''; } }
+  // A frame still showing the empty page every frame starts with, although its src names a web
+  // address: a lazy frame not scrolled to yet, or one still waiting for its page.
+  const notLoaded=(element,child)=>child.URL==='about:blank'&&!!srcSite(element);
+  // How much of its document a frame covers, or 0 when it can't be seen: no size (under 2 px either
+  // way), or placed wholly before the document's start, where nothing can be scrolled to (tracking frames).
+  function frameArea(element) {
+    const r=element.getBoundingClientRect(),view=element.ownerDocument.defaultView,doc=element.ownerDocument.documentElement;
+    if(r.width<2||r.height<2||r.bottom+view.scrollY<=0)return 0;
+    if(view.getComputedStyle(doc).direction==='rtl'?r.left+view.scrollX>=doc.clientWidth:r.right+view.scrollX<=0)return 0;
+    return Math.round(r.width*r.height);
+  }
   // What a selection says about the frames it can't reach into: how many, and which other sites they are from.
   function framesLeftOut(frames) {
     const hosts=[...new Set(frames.map(frame=>frame.site).filter(site=>site&&site!==webSite(location.href)))].map(site=>new URL(site).host),n=frames.length;
@@ -283,8 +310,12 @@
 
   // Every link this document can reach: its own, those in shadow roots (closed ones too), and those
   // in frames it can read. `frames` lists the visible frames it can't read into, each as
-  // {site, at, chrome}: the site its src names, where it sits (see framePath; null for a
-  // selection, which doesn't need it), and whether the frame sits in page chrome.
+  // {site, at, chrome, key, area}: the site it belongs to (see frameSite), where it sits (see
+  // framePath; null for a selection, which doesn't need it), whether the frame sits in page chrome,
+  // its key (see frameKey) and how much of its document it covers (see frameArea); `sealed` for a
+  // frame the page seals off, `loading` for one that hasn't loaded yet, and `url`, its address, for
+  // one without a place (inside a shadow root).
+  // A frame that can't be seen (frameArea) is neither read nor listed.
   function collect(regional=false) {
     const records = [], warnings = [], notes = [], frames = [];
     let malformedLinks=0, capped=false;
@@ -309,12 +340,18 @@
         const shadow = shadowOf(element);
         if (shadow) walk(shadow,transform,clip,chrome,at);
         if (element.tagName==='IFRAME' || element.tagName==='FRAME') {
-          if (!visible(element)) continue;
+          const area = visible(element) ? frameArea(element) : 0;
+          if (!area) continue;
           const outer = chrome||inChrome(element), within = pathBelow(at,element.ownerDocument.defaultView,element.contentWindow);
-          const unread = () => frames.push({site:frameSite(element),at:within,chrome:outer});
+          const unread = (loading=false) => {
+            const sealed=sealedFrame(element),url=within===null&&!regional?frameAddress(element):'';
+            frames.push({site:frameSite(element,sealed||loading),at:within,chrome:outer,key:frameKey(element),area,...(sealed?{sealed:true}:{}),...(loading?{loading:true}:{}),
+              ...(url?{url}:{})});
+          };
           try {
             const child = element.contentDocument;
             if (!child) {unread();continue;}
+            if (notLoaded(element,child)) {unread(true);continue;}
             const frame = element.getBoundingClientRect();
             const sx = transform.sx * (element.offsetWidth ? frame.width/element.offsetWidth : 1);
             const sy = transform.sy * (element.offsetHeight ? frame.height/element.offsetHeight : 1);

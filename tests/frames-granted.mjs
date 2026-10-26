@@ -28,6 +28,8 @@ const result = {started: new Date().toISOString(), profile, browser: 'Chrome for
 const pass = (name, data = {}) => { result.checks.push({name, ...data}); console.log('PASS', name, Object.keys(data).length ? JSON.stringify(data) : ''); };
 const log = (step, data = {}) => console.log(JSON.stringify({time: new Date().toISOString(), step, ...data}));
 const sleep = (ms) => new Promise((done) => setTimeout(done, ms));
+// A result's frames, with the key kept for each frame that was read (`seen`) checked and set aside.
+const counted = ({seen, ...frames}) => { assert.equal(seen.length, frames.read, 'a key is kept for each frame read'); return frames; };
 const fixture = await fixtureServer();
 const coverage = '/site/coverage/', framesUrl = `${fixture.base}${coverage}frames.html`;
 const other = fixture.other, third = `http://third.localhost:${new URL(fixture.base).port}`;
@@ -94,7 +96,7 @@ try {
   assert.equal(new Set(all.map((link) => `${link.url} ${link.frameUrl}`)).size, 12, 'no link twice');
   assert.ok(all.every((link) => link.sourceUrl === framesUrl), 'the page is every link’s source');
   const after = await storedReport();
-  assert.deepEqual([after.batchId, after.capturedCount, after.results[0].count, after.results[0].warning, after.results[0].frames], [first.batchId, 12, 12, '', {read: 7, unread: 0, sites: [], left: []}]);
+  assert.deepEqual([after.batchId, after.capturedCount, after.results[0].count, after.results[0].warning, counted(after.results[0].frames)], [first.batchId, 12, 12, '', {read: 7, unread: 0, sites: [], left: []}]);
   assert.match(await ui.locator('#capture-report').innerText(), /12 links captured/);
   assert.equal(await ui.locator('#capture-report .report-frames-allow').count(), 0, 'nothing is left to allow');
   await ui.screenshot({path: resolve(evidence, 'frames-granted-after-allow.png')});
@@ -106,7 +108,7 @@ try {
   const again = await links(second.batchId);
   assert.equal(again.length, 12);
   assert.deepEqual(named(again).map(String).sort(), named(all).map(String).sort(), 'the same twelve links');
-  assert.deepEqual([second.results[0].warning, second.results[0].frames, await ui.evaluate(() => grantObservations.length)], ['', {read: 7, unread: 0, sites: [], left: []}, 0]);
+  assert.deepEqual([second.results[0].warning, counted(second.results[0].frames), await ui.evaluate(() => grantObservations.length)], ['', {read: 7, unread: 0, sites: [], left: []}, 0]);
   pass('With the two sites allowed, a new capture reads every frame, each link once, with no prompt');
   result.result = 'PASS';
 } catch (error) {

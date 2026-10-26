@@ -25,6 +25,8 @@ const profile = process.env.LINK_METEOR_TEST_PROFILE;
 if (!profile) throw new Error('Set LINK_METEOR_TEST_PROFILE to the profile prepared with LINK_METEOR_GRANTS=all-sites.');
 const result = {started: new Date().toISOString(), profile, browser: 'Chrome for Testing via Playwright, real unpacked extension, grants prepared through the product by the owner', checks: []};
 const pass = (name, data = {}) => { result.checks.push({name, ...data}); console.log('PASS', name, Object.keys(data).length ? JSON.stringify(data) : ''); };
+// A result's frames, with the key kept for each frame that was read (`seen`) checked and set aside.
+const counted = ({seen, ...frames}) => { assert.equal(seen.length, frames.read, 'a key is kept for each frame read'); return frames; };
 const sleep = (ms) => new Promise((done) => setTimeout(done, ms));
 // /pdf-moved-download/<name> moves to the other site, which sends the PDF as a download (for PDF files).
 const fixture = await fixtureServer({routes: (req, res, url) => {
@@ -169,7 +171,7 @@ try {
   const visited = (await ui.evaluate(async () => (await chrome.storage.session.get('linkMeteorCaptureReport')).linkMeteorCaptureReport)).report;
   const visitedLinks = (await rpc(ui, {type: 'state.get'})).collections.flatMap((c) => c.links).filter((link) => link.batchId === visited.batchId);
   assert.deepEqual(visitedLinks.filter((link) => link.originalHref === '/frame-source').map((link) => link.frameUrl).sort(), [second.base + '/frame.html', second.base.replace('127.0.0.1', 'localhost') + '/frame.html'].sort(), 'the link in each frame, with that frame’s address');
-  assert.deepEqual([visited.results[0].count, visited.results[0].warning, visited.results[0].frames], [38, '', {read: 1, unread: 0, sites: [], left: []}]);
+  assert.deepEqual([visited.results[0].count, visited.results[0].warning, counted(visited.results[0].frames)], [38, '', {read: 1, unread: 0, sites: [], left: []}]);
   pass('Capture this page on a never-visited origin needs no prompt with all-sites access, and reads its frame from another site', {origin: second.base});
 
   // 0.6.0: frames from other sites (tests/fixtures/site/coverage/frames.html: frames from this site,
@@ -206,7 +208,7 @@ try {
   assert.equal(new Set(framed.map((link) => `${link.url} ${link.frameUrl}`)).size, framed.length, 'no link twice');
   assert.ok(framed.every((link) => link.sourceUrl === framesUrl && link.sourceTitle === 'Frames from other sites — coverage fixture'), 'the page is every link’s source');
   assert.equal(framed.find((link) => link.anchorText === 'Inner link other').context, 'Words around the frame’s own link: Inner link other.', 'context is read inside the frame');
-  assert.deepEqual([framesRun.results[0].status, framesRun.results[0].count, framesRun.results[0].warning, framesRun.results[0].frames], ['success', 12, '', {read: 7, unread: 0, sites: [], left: []}]);
+  assert.deepEqual([framesRun.results[0].status, framesRun.results[0].count, framesRun.results[0].warning, counted(framesRun.results[0].frames)], ['success', 12, '', {read: 7, unread: 0, sites: [], left: []}]);
   assert.deepEqual(await ui.evaluate(() => window.__requests), [], 'reading the frames asks for nothing');
   // Content links only: the sidebar frame from another site is page chrome, so its link is left out and counted.
   await rpc(ui, {type: 'state.mutate', action: {type: 'settings.update', patch: {contentOnly: true}}});

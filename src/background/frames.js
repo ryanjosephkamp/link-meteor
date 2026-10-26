@@ -4,7 +4,8 @@
 // (chrome.scripting.executeScript with allFrames, which skips the others silently). joinFrames puts
 // the answers together: each link once, with the frame it was in, and the frames nobody could read
 // named by the site their `src` gives, or counted. No webNavigation permission is used: a frame's
-// place in the page (the page script's framePath) pairs it with the copy that ran inside it.
+// place in the page (the page script's framePath), or inside a shadow root its address, pairs it
+// with the copy that ran inside it.
 // Also here: Allow these sites (capture.frames), which reads the page again once the person has
 // allowed the named sites and adds only the links in the frames that weren't read before.
 // The contract is in docs/CONTRACTS.md ("Frames from other sites, and closed components").
@@ -31,15 +32,15 @@ function scan(options) { return globalThis.__linkMeteor?.scan?.(options) ?? null
 
 // Reads a tab whose top document already holds the page script: every frame Link Meteor may read,
 // joined. Returns {links, warnings, page, fresh, frames?}, where frames is {read, unread, sites,
-// left}: how many frames were read by their own copy of the script and how many weren't, the sites
-// Allow these sites can ask for, and the unread frames themselves ({site, at}), kept so a later
-// reading can tell which frames are new (`left`, see joinFrames).
+// left, seen}: how many frames were read by their own copy of the script and how many weren't, the
+// sites Allow these sites can ask for, and the unread frames themselves ({site, at, key}) and the
+// keys of those read, kept so a later reading can tell which frames are new (`left` and `seen`, see joinFrames).
 // Chrome runs a script "when the frame is ready" by default, and a frame that never finishes
 // loading (or a lazy one not yet loaded) would hold the whole capture, so the frames are read as
 // they are now (injectImmediately) and given FRAMES_MS (`ms`). The top document was loaded by the caller.
 // With `top` (a scan answer the caller already has for the top document, such as one gathered over
 // several steps), that answer stands for the top document and only the frames' answers are new.
-export async function scanTab(tabId, options, {left, top, ms = FRAMES_MS} = {}) {
+export async function scanTab(tabId, options, {left, seen, top, ms = FRAMES_MS} = {}) {
   let results = null;
   try {
     results = await within((async () => {
@@ -48,25 +49,36 @@ export async function scanTab(tabId, options, {left, top, ms = FRAMES_MS} = {}) 
     })(), ms);
   } catch { /* the top document alone, below */ }
   if (Array.isArray(top?.links)) results = [{frameId: 0, result: top}, ...(Array.isArray(results) ? results.filter(entry => entry?.frameId !== 0 && entry?.frameId !== undefined) : [])];
-  let joined = joinFrames(results, {left});
-  if (!joined) joined = joinFrames(await chrome.scripting.executeScript({target: {tabId}, func: scan, args: [options]}), {left});
+  let joined = joinFrames(results, {left, seen});
+  if (!joined) joined = joinFrames(await chrome.scripting.executeScript({target: {tabId}, func: scan, args: [options]}), {left, seen});
   if (!joined) throw new Error('The page didn’t answer. Reload it and capture again.');
   const warnings = joined.said ? [...joined.said] : [];
   if (!joined.said && joined.malformed) warnings.push(`${n(joined.malformed)} malformed link destination${joined.malformed === 1 ? ' was' : 's were'} excluded.`);
   if (joined.capped && !warnings.some(text => text.startsWith('Capture reached'))) warnings.push('Capture reached 20,000 loaded links. Results are partial; select smaller regions for the remainder.');
-  // A named site Link Meteor already has access to can't be fixed by asking: its frame is only counted.
+  // The sites to ask for, those whose frames cover the most of the page first (then in page order),
+  // at most MAX_FRAME_SITES. Asking can't help a frame that hasn't loaded yet, a frame of the page's
+  // own site that the page doesn't seal off (it went elsewhere), or a site Link Meteor already has
+  // access to: those frames are only counted.
+  const asked = new Map();
+  for (const frame of joined.unread) {
+    if (!frame.site || frame.loading || (frame.site === joined.site && !frame.sealed)) continue;
+    const entry = asked.get(frame.site) || {site: frame.site, area: 0, count: 0};
+    entry.area += frame.area; entry.count++; asked.set(frame.site, entry);
+  }
   const sites = [];
-  let named = 0, own = 0;
-  for (const site of [...new Set(joined.unread.map(frame => frame.site).filter(Boolean))].sort()) {
+  let named = 0, own = 0, unasked = 0, unaskedSites = 0;
+  for (const {site, count} of [...asked.values()].sort((a, b) => b.area - a.area)) {
     let allowed = false;
     try { allowed = await chrome.permissions.contains({origins: [`${site}/*`]}); } catch { /* treated as not allowed */ }
-    if (allowed || sites.length === MAX_FRAME_SITES) continue;
-    const count = joined.unread.filter(frame => frame.site === site).length;
+    if (allowed) continue;
+    if (sites.length === MAX_FRAME_SITES) { unasked += count; unaskedSites++; continue; }
     sites.push(site); named += count;
     if (site === joined.site) own = count;
   }
-  const frames = joined.read || joined.unread.length ? {read: joined.read, unread: joined.unread.length, sites, left: joined.unread} : null;
-  if (joined.unread.length) warnings.push(framesWarning({unread: joined.unread.length, sites, named, own, page: joined.site}));
+  const loading = joined.unread.filter(frame => frame.loading).length;
+  const unread = joined.unread.map(({site, at, key}) => ({site, at, ...(key ? {key} : {})}));
+  const frames = joined.read || joined.unread.length ? {read: joined.read, unread: joined.unread.length, sites, left: unread, seen: joined.seen} : null;
+  if (joined.unread.length) warnings.push(framesWarning({unread: joined.unread.length, sites, named, own, page: joined.site, unasked, unaskedSites, loading}));
   return {links: joined.links, warnings, page: joined.page, fresh: joined.fresh, ...(frames ? {frames} : {})};
 }
 
@@ -98,7 +110,7 @@ async function captureFrames(message) {
   // Include them, chosen for this capture, covers its frames' navigation links too.
   const contentOnly = before.settings.contentOnly === true && stored.report.leftOutIncluded === undefined;
   let scanned;
-  try { scanned = await scanTab(tab.id, {context: before.settings.saveContext !== false}, {left: kept.frames.left}); }
+  try { scanned = await scanTab(tab.id, {context: before.settings.saveContext !== false}, {left: kept.frames.left, seen: kept.frames.seen}); }
   catch (error) { throw new Error(`Link Meteor can no longer read that page, so its frames weren’t added (${String(error.message || error)}). Capture the page again.`); }
   const {problem} = await current();
   if (problem) throw new Error(problem);

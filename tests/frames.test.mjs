@@ -39,7 +39,7 @@ test('joinFrames: each unread frame is paired with the copy inside it, by its pl
   ];
   const joined = joinFrames(results);
   assert.deepEqual(names(joined), ['Top', 'In B', 'In A, inside B', 'In C']);
-  assert.deepEqual([joined.read, joined.unread, joined.malformed, joined.capped, joined.fresh], [3, [{site: B, at: '3'}], 2, false, 0]);
+  assert.deepEqual([joined.read, left(joined), joined.malformed, joined.capped, joined.fresh], [3, [[B, '3']], 2, false, 0]);
   assert.deepEqual(joined.links.map((item) => [item.frameUrl, item.sourceUrl, item.sourceTitle, item.pageChrome]), [
     [PAGE_URL, PAGE_URL, 'A frame’s own title', undefined], ['https://b.test/frame', PAGE_URL, 'Page A', undefined],
     ['https://a.test/inner', PAGE_URL, 'Page A', undefined], ['https://c.test/side', PAGE_URL, 'Page A', true]], 'frames keep their frameUrl, take the page as their source, and inherit page chrome from their frame');
@@ -91,6 +91,53 @@ test('joinFrames: with `left`, only the frames an earlier reading left unread, a
   assert.deepEqual(names(joinFrames(loose, {left: [{site: B}, {site: B, at: ''}]})), ['Loose one', 'Loose two']);
 });
 
+test('joinFrames: a frame left unread is known again by its key, after its place changed', () => {
+  const top = (frames) => answer(0, {links: [link('Top')], frames});
+  const inB = (frameId, at, name) => answer(frameId, {links: [link(name, `https://b.test/${frameId}`)], at, url: `https://b.test/${frameId}`});
+  // The first reading: b.test's frame at place 1 (a hidden frame sits at 0), not read.
+  const first = joinFrames([top([{site: B, at: '1', key: 'p.2', area: 3000}])]);
+  assert.deepEqual([first.unread, first.seen], [[{site: B, at: '1', key: 'p.2', area: 3000}], []]);
+  // Its place changes (Chrome numbers frames in the order they were added to the page, so a frame
+  // moved within the page comes last, and one removed moves those after it up): still the same frame.
+  const shifted = joinFrames([top([{site: B, at: '2', key: 'p.2'}]), inB(5, '2', 'In B')], {left: first.unread});
+  assert.deepEqual([names(shifted), shifted.fresh, shifted.unread, shifted.seen], [['In B'], 1, [], ['p.2']]);
+  // Or the frame before it is removed: at place 0 now.
+  assert.deepEqual(names(joinFrames([top([{site: B, at: '0', key: 'p.2'}]), inB(5, '0', 'In B')], {left: first.unread})), ['In B']);
+  // A frame read the first time never counts again, also when it now sits where the unread one was.
+  const both = {left: [{site: B, at: '1', key: 'p.2'}], seen: ['p.1']};
+  const moved = joinFrames([top([{site: B, at: '1', key: 'p.1'}, {site: B, at: '2', key: 'p.2'}]), inB(5, '1', 'Read before'), inB(6, '2', 'Unread before')], both);
+  assert.deepEqual([names(moved), moved.fresh, moved.seen], [['Unread before'], 1, ['p.1', 'p.2']]);
+  // A frame the page put in place of the unread one (a new element of the same site) counts as it ...
+  const replaced = joinFrames([top([{site: B, at: '0', key: 'p.1'}, {site: B, at: '1', key: 'p.7'}]), inB(5, '0', 'Read before'), inB(6, '1', 'Replacement')], both);
+  assert.deepEqual([names(replaced), replaced.fresh], [['Replacement'], 1]);
+  // ... but a frame read before never does, and a frame still there isn't replaced.
+  assert.deepEqual(names(joinFrames([top([{site: B, at: '0', key: 'p.1'}]), inB(5, '0', 'Read before')], both)), []);
+  const still = joinFrames([top([{site: B, at: '0', key: 'p.2'}, {site: B, at: '1', key: 'p.8'}]), inB(6, '1', 'Newer')], both);
+  assert.deepEqual([names(still), left(still)], [[], [[B, '0']]]);
+  // Another site's new frame doesn't take a b.test frame's place.
+  assert.deepEqual(names(joinFrames([top([{site: C, at: '0', key: 'p.9'}]), answer(5, {links: [link('In C')], at: '0', url: 'https://c.test/f'})], both)), []);
+  // Without keys, the site and the place decide, as before.
+  assert.deepEqual(names(joinFrames([top([{site: B, at: '1'}]), inB(5, '1', 'Same place')], {left: [{site: B, at: '1'}]})), ['Same place']);
+});
+
+test('joinFrames: a frame inside a shadow root is paired by its address first, then by its site', () => {
+  // A sandboxed frame written in the page (srcdoc) answers at about:srcdoc; a hidden frame of the
+  // same site answers too, ahead of the visible one; a frame that moved within its site answers at its new address.
+  const results = [
+    answer(0, {links: [link('Top')], frames: [{site: A, at: null, key: 's.1', sealed: true, url: 'about:srcdoc'}, {site: B, at: null, key: 's.2', url: 'https://b.test/visible'}, {site: B, at: null, key: 's.3', url: 'https://b.test/old'}]}),
+    answer(1, {links: [link('Hidden')], at: null, url: 'https://b.test/hidden'}),
+    answer(2, {links: [link('Visible')], at: null, url: 'https://b.test/visible'}),
+    answer(3, {links: [link('Sealed')], at: null, url: 'about:srcdoc'}),
+    answer(4, {links: [link('Moved')], at: null, url: 'https://b.test/new'}),
+  ];
+  const joined = joinFrames(results);
+  assert.deepEqual([names(joined), joined.unread], [['Top', 'Sealed', 'Visible', 'Hidden'], []], 'the visible frame gets its own answer; the last one takes what its site has left');
+  // Without the hidden frame's answer, the frame that moved takes the one left from its site.
+  assert.deepEqual(names(joinFrames(results.filter((entry) => entry.frameId !== 1))), ['Top', 'Sealed', 'Visible', 'Moved']);
+  // A frame whose site can't be told is never paired by site.
+  assert.deepEqual(left(joinFrames([answer(0, {frames: [{site: '', at: null, key: 's.4'}]}), answer(1, {links: [link('Somewhere')], at: null, url: 'about:blank'})])), [['', null]]);
+});
+
 test('joinFrames: limits', () => {
   const many = (count, name) => Array.from({length: count}, (_, i) => link(`${name} ${i}`));
   const capped = joinFrames([answer(0, {links: many(19999, 'Top'), frames: [{site: B, at: '0'}]}), answer(1, {links: many(5, 'Frame'), at: '0', url: 'https://b.test/f'})]);
@@ -118,6 +165,13 @@ test('the report’s words for frames that weren’t read', () => {
   assert.equal(framesWarning({unread: 1, sites: [], named: 0, page: A}), '1 frame couldn’t be read: Chrome didn’t let Link Meteor into it.');
   assert.equal(framesWarning({unread: 2000, sites: [], named: 0, page: A}), '2,000 frames couldn’t be read: Chrome didn’t let Link Meteor into them.');
   assert.equal(framesWarning({unread: 3, sites: [B], named: 1, page: A}), '1 frame from another site wasn’t read, because Link Meteor has no access to b.test. Allow that site to include its links. 2 more frames couldn’t be read: Chrome didn’t let Link Meteor into them.');
+  // Frames past the sites one request names, and frames that hadn't loaded yet.
+  const twenty = Array.from({length: 20}, (_, i) => `https://s${i}.test`);
+  assert.equal(framesWarning({unread: 24, sites: twenty, named: 20, page: A, unasked: 3, unaskedSites: 2, loading: 1}), '20 frames from other sites weren’t read, because Link Meteor has no access to s0.test, s1.test, s2.test and 17 more. Allow those sites to include their links. '
+    + '3 more frames from 2 more sites weren’t read: Link Meteor asks for at most 20 sites at a time, and offers the rest once these are allowed. 1 more frame hadn’t loaded yet, so it wasn’t read: scroll to it, let it load, and capture the page again.');
+  assert.match(framesWarning({unread: 21, sites: twenty, named: 20, page: A, unasked: 1, unaskedSites: 1}), /their links\. 1 more frame from 1 more site wasn’t read: Link Meteor asks for at most 20 sites at a time, and offers the rest once these are allowed\.$/);
+  assert.equal(framesWarning({unread: 2, page: A, loading: 2}), '2 frames hadn’t loaded yet, so they weren’t read: scroll to them, let them load, and capture the page again.');
+  assert.equal(framesWarning({unread: 2, page: A, loading: 1}), '1 frame couldn’t be read: Chrome didn’t let Link Meteor into it. 1 more frame hadn’t loaded yet, so it wasn’t read: scroll to it, let it load, and capture the page again.');
 });
 
 /* The background's pipeline, with Chrome's APIs simulated. */
@@ -166,10 +220,11 @@ const refused = async (message, pattern, sender) => { const reply = await call(m
 const collection = (id) => local.linkMeteorState.collections.find((c) => c.id === id);
 const active = () => collection(local.linkMeteorState.activeCollectionId);
 // A page at a.test with a frame from b.test (holding a frame from a.test), a sidebar frame from c.test, and a sandboxed frame of its own.
+// Each frame has the key the page script gives it, and the area it covers.
 const PAGE = () => [
   answer(0, {links: [link('Top'), link('Nav', PAGE_URL, {pageChrome: true})], page: {title: 'Cited page'}, malformed: 1,
-    frames: [{site: B, at: '0', chrome: false}, {site: C, at: '1', chrome: true}, {site: A, at: '2', chrome: false}]}),
-  answer(4, {links: [link('In B', 'https://b.test/frame', {context: 'Words around In B.'})], at: '0', url: 'https://b.test/frame', frames: [{site: A, at: '0.0', chrome: false}]}),
+    frames: [{site: B, at: '0', chrome: false, key: 'k.1', area: 50000}, {site: C, at: '1', chrome: true, key: 'k.2', area: 20000}, {site: A, at: '2', chrome: false, key: 'k.3', area: 10000, sealed: true}]}),
+  answer(4, {links: [link('In B', 'https://b.test/frame', {context: 'Words around In B.'})], at: '0', url: 'https://b.test/frame', frames: [{site: A, at: '0.0', chrome: false, key: 'b.1', area: 9000}]}),
   answer(5, {links: [link('In A, inside B', 'https://a.test/inner')], at: '0.0', url: 'https://a.test/inner'}),
   answer(6, {links: [link('In C', 'https://c.test/side')], at: '1', url: 'https://c.test/side', malformed: 2}),
 ];
@@ -179,7 +234,7 @@ const reset = async ({allowed = [], frames = 'answer', settings = {}} = {}) => {
 };
 const saved = (batchId, home = active()) => home.links.filter((item) => item.batchId === batchId).map((item) => item.anchorText);
 const SEALED = () => ({...answer(7, {links: [link('Sandboxed', 'https://a.test/sealed')], at: '2', url: 'https://a.test/sealed'}), sealed: true});
-const LEFT = {b: {site: B, at: '0'}, c: {site: C, at: '1'}, sealed: {site: A, at: '2'}};
+const LEFT = {b: {site: B, at: '0', key: 'k.1'}, c: {site: C, at: '1', key: 'k.2'}, sealed: {site: A, at: '2', key: 'k.3'}};
 
 test('Capture this page runs the page script in every frame at once, joins the answers, and names the frames it couldn’t read', async () => {
   await reset();
@@ -188,7 +243,7 @@ test('Capture this page runs the page script in every frame at once, joins the a
   assert.deepEqual(scripted.map((spec) => [spec.files ? 'files' : spec.func.name, spec.target.allFrames === true, spec.injectImmediately === true]),
     [['documentType', false, false], ['files', false, false], ['files', true, true], ['scan', true, true]], 'the top document as before; then every frame, without waiting for frames still loading');
   assert.deepEqual(scripted.at(-1).args, [{context: true}]);
-  assert.deepEqual([result.status, result.count, result.frames], ['success', 2, {read: 0, unread: 3, sites: [A, B, C], left: [LEFT.b, LEFT.c, LEFT.sealed]}]);
+  assert.deepEqual([result.status, result.count, result.frames], ['success', 2, {read: 0, unread: 3, sites: [B, C, A], left: [LEFT.b, LEFT.c, LEFT.sealed], seen: []}], 'the sites whose frames cover the most of the page first');
   assert.equal(result.warning, '1 malformed link destination was excluded. 3 frames weren’t read: 2 from other sites (b.test and c.test), which Link Meteor has no access to, and 1 sandboxed frame of this site, which the toolbar’s temporary access doesn’t cover. Allow those sites and this one (a.test) to include their links.');
   assert.deepEqual(saved(report.batchId), ['Top', 'Nav']);
   assert.equal(report.collectionId, active().id, 'the report says where the capture went');
@@ -199,7 +254,7 @@ test('Capture this page runs the page script in every frame at once, joins the a
   // toolbar's access reaches that one); c.test's frame and the sandboxed one are named.
   await reset({allowed: [B]});
   const some = (await ok({type: 'capture.run', tabIds: [1]})).report;
-  assert.deepEqual([some.results[0].count, some.results[0].frames, some.results[0].warning], [4, {read: 2, unread: 2, sites: [A, C], left: [LEFT.c, LEFT.sealed]},
+  assert.deepEqual([some.results[0].count, some.results[0].frames, some.results[0].warning], [4, {read: 2, unread: 2, sites: [C, A], left: [LEFT.c, LEFT.sealed], seen: ['k.1', 'b.1']},
     '1 malformed link destination was excluded. 2 frames weren’t read: 1 from another site (c.test), which Link Meteor has no access to, and 1 sandboxed frame of this site, which the toolbar’s temporary access doesn’t cover. Allow that site and this one (a.test) to include their links.']);
   const links = active().links.filter((item) => item.batchId === some.batchId);
   assert.deepEqual(links.map((item) => [item.anchorText, item.frameUrl, item.sourceUrl, item.sourceTitle, item.context]), [
@@ -209,14 +264,14 @@ test('Capture this page runs the page script in every frame at once, joins the a
   // A site Link Meteor has access to, whose frame still didn't answer: counted, with nothing to ask for.
   await reset({allowed: [A, B]});
   const counted = (await ok({type: 'capture.run', tabIds: [1]})).report.results[0];
-  assert.deepEqual([counted.frames, counted.warning], [{read: 2, unread: 2, sites: [C], left: [LEFT.c, LEFT.sealed]},
+  assert.deepEqual([counted.frames, counted.warning], [{read: 2, unread: 2, sites: [C], left: [LEFT.c, LEFT.sealed], seen: ['k.1', 'b.1']},
     '1 malformed link destination was excluded. 1 frame from another site wasn’t read, because Link Meteor has no access to c.test. Allow that site to include its links. 1 more frame couldn’t be read: Chrome didn’t let Link Meteor into it.']);
 
   // With every site: everything once, nothing left to say but the malformed links (counted across frames).
   await reset({allowed: [A, B, C]});
   page.answers.push(SEALED());
   const all = (await ok({type: 'capture.run', tabIds: [1]})).report;
-  assert.deepEqual([saved(all.batchId), all.results[0].frames, all.results[0].warning], [['Top', 'Nav', 'In B', 'In A, inside B', 'In C', 'Sandboxed'], {read: 4, unread: 0, sites: [], left: []}, '3 malformed link destinations were excluded.']);
+  assert.deepEqual([saved(all.batchId), all.results[0].frames, all.results[0].warning], [['Top', 'Nav', 'In B', 'In A, inside B', 'In C', 'Sandboxed'], {read: 4, unread: 0, sites: [], left: [], seen: ['k.1', 'b.1', 'k.2', 'k.3']}, '3 malformed link destinations were excluded.']);
   // A page without frames from other sites says nothing about frames.
   page.answers = [answer(0, {links: [link('Plain')]})];
   const plain = (await ok({type: 'capture.run', tabIds: [1]})).report.results[0];
@@ -238,7 +293,7 @@ test('when the frames don’t answer, the top document is read alone and its fra
   for (const frames of ['fail', 'hang']) {
     await reset({allowed: [A, B, C], frames});
     const read = await scanTab(1, {context: false}, {ms: 40});
-    assert.deepEqual([read.links.map((item) => item.anchorText), read.frames], [['Top', 'Nav'], {read: 0, unread: 3, sites: [], left: [LEFT.b, LEFT.c, LEFT.sealed]}], frames);
+    assert.deepEqual([read.links.map((item) => item.anchorText), read.frames], [['Top', 'Nav'], {read: 0, unread: 3, sites: [], left: [LEFT.b, LEFT.c, LEFT.sealed], seen: []}], frames);
     assert.equal(read.warnings.join(' '), '1 malformed link destination was excluded. 3 frames couldn’t be read: Chrome didn’t let Link Meteor into them.', 'with access to their sites there is nothing to ask for');
     assert.deepEqual([scripted.at(-1).target.allFrames, scripted.at(-1).func.name, scripted.at(-1).args], [undefined, 'scan', [{context: false}]]);
   }
@@ -247,7 +302,7 @@ test('when the frames don’t answer, the top document is read alone and its fra
   await reset({allowed: [B]});
   const {result: gathered} = answer(0, {links: [link('Gathered while scrolling')], frames: PAGE()[0].result.frames});
   const handed = await scanTab(1, {context: true}, {top: gathered});
-  assert.deepEqual([handed.links.map((item) => item.anchorText), handed.frames.read, handed.frames.sites], [['Gathered while scrolling', 'In B', 'In A, inside B'], 2, [A, C]]);
+  assert.deepEqual([handed.links.map((item) => item.anchorText), handed.frames.read, handed.frames.sites], [['Gathered while scrolling', 'In B', 'In A, inside B'], 2, [C, A]]);
   page.frames = 'fail';
   assert.deepEqual((await scanTab(1, {context: true}, {top: gathered})).links.map((item) => item.anchorText), ['Gathered while scrolling'], 'also when the frames don’t answer');
   // No answer at all (the tab went away): an error, in plain words.
@@ -260,7 +315,7 @@ test('Allow these sites (capture.frames) reads the page again and adds only the 
   await ok({type: 'state.mutate', action: {type: 'collection.create', name: 'Allowed later'}});
   const home = active().id;
   const first = (await ok({type: 'capture.run', tabIds: [1]})).report;
-  assert.deepEqual(first.results[0].frames.sites, [A, B, C]);
+  assert.deepEqual(first.results[0].frames.sites, [B, C, A]);
   // The person allowed b.test and c.test; the active collection changed meanwhile.
   await ok({type: 'state.mutate', action: {type: 'collection.create', name: 'Now active'}});
   page.allowed = new Set([B, C]); scripted.length = 0;
@@ -271,7 +326,7 @@ test('Allow these sites (capture.frames) reads the page again and adds only the 
     'the frames’ links only, with the frame inside one of them, in the capture’s batch and collection');
   assert.deepEqual(saved(first.batchId, collection(home)), ['Top', 'Nav', 'In B', 'In A, inside B', 'In C'], 'nothing twice');
   assert.equal(active().links.length, 0, 'not the collection that is active now');
-  assert.deepEqual([reply.report.batchId, reply.report.collectionId, reply.report.capturedCount, reply.report.results[0].count, reply.report.results[0].frames], [first.batchId, home, 5, 5, {read: 3, unread: 1, sites: [A], left: [LEFT.sealed]}]);
+  assert.deepEqual([reply.report.batchId, reply.report.collectionId, reply.report.capturedCount, reply.report.results[0].count, reply.report.results[0].frames], [first.batchId, home, 5, 5, {read: 3, unread: 1, sites: [A], left: [LEFT.sealed], seen: ['k.1', 'b.1', 'k.2']}]);
   assert.equal(reply.report.results[0].warning, '3 malformed link destinations were excluded. 1 sandboxed frame of this site wasn’t read: the toolbar’s temporary access covers the page, not the frames it seals off. Allow this site (a.test) to include its links.');
   assert.deepEqual(session.linkMeteorCaptureReport.report, reply.report, 'the kept report shows the same to a view opened later');
   assert.deepEqual(scripted.map((spec) => [spec.files ? 'files' : spec.func.name, spec.target.allFrames === true, spec.injectImmediately === true]), [['files', true, true], ['scan', true, true]]);
@@ -285,7 +340,7 @@ test('Allow these sites (capture.frames) reads the page again and adds only the 
   page.answers.push(SEALED());
   const sealed = await ok({type: 'capture.frames', tabId: 1, batchId: first.batchId});
   assert.deepEqual([sealed.added, saved(first.batchId, collection(home)), sealed.report.results[0].frames, sealed.report.capturedCount, sealed.report.results[0].warning],
-    [{count: 1, skipped: 0, leftOut: 0, frames: 1}, ['Top', 'Nav', 'In B', 'In A, inside B', 'In C', 'Sandboxed'], {read: 4, unread: 0, sites: [], left: []}, 6, '3 malformed link destinations were excluded.']);
+    [{count: 1, skipped: 0, leftOut: 0, frames: 1}, ['Top', 'Nav', 'In B', 'In A, inside B', 'In C', 'Sandboxed'], {read: 4, unread: 0, sites: [], left: [], seen: ['k.1', 'b.1', 'k.2', 'k.3']}, 6, '3 malformed link destinations were excluded.']);
   // Nothing is left unread: there is nothing to add.
   await refused({type: 'capture.frames', tabId: 1, batchId: first.batchId}, /left no frames unread/);
   await ok({type: 'state.mutate', action: {type: 'collection.activate', id: home}});
@@ -358,6 +413,46 @@ test('capture.frames refuses what it can’t do, in plain words', async () => {
   page.answers = [answer(0, {links: [link('Plain')]})];
   const plain = (await ok({type: 'capture.run', tabIds: [1]})).report;
   await refused({type: 'capture.frames', tabId: 1, batchId: plain.batchId}, /left no frames unread/);
+});
+
+test('Allow these sites still adds a frame’s links after the page removes a frame before it', async () => {
+  // The page at first: a notice from ads.test ahead of the other frames, each of them a place further on.
+  const later = (entries) => entries.map((entry) => ({...entry, result: {...entry.result, at: entry.result.at.replace(/^\d+/, (place) => String(Number(place) + 1)),
+    frames: entry.result.frames.map((frame) => ({...frame, at: frame.at.replace(/^\d+/, (place) => String(Number(place) + 1))}))}}));
+  await reset();
+  const withNotice = later(PAGE());
+  withNotice[0].result.frames.unshift({site: 'https://ads.test', at: '0', key: 'k.9', area: 300});
+  page.answers = withNotice;
+  await ok({type: 'state.mutate', action: {type: 'collection.create', name: 'Shifted'}});
+  const first = (await ok({type: 'capture.run', tabIds: [1]})).report;
+  assert.deepEqual(first.results[0].frames.left.map((frame) => frame.at), ['0', '1', '2', '3']);
+  // Before the click, the page removes the notice: every frame after it moves up a place.
+  page.answers = PAGE(); page.allowed = new Set([B, C]);
+  const reply = await ok({type: 'capture.frames', tabId: 1, batchId: first.batchId});
+  assert.deepEqual([reply.added, saved(first.batchId)], [{count: 3, skipped: 0, leftOut: 0, frames: 3}, ['Top', 'Nav', 'In B', 'In A, inside B', 'In C']]);
+  assert.deepEqual([reply.report.results[0].frames.sites, reply.report.results[0].frames.left], [[A], [LEFT.sealed]], 'what is still unread is still offered');
+});
+
+test('Capture this page offers only sites that can help, the biggest first, and says what is past the limit', async () => {
+  await reset();
+  const top = (frames) => [answer(0, {links: [link('Top')], frames})];
+  // A frame of the page's own site the page doesn't seal off (it went elsewhere), and one that hasn't loaded yet.
+  page.answers = top([{site: A, at: '0', key: 'x.1', area: 30000}, {site: B, at: '1', key: 'x.2', area: 30000, loading: true}, {site: '', at: '2', key: 'x.3', area: 30000}]);
+  const lone = (await ok({type: 'capture.run', tabIds: [1]})).report.results[0];
+  assert.deepEqual([lone.frames.sites, lone.frames.unread], [[], 3], 'nothing to ask for: no button');
+  assert.equal(lone.warning, '2 frames couldn’t be read: Chrome didn’t let Link Meteor into them. 1 more frame hadn’t loaded yet, so it wasn’t read: scroll to it, let it load, and capture the page again.');
+  // Twenty-one small ad frames whose hosts sort first, then the page's video: the video's site is
+  // offered first; the smallest ad's site is past the limit, and said so.
+  const ads = Array.from({length: 21}, (_, i) => ({site: `https://${String(i).padStart(2, '0')}.ads.test`, at: String(i), key: `a.${i}`, area: 300 * 250 - i}));
+  page.answers = top([...ads, {site: 'https://video.test', at: '21', key: 'v.1', area: 640 * 360}]);
+  const busy = (await ok({type: 'capture.run', tabIds: [1]})).report.results[0];
+  assert.deepEqual([busy.frames.sites.length, busy.frames.sites[0], busy.frames.sites.includes('https://20.ads.test'), busy.frames.unread], [20, 'https://video.test', false, 22]);
+  assert.equal(busy.warning, '20 frames from other sites weren’t read, because Link Meteor has no access to video.test, 00.ads.test, 01.ads.test and 17 more. Allow those sites to include their links. '
+    + '2 more frames from 2 more sites weren’t read: Link Meteor asks for at most 20 sites at a time, and offers the rest once these are allowed.');
+  // Once those are allowed, the rest are offered.
+  page.allowed = new Set(busy.frames.sites);
+  const rest = await scanTab(1, {});
+  assert.deepEqual(rest.frames.sites, ['https://19.ads.test', 'https://20.ads.test']);
 });
 
 test('capture.frames writes its report only while it is still that capture’s', async () => {

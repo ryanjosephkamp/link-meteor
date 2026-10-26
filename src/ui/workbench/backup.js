@@ -17,6 +17,7 @@ const SETTING_NAMES = {
   exportTimestamp: 'Date in export names', exportTimestampFormat: 'Export date format',
   theme: 'Theme', appearance: 'Appearance', afterDrag: 'After a drag', afterDragFormat: 'Copy format after a drag',
   contentOnly: 'Leave out navigation links', skipSaved: 'Skip links already saved', saveContext: 'Save the words around each link',
+  followPages: 'Pages to follow', lookupDetails: 'Page details lookup',
 };
 
 let pending = null;       // the chosen file: {text, backup, fileName}
@@ -116,7 +117,7 @@ function settingValue(key, value) {
     case 'appearance': return { system: 'system', light: 'light', dark: 'dark' }[value] || String(value);
     case 'afterDrag': return { card: 'show the card', copy: 'copy right away', add: 'add right away' }[value] || String(value);
     case 'afterDragFormat': return { tsv: 'text + URL table', text: 'URLs', markdown: 'Markdown', rich: 'rich links' }[value] || String(value);
-    case 'contentOnly': case 'skipSaved': case 'saveContext': return value ? 'on' : 'off';
+    case 'contentOnly': case 'skipSaved': case 'saveContext': case 'lookupDetails': return value ? 'on' : 'off';
     default: return String(value);
   }
 }

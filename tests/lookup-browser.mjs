@@ -14,7 +14,8 @@
 // With the setting on, from the keyboard where it matters:
 // - a run over a DOI, an arXiv ID, a PubMed ID, a link without an identifier, two links sharing a
 //   DOI, a DOI only DataCite has and one nobody has: the requests in order, exactly as lookupUrl
-//   names them, at least 350 ms apart, and the frame removed afterward;
+//   names them, at least 350 ms apart, and the frame removed afterward; a link to arXiv asked
+//   about by its arXiv ID, never by another DOI its PDF named;
 // - what is saved: a page's own tags are never replaced, a title guessed from a PDF is, and Undo
 //   puts every citation back exactly;
 // - Look up details in a link's details and beside the Export panel's "no authors yet" line, and
@@ -68,7 +69,8 @@ const answers = new Map(RECORDED);
 const cited = (service, identifier) => readAnswer(service, identifier, answers.get(lookupUrl(service, identifier))).citation;
 
 // The seed: eight links from one page. The PDF link's citation was read from the PDF itself, with
-// a title guessed from its largest text; the chapter's page gave its own tags, without authors.
+// a title guessed from its largest text and the one DOI on its first page, its code's (never asked
+// about: a link to arXiv is looked up by its arXiv ID); the chapter's page gave its own tags, without authors.
 const SOURCE = 'https://scholar.example.com/scholar?q=reading';
 const at = (i) => new Date(Date.UTC(2026, 8, 20 + i, 10)).toISOString();
 const L = (id, anchorText, url) => ({id, anchorText, accessibleLabel: '', url, originalHref: url, sourceUrl: SOURCE, sourceTitle: 'Reading list', frameUrl: '', capturedAt: at(Number(id.slice(1))), batchId: 'seed', notes: '', tags: []});
@@ -76,7 +78,8 @@ const P1 = `https://doi.org/${DOI}`, P2 = 'https://arxiv.org/pdf/2409.11211', P3
 const P5 = `https://journals.plos.org/plosmedicine/article?id=${DOI}`, P6 = `https://doi.org/${DATASET}`, P7 = `https://doi.org/${NOBODY}`, P8 = `https://link.springer.com/chapter/${CHAPTER}`;
 const LINKS = [L('p1', 'Why most findings are false', P1), L('p2', '[PDF] SplatFields', P2), L('p3', 'Ioannidis 2005 on PubMed', P3), L('p4', 'Lab notes', P4),
   L('p5', 'The same paper at PLOS', P5), L('p6', 'A dataset', P6), L('p7', 'Nobody has this', P7), L('p8', 'SplatFields chapter', P8)];
-const FROM_PDF = {title: 'A Guess From The Largest Text', arxiv: '2409.11211', arxivVersion: 'v1', arxivCategory: 'cs.CV', date: '17 Sep 2024', pdfUrl: P2, source: 'pdf', readAt: '2026-09-29T09:00:00.000Z'};
+const CODE_DOI = '10.5281/zenodo.1111111';
+const FROM_PDF = {title: 'A Guess From The Largest Text', arxiv: '2409.11211', arxivVersion: 'v1', arxivCategory: 'cs.CV', date: '17 Sep 2024', doi: CODE_DOI, pdfUrl: P2, source: 'pdf', readAt: '2026-09-29T09:00:00.000Z'};
 const FROM_TAGS = {title: 'Title From The Page', date: '2024', readAt: '2026-09-30T09:00:00.000Z'};
 const SEEDED = {[P2]: FROM_PDF, [P8]: FROM_TAGS};
 const FILLED = 'titles for 1 paper, authors for 1, dates for 1, journals for 1';
@@ -294,6 +297,7 @@ try {
   assert.deepEqual(saved[P6], {...cited('datacite', DATASET), readAt}, 'the DOI Crossref doesn’t have came from DataCite');
   assert.deepEqual(saved[P2], mergeCitation(FROM_PDF, {...cited('datacite', ARXIV_DOI), readAt}));
   assert.deepEqual([saved[P2].title, saved[P2].source, saved[P2].arxivCategory, saved[P2].authors.length], ['SplatFields: Neural Gaussian Splats for Sparse 3D and 4D Reconstruction', 'datacite', 'cs.CV', 7], 'the title guessed from the PDF is replaced; what only the PDF knew stays');
+  assert.ok(!made.some((request) => request.url.includes(encodeURIComponent(CODE_DOI))), 'the code’s DOI on the PDF’s first page was never asked about');
   assert.deepEqual(saved[P8], mergeCitation(FROM_TAGS, {...cited('crossref', CHAPTER), readAt}));
   assert.deepEqual([saved[P8].title, saved[P8].date, saved[P8].readAt, saved[P8].source, saved[P8].authors.length, saved[P8].journal], ['Title From The Page', '2024', FROM_TAGS.readAt, undefined, 7, 'Computer Vision – ECCV 2024'], 'the page’s own tags are never replaced; the lookup fills what they left out');
   pass('lookup-saves-only-what-was-missing', {citations: Object.keys(saved).length});

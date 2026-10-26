@@ -43,6 +43,14 @@ export function lookupRequests(ids = {}) {
   return requests;
 }
 
+// The requests for a link: lookupRequests for identifiersOf(link, pages), except that a link to
+// arXiv is asked about by the arXiv ID in its address, never by a DOI its citation names: a PDF's
+// first page can name another work's DOI (its code's, say), whose answer would replace the paper's.
+export function linkRequests(link, pages = {}) {
+  const address = identifiersOf(link);
+  return lookupRequests(address.arxiv ? { arxiv: address.arxiv } : identifiersOf(link, pages));
+}
+
 /* Answers ----------------------------------------------------------------------------------------- */
 const ENTITIES = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' ' };
 // Text from a service, made plain: tags and entities removed, spaces collapsed, cut to a limit.
@@ -170,7 +178,7 @@ export function sameCitation(a, b) {
 }
 
 // The run for these links (or rows): one ask per identifier, however many links share it.
-// - `asks`: [{key, requests, targets, links}], at most MAX_LOOKUPS. `requests` are lookupRequests'
+// - `asks`: [{key, requests, targets, links}], at most MAX_LOOKUPS. `requests` are linkRequests'
 //   for the identifier, tried in order. `targets` are the addresses the answer is saved under: for
 //   each link, the citation it already uses (citationFor: its own page's, or one borrowed from a
 //   saved page about the same work), otherwise the link's own address.
@@ -182,7 +190,7 @@ export function lookupPlan(links, pages = {}, { seen } = {}) {
   const asks = new Map();
   let without = 0, complete = 0;
   for (const link of links) {
-    const requests = lookupRequests(identifiersOf(link, pages));
+    const requests = linkRequests(link, pages);
     const used = citationFor(link, pages);
     const target = used?.key || pageKey(link?.url);
     if (!requests.length || !target) { without++; continue; }

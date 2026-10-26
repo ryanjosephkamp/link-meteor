@@ -8,8 +8,8 @@
 // a link's address, text, notes or collection name. Only core/lookup.js's reading of an answer is
 // saved, with links.append, so the model's mergeCitation decides what wins; Undo puts back what
 // each address held before, with pages.restore.
-import { LOOKUP_PAUSE_MS, LOOKUP_SERVICES, MAX_LOOKUP_FAILURES, lookupMissing, lookupOutcome, lookupPlan, lookupReport, lookupRequests, missingWords, readAnswer, sameCitation, unauthored } from '../../core/lookup.js';
-import { identifiersOf, citationFor } from '../../core/identifiers.js';
+import { LOOKUP_PAUSE_MS, LOOKUP_SERVICES, MAX_LOOKUP_FAILURES, linkRequests, lookupMissing, lookupOutcome, lookupPlan, lookupReport, missingWords, readAnswer, sameCitation, unauthored } from '../../core/lookup.js';
+import { citationFor } from '../../core/identifiers.js';
 import { CITE_FORMATS } from '../../core/export.js';
 import { $, node, button, count, labelFor } from './helpers.js';
 import { ui, request, action, show, currentCollection } from './state.js';
@@ -233,7 +233,7 @@ function dismiss() {
 
 /* Where it starts -------------------------------------------------------------------------------- */
 function selectedInView() { return ui.rows.flatMap((row) => row.occurrenceIds.filter((id) => ui.selectedIds.has(id))); }
-const lookable = (link, pages) => lookupRequests(identifiersOf(link, pages)).length > 0;
+const lookable = (link, pages) => linkRequests(link, pages).length > 0;
 
 // Look up details in the list toolbar: shown while the selection in this view holds a link with a
 // DOI, an arXiv ID or a PubMed ID.
@@ -255,7 +255,7 @@ export function renderLookupLine(rows, format) {
 // In a link's details, where its citation lacks something a lookup gives; otherwise null.
 export function detailLookup(link) {
   const pages = currentCollection()?.pages || {};
-  const requests = lookupRequests(identifiersOf(link, pages));
+  const requests = linkRequests(link, pages);
   const missing = requests.length ? lookupMissing(citationFor(link, pages)?.citation, requests) : [];
   if (!missing.length) return null;
   const block = node('div', 'occ-block occ-lookup'); block.setAttribute('role', 'group'); block.setAttribute('aria-label', 'Missing details');

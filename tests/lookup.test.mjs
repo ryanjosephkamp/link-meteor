@@ -8,7 +8,7 @@ import { resolve } from 'node:path';
 import { readdir } from 'node:fs/promises';
 import { createState, mergeCitation, reduceState } from '../src/core/model.js';
 import { citeFacts } from '../src/core/cite.js';
-import { LOOKUP_SERVICES, MAX_LOOKUPS, filled, lookupAllowed, lookupMissing, lookupOutcome, lookupPlan, lookupReport, lookupRequests, lookupUrl, missingWords, plainText, readAnswer, readCrossref, readDatacite, readPubmed, sameCitation, unauthored } from '../src/core/lookup.js';
+import { LOOKUP_SERVICES, MAX_LOOKUPS, filled, linkRequests, lookupAllowed, lookupMissing, lookupOutcome, lookupPlan, lookupReport, lookupRequests, lookupUrl, missingWords, plainText, readAnswer, readCrossref, readDatacite, readPubmed, sameCitation, unauthored } from '../src/core/lookup.js';
 
 const root = resolve(import.meta.dirname, '..');
 const recorded = (name) => readFile(resolve(root, 'tests/fixtures/lookup', name), 'utf8');
@@ -25,6 +25,21 @@ test('each identifier goes to one service, with nothing but the identifier in th
   assert.deepEqual(lookupRequests({ pmid: '16060722' }), [{ service: 'pubmed', identifier: '16060722', url: 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?db=pubmed&retmode=json&id=16060722' }]);
   assert.deepEqual(lookupRequests({ isbn: '9780262033848', pmcid: 'PMC1182327' }), [], 'nothing to look up without a DOI, an arXiv ID or a PubMed ID');
   assert.deepEqual(lookupRequests(), []);
+});
+
+test('a link to arXiv is asked about by the arXiv ID in its address, not by a DOI its PDF named', () => {
+  const PDF = 'https://arxiv.org/pdf/2409.11211v1';
+  const link = (url) => ({ id: url, url, originalHref: url, anchorText: 'Paper' });
+  // The PDF reader keeps the one DOI on page 1 besides arXiv's own: here, the paper's code on Zenodo.
+  const pages = { [PDF]: { title: 'SplatFields', authors: ['Mihajlovic, Marko'], doi: '10.5281/zenodo.1234567', arxiv: '2409.11211', source: 'pdf', readAt: '2026-10-26T00:00:00.000Z' } };
+  assert.deepEqual(linkRequests(link(PDF), pages).map((request) => `${request.service} ${request.identifier}`), ['datacite 10.48550/arXiv.2409.11211']);
+  assert.deepEqual(lookupPlan([link(PDF)], pages).asks.map((ask) => ask.key), ['datacite:10.48550/arxiv.2409.11211']);
+  assert.deepEqual(linkRequests(link('https://doi.org/10.48550/arXiv.2409.11211'), {}).map((request) => request.identifier), ['10.48550/arXiv.2409.11211']);
+  // Any other link is asked about by its identifiers as before: a DOI its own citation names, too.
+  const page = 'https://journal.example/article/7';
+  assert.deepEqual(linkRequests(link(page), { [page]: { title: 'T', doi: '10.1371/journal.pmed.0020124' } }).map((request) => request.service), ['crossref', 'datacite']);
+  assert.deepEqual(linkRequests(link('https://pubmed.ncbi.nlm.nih.gov/16060722/')).map((request) => request.service), ['pubmed']);
+  assert.deepEqual(linkRequests(link('https://example.org/notes')), []);
 });
 
 test('only the three services, and only identifiers of the right shape', () => {

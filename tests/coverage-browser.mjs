@@ -260,17 +260,31 @@ try {
     'Read 1 more frame: nothing new was added. Skipped 3 links already saved.', 'Link Meteor now has access to a.example, but the frames from that site still couldn’t be read. The capture report says what is left.']);
   pass('After Chrome allows the sites (simulated, so without real access) the page is read again into the same capture: nothing is added twice, the report is kept as it was, and the notice says the frames still couldn’t be read; a request for another capture is refused', {notice: await text('notice')});
 
-  // A region on that page: frames from other sites can't be selected, and the card says how many.
-  await rpc({type: 'capture.arm', tabId: frames.tabId});
-  await until(() => js(frames.session, `!!${card('')}`), 'the selection layer on the frames page');
-  const whole = await js(frames.session, `(() => { const r = document.querySelector('main').getBoundingClientRect(); return {from: {x: r.left + 2, y: Math.max(2, r.top + 2)}, to: {x: r.right - 2, y: Math.min(innerHeight - 4, r.bottom - 2)}}; })()`);
-  await drag(frames.session, whole.from, whole.to);
-  await until(() => js(frames.session, `/links? selected$/.test(${card(`.querySelector('.count')?.textContent`)} || '')`), 'a region on the frames page');
-  const regionFrames = await js(frames.session, `(() => { const root = ${card('')}; return {rows: [...root.querySelectorAll('.preview .t')].map((row) => row.textContent), warning: root.querySelector('.warning').textContent}; })()`);
+  // A region on that page: frames from other sites can't be selected, and the card names only the
+  // frames the region touches.
+  const selectOn = async (from, to) => {
+    await rpc({type: 'capture.arm', tabId: frames.tabId});
+    await until(() => js(frames.session, `!!${card('')} && !${card(`.querySelector('.bar')`)}?.checkVisibility?.()`), 'the selection layer on the frames page');
+    // From the top of the page, stopping short of the window's edge, where the drag would scroll it.
+    const box = await js(frames.session, `(() => { scrollTo(0, 0); const a = document.querySelector(${JSON.stringify(from)}).getBoundingClientRect(), b = document.querySelector(${JSON.stringify(to)}).getBoundingClientRect(); return {from: {x: a.left + 2, y: Math.max(2, a.top + 2)}, to: {x: b.right - 2, y: Math.min(innerHeight - 60, b.bottom - 2)}}; })()`);
+    await drag(frames.session, box.from, box.to);
+    await until(() => js(frames.session, `/links? selected$/.test(${card(`.querySelector('.count')?.textContent`)} || '')`), 'a region on the frames page');
+    const shown = await js(frames.session, `(() => { const root = ${card('')}; return {rows: [...root.querySelectorAll('.preview .t')].map((row) => row.textContent), warning: root.querySelector('.warning').textContent}; })()`);
+    await js(frames.session, `${card(`.querySelector('.dismiss')`)}.click(); true`);
+    await until(() => js(frames.session, `!${card('')}`), 'the card closed');
+    return shown;
+  };
+  const framesOut = (count, names) => `Links inside ${count === 1 ? '1 frame' : `${count} frames`} aren’t included: a selection can’t reach into frames from other sites (${names}) or sandboxed frames. Capture this page reads them where Link Meteor has access.`;
+  const regionFrames = await selectOn('main', 'main');
   assert.deepEqual(regionFrames.rows.filter((row) => /nested-other|other|third|aside|component/.test(row)), [], 'no link from a frame the page can’t reach');
-  assert.equal(regionFrames.warning, `Links inside 6 frames aren’t included: a selection can’t reach into frames from other sites (${hosts.other} and ${hosts.third}) or sandboxed frames. Capture this page reads them where Link Meteor has access.`);
-  await js(frames.session, `${card(`.querySelector('.dismiss')`)}.click(); true`);
-  pass('A region on a page with frames from other sites: their links can’t be selected, and the card counts those frames and names their sites', {rows: regionFrames.rows, warning: regionFrames.warning});
+  // Only the page's own link: no frame in the region.
+  assert.deepEqual(await selectOn('#top-link', '#top-link'), {rows: ['Top link'], warning: ''});
+  // The frame from this site: read, but the frame from the other site inside it is not.
+  const sameFrame = await selectOn('#same', '#same');
+  assert.deepEqual([sameFrame.rows, sameFrame.warning], [['Inner link same', 'Leaf link same-nested-this'], framesOut(1, hosts.other)]);
+  // The frames from the other site and the third site.
+  assert.deepEqual((await selectOn('#other', '#third')).warning, framesOut(2, `${hosts.other} and ${hosts.third}`));
+  pass('A region on a page with frames from other sites: their links can’t be selected, and the card counts and names only the frames the region touches', {rows: regionFrames.rows, warning: regionFrames.warning, same: sameFrame.warning});
   await closeTab(frames);
 
   // One other site and no sandboxed frame: the words and the button are singular.

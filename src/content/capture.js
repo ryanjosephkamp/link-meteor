@@ -314,7 +314,7 @@
   // framePath; null for a selection, which doesn't need it), whether the frame sits in page chrome,
   // its key (see frameKey) and how much of its document it covers (see frameArea); `sealed` for a
   // frame the page seals off, `loading` for one that hasn't loaded yet, and `url`, its address, for
-  // one without a place (inside a shadow root).
+  // one without a place (inside a shadow root). For a selection, also its `element` and `rects`.
   // A frame that can't be seen (frameArea) is neither read nor listed.
   function collect(regional=false) {
     const records = [], warnings = [], notes = [], frames = [];
@@ -346,7 +346,7 @@
           const unread = (loading=false) => {
             const sealed=sealedFrame(element),url=within===null&&!regional?frameAddress(element):'';
             frames.push({site:frameSite(element,sealed||loading),at:within,chrome:outer,key:frameKey(element),area,...(sealed?{sealed:true}:{}),...(loading?{loading:true}:{}),
-              ...(url?{url}:{})});
+              ...(url?{url}:{}),...(regional?{element,rects:geometry(element,transform,clip)}:{})});
           };
           try {
             const child = element.contentDocument;
@@ -365,8 +365,8 @@
     walk(document);
     if (malformedLinks) notes.push(`${malformedLinks} malformed link destination${malformedLinks===1?' was':'s were'} excluded.`);
     if (capped) notes.push('Capture reached 20,000 loaded links. Results are partial; select smaller regions for the remainder.');
-    // A selection says which frames it left out; Capture this page reports them itself (scan).
-    if (frames.length) warnings.push(framesLeftOut(frames));
+    // A region's card says which frames inside it it left out (see framesIn); Capture this page
+    // reports them itself (scan).
     warnings.push(...notes);
     return {records,inaccessibleFrames:frames.length,frames,warnings,notes,malformed:malformedLinks,capped};
   }
@@ -531,11 +531,12 @@
     document.documentElement.append(host);
     const $=selector=>shadow.querySelector(selector);
     const shield=$('.shield'), box=$('.rect'), badge=$('.badge'), hits=$('.hits'), bar=$('.bar');
-    let dragging=false, start=null, pointer=null, frame=null, entries=[], selected=[], ticks=[], warnings=[],inaccessibleFrames=0,committed=false,destination='',destinationId='',chosen=!!lastDestinationId,collections=[],destinationRequest=0,saveInFlight=null,savedBatchId='',savedCollectionId='',opening=null,pendingOpen=null;
+    let dragging=false, start=null, pointer=null, frame=null, entries=[], selected=[], ticks=[], notes=[],frameItems=[],framesIn=new Map(),inaccessibleFrames=0,committed=false,destination='',destinationId='',chosen=!!lastDestinationId,collections=[],destinationRequest=0,saveInFlight=null,savedBatchId='',savedCollectionId='',opening=null,pendingOpen=null;
     // 0.4.0: preview rows, links unticked as page chrome or by the active filter, links already saved,
     // this card's Skip saved choice, the left-out note's state, and the notice's timer.
     let rows=[],chromeOff=new Set(),filterOff=new Set(),filter='all',savedUrls=new Set(),savedRequest=0,skip=false,leftState='',leftIncluded=0,noticeTimer=0;
-    const swept=new Map();
+    // The links (and the frames this page can't read) the selection held before each scroll.
+    const swept=new Map(),sweptFrames=new Map();
     const state={close,progress,idle:()=>!$('.notice').hidden&&bar.style.display!=='block'};active=state;
     for(const button of shadow.querySelectorAll('button[data-key]'))button.setAttribute('aria-keyshortcuts',button.dataset.key.toUpperCase());
 
@@ -573,18 +574,20 @@
       event.preventDefault();event.stopImmediatePropagation();
       dragging=true;pointer={x:event.clientX,y:event.clientY};start={x:event.clientX+scrollX,y:event.clientY+scrollY};
       if(now)pointer={x:now.x,y:now.y};
-      const result=collect(true);entries=result.records;warnings=result.warnings;inaccessibleFrames=result.inaccessibleFrames;
+      const result=collect(true);entries=result.records;frameItems=result.frames;notes=result.notes;
       shield.setPointerCapture?.(event.pointerId);box.hidden=false;badge.hidden=false;$('.hint').style.pointerEvents='none';
       refresh();frame=requestAnimationFrame(tick);
     }
     function currentRect(){return{left:Math.min(start.x-scrollX,pointer.x),top:Math.min(start.y-scrollY,pointer.y),right:Math.max(start.x-scrollX,pointer.x),bottom:Math.max(start.y-scrollY,pointer.y)};}
     function refresh(rescan=false) {
       if(!start)return;
-      if(rescan){const result=collect(true);entries=result.records;warnings=result.warnings;inaccessibleFrames=result.inaccessibleFrames;}
+      if(rescan){for(const [element,item] of framesIn)sweptFrames.set(element,item);const result=collect(true);entries=result.records;frameItems=result.frames;notes=result.notes;}
       const rect=currentRect();box.style.cssText=`left:${rect.left}px;top:${rect.top}px;width:${rect.right-rect.left}px;height:${rect.bottom-rect.top}px`;
       const matched=entries.filter(entry=>entry.rects.some(r=>positive(intersect(rect,r))));
       const combined=new Map(swept);for(const entry of matched)combined.set(entry.element,entry);
       selected=[...combined.values()].slice(0,MAX_LINKS);hits.replaceChildren();
+      // The frames it can't read that the selection touches: only those are named on the card.
+      framesIn=new Map(sweptFrames);for(const item of frameItems)if(item.rects.some(r=>positive(intersect(rect,r))))framesIn.set(item.element,item);
       for(const entry of matched.slice(0,250)){for(const r of entry.rects){const hit=document.createElement('div');hit.className='hit';hit.style.cssText=`left:${r.left}px;top:${r.top}px;width:${r.right-r.left}px;height:${r.bottom-r.top}px`;hits.append(hit);}}
       badge.textContent=`${selected.length} link${selected.length===1?'':'s'}`;badge.style.left=Math.min(innerWidth-90,Math.max(4,pointer.x+12))+'px';badge.style.top=Math.min(innerHeight-35,Math.max(4,pointer.y+12))+'px';
     }
@@ -614,7 +617,8 @@
       ticks=selected.map(entry=>!(captureSettings.contentOnly&&entry.chrome));
       chromeOff=new Set(ticks.flatMap((ticked,index)=>ticked?[]:[index]));leftState=chromeOff.size?'left':'';skip=!!captureSettings.skipSaved;
       renderPreview();updateCounts();follow();
-      $('.warning').textContent=warnings.join(' ');
+      const left=[...framesIn.values()];inaccessibleFrames=left.length;
+      $('.warning').textContent=[...(left.length?[framesLeftOut(left)]:[]),...notes].join(' ');
       // After a drag: the card, or copy or add right away with a notice.
       const after=captureSettings.afterDrag;
       if((after==='copy'||after==='add')&&tickedLinks().length)(after==='copy'?quickCopy:quickAdd)();

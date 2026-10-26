@@ -167,8 +167,36 @@ try {
   assert.equal((await collection('Scrolled')).links.length, 0);
   assert.equal((await report()).undo, false);
   assert.match(await js(ui, `document.querySelector('#capture-report .report-scroll').innerText`), /Undone: removed 61 links\.$/, 'the report says it is undone');
-  await check('further-scroll', false);
   pass('Scroll to the end first: a counter with Stop in the workbench and on the page, every batch of the feed in one batch of links, and Undo', {links: 61});
+
+  /* 2b. With Leave out navigation links: Include them, then Undo; and Undo, then no Include them. */
+  await rpc({type: 'state.mutate', action: {type: 'settings.update', patch: {contentOnly: true}}});
+  const leftOutLine = () => js(ui, `(() => { const line = document.querySelector('#capture-report .report-left-out'); return line ? {text: line.querySelector('span').innerText, include: !!line.querySelector('.link-btn')} : null; })()`);
+  await fresh('Included');
+  await quiet();
+  await click('capture');
+  await until(async () => /^Capture finished: 60 links from this page\./.test(await notice()), 'the scroll that left a navigation link out', 60000);
+  assert.deepEqual(await leftOutLine(), {text: 'Left out 1 navigation link.', include: true});
+  await js(ui, `document.querySelector('#capture-report .report-left-out .link-btn').click()`);
+  await until(async () => (await notice()) === 'Added 1 navigation link to “Included”.', 'Include them');
+  assert.equal((await collection('Included')).links.length, 61);
+  await js(ui, `document.querySelector('#capture-report .report-scroll .link-btn').click()`);
+  await until(async () => (await notice()) === 'Undone: removed 61 links from “Included”.', 'Undo after Include them');
+  assert.equal((await collection('Included')).links.length, 0, 'Undo removes the navigation link it included too');
+  await fresh('Undone first');
+  await quiet();
+  await click('capture');
+  await until(async () => /^Capture finished: 60 links from this page\./.test(await notice()), 'the second scroll', 60000);
+  const batch = (await collection('Undone first')).links[0].batchId;
+  await js(ui, `document.querySelector('#capture-report .report-scroll .link-btn').click()`);
+  await until(async () => (await notice()) === 'Undone: removed 60 links from “Undone first”.', 'Undo first');
+  assert.deepEqual(await leftOutLine(), {text: 'Left out 1 navigation link.', include: false}, 'Include them is gone after Undo');
+  assert.equal(await rpcError({type: 'capture.includeLeftOut', batchId: batch}), 'Those navigation links are no longer kept. Capture the page again to include them.');
+  assert.equal((await collection('Undone first')).links.length, 0);
+  await rpc({type: 'state.mutate', action: {type: 'settings.update', patch: {contentOnly: false}}});
+  await check('further-scroll', false);
+  await quiet();
+  pass('Scroll to the end first with Leave out navigation links: Undo after Include them removes both; after Undo, Include them is no longer offered');
 
   /* 3. Follow Next through a paged site, with one toolbar click. */
   await go(listing('of=3&next=text'), `document.title === 'Listing, page 1'`);
@@ -259,6 +287,17 @@ try {
   assert.equal((await collection('Hung')).links.length, 12, 'what was read is kept');
   for (const res of hanging) res.destroy();
   pass('Follow Next ends, each in its own words: a loop, a next page on a site without access (not opened), a page Chrome can’t load, and a page that doesn’t load in 30 seconds');
+
+  /* 5b. Pages that change their own address after loading (a # part, history.replaceState) haven't moved. */
+  for (const own of ['hash', 'replace']) {
+    // The last run's notice ends the same way, so it is put away first.
+    await quiet();
+    shown = await follow(`of=3&next=text&own=${own}`, `Own address ${own}`, 'Page 3 has no Next link.');
+    assert.deepEqual(shown.rows.map((row) => [row[0], row[4]]), [['1', 'Captured'], ['2', 'Captured'], ['3', 'Captured']], own);
+    assert.equal((await collection(`Own address ${own}`)).links.length, 40, own);
+    assert.match(await js(page, 'location.href'), own === 'hash' ? /p=3.*#results$/ : /p=3.*&sort=new$/, 'the page did change its own address');
+  }
+  pass('Follow Next reads pages that change their own address after loading, with a # part or history.replaceState, as the same pages');
 
   /* 6. Stop in the workbench, and Escape on the page. */
   await go(listing('of=12&next=text-page'), `document.title === 'Listing, page 1'`);

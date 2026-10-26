@@ -1117,10 +1117,11 @@
   // scrollScan (Scroll to the end first), nextLink (Follow Next) and the notice with Stop.
   // The scroll's limits. A caller may lower them (options.scroll.limits), never raise them.
   const SCROLL={screens:50,links:5000,ms:120000,settle:600,grow:2000,still:3,poll:200};
-  // runNow: {runId, halt} while a run reads this page, so Stop and Escape reach it.
-  let runHost=null,runNow=null,runTimer=0;
+  // runNow: {runId, halt} while a run reads this page, so Stop and Escape reach it. runHalted: the
+  // run Stop reached before its scroll began here, so that scroll ends at once.
+  let runHost=null,runNow=null,runTimer=0,runHalted='';
   const wait=ms=>new Promise(done=>setTimeout(done,ms));
-  const tell=message=>{try{chrome.runtime.sendMessage(message).catch(()=>{});}catch{/* extension reloaded */}};
+  const tell=message=>{try{return chrome.runtime.sendMessage(message).catch(()=>{});}catch{/* extension reloaded */}};
   // The notice: the run's counter as its text and one Stop button. Once the run is over it says how
   // it ended, and closes itself after NOTICE_MS unless it has focus or the pointer is over it.
   function runNotice(text,{going=true}={}){
@@ -1154,7 +1155,7 @@
   // ends at once with what it has, and the background ends the run.
   function stopRun(){
     if(!runNow)return;
-    runNow.halt?.();
+    runHalted=runNow.runId;runNow.halt?.();
     if(runHost){runHost.shadowRoot.querySelector('.run-text').textContent='Stopping…';runHost.shadowRoot.querySelector('.run-stop').disabled=true;}
     tell({type:'run.stop',runId:runNow.runId});
   }
@@ -1163,7 +1164,7 @@
   // content.run from the background: {runId, text} shows the counter; with done, how the run ended;
   // with halt, Stop was pressed in the workbench.
   function runMessage(message){
-    if(message.halt){if(runNow&&(!message.runId||message.runId===runNow.runId)){runNow.halt?.();if(runHost){runHost.shadowRoot.querySelector('.run-text').textContent='Stopping…';runHost.shadowRoot.querySelector('.run-stop').disabled=true;}}return;}
+    if(message.halt){runHalted=String(message.runId || '');if(runNow&&(!message.runId||message.runId===runNow.runId)){runNow.halt?.();if(runHost){runHost.shadowRoot.querySelector('.run-text').textContent='Stopping…';runHost.shadowRoot.querySelector('.run-stop').disabled=true;}}return;}
     if(message.done){runNow=null;if(message.text)runNotice(String(message.text),{going:false});else closeRunNotice();return;}
     if(runNow?.runId!==message.runId)runNow={runId:String(message.runId || '')};
     runNotice(String(message.text || ''));
@@ -1187,8 +1188,10 @@
     const want=options.scroll && typeof options.scroll==='object'?options.scroll:{},cap=key=>{const value=Number(want.limits?.[key]);return value>0?Math.min(SCROLL[key],value):SCROLL[key];};
     const max={screens:cap('screens'),links:cap('links'),ms:cap('ms')},settle=cap('settle'),grow=cap('grow'),poll=Math.min(SCROLL.poll,settle);
     const box=scroller(),home={left:box.scrollLeft,top:box.scrollTop},started=Date.now(),seen=new Map(),links=[];
-    let screens=1,still=0,ended='',halted=false;
-    const state={runId:String(want.runId || ''),halt(){halted=true;}};runNow=state;
+    // Stop that came before this scroll began (between pages, or while the page was being readied) ends it at once.
+    const runId=String(want.runId || '');
+    let screens=1,still=0,ended='',halted=!!runId&&runHalted===runId;
+    const state={runId,halt(){halted=true;}};runNow=state;
     // A link is kept the first time its element shows that address and those words, so what the
     // page removes later stays, and what it shows again in the same element isn't counted twice.
     const gather=()=>{
@@ -1203,7 +1206,8 @@
     const note=()=>{
       const base=Number(want.links)||0;
       if(runNow===state&&!halted)runNotice(want.lead?`${want.lead}screen ${screens} of up to ${max.screens} · ${plural(base+links.length,'link')}`:`Scrolling: screen ${screens} of up to ${max.screens} · ${plural(links.length,'link')}`);
-      tell({type:'run.scroll',runId:state.runId,screen:screens,of:max.screens,links:links.length});
+      // The background answers {halt: true} once Stop was pressed, should this page have missed it.
+      Promise.resolve(tell({type:'run.scroll',runId:state.runId,screen:screens,of:max.screens,links:links.length})).then(reply=>{if(reply?.data?.halt)state.halt();},()=>{});
     };
     gather();note();
     while(!ended){

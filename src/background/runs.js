@@ -17,7 +17,7 @@ import {reduceState, pageKey, MIN_FOLLOW_PAGES, MAX_FOLLOW_PAGES, MAX_CONTEXT} f
 import {pdfSetProblem, MAX_PDF_BYTES, MAX_PDF_SET_BYTES} from '../core/pdf.js';
 import {isFileLink} from '../core/files.js';
 import {serial, readState, writeState} from './store.js';
-import {WORKBENCH, appendLinks} from './card.js';
+import {WORKBENCH, LEFT_OUT_KEY, appendLinks} from './card.js';
 
 // Session key: the run in progress, or the last one that ended (for its report and its Undo). It
 // holds the queue, counts, each page's outcome and the batch, never a page's links.
@@ -31,6 +31,8 @@ export const MAX_RUN_PAGES = 20, LOAD_MS = 30000, NEXT_PAUSE_MS = 1500, PAGES_PA
 // PDF files are fetched FILES_PAUSE_MS apart; the page that fetches one gets FILE_WAIT_MS to answer.
 // A tab opened at an address the site sends as a download is closed by Chrome within CLOSING_MS.
 export const FILES_PAUSE_MS = 2000, FILE_WAIT_MS = 120000, CLOSING_MS = 2000;
+// Chrome won't close a tab while the person drags one: a run's tab is tried again for CLOSE_MS.
+const CLOSE_MS = 10000;
 const POLL_MS = 250, LOAD_GRACE_MS = 1000, KEEP_AWAKE_MS = 20000, SCROLL_SCREENS = 50, MAX_LINKS = 20000;
 const SCHEMES = ['http:', 'https:', 'mailto:', 'tel:'];
 const BUSY = 'Link Meteor is already running a capture. Stop it, or wait for it to finish.';
@@ -81,7 +83,8 @@ function pause(job, ms) {
 }
 // Asks Link Meteor's own pages to do part of a step the background can't (reading a PDF), and
 // waits for the answer: a message of a type in ANSWERS with the same runId and step. Null when no
-// page is open, none answers in time, or Stop is pressed.
+// page is open or Stop is pressed; LATE when a page is open but none answers in time.
+const LATE = Object.freeze({late: true});
 function ask(job, message, ms) {
   const key = `${message.runId}:${message.step}`;
   if (job.stopped) return Promise.resolve(null);
@@ -90,7 +93,7 @@ function ask(job, message, ms) {
     const finish = answer => { if (job.asks.get(key) === finish) job.asks.delete(key); job.waiters.delete(stopped); done(answer); };
     const stopped = () => finish(null);
     job.asks.set(key, finish); job.waiters.add(stopped);
-    clock.sleep(ms).then(stopped);
+    clock.sleep(ms).then(() => finish(LATE));
     try { chrome.runtime.sendMessage(message).then(() => {}, stopped); } catch { stopped(); }
   });
 }
@@ -120,15 +123,35 @@ async function loaded(job, tabId, started = false) {
 async function hasAccess(url) {
   try { return await chrome.permissions.contains({origins: [`${new URL(url).origin}/*`]}); } catch { return false; }
 }
-// What kind of document a tab shows ('application/pdf', 'text/html', …), or {error} where Chrome
-// won't run a script (no access, or an error page).
+// Whether the Link Meteor page that started a run (run.owner) is still open, as Chrome's list of
+// the extension's pages says: a tab by its documentId; a side panel, whose messages name no
+// document, as any side panel. Without either, it is taken as open.
+const SIDE_PANEL = 'side-panel';
+async function ownerOpen(run) {
+  if (!run.owner || typeof chrome.runtime.getContexts !== 'function') return true;
+  try { return (await chrome.runtime.getContexts(run.owner === SIDE_PANEL ? {contextTypes: ['SIDE_PANEL']} : {documentIds: [run.owner]})).length > 0; } catch { return true; }
+}
+// What kind of document a tab shows ('application/pdf', 'text/html', …) and which document it is
+// (Chrome's documentId), or {error} where Chrome won't run a script (no access, or an error page).
 async function documentType(tabId) {
-  try { const [probe] = await chrome.scripting.executeScript({target: {tabId}, func: function documentType() { return document.contentType; }}); return {type: String(probe?.result || '')}; }
+  try { const [probe] = await chrome.scripting.executeScript({target: {tabId}, func: function documentType() { return document.contentType; }}); return {type: String(probe?.result || ''), documentId: probe?.documentId || ''}; }
   catch (error) { return {error: String(error?.message || error)}; }
 }
 // The run's notice on the page it is reading, with Stop. A page without the page script hears nothing.
 async function tellPage(tabId, message) {
   try { await chrome.tabs.sendMessage(tabId, {type: 'content.run', ...message}, {frameId: 0}); } catch { /* no page script there */ }
+}
+// Closes a run's background tab. Chrome refuses while the person drags a tab ("Tabs cannot be
+// edited right now"), so it is tried again for a while. A tab that still won't close is told the
+// run is done there, so its notice shows no Stop and Escape is the page's again.
+async function closeTab(run, tabId) {
+  for (let waited = 0; ; waited += POLL_MS) {
+    try { await chrome.tabs.remove(tabId); return; }
+    catch (error) { if (/No tab with id/i.test(String(error?.message || error))) return; }
+    if (waited >= CLOSE_MS) break;
+    await clock.sleep(POLL_MS);
+  }
+  await tellPage(tabId, {runId: run.runId, done: true});
 }
 async function showOnPage(run, text, tabId = run.tabId) {
   try { await chrome.scripting.executeScript({target: {tabId}, files: ['content/capture.js']}); } catch { return; }
@@ -147,9 +170,10 @@ function rowOf(result, item) {
   if (result.status === 'success') {
     const how = !found ? 'No links on this page' : !added ? 'Captured: nothing new' : 'Captured';
     const scrolled = !result.scroll ? '' : result.scroll.ended === 'end' ? ` · scrolled ${plural(result.scroll.screens, 'screen')} to the end` : ` · ${result.scroll.text}`;
-    // Frames from other sites that couldn't be read, where the capture counts them (frames.unread).
+    // Frames that couldn't be read, where the capture counts them (frames.unread): frames from other
+    // sites, and also the page's own sandboxed frames and frames whose site can't be told.
     const unreadFrames = Number.isInteger(result.frames?.unread) && result.frames.unread > 0 ? result.frames.unread : 0;
-    const frames = unreadFrames ? ` · ${plural(unreadFrames, 'frame')} from other sites ${unreadFrames === 1 ? 'wasn’t' : 'weren’t'} read` : '';
+    const frames = unreadFrames ? ` · ${plural(unreadFrames, 'frame')} ${unreadFrames === 1 ? 'wasn’t' : 'weren’t'} read` : '';
     return {...row, status: found ? 'captured' : 'empty', how: how + scrolled + frames, ...(result.warning ? {warning: result.warning} : {})};
   }
   if (result.status === 'denied') return {...row, status: 'no-access', how: 'No access'};
@@ -177,7 +201,8 @@ async function drive(job) {
       try { outcome = await kind.step(job, item); }
       catch (error) { outcome = {row: unread(item, `Couldn’t be read: ${error?.message || error}`, 'error'), ...(kind.endsOnFailure ? {end: {reason: 'failed'}} : {})}; }
       run.results.push({page: run.at + 1, ...outcome.row});
-      run.links += outcome.row.added || 0;
+      // `links` counts what was added; `found`, what the counter shows: every link found so far.
+      run.links += outcome.row.added || 0; run.found = (run.found || 0) + (outcome.row.found || 0);
       run.at++; run.doing = null; run.live = null; run.quick = outcome.quick === true;
       if (outcome.next) run.queue.push(outcome.next);
       if (outcome.end) run.ended = outcome.end;
@@ -229,8 +254,10 @@ async function finish(job) {
 }
 
 // Only one run at a time. Claims the right to start one; the caller sets `starting` back to false.
-// A run the last worker left unfinished is picked up first (see adopt).
+// A run the last worker left unfinished is picked up first (see adopt). A worker woken by this very
+// request is still looking for such a run: that is waited for, not taken for a run in progress.
 async function claim() {
+  await woke;
   if (going || starting) throw new Error(BUSY);
   starting = true;
   try {
@@ -254,7 +281,7 @@ export async function startRun(message, sender = {}) {
     const home = state.collections.find(c => c.id === message.collectionId);
     if (saves && !home) throw new Error('The chosen collection no longer exists, so nothing was started. Choose another destination.');
     const run = {runId: crypto.randomUUID(), kind: message.kind, state: 'running', stopping: false, collectionId: home?.id || '', name: home?.name || '', batchId: crypto.randomUUID(),
-      scroll: message.scroll === true && kind.scrolls === true, queue: [], at: 0, seen: [], results: [], links: 0, doing: null, live: null, page: null, ended: null, startedAt: iso()};
+      scroll: message.scroll === true && kind.scrolls === true, queue: [], at: 0, seen: [], results: [], links: 0, found: 0, doing: null, live: null, page: null, ended: null, startedAt: iso()};
     Object.assign(run, await kind.begin(message, sender, state));
     job = hold(run);
     await save(run);
@@ -281,9 +308,12 @@ export async function stopRun(message, sender = {}) {
 }
 
 // run.scroll {runId, screen, of, links} from the page that is scrolling: its counter, passed on.
+// The answer says {halt: true} once Stop was pressed, for a page that missed it (a scroll that
+// began just after Stop, or a page that had no script yet when Stop was sent).
 function scrolled(message, sender = {}) {
   const run = going?.run;
   if (!run || run.runId !== message.runId || sender.tab?.id !== run.tabId) return {};
+  if (going.stopped) return {halt: true};
   const number = (value, most) => Number.isInteger(value) && value >= 0 ? Math.min(value, most) : 0;
   run.live = {screen: number(message.screen, SCROLL_SCREENS), of: number(message.of, SCROLL_SCREENS) || SCROLL_SCREENS, links: number(message.links, MAX_LINKS)};
   progress(run);
@@ -309,17 +339,22 @@ export function undoRun(message) {
     const home = previous.collections.find(c => c.id === run.collectionId);
     if (!home) throw new Error('The collection this run saved to no longer exists, so there is nothing to undo.');
     const batch = home.links.filter(link => link.batchId === run.batchId);
-    if (batch.length !== run.count || batch.some(touched)) throw new Error('These links changed since the run, so Undo is no longer possible. Remove them in the list instead.');
+    // Scroll to the end first is one page with the usual report: what that report added to the
+    // batch since (Include them, frames from Allow these sites) is the run's too.
+    const kept = (await chrome.storage.session.get(REPORT_KEY).catch(() => ({})))[REPORT_KEY];
+    const count = run.kind === 'scroll' && kept?.report?.batchId === run.batchId ? (kept.report.capturedCount || 0) + (kept.report.leftOutIncluded || 0) : run.count;
+    if (batch.length !== count || batch.some(touched)) throw new Error('These links changed since the run, so Undo is no longer possible. Remove them in the list instead.');
     let state = previous;
     if (batch.length) {
       state = {...reduceState(previous, {type: 'links.remove', collectionId: home.id, ids: batch.map(link => link.id)}), undo: previous.undo};
       try { await writeState(previous, state); } catch { throw new Error('Could not undo the run. Nothing was changed.'); }
     }
     await save({...run, undone: true});
-    // The kept report remembers it, so a view that shows the report later doesn't offer Undo again.
+    // The kept report remembers it, so a view that shows the report later doesn't offer Undo again,
+    // and the navigation links it left out can no longer be included.
     try {
-      const kept = (await chrome.storage.session.get(REPORT_KEY))[REPORT_KEY];
       if (kept?.report?.batchId === run.batchId) await chrome.storage.session.set({[REPORT_KEY]: {...kept, report: {...kept.report, undone: batch.length}}});
+      if ((await chrome.storage.session.get(LEFT_OUT_KEY))[LEFT_OUT_KEY]?.batchId === run.batchId) await chrome.storage.session.remove(LEFT_OUT_KEY);
     } catch { /* the notice still says it */ }
     return {state, count: batch.length, name: home.name};
   });
@@ -338,7 +373,7 @@ async function adopt(run) {
   const kind = KINDS[run.kind] || {};
   const job = hold(run);
   if (run.doing) {
-    if (run.doing.tabId !== undefined) await chrome.tabs.remove(run.doing.tabId).catch(() => {});
+    if (run.doing.tabId !== undefined) await closeTab(run, run.doing.tabId);
     if (run.queue?.[run.at]) { run.results.push({page: run.at + 1, ...unread(run.queue[run.at], 'Interrupted: Chrome stopped Link Meteor’s background worker', 'interrupted')}); run.at++; }
     run.doing = null; run.live = null;
   }
@@ -421,7 +456,7 @@ function pdfOccurrences(raw, tab, batchId) {
 async function readPdf(job, item, tab) {
   const {run} = job, row = {...unread(item, ''), url: tab.url || item.url, title: tab.title || ''};
   const reply = await ask(job, {type: 'run.pdf', runId: run.runId, step: run.at, tabId: tab.id, url: tab.url, title: tab.title || ''}, PDF_WAIT_MS);
-  if (!reply) return {...row, status: job.stopped ? 'not-read' : 'pdf-unread', how: job.stopped ? STOPPED : 'A PDF: keep Link Meteor open during the run to read PDFs.'};
+  if (!reply || reply === LATE) return {...row, status: job.stopped ? 'not-read' : 'pdf-unread', how: job.stopped ? STOPPED : reply ? PDF_SLOW : 'A PDF: keep Link Meteor open during the run to read PDFs.'};
   if (typeof reply.error === 'string' && reply.error) return {...row, status: 'error', how: `A PDF: ${reply.error}`};
   let links;
   try { links = pdfOccurrences(reply.links, tab, run.batchId); } catch (error) { return {...row, status: 'error', how: `A PDF that couldn’t be saved: ${error.message}`}; }
@@ -441,12 +476,19 @@ const FILE_REASONS = {
   'not-pdf': 'Not a PDF: the site asked to sign in, or the address has expired.',
   size: pdfSetProblem([MAX_PDF_BYTES + 1]),
   status: 'The site answered with an error instead of the PDF.',
+  // The site sent part of the file, then nothing more for a while (pdf-tab.js gives up on it).
+  stalled: 'The site stopped sending the PDF.',
   'set-size': pdfSetProblem(Array(Math.floor(MAX_PDF_SET_BYTES / MAX_PDF_BYTES) + 1).fill(MAX_PDF_BYTES)),
 };
 const DOWNLOADED = 'Chrome downloaded this one instead of showing it. It is in your Downloads folder, not in this file.';
-// A selected page whose address the site sends as a download: Chrome saves the file and closes the tab.
-const PAGE_DOWNLOADED = 'Chrome downloaded this address as a file instead of showing it. It is in your Downloads folder; no links were read from it.';
+// A selected page's tab that closed before it was read: the person closed it, or the site sent the
+// address as a download, which Chrome saves and then closes the tab. Which one isn't known.
+const PAGE_CLOSED = 'The tab closed before it was read. Chrome may have downloaded this address as a file instead of showing it.';
+// A PDF among selected pages that an open Link Meteor page didn't read within PDF_WAIT_MS.
+const PDF_SLOW = `A PDF: reading it took more than ${PDF_WAIT_MS / 1000} seconds, so its links weren’t saved. Capture it by itself to read them.`;
 const FILE_UNANSWERED = 'The Link Meteor page that started this didn’t answer, so the run ended. Keep it open until the PDFs are fetched.';
+// A PDF's file not fetched within FILE_WAIT_MS (a large file, a slow connection): it alone is left out.
+const FILE_SLOW = `Not fetched within ${FILE_WAIT_MS / 60000} minutes, so it was left out. Download files saves it by itself.`;
 
 const followCap = state => { const value = state.settings.followPages; return Number.isInteger(value) && value >= MIN_FOLLOW_PAGES && value <= MAX_FOLLOW_PAGES ? value : MAX_FOLLOW_PAGES; };
 const addedTo = (run) => run.count ? `added ${plural(run.count, 'link')} to “${run.name}”` : `no links were added to “${run.name}”`;
@@ -478,8 +520,9 @@ export const KINDS = {
       const tab = await capture.resolveTarget(Number.isInteger(message.tabId) ? message.tabId : undefined, sender.tab?.id);
       return {tabId: tab.id, cap: followCap(state), queue: [{url: pageKey(tab.url || '')}]};
     },
+    // The links found so far: a page that is scrolling counts what it has found, as a page read counts.
     counter(run) {
-      const step = Math.min(run.at + 1, run.cap), links = run.links + (run.live?.links || 0);
+      const step = Math.min(run.at + 1, run.cap), links = (run.found || 0) + (run.live?.links || 0);
       return {step, of: run.cap, links, text: `Page ${n(step)} of up to ${n(run.cap)}${run.live ? ` · screen ${n(run.live.screen)} of up to ${n(run.live.of)}` : ''} · ${plural(links, 'link')}`};
     },
     async step(job, item) {
@@ -498,21 +541,26 @@ export const KINDS = {
       try { tab = await chrome.tabs.get(run.tabId); } catch { return closed; }
       run.page = {title: tab.title || '', url: tab.url || item.url}; progress(run);
       if (index > 0) {
-        // Where the address led: a page already read ends the run here.
+        // Where the address led: a page already read ends the run here, with the tab back on that page.
         const landed = pageKey(tab.url || '');
-        if (landed && landed !== item.url && run.seen.includes(landed)) return {row: unread({url: landed}, 'Not read: already read in this run', 'loop'), end: {reason: 'loop'}};
+        if (landed && landed !== item.url && run.seen.includes(landed)) {
+          const back = run.results.find(row => pageKey(row.url || '') === landed || run.queue[row.page - 1]?.url === landed)?.page;
+          return {row: unread({url: landed}, 'Not read: already read in this run', 'loop'), end: {reason: 'loop', moved: true, ...(back ? {back} : {})}};
+        }
         const type = await documentType(run.tabId);
         if (type.type === 'application/pdf') return {row: {...unread(item, 'A PDF: capture it by itself to read its links', 'pdf-unread'), title: tab.title || ''}, end: {reason: 'pdf'}};
         if (/error page/i.test(type.error || '')) return {row: unread(item, 'Didn’t load: Chrome showed an error page', 'not-loaded'), end: {reason: 'not-loaded', shown: true}};
-        await showOnPage(run, `${lead}${plural(run.links, 'link')}`);
+        await showOnPage(run, `${lead}${plural(run.found || 0, 'link')}`);
         await pause(job, NEXT_PAUSE_MS);
         if (job.stopped) return {row: unread(item, STOPPED)};
-        // The person may have moved or closed the tab meanwhile.
+        // The person may have moved or closed the tab meanwhile. A page that changes its own address
+        // (a # part, history.replaceState) is the same document, which has not moved.
         let now;
         try { now = await chrome.tabs.get(run.tabId); } catch { return closed; }
-        if ((now.url || '') !== (tab.url || '')) return {row: unread(item, 'Not read: the tab went to another page', 'moved'), end: {reason: 'tab-moved'}};
-      } else await showOnPage(run, `${lead}${plural(run.links, 'link')}`);
-      const result = await capturePage(job, run.tabId, run.scroll ? {scroll: {runId: run.runId, lead, links: run.links}} : {});
+        const after = (now.url || '') === (tab.url || '') ? null : await documentType(run.tabId);
+        if (after && !(type.documentId && after.documentId === type.documentId)) return {row: unread(item, 'Not read: the tab went to another page', 'moved'), end: {reason: 'tab-moved'}};
+      } else await showOnPage(run, `${lead}${plural(run.found || 0, 'link')}`);
+      const result = await capturePage(job, run.tabId, run.scroll ? {scroll: {runId: run.runId, lead, links: run.found || 0}} : {});
       let row = rowOf(result, item);
       // Chrome hides a tab once the toolbar's access is gone: the page is an error page, or on another site.
       if (index > 0 && result.status === 'denied') row = {...row, title: '', how: 'Not read: it didn’t load, or it moved to a site without access'};
@@ -550,8 +598,10 @@ export const KINDS = {
         pdf: read ? 'Next led to a PDF, which Follow Next doesn’t read.' : 'This tab shows a PDF, which Follow Next doesn’t read. Capture the PDF by itself.',
         failed: end.detail || 'A page couldn’t be read.',
       }[reason] || '';
-      return {head: `Followed Next through ${plural(read, 'page')}: ${addedTo(run)}.`, ended,
-        where: read && ['no-next', 'next-button', 'cap', 'no-access', 'loop'].includes(reason) ? `Your tab is on ${last}.` : ''};
+      // Where the tab is: on the last page read, unless Next moved it back to a page already read.
+      const where = !read ? '' : reason === 'loop' && end.moved ? (end.back ? `Your tab is back on page ${n(end.back)}.` : '')
+        : ['no-next', 'next-button', 'cap', 'no-access', 'loop'].includes(reason) ? `Your tab is on ${last}.` : '';
+      return {head: `Followed Next through ${plural(read, 'page')}: ${addedTo(run)}.`, ended, where};
     },
   },
 
@@ -565,7 +615,7 @@ export const KINDS = {
       if (urls.length > MAX_RUN_PAGES) throw new Error(`Choose up to ${MAX_RUN_PAGES} pages at a time.`);
       return {queue: urls.map(url => ({url}))};
     },
-    counter: run => ({step: Math.min(run.at + 1, run.queue.length), of: run.queue.length, links: run.links, text: `Page ${n(Math.min(run.at + 1, run.queue.length))} of ${n(run.queue.length)} · ${plural(run.links, 'link')}`}),
+    counter: run => ({step: Math.min(run.at + 1, run.queue.length), of: run.queue.length, links: run.found || 0, text: `Page ${n(Math.min(run.at + 1, run.queue.length))} of ${n(run.queue.length)} · ${plural(run.found || 0, 'link')}`}),
     async step(job, item) {
       const {run} = job;
       // A page on a site Link Meteor can't read is not opened.
@@ -576,7 +626,7 @@ export const KINDS = {
       try {
         const state = await loaded(job, tab.id, true);
         if (state === 'stopped') return {row: unread(item, STOPPED)};
-        if (state === 'closed') return {row: unread(item, PAGE_DOWNLOADED, 'downloaded')};
+        if (state === 'closed') return {row: unread(item, PAGE_CLOSED, 'closed')};
         if (state === 'timeout') return {row: unread(item, NOT_LOADED, 'not-loaded')};
         // A tab Chrome is about to close for a download shows "complete" with no address for a moment first.
         let now = await chrome.tabs.get(tab.id).catch(() => null);
@@ -585,18 +635,18 @@ export const KINDS = {
           if (job.stopped) return {row: unread(item, STOPPED)};
           now = await chrome.tabs.get(tab.id).catch(() => null);
         }
-        if (!now) return {row: unread(item, PAGE_DOWNLOADED, 'downloaded')};
+        if (!now) return {row: unread(item, PAGE_CLOSED, 'closed')};
         // Where the address led: a site without access is closed unread, and reported the same way.
         if (!now.url || !(await hasAccess(now.url))) return {row: unread(item, now.url ? `No access: it moved to ${hostOf(now.url)}` : 'No access: it moved to another site', 'no-access')};
         run.page = {title: now.title || '', url: now.url}; progress(run);
         const type = await documentType(tab.id);
         if (/error page/i.test(type.error || '')) return {row: unread(item, 'Didn’t load: Chrome showed an error page', 'not-loaded')};
         // The page shows the counter and Stop too, should the person look at that tab.
-        await showOnPage(run, `Capturing selected pages: page ${n(run.at + 1)} of ${n(run.queue.length)} · ${plural(run.links, 'link')}`, tab.id);
+        await showOnPage(run, `Capturing selected pages: page ${n(run.at + 1)} of ${n(run.queue.length)} · ${plural(run.found || 0, 'link')}`, tab.id);
         if (type.type === 'application/pdf') return {row: await readPdf(job, item, now)};
         return {row: rowOf(await capturePage(job, tab.id), item)};
       } finally {
-        await chrome.tabs.remove(tab.id).catch(() => {});
+        await closeTab(run, tab.id);
         run.doing = {index: run.at};
       }
     },
@@ -617,7 +667,7 @@ export const KINDS = {
   // Background tabs are opened only on sites Link Meteor has access to, and closed afterward.
   files: {
     title: 'Getting PDFs', saves: false, report: false, resumes: true, pause: FILES_PAUSE_MS,
-    begin(message) {
+    begin(message, sender) {
       const files = Array.isArray(message.files) ? message.files : [];
       if (!files.length) throw new Error('Choose at least one PDF.');
       const problem = pdfSetProblem(files.map(() => 0));
@@ -629,7 +679,9 @@ export const KINDS = {
         // (a PDF's own links name that PDF as their source), which Chrome might download instead of showing.
         return {url, name: typeof file.name === 'string' ? file.name.slice(0, 200) : '', ...(from && originOf(from) === originOf(url) && !isFileLink({url: from}) ? {from} : {})};
       });
-      return {queue, ...(Number.isInteger(message.tabId) ? {own: message.tabId} : {})};
+      // `owner` is the page that started the run, which alone fetches the files (see ownerOpen).
+      const owner = typeof sender?.documentId === 'string' && sender.documentId ? sender.documentId : !sender?.tab && sender?.url?.startsWith(WORKBENCH) ? SIDE_PANEL : '';
+      return {queue, ...(Number.isInteger(message.tabId) ? {own: message.tabId} : {}), ...(owner ? {owner} : {})};
     },
     counter: run => { const step = Math.min(run.at + 1, run.queue.length); return {step, of: run.queue.length, links: 0, text: `Getting PDF ${n(step)} of ${n(run.queue.length)}`}; },
     async step(job, item) {
@@ -642,6 +694,9 @@ export const KINDS = {
         const reply = await ask(job, {type: 'run.file', runId: run.runId, step: index, tabId, url}, FILE_WAIT_MS);
         why = typeof reply?.reason === 'string' ? reply.reason : '';
         if (!reply) return job.stopped ? ended('not-read', STOPPED) : ended('no-answer', FILE_UNANSWERED, {end: {reason: 'no-answer'}});
+        // No answer in time: a slow file is left out and the run goes on, unless the page that
+        // started the run is gone (another Link Meteor page heard the question in its place).
+        if (reply === LATE) return await ownerOpen(run) ? ended('timeout', FILE_SLOW) : ended('no-answer', FILE_UNANSWERED, {end: {reason: 'no-answer'}});
         if (reply.ok === true) return ended('got', 'Fetched', {row: {size: Number.isInteger(reply.size) && reply.size > 0 ? reply.size : 0}});
         if (reply.reason === 'set-size') return ended('too-large', FILE_REASONS['set-size'], {end: {reason: 'too-large'}});
         return Object.hasOwn(FILE_REASONS, reply.reason) ? ended(reply.reason === 'size' ? 'too-large' : reply.reason, FILE_REASONS[reply.reason]) : null;
@@ -656,7 +711,7 @@ export const KINDS = {
           if (state === 'stopped') return ended('not-read', STOPPED);
           return await use(tab.id, state);
         } finally {
-          await chrome.tabs.remove(tab.id).catch(() => {});
+          await closeTab(run, tab.id);
           run.doing = {index};
         }
       };
@@ -711,7 +766,7 @@ export const KINDS = {
 // fetching a PDF's file.
 const ANSWERS = ['run.pdfLinks', 'run.fileDone'];
 // For a kind added later: the engine's tools.
-export const engine = {pause, ask, loaded, hasAccess, documentType, tellPage, capturePage, rowOf, unread, save, progress, plural, hostOf};
+export const engine = {pause, ask, LATE, loaded, hasAccess, documentType, tellPage, closeTab, capturePage, rowOf, unread, save, progress, plural, hostOf};
 
 // Messages this module answers, accepted only from the workbench.
 export const workbenchMessages = {

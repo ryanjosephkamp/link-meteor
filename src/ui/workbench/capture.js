@@ -269,6 +269,8 @@ function reportLeftOut(box, report) {
   line.append(text);
   if (!leftOut) say([skippedText]);
   else if (report.leftOutIncluded !== undefined) say([`Included ${plural(report.leftOutIncluded, 'navigation link')}.`, skippedText]);
+  // A capture that was undone (Scroll to the end first has Undo) has nothing to include them in.
+  else if (report.undone !== undefined) say([`Left out ${plural(leftOut, 'navigation link')}.`, skippedText]);
   else {
     say([`Left out ${plural(leftOut, 'navigation link')}.`, skippedText]);
     const include = button('Include them', 'link-btn');

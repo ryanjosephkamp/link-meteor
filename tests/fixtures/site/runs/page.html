@@ -24,6 +24,8 @@ ol{padding-left:24px}li{padding:6px 0}li a{font-weight:700;color:#1b4f9c}
 //           Chrome can't load), or nothing (no Next on the last page)
 //   tall    1: each page is several screens tall
 //   decoy   1: a link named Next in the text, before the pager's own
+//   own     the page changes its own address 600 ms after it loads: "hash" (a # part) or
+//           "replace" (history.replaceState), as many sites do
 const ask=new URLSearchParams(location.search),number=(key,fallback)=>Number(ask.get(key))>0?Number(ask.get(key)):fallback;
 const p=number('p',1),of=number('of',3),per=number('per',5),style=ask.get('next')||'text',after=ask.get('after')||'';
 document.title=`Listing, page ${p}`;
@@ -62,5 +64,7 @@ const NEXT={
   none:()=>'',
 };
 if(target&&NEXT[style])pager.insertAdjacentHTML('beforeend',NEXT[style](target));
+if(ask.get('own')==='hash')setTimeout(()=>{location.hash='results';},600);
+if(ask.get('own')==='replace')setTimeout(()=>{history.replaceState(null,'',`${location.pathname}${location.search}&sort=new`);},600);
 </script>
 </html>

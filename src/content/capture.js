@@ -237,11 +237,38 @@
   function frameIndex(parent,child) { try { for (let i=0,n=Math.min(parent.length,MAX_FRAMES);i<n;i++) if (parent[i]===child) return i; } catch { /* the frame is gone */ } return -1; }
   function framePath(win) { const path=[]; try { for (let w=win;w!==w.top;w=w.parent) { const i=frameIndex(w.parent,w); if (i<0) return null; path.unshift(i); } } catch { return null; } return path.join('.'); }
   function pathBelow(at,parent,child) { const i=at===null||!parent||!child?-1:frameIndex(parent,child); return i<0?null:at?`${at}.${i}`:String(i); }
-  // The site a frame belongs to: the one its src names, when that is a web address; otherwise the
-  // site of the document it sits in (a frame written in the page, or one with no address, is that
-  // page's own). '' when neither is a web address.
+  // Each frame element keeps one key while this copy of the script runs, so a later reading (Allow
+  // these sites) knows a frame again when its place has changed, as it does when the page removes
+  // a frame before it.
+  const frameKeys=new WeakMap(),KEYS=Math.random().toString(36).slice(2,8);let keyCount=0;
+  const frameKey=element=>{let key=frameKeys.get(element);if(!key)frameKeys.set(element,key=`${KEYS}.${++keyCount}`);return key;};
+  // The site a frame belongs to: the one its src names, when that is a web address. A frame of the
+  // site of the document it sits in (or with no web address) is that document's own only when the
+  // page seals it off (`sealed`) or it hasn't loaded yet; any other such frame that can't be read
+  // has gone to a site that can't be told, ''.
   const webSite=value=>{ try { const url=new URL(value); return url.protocol==='http:'||url.protocol==='https:'?url.origin:''; } catch { return ''; } };
-  function frameSite(element) { const src=element.hasAttribute('srcdoc')?'':element.getAttribute('src'); let named=''; try { named=src?webSite(new URL(src,element.baseURI).href):''; } catch { /* not an address */ } return named||webSite(element.ownerDocument.URL)||webSite(location.href); }
+  function srcSite(element) { const src=element.hasAttribute('srcdoc')?'':element.getAttribute('src'); try { return src?webSite(new URL(src,element.baseURI).href):''; } catch { return ''; } }
+  function frameSite(element,own) { const named=srcSite(element),here=webSite(element.ownerDocument.URL)||webSite(location.href); return own?named||here:named!==here?named:''; }
+  // Frames the page seals off from itself: sandboxed without allow-same-origin, at a data: address,
+  // or inside a document that is sandboxed itself.
+  function sealedFrame(element) {
+    const src=element.hasAttribute('srcdoc')?'':String(element.getAttribute('src')||'').trim();
+    return (element.hasAttribute('sandbox')&&!element.sandbox?.contains?.('allow-same-origin'))||/^data:/i.test(src)||element.ownerDocument.defaultView?.origin==='null';
+  }
+  // The address a frame was sent to (about:srcdoc for one written in the page): what pairs a frame
+  // without a place with the copy of this script inside it, unless it has moved on since.
+  function frameAddress(element) { if (element.hasAttribute('srcdoc')) return 'about:srcdoc'; try { const url=new URL(element.getAttribute('src')||'about:blank',element.baseURI).href; return url.length<=2048?url:''; } catch { return ''; } }
+  // A frame still showing the empty page every frame starts with, although its src names a web
+  // address: a lazy frame not scrolled to yet, or one still waiting for its page.
+  const notLoaded=(element,child)=>child.URL==='about:blank'&&!!srcSite(element);
+  // How much of its document a frame covers, or 0 when it can't be seen: no size (under 2 px either
+  // way), or placed wholly before the document's start, where nothing can be scrolled to (tracking frames).
+  function frameArea(element) {
+    const r=element.getBoundingClientRect(),view=element.ownerDocument.defaultView,doc=element.ownerDocument.documentElement;
+    if(r.width<2||r.height<2||r.bottom+view.scrollY<=0)return 0;
+    if(view.getComputedStyle(doc).direction==='rtl'?r.left+view.scrollX>=doc.clientWidth:r.right+view.scrollX<=0)return 0;
+    return Math.round(r.width*r.height);
+  }
   // What a selection says about the frames it can't reach into: how many, and which other sites they are from.
   function framesLeftOut(frames) {
     const hosts=[...new Set(frames.map(frame=>frame.site).filter(site=>site&&site!==webSite(location.href)))].map(site=>new URL(site).host),n=frames.length;
@@ -283,8 +310,12 @@
 
   // Every link this document can reach: its own, those in shadow roots (closed ones too), and those
   // in frames it can read. `frames` lists the visible frames it can't read into, each as
-  // {site, at, chrome}: the site its src names, where it sits (see framePath; null for a
-  // selection, which doesn't need it), and whether the frame sits in page chrome.
+  // {site, at, chrome, key, area}: the site it belongs to (see frameSite), where it sits (see
+  // framePath; null for a selection, which doesn't need it), whether the frame sits in page chrome,
+  // its key (see frameKey) and how much of its document it covers (see frameArea); `sealed` for a
+  // frame the page seals off, `loading` for one that hasn't loaded yet, and `url`, its address, for
+  // one without a place (inside a shadow root). For a selection, also its `element` and `rects`.
+  // A frame that can't be seen (frameArea) is neither read nor listed.
   function collect(regional=false) {
     const records = [], warnings = [], notes = [], frames = [];
     let malformedLinks=0, capped=false;
@@ -309,12 +340,18 @@
         const shadow = shadowOf(element);
         if (shadow) walk(shadow,transform,clip,chrome,at);
         if (element.tagName==='IFRAME' || element.tagName==='FRAME') {
-          if (!visible(element)) continue;
+          const area = visible(element) ? frameArea(element) : 0;
+          if (!area) continue;
           const outer = chrome||inChrome(element), within = pathBelow(at,element.ownerDocument.defaultView,element.contentWindow);
-          const unread = () => frames.push({site:frameSite(element),at:within,chrome:outer});
+          const unread = (loading=false) => {
+            const sealed=sealedFrame(element),url=within===null&&!regional?frameAddress(element):'';
+            frames.push({site:frameSite(element,sealed||loading),at:within,chrome:outer,key:frameKey(element),area,...(sealed?{sealed:true}:{}),...(loading?{loading:true}:{}),
+              ...(url?{url}:{}),...(regional?{element,rects:geometry(element,transform,clip)}:{})});
+          };
           try {
             const child = element.contentDocument;
             if (!child) {unread();continue;}
+            if (notLoaded(element,child)) {unread(true);continue;}
             const frame = element.getBoundingClientRect();
             const sx = transform.sx * (element.offsetWidth ? frame.width/element.offsetWidth : 1);
             const sy = transform.sy * (element.offsetHeight ? frame.height/element.offsetHeight : 1);
@@ -328,8 +365,8 @@
     walk(document);
     if (malformedLinks) notes.push(`${malformedLinks} malformed link destination${malformedLinks===1?' was':'s were'} excluded.`);
     if (capped) notes.push('Capture reached 20,000 loaded links. Results are partial; select smaller regions for the remainder.');
-    // A selection says which frames it left out; Capture this page reports them itself (scan).
-    if (frames.length) warnings.push(framesLeftOut(frames));
+    // A region's card says which frames inside it it left out (see framesIn); Capture this page
+    // reports them itself (scan).
     warnings.push(...notes);
     return {records,inaccessibleFrames:frames.length,frames,warnings,notes,malformed:malformedLinks,capped};
   }
@@ -494,11 +531,12 @@
     document.documentElement.append(host);
     const $=selector=>shadow.querySelector(selector);
     const shield=$('.shield'), box=$('.rect'), badge=$('.badge'), hits=$('.hits'), bar=$('.bar');
-    let dragging=false, start=null, pointer=null, frame=null, entries=[], selected=[], ticks=[], warnings=[],inaccessibleFrames=0,committed=false,destination='',destinationId='',chosen=!!lastDestinationId,collections=[],destinationRequest=0,saveInFlight=null,savedBatchId='',savedCollectionId='',opening=null,pendingOpen=null;
+    let dragging=false, start=null, pointer=null, frame=null, entries=[], selected=[], ticks=[], notes=[],frameItems=[],framesIn=new Map(),inaccessibleFrames=0,committed=false,destination='',destinationId='',chosen=!!lastDestinationId,collections=[],destinationRequest=0,saveInFlight=null,savedBatchId='',savedCollectionId='',opening=null,pendingOpen=null;
     // 0.4.0: preview rows, links unticked as page chrome or by the active filter, links already saved,
     // this card's Skip saved choice, the left-out note's state, and the notice's timer.
     let rows=[],chromeOff=new Set(),filterOff=new Set(),filter='all',savedUrls=new Set(),savedRequest=0,skip=false,leftState='',leftIncluded=0,noticeTimer=0;
-    const swept=new Map();
+    // The links (and the frames this page can't read) the selection held before each scroll.
+    const swept=new Map(),sweptFrames=new Map();
     const state={close,progress,idle:()=>!$('.notice').hidden&&bar.style.display!=='block'};active=state;
     for(const button of shadow.querySelectorAll('button[data-key]'))button.setAttribute('aria-keyshortcuts',button.dataset.key.toUpperCase());
 
@@ -536,18 +574,20 @@
       event.preventDefault();event.stopImmediatePropagation();
       dragging=true;pointer={x:event.clientX,y:event.clientY};start={x:event.clientX+scrollX,y:event.clientY+scrollY};
       if(now)pointer={x:now.x,y:now.y};
-      const result=collect(true);entries=result.records;warnings=result.warnings;inaccessibleFrames=result.inaccessibleFrames;
+      const result=collect(true);entries=result.records;frameItems=result.frames;notes=result.notes;
       shield.setPointerCapture?.(event.pointerId);box.hidden=false;badge.hidden=false;$('.hint').style.pointerEvents='none';
       refresh();frame=requestAnimationFrame(tick);
     }
     function currentRect(){return{left:Math.min(start.x-scrollX,pointer.x),top:Math.min(start.y-scrollY,pointer.y),right:Math.max(start.x-scrollX,pointer.x),bottom:Math.max(start.y-scrollY,pointer.y)};}
     function refresh(rescan=false) {
       if(!start)return;
-      if(rescan){const result=collect(true);entries=result.records;warnings=result.warnings;inaccessibleFrames=result.inaccessibleFrames;}
+      if(rescan){for(const [element,item] of framesIn)sweptFrames.set(element,item);const result=collect(true);entries=result.records;frameItems=result.frames;notes=result.notes;}
       const rect=currentRect();box.style.cssText=`left:${rect.left}px;top:${rect.top}px;width:${rect.right-rect.left}px;height:${rect.bottom-rect.top}px`;
       const matched=entries.filter(entry=>entry.rects.some(r=>positive(intersect(rect,r))));
       const combined=new Map(swept);for(const entry of matched)combined.set(entry.element,entry);
       selected=[...combined.values()].slice(0,MAX_LINKS);hits.replaceChildren();
+      // The frames it can't read that the selection touches: only those are named on the card.
+      framesIn=new Map(sweptFrames);for(const item of frameItems)if(item.rects.some(r=>positive(intersect(rect,r))))framesIn.set(item.element,item);
       for(const entry of matched.slice(0,250)){for(const r of entry.rects){const hit=document.createElement('div');hit.className='hit';hit.style.cssText=`left:${r.left}px;top:${r.top}px;width:${r.right-r.left}px;height:${r.bottom-r.top}px`;hits.append(hit);}}
       badge.textContent=`${selected.length} link${selected.length===1?'':'s'}`;badge.style.left=Math.min(innerWidth-90,Math.max(4,pointer.x+12))+'px';badge.style.top=Math.min(innerHeight-35,Math.max(4,pointer.y+12))+'px';
     }
@@ -577,7 +617,8 @@
       ticks=selected.map(entry=>!(captureSettings.contentOnly&&entry.chrome));
       chromeOff=new Set(ticks.flatMap((ticked,index)=>ticked?[]:[index]));leftState=chromeOff.size?'left':'';skip=!!captureSettings.skipSaved;
       renderPreview();updateCounts();follow();
-      $('.warning').textContent=warnings.join(' ');
+      const left=[...framesIn.values()];inaccessibleFrames=left.length;
+      $('.warning').textContent=[...(left.length?[framesLeftOut(left)]:[]),...notes].join(' ');
       // After a drag: the card, or copy or add right away with a notice.
       const after=captureSettings.afterDrag;
       if((after==='copy'||after==='add')&&tickedLinks().length)(after==='copy'?quickCopy:quickAdd)();

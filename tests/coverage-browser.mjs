@@ -10,7 +10,10 @@
 //   and Allow these sites asks for exactly those sites in the click. Chrome's prompt is never
 //   shown: the workbench's chrome.permissions.request is replaced by a stub (a simulated decline,
 //   then a simulated accept, which gives no real access).
-// - A lazy frame not yet loaded and a frame that never finishes loading don't hold the capture.
+// - Lazy frames not yet loaded and a frame that never finishes loading don't hold the capture; the
+//   report says the lazy ones hadn't loaded.
+// - Frames at the edges: a frame sent to another site without an address, frames with no size or
+//   off the page, and frames in a closed component (sandboxed, hidden), each reported truthfully.
 // - The report's frames line and button at 320 px, with measured contrast in light and dark.
 // The fixture server answers as three sites: 127.0.0.1, localhost and third.localhost.
 //   npm run build && LINK_METEOR_FIXTURE_PORT=52630 node tests/coverage-browser.mjs
@@ -170,9 +173,11 @@ try {
   const report = await storedReport();
   const hosts = {here: new URL(fixture.base).host, other: new URL(other).host, third: new URL(third).host};
   const NOT_READ = `6 frames weren’t read: 5 from other sites (${hosts.other} and ${hosts.third}), which Link Meteor has no access to, and 1 sandboxed frame of this site, which the toolbar’s temporary access doesn’t cover. Allow those sites and this one (${hosts.here}) to include their links.`;
-  // Each unread frame is kept with its site and its place among the page's frames (none for the one inside a closed component).
+  // Each unread frame is kept with its site, its place among the page's frames (none for the one
+  // inside a closed component) and its key. The sites whose frames cover the most come first.
   const LEFT = [{site: other, at: '0.1'}, {site: other, at: '1'}, {site: third, at: '2'}, {site: other, at: '3'}, {site: other, at: null}, {site: fixture.base, at: '4'}];
-  assert.deepEqual(report.results.map((item) => [item.status, item.count, item.warning, item.frames]), [['success', 4, NOT_READ, {read: 0, unread: 6, sites: [fixture.base, other, third], left: LEFT}]]);
+  const unkeyed = (frames) => frames && {...frames, left: frames.left.map(({key, ...rest}) => { assert.match(key, /^[a-z0-9]+\.\d+$/); return rest; })};
+  assert.deepEqual(report.results.map((item) => [item.status, item.count, item.warning, unkeyed(item.frames)]), [['success', 4, NOT_READ, {read: 0, unread: 6, sites: [other, third, fixture.base], left: LEFT, seen: []}]]);
   // What the page itself can reach is read once, each link with the frame it was in. The hidden
   // frame from the other site is neither read nor counted.
   const READ = [
@@ -186,7 +191,7 @@ try {
   assert.ok(firstLinks.every((link) => link.sourceUrl === framesUrl), 'every link’s source is the page');
   const shown = await js(ui, `(() => { const item = document.querySelector('#capture-report .report-item'), allow = item.querySelector('.report-frames-allow'); return {title: document.querySelector('#capture-report h3').firstChild.textContent, status: item.querySelector('.status').textContent, detail: item.querySelector('.detail.warn').textContent, label: allow.textContent, hint: allow.title, type: allow.type}; })()`);
   assert.deepEqual(shown, {title: '4 links captured', status: '4 links', detail: NOT_READ, label: 'Allow these sites', type: 'button',
-    hint: `Chrome asks to allow Link Meteor on ${hosts.here}, ${hosts.other}, ${hosts.third}. Then the page’s frames from those sites are read and their links added.`});
+    hint: `Chrome asks to allow Link Meteor on ${hosts.other}, ${hosts.third}, ${hosts.here}. Then the page’s frames from those sites are read and their links added.`});
   assert.deepEqual(await requests(), [], 'capturing asks for nothing');
   pass('Frames with only the toolbar’s access: the frames the page can reach are read once each, with their frameUrl; the five frames from other sites and the sandboxed frame are named by site in the report, which offers Allow these sites; a hidden frame is neither read nor counted', {links: fields(firstLinks), warning: NOT_READ});
 
@@ -226,9 +231,9 @@ try {
   const before = await linkCount();
   await click('#capture-report .report-frames-allow');
   await until(async () => /was declined/.test(await text('error')), 'the decline is said');
-  const ASKED = [{origins: [`${fixture.base}/*`, `${other}/*`, `${third}/*`]}];
+  const ASKED = [{origins: [`${other}/*`, `${third}/*`, `${fixture.base}/*`]}];
   assert.deepEqual(await requests(), ASKED, 'one request, for exactly the named sites');
-  assert.equal(await text('error').then((value) => value.replace(/\s*Dismiss\s*$/, '')), `Chrome’s request for access to ${hosts.here}, ${hosts.other} and ${hosts.third} was declined, so nothing changed. The frames from those sites are still not read.`);
+  assert.equal(await text('error').then((value) => value.replace(/\s*Dismiss\s*$/, '')), `Chrome’s request for access to ${hosts.other}, ${hosts.third} and ${hosts.here} was declined, so nothing changed. The frames from those sites are still not read.`);
   assert.deepEqual([await linkCount(), (await storedReport()).capturedCount, await js(ui, `document.querySelector('#capture-report .report-frames-allow').disabled`)], [before, 4, false]);
   pass('Allow these sites asks Chrome once, in the click, for exactly the sites the report names; a decline (simulated) changes nothing and says so', {asked: ASKED});
 
@@ -238,7 +243,7 @@ try {
   await click('#capture-report .report-frames-allow');
   await until(async () => /still couldn’t be read/.test(await text('notice')), 'the second reading is reported');
   assert.deepEqual(await requests(), ASKED);
-  assert.equal(await text('notice'), `Link Meteor now has access to ${hosts.here}, ${hosts.other} and ${hosts.third}, but the frames from those sites still couldn’t be read. The capture report says what is left.`);
+  assert.equal(await text('notice'), `Link Meteor now has access to ${hosts.other}, ${hosts.third} and ${hosts.here}, but the frames from those sites still couldn’t be read. The capture report says what is left.`);
   const after = await storedReport();
   assert.deepEqual([await linkCount(), after.batchId, after.capturedCount, after.results[0].count, after.results[0].warning, after.results[0].frames], [before, report.batchId, 4, 4, NOT_READ, report.results[0].frames]);
   assert.deepEqual(fields(await batch(report.batchId)), READ, 'the links of the first reading, none of them twice');
@@ -255,17 +260,31 @@ try {
     'Read 1 more frame: nothing new was added. Skipped 3 links already saved.', 'Link Meteor now has access to a.example, but the frames from that site still couldn’t be read. The capture report says what is left.']);
   pass('After Chrome allows the sites (simulated, so without real access) the page is read again into the same capture: nothing is added twice, the report is kept as it was, and the notice says the frames still couldn’t be read; a request for another capture is refused', {notice: await text('notice')});
 
-  // A region on that page: frames from other sites can't be selected, and the card says how many.
-  await rpc({type: 'capture.arm', tabId: frames.tabId});
-  await until(() => js(frames.session, `!!${card('')}`), 'the selection layer on the frames page');
-  const whole = await js(frames.session, `(() => { const r = document.querySelector('main').getBoundingClientRect(); return {from: {x: r.left + 2, y: Math.max(2, r.top + 2)}, to: {x: r.right - 2, y: Math.min(innerHeight - 4, r.bottom - 2)}}; })()`);
-  await drag(frames.session, whole.from, whole.to);
-  await until(() => js(frames.session, `/links? selected$/.test(${card(`.querySelector('.count')?.textContent`)} || '')`), 'a region on the frames page');
-  const regionFrames = await js(frames.session, `(() => { const root = ${card('')}; return {rows: [...root.querySelectorAll('.preview .t')].map((row) => row.textContent), warning: root.querySelector('.warning').textContent}; })()`);
+  // A region on that page: frames from other sites can't be selected, and the card names only the
+  // frames the region touches.
+  const selectOn = async (from, to) => {
+    await rpc({type: 'capture.arm', tabId: frames.tabId});
+    await until(() => js(frames.session, `!!${card('')} && !${card(`.querySelector('.bar')`)}?.checkVisibility?.()`), 'the selection layer on the frames page');
+    // From the top of the page, stopping short of the window's edge, where the drag would scroll it.
+    const box = await js(frames.session, `(() => { scrollTo(0, 0); const a = document.querySelector(${JSON.stringify(from)}).getBoundingClientRect(), b = document.querySelector(${JSON.stringify(to)}).getBoundingClientRect(); return {from: {x: a.left + 2, y: Math.max(2, a.top + 2)}, to: {x: b.right - 2, y: Math.min(innerHeight - 60, b.bottom - 2)}}; })()`);
+    await drag(frames.session, box.from, box.to);
+    await until(() => js(frames.session, `/links? selected$/.test(${card(`.querySelector('.count')?.textContent`)} || '')`), 'a region on the frames page');
+    const shown = await js(frames.session, `(() => { const root = ${card('')}; return {rows: [...root.querySelectorAll('.preview .t')].map((row) => row.textContent), warning: root.querySelector('.warning').textContent}; })()`);
+    await js(frames.session, `${card(`.querySelector('.dismiss')`)}.click(); true`);
+    await until(() => js(frames.session, `!${card('')}`), 'the card closed');
+    return shown;
+  };
+  const framesOut = (count, names) => `Links inside ${count === 1 ? '1 frame' : `${count} frames`} aren’t included: a selection can’t reach into frames from other sites (${names}) or sandboxed frames. Capture this page reads them where Link Meteor has access.`;
+  const regionFrames = await selectOn('main', 'main');
   assert.deepEqual(regionFrames.rows.filter((row) => /nested-other|other|third|aside|component/.test(row)), [], 'no link from a frame the page can’t reach');
-  assert.equal(regionFrames.warning, `Links inside 6 frames aren’t included: a selection can’t reach into frames from other sites (${hosts.other} and ${hosts.third}) or sandboxed frames. Capture this page reads them where Link Meteor has access.`);
-  await js(frames.session, `${card(`.querySelector('.dismiss')`)}.click(); true`);
-  pass('A region on a page with frames from other sites: their links can’t be selected, and the card counts those frames and names their sites', {rows: regionFrames.rows, warning: regionFrames.warning});
+  // Only the page's own link: no frame in the region.
+  assert.deepEqual(await selectOn('#top-link', '#top-link'), {rows: ['Top link'], warning: ''});
+  // The frame from this site: read, but the frame from the other site inside it is not.
+  const sameFrame = await selectOn('#same', '#same');
+  assert.deepEqual([sameFrame.rows, sameFrame.warning], [['Inner link same', 'Leaf link same-nested-this'], framesOut(1, hosts.other)]);
+  // The frames from the other site and the third site.
+  assert.deepEqual((await selectOn('#other', '#third')).warning, framesOut(2, `${hosts.other} and ${hosts.third}`));
+  pass('A region on a page with frames from other sites: their links can’t be selected, and the card counts and names only the frames the region touches', {rows: regionFrames.rows, warning: regionFrames.warning, same: sameFrame.warning});
   await closeTab(frames);
 
   // One other site and no sandboxed frame: the words and the button are singular.
@@ -273,8 +292,8 @@ try {
   await until(() => js(single.session, framesLoaded), 'the frames loaded again');
   await sleep(600);
   const singleRun = await rpc({type: 'capture.run', tabIds: [single.tabId]});
-  assert.deepEqual([singleRun.report.results[0].count, singleRun.report.results[0].warning, singleRun.report.results[0].frames],
-    [4, `4 frames from another site weren’t read, because Link Meteor has no access to ${hosts.other}. Allow that site to include their links.`, {read: 0, unread: 4, sites: [other], left: [{site: other, at: '0.1'}, {site: other, at: '1'}, {site: other, at: '2'}, {site: other, at: null}]}]);
+  assert.deepEqual([singleRun.report.results[0].count, singleRun.report.results[0].warning, unkeyed(singleRun.report.results[0].frames)],
+    [4, `4 frames from another site weren’t read, because Link Meteor has no access to ${hosts.other}. Allow that site to include their links.`, {read: 0, unread: 4, sites: [other], left: [{site: other, at: '0.1'}, {site: other, at: '1'}, {site: other, at: '2'}, {site: other, at: null}], seen: []}]);
   await until(async () => (await js(ui, `document.querySelector('#capture-report .report-frames-allow')?.textContent`)) === 'Allow this site', 'the report offers Allow this site');
   await click('#capture-report .report-frames-allow');
   await until(async () => /was declined/.test(await text('error')), 'the single decline is said');
@@ -282,7 +301,7 @@ try {
   await closeTab(single);
   pass('One other site: the report says “another site”, the button says Allow this site, and it asks for that one site');
 
-  /* 4. Frames that aren't ready don't hold the capture. */
+  /* 4. Frames that aren't ready don't hold the capture, and lazy ones are said not to have loaded. */
   const loading = await open(`${fixture.base}${folder}loading.html`);
   await until(() => js(loading.session, `document.getElementById('slow-other').contentDocument === null`), 'the other site’s slow frame began to load');
   const started = Date.now();
@@ -292,11 +311,25 @@ try {
   assert.ok(took < 8000, `the capture took ${took} ms`);
   assert.deepEqual(loadingLinks.filter(([name]) => name !== 'Slow link'), [['Loading top link', '/f/loading-top', `${folder}loading.html`]]);
   assert.ok(loadingLinks.filter(([name]) => name === 'Slow link').length <= 1, 'the frame still loading is read at most once');
-  assert.deepEqual([loadingRun.report.results[0].status, loadingRun.report.results[0].frames, loadingRun.report.results[0].warning],
-    ['success', {read: 0, unread: 1, sites: [other], left: [{site: other, at: '1'}]}, `1 frame from another site wasn’t read, because Link Meteor has no access to ${hosts.other}. Allow that site to include its links.`]);
-  assert.equal(await js(loading.session, `document.getElementById('lazy').contentDocument.URL`), 'about:blank', 'the lazy frame was never loaded');
+  assert.deepEqual([loadingRun.report.results[0].status, unkeyed(loadingRun.report.results[0].frames), loadingRun.report.results[0].warning],
+    ['success', {read: 0, unread: 3, sites: [other], left: [{site: other, at: '1'}, {site: fixture.base, at: '2'}, {site: other, at: '3'}], seen: []},
+      `1 frame from another site wasn’t read, because Link Meteor has no access to ${hosts.other}. Allow that site to include its links. 2 more frames hadn’t loaded yet, so they weren’t read: scroll to them, let them load, and capture the page again.`]);
+  assert.deepEqual(await js(loading.session, `['lazy', 'lazy-other'].map((id) => document.getElementById(id).contentDocument.URL)`), ['about:blank', 'about:blank'], 'the lazy frames were never loaded');
   await closeTab(loading);
-  pass('A frame that never finishes loading and a lazy frame not yet loaded don’t hold the capture: the page is read as it is', {ms: took, links: loadingLinks});
+  pass('A frame that never finishes loading and lazy frames not yet loaded don’t hold the capture: the page is read as it is, and the report says the lazy frames, from this site and another, hadn’t loaded', {ms: took, links: loadingLinks});
+
+  /* 5. Frames at the edges, with only the toolbar's access. */
+  await rpc({type: 'state.mutate', action: {type: 'collection.create', name: 'Edges'}});
+  const edges = await open(`${fixture.base}${folder}edges.html`);
+  await until(() => js(edges.session, 'window.fixtureFramesLoaded?.() === true'), 'the edge frames loaded');
+  await sleep(600);
+  const edgesRun = await rpc({type: 'capture.run', tabIds: [edges.tabId]});
+  const edgeResult = edgesRun.report.results[0];
+  assert.deepEqual(fields(await batch(edgesRun.report.batchId)), [['Edges top link', '/f/edges-top', `${folder}edges.html`]]);
+  assert.deepEqual([unkeyed(edgeResult.frames), edgeResult.warning], [{read: 0, unread: 5, sites: [other, fixture.base], left: [{site: other, at: '0'}, {site: other, at: '1'}, {site: '', at: '2'}, {site: fixture.base, at: null}, {site: other, at: null}], seen: []},
+    `4 frames weren’t read: 3 from another site (${hosts.other}), which Link Meteor has no access to, and 1 sandboxed frame of this site, which the toolbar’s temporary access doesn’t cover. Allow that site and this one (${hosts.here}) to include their links. 1 more frame couldn’t be read: Chrome didn’t let Link Meteor into it.`]);
+  await closeTab(edges);
+  pass('Frames at the edges: a frame the page sent to another site is counted, not offered as this site; frames with no size, off the page or hidden are not counted; a sandboxed frame in a closed component is offered as this site', {warning: edgeResult.warning});
 
   result.result = 'PASS';
 } catch (error) {

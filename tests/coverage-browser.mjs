@@ -288,8 +288,9 @@ try {
   // The frame from this site: read, but the frame from the other site inside it is not.
   const sameFrame = await selectOn('#same', '#same');
   assert.deepEqual([sameFrame.rows, sameFrame.warning], [['Inner link same', 'Leaf link same-nested-this'], framesOut(1, hosts.other)]);
-  // The frames from the other site and the third site.
-  assert.deepEqual((await selectOn('#other', '#third')).warning, framesOut(2, `${hosts.other} and ${hosts.third}`));
+  // The frames from the other site and the third site, from the heading above the first: on Linux and
+  // Windows, Chrome sends a synthetic press on a frame from another site into that frame.
+  assert.deepEqual((await selectOn('section:has(> #other) h2', '#third')).warning, framesOut(2, `${hosts.other} and ${hosts.third}`));
   pass('A region on a page with frames from other sites: their links can’t be selected, and the card counts and names only the frames the region touches', {rows: regionFrames.rows, warning: regionFrames.warning, same: sameFrame.warning});
   await closeTab(frames);
 

@@ -119,6 +119,23 @@ test('XLSX escapes OOXML control tokens and supports columns past Z', () => {
   assert.equal(encodedCell?.replace(/_x([0-9a-fA-F]{4})_/g, (_, hex) => String.fromCharCode(parseInt(hex, 16))), values[26]);
 });
 
+test('XLSX writes U+FFFE, U+FFFF and lone surrogates as _xHHHH_, so every sheet stays well-formed XML', () => {
+  const odd = 'Figure\uffff 3 \ufffe, lone \ud800 and \udc00, a pair 𠮷 😀';
+  const decode = (text) => text.replace(/_x([0-9a-fA-F]{4})_/g, (_, hex) => String.fromCharCode(parseInt(hex, 16)));
+  const plain = readPackagedMembers(Buffer.from(writeXlsx(['Anchor text'], [[odd]]))).get('xl/worksheets/sheet1.xml').toString('utf8');
+  const book = readPackagedMembers(Buffer.from(makeExport([{ id: '1', anchorText: odd, url: 'https://e.org/a\uffff.pdf' }], { format: 'xlsx', columns: ['anchorText', 'url'], about: { exportedAt: new Date(2026, 9, 26), collection: 'T', version: '0.6.0' } }).data));
+  const formatted = book.get('xl/worksheets/sheet1.xml').toString('utf8');
+  for (const xml of [plain, formatted]) {
+    assert.doesNotMatch(xml, /[\ufffe\uffff\ufffd]/u, 'no noncharacter, and no lone surrogate turned into U+FFFD');
+    assert.equal(decode(xml.match(/<t>(Figure.*?)<\/t>/su)?.[1] ?? ''), odd);
+  }
+  assert.match(formatted, /Figure_xFFFF_ 3 _xFFFE_, lone _xD800_ and _xDC00_, a pair 𠮷 😀/);
+  // A web address holding one is not made a link, since a link's target can't be escaped.
+  assert.equal(hyperlinkTarget('https://e.org/a\uffff.pdf'), '');
+  assert.equal(book.has('xl/worksheets/_rels/sheet1.xml.rels'), false);
+  assert.equal(hyperlinkTarget('https://e.org/𠮷.pdf'), 'https://e.org/𠮷.pdf');
+});
+
 test('Markdown preserves a genuinely empty anchor label', () => {
   assert.equal(makeExport([{anchorText:'',url:'https://example.org/image'}],{format:'markdown'}).data,'[](https://example.org/image)');
 });

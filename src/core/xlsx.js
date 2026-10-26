@@ -1,10 +1,15 @@
 // Small OOXML workbook writer. ZIP entries are stored (method 0), so no runtime dependency is needed.
 import { zip } from './zip.js';
 
+// Characters XML 1.0 can't hold: C0 controls but tab and line breaks, U+FFFE, U+FFFF and lone
+// surrogates. In cell text they are written as _xHHHH_, which spreadsheets read back.
+const NOT_XML_CHAR = /[\u0000-\u0008\u000b\u000c\u000e-\u001f\ufffe\uffff]|[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/;
+const NOT_XML = new RegExp(NOT_XML_CHAR.source, 'g');
+
 function xml(value) {
   return String(value)
     .replace(/_x[0-9a-fA-F]{4}_/g, match => `_x005F_${match.slice(1)}`)
-    .replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/g, char => `_x${char.charCodeAt(0).toString(16).toUpperCase().padStart(4, '0')}_`)
+    .replace(NOT_XML, char => `_x${char.charCodeAt(0).toString(16).toUpperCase().padStart(4, '0')}_`)
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;').replace(/'/g, '&apos;');
 }
@@ -48,7 +53,7 @@ function attr(value) {
 // The exact cell text becomes the link target, or '' when it is not a web or mail address.
 export function hyperlinkTarget(value) {
   const text = String(value ?? '');
-  if (!text || text.length > MAX_HYPERLINK_LENGTH || /[\s\u0000-\u001f\u007f]/u.test(text)) return '';
+  if (!text || text.length > MAX_HYPERLINK_LENGTH || /[\s\u0000-\u001f\u007f]/u.test(text) || NOT_XML_CHAR.test(text)) return '';
   if (!/^(https?:\/\/|mailto:)/i.test(text)) return '';
   try { return ['http:', 'https:', 'mailto:'].includes(new URL(text).protocol) ? text : ''; } catch { return ''; }
 }

@@ -197,7 +197,7 @@ test('selected pages: no access, a redirect to another site, a slow page, a tab 
     [2, 'no-access', 0, 0, 'No access: it moved to another site'],
     [3, 'not-loaded', 0, 0, 'Didn’t load within 30 seconds'],
     [4, 'empty', 0, 0, 'No links on this page'],
-    [5, 'downloaded', 0, 0, 'Chrome downloaded this address as a file instead of showing it. It is in your Downloads folder; no links were read from it.'],
+    [5, 'closed', 0, 0, 'The tab closed before it was read. Chrome may have downloaded this address as a file instead of showing it.'],
     [6, 'not-loaded', 0, 0, 'Didn’t load: Chrome showed an error page'],
     [7, 'captured', 2, 2, 'Captured']]);
   assert.deepEqual(calls.created.map((tab) => tab.url), urls.slice(1), 'a page without access is not opened');
@@ -870,6 +870,27 @@ test('Follow Next: a page that changes its own address (a # part, or history.rep
   await advance(700); load(tabs.get(tab.id), `${SITE}/somewhere-else`);
   await toTheEnd();
   assert.equal(report().ended.text, 'The tab went to another page.');
+});
+
+test('Follow Next: when Next leads back to a page already read, the report says where the tab is', async () => {
+  await reset(); paged(3); site.get(listing(3)).redirect = listing(1);
+  const tab = clicked(listing(1));
+  await ask({type: 'run.start', kind: 'next', tabId: tab.id, collectionId: state().activeCollectionId});
+  await toTheEnd();
+  assert.deepEqual(rows().map((row) => [row[1], row[4]]), [['captured', 'Captured'], ['captured', 'Captured'], ['loop', 'Not read: already read in this run']]);
+  assert.equal(tabs.get(tab.id).url, listing(1));
+  assert.equal(report().note, 'Next goes to a page already read in this run. Your tab is back on page 1. The links from all 2 pages are one batch, so Undo removes them together.');
+});
+
+test('selected pages: a tab closed before it was read says so as the contract does', async () => {
+  await reset(); granted.add(SITE);
+  page(`${SITE}/slow`, {title: 'Slow', loadMs: 5000}); page(`${SITE}/download`, {download: true});
+  await ask({type: 'run.start', kind: 'pages', collectionId: state().activeCollectionId, urls: [`${SITE}/slow`, `${SITE}/download`]});
+  await advance(1000);
+  tabs.delete(calls.created[0].id);
+  await toTheEnd();
+  const CLOSED = 'The tab closed before it was read. Chrome may have downloaded this address as a file instead of showing it.';
+  assert.deepEqual(rows(), [[1, 'closed', 0, 0, CLOSED], [2, 'closed', 0, 0, CLOSED]]);
 });
 
 test('Scroll to the end first: Include them and Undo work together', async () => {

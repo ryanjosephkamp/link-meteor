@@ -468,8 +468,9 @@ const FILE_REASONS = {
   'set-size': pdfSetProblem(Array(Math.floor(MAX_PDF_SET_BYTES / MAX_PDF_BYTES) + 1).fill(MAX_PDF_BYTES)),
 };
 const DOWNLOADED = 'Chrome downloaded this one instead of showing it. It is in your Downloads folder, not in this file.';
-// A selected page whose address the site sends as a download: Chrome saves the file and closes the tab.
-const PAGE_DOWNLOADED = 'Chrome downloaded this address as a file instead of showing it. It is in your Downloads folder; no links were read from it.';
+// A selected page's tab that closed before it was read: the person closed it, or the site sent the
+// address as a download, which Chrome saves and then closes the tab. Which one isn't known.
+const PAGE_CLOSED = 'The tab closed before it was read. Chrome may have downloaded this address as a file instead of showing it.';
 const FILE_UNANSWERED = 'The Link Meteor page that started this didn’t answer, so the run ended. Keep it open until the PDFs are fetched.';
 
 const followCap = state => { const value = state.settings.followPages; return Number.isInteger(value) && value >= MIN_FOLLOW_PAGES && value <= MAX_FOLLOW_PAGES ? value : MAX_FOLLOW_PAGES; };
@@ -522,9 +523,12 @@ export const KINDS = {
       try { tab = await chrome.tabs.get(run.tabId); } catch { return closed; }
       run.page = {title: tab.title || '', url: tab.url || item.url}; progress(run);
       if (index > 0) {
-        // Where the address led: a page already read ends the run here.
+        // Where the address led: a page already read ends the run here, with the tab back on that page.
         const landed = pageKey(tab.url || '');
-        if (landed && landed !== item.url && run.seen.includes(landed)) return {row: unread({url: landed}, 'Not read: already read in this run', 'loop'), end: {reason: 'loop'}};
+        if (landed && landed !== item.url && run.seen.includes(landed)) {
+          const back = run.results.find(row => pageKey(row.url || '') === landed || run.queue[row.page - 1]?.url === landed)?.page;
+          return {row: unread({url: landed}, 'Not read: already read in this run', 'loop'), end: {reason: 'loop', moved: true, ...(back ? {back} : {})}};
+        }
         const type = await documentType(run.tabId);
         if (type.type === 'application/pdf') return {row: {...unread(item, 'A PDF: capture it by itself to read its links', 'pdf-unread'), title: tab.title || ''}, end: {reason: 'pdf'}};
         if (/error page/i.test(type.error || '')) return {row: unread(item, 'Didn’t load: Chrome showed an error page', 'not-loaded'), end: {reason: 'not-loaded', shown: true}};
@@ -576,8 +580,10 @@ export const KINDS = {
         pdf: read ? 'Next led to a PDF, which Follow Next doesn’t read.' : 'This tab shows a PDF, which Follow Next doesn’t read. Capture the PDF by itself.',
         failed: end.detail || 'A page couldn’t be read.',
       }[reason] || '';
-      return {head: `Followed Next through ${plural(read, 'page')}: ${addedTo(run)}.`, ended,
-        where: read && ['no-next', 'next-button', 'cap', 'no-access', 'loop'].includes(reason) ? `Your tab is on ${last}.` : ''};
+      // Where the tab is: on the last page read, unless Next moved it back to a page already read.
+      const where = !read ? '' : reason === 'loop' && end.moved ? (end.back ? `Your tab is back on page ${n(end.back)}.` : '')
+        : ['no-next', 'next-button', 'cap', 'no-access', 'loop'].includes(reason) ? `Your tab is on ${last}.` : '';
+      return {head: `Followed Next through ${plural(read, 'page')}: ${addedTo(run)}.`, ended, where};
     },
   },
 
@@ -602,7 +608,7 @@ export const KINDS = {
       try {
         const state = await loaded(job, tab.id, true);
         if (state === 'stopped') return {row: unread(item, STOPPED)};
-        if (state === 'closed') return {row: unread(item, PAGE_DOWNLOADED, 'downloaded')};
+        if (state === 'closed') return {row: unread(item, PAGE_CLOSED, 'closed')};
         if (state === 'timeout') return {row: unread(item, NOT_LOADED, 'not-loaded')};
         // A tab Chrome is about to close for a download shows "complete" with no address for a moment first.
         let now = await chrome.tabs.get(tab.id).catch(() => null);
@@ -611,7 +617,7 @@ export const KINDS = {
           if (job.stopped) return {row: unread(item, STOPPED)};
           now = await chrome.tabs.get(tab.id).catch(() => null);
         }
-        if (!now) return {row: unread(item, PAGE_DOWNLOADED, 'downloaded')};
+        if (!now) return {row: unread(item, PAGE_CLOSED, 'closed')};
         // Where the address led: a site without access is closed unread, and reported the same way.
         if (!now.url || !(await hasAccess(now.url))) return {row: unread(item, now.url ? `No access: it moved to ${hostOf(now.url)}` : 'No access: it moved to another site', 'no-access')};
         run.page = {title: now.title || '', url: now.url}; progress(run);

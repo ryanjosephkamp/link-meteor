@@ -1727,7 +1727,7 @@ Off by default (`lookupDetails`). It fills in a paper's title, authors, date and
 - `#cite-facts` says "2 with authors and a date", without "read from the pages themselves".
 - `#format-help` for BibTeX, RIS and CSL-JSON says "Built from the details saved with each link; while exporting, nothing is looked up online.", and for the annotated bibliography "While exporting, nothing is looked up online."
 
-**A citation's tags, filled in by a lookup, stay the page's:** it keeps no `source`, so its note still names the page's tags, and nothing records which fields the lookup gave.
+**A citation's tags, filled in by a lookup, stay the page's:** it keeps no `source`, so its note still names the page's tags. `filled` records which fields the lookup gave (`{authors: 'crossref'}`); a link's details don't show it.
 
 **Tested** in `tests/lookup-browser.mjs`, with the test answering in the services' place: with the switch off, no frame and no request from any of the three starting places; the requests of a run, in order, at least 350 ms apart, each a `GET` with origin `null`, no cookie, no referrer and no body; what is saved, tags kept, a PDF's guessed title replaced; Undo exact; Stop in the middle; "too many requests"; an answer that isn't JSON; three failures in a row; the switch turned off during a run; BibTeX with the looked-up authors; 320 px; and text contrast in every theme, light and dark. `tests/lookup.test.mjs` covers the plan, what is saved, every sentence of the result, the wording against the privacy texts, and that only the frame's script can make a request.
 

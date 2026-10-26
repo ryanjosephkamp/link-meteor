@@ -283,7 +283,8 @@ async function menuLink(info, tab) {
     try {
       await chrome.scripting.executeScript({target: {tabId: tab.id}, files: ['content/capture.js']});
       const reply = await chrome.tabs.sendMessage(tab.id, {type: 'content.contextLink', url});
-      const found = reply?.ok === true ? reply.data : reply;
+      // The page answers {ok: true, data: {link, page}}, with link null when no link has that address.
+      const found = reply?.ok === true ? reply.data?.link : null;
       if (found?.url === url) return {url, anchorText: typeof found.anchorText === 'string' ? found.anchorText : '', accessibleLabel: typeof found.accessibleLabel === 'string' ? found.accessibleLabel : ''};
     } catch { /* no page script there */ }
   }

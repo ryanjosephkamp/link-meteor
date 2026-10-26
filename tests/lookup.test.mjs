@@ -7,7 +7,7 @@ import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { readdir } from 'node:fs/promises';
 import { createState, mergeCitation, reduceState } from '../src/core/model.js';
-import { citeFacts } from '../src/core/cite.js';
+import { citations, citeFacts } from '../src/core/cite.js';
 import { LOOKUP_SERVICES, MAX_LOOKUPS, filled, linkRequests, lookupAllowed, lookupMissing, lookupOutcome, lookupPlan, lookupReport, lookupRequests, lookupUrl, missingWords, plainText, readAnswer, readCrossref, readDatacite, readPubmed, sameCitation, unauthored } from '../src/core/lookup.js';
 
 const root = resolve(import.meta.dirname, '..');
@@ -94,6 +94,44 @@ test('PubMed: names read as family and initials, the date as printed', async () 
     journal: 'PLoS medicine', volume: '2', issue: '8', firstPage: 'e124', doi: '10.1371/journal.pmed.0020124', pmid: '16060722', source: 'pubmed' });
   assert.equal(readPubmed({ result: { uids: ['1'], 1: { uid: '1', error: 'cannot get document summary' } } }, '1'), null);
   assert.equal(readPubmed(await json('pubmed-article.json'), '999'), null, 'the answer must be for the ID asked');
+});
+
+test('PubMed: a short last page in full, extras after the range left out, and a suffix after the initials', () => {
+  const read = (pages, names = []) => readPubmed({ result: { 1: { title: 'T.', pages, authors: names.map((name) => ({ name })) } } }, '1');
+  const range = (pages) => { const { firstPage = '', lastPage = '' } = read(pages); return [firstPage, lastPage]; };
+  assert.deepEqual(range('1123-9'), ['1123', '1129'], 'MEDLINE’s 1123-9 is 1123 to 1129');
+  assert.deepEqual(range('1123-9; quiz 1130'), ['1123', '1129']);
+  assert.deepEqual(range('1199-203'), ['1199', '1203']);
+  assert.deepEqual(range('12-4, 16'), ['12', '14']);
+  assert.deepEqual(range('S12-5'), ['S12', 'S15']);
+  assert.deepEqual(range('45-52'), ['45', '52']);
+  assert.deepEqual(range('e124'), ['e124', '']);
+  assert.deepEqual(range('iii-iv'), ['iii', 'iv'], 'anything else stays as printed');
+  assert.deepEqual(range(''), ['', '']);
+  assert.deepEqual(read('1', ['de Azevedo WF Jr', 'Bitencourt-Ferreira G', 'Gates WH 3rd', 'Smith J II', 'Van Der Berg JA', 'World Health Organization']).authors,
+    ['de Azevedo, WF, Jr', 'Bitencourt-Ferreira, G', 'Gates, WH, 3rd', 'Smith, J, II', 'Van Der Berg, JA', 'World Health Organization']);
+  // The same rule for Crossref's pages, which are usually printed in full.
+  assert.deepEqual(['firstPage', 'lastPage'].map((key) => readCrossref({ message: { title: ['T'], page: '1123-9' } })[key]), ['1123', '1129']);
+  assert.deepEqual(['firstPage', 'lastPage'].map((key) => readCrossref({ message: { title: ['T'], page: '1123-1129' } })[key]), ['1123', '1129']);
+});
+
+test('Crossref: a whole book has no journal (its last container title is its series), and books keep their ISBN', async () => {
+  for (const type of ['book', 'edited-book', 'monograph', 'reference-book']) {
+    const book = readCrossref({ message: { type, title: ['A Book'], 'container-title': ['Lecture Notes in Computer Science'], ISBN: ['9780306406157'], publisher: 'Springer' } });
+    assert.deepEqual([book.journal, book.isbn, book.publisher], [undefined, '9780306406157', 'Springer'], type);
+  }
+  for (const type of ['book-chapter', 'book-part', 'reference-entry']) {
+    const part = readCrossref({ message: { type, title: ['A Chapter'], 'container-title': ['Lecture Notes in Computer Science', 'The Book'], ISBN: ['9780306406157'] } });
+    assert.deepEqual([part.journal, part.isbn], ['The Book', '9780306406157'], type);
+  }
+  const article = readCrossref(await json('crossref-article.json'));
+  assert.deepEqual([article.journal, article.isbn], ['PLoS Medicine', undefined]);
+  // An edited book exports as a book's details, not as an article in its series.
+  const pages = { 'https://doi.org/10.1007/x': readCrossref({ message: { type: 'edited-book', title: ['A Book'], 'container-title': ['Lecture Notes in Computer Science'], ISBN: ['9780306406157'] } }) };
+  const bibtex = citations([{ id: 'a', url: 'https://doi.org/10.1007/x', anchorText: 'A Book', accessibleLabel: '', capturedAt: '2026-10-26T12:00:00.000Z', notes: '', tags: [] }], { format: 'bibtex', pages });
+  assert.match(bibtex, /^@misc\{/);
+  assert.doesNotMatch(bibtex, /journal|Lecture Notes/);
+  assert.match(bibtex, /isbn\s+= \{9780306406157\}/);
 });
 
 test('an answer is a citation, a miss, or a reason to stop', async () => {

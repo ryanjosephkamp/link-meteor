@@ -80,9 +80,13 @@ function fields(entries) {
   }
   return citation;
 }
+// A range as its first and last page. MEDLINE prints the last page short ("1123-9" is 1123 to 1129)
+// and may add more after it ("1123-9; quiz 1130"): the range is its first part, both pages in full.
 function pages(value) {
-  const [firstPage, lastPage] = plainText(value, 80).split(/\s*[-–—]\s*/u);
-  return { firstPage: firstPage || '', lastPage: lastPage && lastPage !== firstPage ? lastPage : '' };
+  const [firstPage = '', lastPage = ''] = plainText(value, 80).split(/[;,]/u)[0].trim().split(/\s*[-–—]\s*/u);
+  const start = /^(\D*)(\d+)$/u.exec(firstPage);
+  const last = start && /^\d+$/u.test(lastPage) && lastPage.length < start[2].length ? start[1] + start[2].slice(0, -lastPage.length) + lastPage : lastPage;
+  return { firstPage, lastPage: last && last !== firstPage ? last : '' };
 }
 
 // Crossref's answer for a DOI ({message}), as a page citation, or null when it names no work.
@@ -92,13 +96,15 @@ export function readCrossref(answer) {
   const date = (work.issued || work.published || work['published-print'] || work['published-online'])?.['date-parts']?.[0];
   const [year, month, day] = Array.isArray(date) ? date.map(Number) : [];
   const range = pages(work.page);
-  const book = /^book/u.test(String(work.type || ''));
+  // A whole book's container title is its series, which is no journal. Books and their parts have an ISBN.
+  const type = String(work.type || ''), whole = /^(?:book|edited-book|monograph|reference-book|book-set|book-series)$/u.test(type);
+  const book = whole || /^(?:book-|reference-entry$)/u.test(type);
   return { ...fields([
     ['title', first(work.title)],
     ['authors', names(work.author, (author) => (author?.family && author?.given ? `${author.family}, ${author.given}` : author?.family || author?.name || ''))],
     ['date', year >= 1000 ? [year, month >= 1 && month <= 12 ? pad(month) : '', month && day >= 1 && day <= 31 ? pad(day) : ''].filter(Boolean).join('-') : '', 40],
     // A chapter's book is its last container title; a journal article has one.
-    ['journal', Array.isArray(work['container-title']) ? work['container-title'].at(-1) : work['container-title']],
+    ['journal', whole ? '' : Array.isArray(work['container-title']) ? work['container-title'].at(-1) : work['container-title']],
     ['publisher', work.publisher], ['volume', work.volume], ['issue', work.issue], ['firstPage', range.firstPage], ['lastPage', range.lastPage],
     ['doi', work.DOI], ['isbn', book ? first(work.ISBN) : ''],
   ]), source: 'crossref' };
@@ -133,8 +139,9 @@ export function readPubmed(answer, pmid) {
   const doi = (Array.isArray(work.articleids) ? work.articleids : []).find((item) => item?.idtype === 'doi')?.value;
   return { ...fields([
     ['title', String(work.title).replace(/\.$/u, '')],
-    // PubMed prints "Family Initials": the same name with a comma, which citations read as family and given.
-    ['authors', names(work.authors, (author) => { const name = plainText(author?.name, MAX_AUTHOR), cut = /^(.+) (\p{Lu}{1,4})$/u.exec(name); return cut ? `${cut[1]}, ${cut[2]}` : name; })],
+    // PubMed prints "Family Initials" or "Family Initials Jr": the same name with commas, "Family,
+    // Initials, Jr", which citations read as family, given and suffix.
+    ['authors', names(work.authors, (author) => { const name = plainText(author?.name, MAX_AUTHOR), cut = /^(.+?) (\p{Lu}{1,4})(?: (Jr|Sr|II|III|IV|[2-9](?:nd|rd|th)))?$/u.exec(name); return cut ? [cut[1], cut[2], cut[3]].filter(Boolean).join(', ') : name; })],
     ['date', work.pubdate, 40], ['journal', work.fulljournalname || work.source], ['volume', work.volume], ['issue', work.issue],
     ['firstPage', range.firstPage], ['lastPage', range.lastPage], ['doi', DOI.test(String(doi || '')) ? doi : ''], ['pmid', PMID.test(String(pmid)) ? String(pmid) : ''],
   ]), source: 'pubmed' };

@@ -511,25 +511,26 @@ try {
   await everyTheme('a report', [['report', '#pdf-result p'], ['file name', '#pdf-result li b'], ['how it ended', '#pdf-result li'], ['Download as one ZIP', '#pdf-zip span'], ['Combine into one PDF…', '#pdf-combine span']], 'pdf-files-report-320');
   pass('Stop, from the keyboard, in the middle of a run: the file in hand and the rest are not read, no ZIP is made, and a file that arrives later is not taken');
 
-  /* 11b. A PDF the site is slow to send: after its 2 minutes it alone is left out, and the ZIP holds the others. */
+  /* 11b. A PDF the site stops sending: after 60 seconds with nothing new it alone is left out, and the ZIP holds the
+     others. (A site that keeps sending, too slowly, meets the 2-minute limit instead: tests/runs.test.mjs.) */
   const releaseLate = hold();
   await quiet();
   await press('pdf-zip');
   await until(() => running(), 'the run with a slow PDF');
-  await until(async () => !(await running()) && !!(await outcome()), 'the run past the slow PDF’s 2 minutes', 200000);
+  await until(async () => !(await running()) && !!(await outcome()), 'the run past the stalled PDF’s 60 seconds', 120000);
   const slowZip = await download(4);
-  const slowLine = 'A-slow-paper.pdf: Not fetched within 2 minutes, so it was left out. Download files saves it by itself.';
+  const slowLine = 'A-slow-paper.pdf: The site stopped sending the PDF.';
   assert.deepEqual(await outcome(), {head: `Downloaded ${slowZip.name} with 2 of 3 PDFs, ${sizeText(journal.length + paper.length)}.`,
     lines: [`A-study-of-things-that-link.pdf: In the ZIP · ${sizeText(journal.length)}`, slowLine, `A-small-paper-about-links.pdf: In the ZIP · ${sizeText(paper.length)}`]});
   const slowMembers = readPackagedMembers(slowZip.bytes);
   assert.deepEqual([...slowMembers.keys()], ['A-study-of-things-that-link.pdf', 'A-small-paper-about-links.pdf']);
   assert.ok(slowMembers.get('A-study-of-things-that-link.pdf').equals(journal) && slowMembers.get('A-small-paper-about-links.pdf').equals(paper), 'the others, byte for byte');
   const lateRun = await lastRun();
-  assert.deepEqual([lateRun.ended.reason, lateRun.results.map((row) => row.status), lateRun.summary], ['finished', ['got', 'timeout', 'got'], 'Fetched 2 of 3 PDFs.']);
+  assert.deepEqual([lateRun.ended.reason, lateRun.results.map((row) => row.status), lateRun.summary], ['finished', ['got', 'stalled', 'got'], 'Fetched 2 of 3 PDFs.']);
   releaseLate();
   await sleep(1500);
   assert.deepEqual([saved.length, await visible('pdf-progress')], [4, false], 'the slow file, sent at last, changes nothing');
-  pass('A PDF the site takes more than 2 minutes to send is left out by itself, said as that; the ZIP holds the others byte for byte', {zip: slowZip.name});
+  pass('A PDF the site stops sending is left out by itself after 60 seconds, said as that; the ZIP holds the others byte for byte', {zip: slowZip.name});
 
   // The panel: its list (a link's PDF and a file from the computer), what was left out, the name, the summary.
   await quiet();

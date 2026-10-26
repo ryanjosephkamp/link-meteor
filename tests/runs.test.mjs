@@ -325,12 +325,12 @@ test('Follow Next: the same tab, each page loaded, a 1.5 second pause, then capt
   assert.equal(report().note, 'Page 3 has no Next link. Your tab is on page 3. The links from all 3 pages are one batch, so Undo removes them together.');
   assert.deepEqual([done.ended.reason, done.count, report().read, report().found, report().skipped, report().leftOut], ['no-next', 9, 3, 16, 1, 6]);
   assert.equal(session.linkMeteorLeftOut, undefined, 'a run only counts what it leaves out');
-  // The counter, in the workbench and on the page.
+  // The counter, in the workbench and on the page: the links found so far, left out and skipped ones too.
   const told = calls.broadcasts.filter((message) => message.type === 'run.progress' && message.runId === runId);
   assert.deepEqual([told[0].title, told[0].text, told[0].step, told[0].of], ['Following Next', 'Page 1 of up to 20 · 0 links', 1, 20]);
-  assert.ok(told.some((message) => message.text === 'Page 3 of up to 20 · 6 links' && message.page === 'Listing, page 3'));
+  assert.ok(told.some((message) => message.text === 'Page 3 of up to 20 · 11 links' && message.page === 'Listing, page 3'));
   const onPage = calls.toPage.filter((message) => message.type === 'content.run').map((message) => message.done ? `done: ${message.text}` : message.text);
-  assert.deepEqual(onPage, ['Following Next: page 1 of up to 20 · 0 links', 'Following Next: page 2 of up to 20 · 3 links', 'Following Next: page 3 of up to 20 · 6 links', 'done: Followed Next through 3 pages: added 9 links to “My research”. Page 3 has no Next link.']);
+  assert.deepEqual(onPage, ['Following Next: page 1 of up to 20 · 0 links', 'Following Next: page 2 of up to 20 · 5 links', 'Following Next: page 3 of up to 20 · 11 links', 'done: Followed Next through 3 pages: added 9 links to “My research”. Page 3 has no Next link.']);
   assert.ok(calls.toPage.every((message) => message.id === tab.id));
 });
 
@@ -966,3 +966,22 @@ test('the first run after the worker restarts is not refused while the worker lo
   assert.deepEqual(fileRows(await toTheEnd()), [[1, 'A.pdf', 'got', 'Fetched']]);
 });
 
+test('Follow Next: the running count of links only goes up, from page to page and while a page scrolls', async () => {
+  await reset({settings: {contentOnly: true, skipSaved: true}}); paged(3, {chrome: 2});
+  site.get(listing(2)).scroll = {screens: 3, of: 50, ended: 'end', text: 'Reached the end after 3 screens.'};
+  const tab = clicked(listing(1));
+  const original = chrome.scripting.executeScript;
+  // While page 2 scrolls, the page says how many links it has found.
+  chrome.scripting.executeScript = async (spec) => {
+    const answer = await original(spec);
+    if (String(spec.func).includes('.scan') && spec.args?.[0]?.scroll && tabs.get(tab.id).url === listing(2)) await ask({type: 'run.scroll', runId: spec.args[0].scroll.runId, screen: 3, of: 50, links: 5}, {url: listing(2), tab: {id: tab.id}});
+    return answer;
+  };
+  try {
+    const {runId} = await ask({type: 'run.start', kind: 'next', tabId: tab.id, collectionId: state().activeCollectionId, scroll: true});
+    await toTheEnd();
+    const counts = calls.broadcasts.filter((message) => message.type === 'run.progress' && message.runId === runId).map((message) => message.links);
+    assert.deepEqual(counts, [...counts].sort((a, b) => a - b), `the count only goes up: ${counts}`);
+    assert.equal(counts.at(-1), report().found);
+  } finally { chrome.scripting.executeScript = original; }
+});

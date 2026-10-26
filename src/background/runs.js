@@ -200,7 +200,8 @@ async function drive(job) {
       try { outcome = await kind.step(job, item); }
       catch (error) { outcome = {row: unread(item, `Couldn’t be read: ${error?.message || error}`, 'error'), ...(kind.endsOnFailure ? {end: {reason: 'failed'}} : {})}; }
       run.results.push({page: run.at + 1, ...outcome.row});
-      run.links += outcome.row.added || 0;
+      // `links` counts what was added; `found`, what the counter shows: every link found so far.
+      run.links += outcome.row.added || 0; run.found = (run.found || 0) + (outcome.row.found || 0);
       run.at++; run.doing = null; run.live = null; run.quick = outcome.quick === true;
       if (outcome.next) run.queue.push(outcome.next);
       if (outcome.end) run.ended = outcome.end;
@@ -279,7 +280,7 @@ export async function startRun(message, sender = {}) {
     const home = state.collections.find(c => c.id === message.collectionId);
     if (saves && !home) throw new Error('The chosen collection no longer exists, so nothing was started. Choose another destination.');
     const run = {runId: crypto.randomUUID(), kind: message.kind, state: 'running', stopping: false, collectionId: home?.id || '', name: home?.name || '', batchId: crypto.randomUUID(),
-      scroll: message.scroll === true && kind.scrolls === true, queue: [], at: 0, seen: [], results: [], links: 0, doing: null, live: null, page: null, ended: null, startedAt: iso()};
+      scroll: message.scroll === true && kind.scrolls === true, queue: [], at: 0, seen: [], results: [], links: 0, found: 0, doing: null, live: null, page: null, ended: null, startedAt: iso()};
     Object.assign(run, await kind.begin(message, sender, state));
     job = hold(run);
     await save(run);
@@ -516,8 +517,9 @@ export const KINDS = {
       const tab = await capture.resolveTarget(Number.isInteger(message.tabId) ? message.tabId : undefined, sender.tab?.id);
       return {tabId: tab.id, cap: followCap(state), queue: [{url: pageKey(tab.url || '')}]};
     },
+    // The links found so far: a page that is scrolling counts what it has found, as a page read counts.
     counter(run) {
-      const step = Math.min(run.at + 1, run.cap), links = run.links + (run.live?.links || 0);
+      const step = Math.min(run.at + 1, run.cap), links = (run.found || 0) + (run.live?.links || 0);
       return {step, of: run.cap, links, text: `Page ${n(step)} of up to ${n(run.cap)}${run.live ? ` · screen ${n(run.live.screen)} of up to ${n(run.live.of)}` : ''} · ${plural(links, 'link')}`};
     },
     async step(job, item) {
@@ -545,7 +547,7 @@ export const KINDS = {
         const type = await documentType(run.tabId);
         if (type.type === 'application/pdf') return {row: {...unread(item, 'A PDF: capture it by itself to read its links', 'pdf-unread'), title: tab.title || ''}, end: {reason: 'pdf'}};
         if (/error page/i.test(type.error || '')) return {row: unread(item, 'Didn’t load: Chrome showed an error page', 'not-loaded'), end: {reason: 'not-loaded', shown: true}};
-        await showOnPage(run, `${lead}${plural(run.links, 'link')}`);
+        await showOnPage(run, `${lead}${plural(run.found || 0, 'link')}`);
         await pause(job, NEXT_PAUSE_MS);
         if (job.stopped) return {row: unread(item, STOPPED)};
         // The person may have moved or closed the tab meanwhile. A page that changes its own address
@@ -554,8 +556,8 @@ export const KINDS = {
         try { now = await chrome.tabs.get(run.tabId); } catch { return closed; }
         const after = (now.url || '') === (tab.url || '') ? null : await documentType(run.tabId);
         if (after && !(type.documentId && after.documentId === type.documentId)) return {row: unread(item, 'Not read: the tab went to another page', 'moved'), end: {reason: 'tab-moved'}};
-      } else await showOnPage(run, `${lead}${plural(run.links, 'link')}`);
-      const result = await capturePage(job, run.tabId, run.scroll ? {scroll: {runId: run.runId, lead, links: run.links}} : {});
+      } else await showOnPage(run, `${lead}${plural(run.found || 0, 'link')}`);
+      const result = await capturePage(job, run.tabId, run.scroll ? {scroll: {runId: run.runId, lead, links: run.found || 0}} : {});
       let row = rowOf(result, item);
       // Chrome hides a tab once the toolbar's access is gone: the page is an error page, or on another site.
       if (index > 0 && result.status === 'denied') row = {...row, title: '', how: 'Not read: it didn’t load, or it moved to a site without access'};
@@ -610,7 +612,7 @@ export const KINDS = {
       if (urls.length > MAX_RUN_PAGES) throw new Error(`Choose up to ${MAX_RUN_PAGES} pages at a time.`);
       return {queue: urls.map(url => ({url}))};
     },
-    counter: run => ({step: Math.min(run.at + 1, run.queue.length), of: run.queue.length, links: run.links, text: `Page ${n(Math.min(run.at + 1, run.queue.length))} of ${n(run.queue.length)} · ${plural(run.links, 'link')}`}),
+    counter: run => ({step: Math.min(run.at + 1, run.queue.length), of: run.queue.length, links: run.found || 0, text: `Page ${n(Math.min(run.at + 1, run.queue.length))} of ${n(run.queue.length)} · ${plural(run.found || 0, 'link')}`}),
     async step(job, item) {
       const {run} = job;
       // A page on a site Link Meteor can't read is not opened.
@@ -637,7 +639,7 @@ export const KINDS = {
         const type = await documentType(tab.id);
         if (/error page/i.test(type.error || '')) return {row: unread(item, 'Didn’t load: Chrome showed an error page', 'not-loaded')};
         // The page shows the counter and Stop too, should the person look at that tab.
-        await showOnPage(run, `Capturing selected pages: page ${n(run.at + 1)} of ${n(run.queue.length)} · ${plural(run.links, 'link')}`, tab.id);
+        await showOnPage(run, `Capturing selected pages: page ${n(run.at + 1)} of ${n(run.queue.length)} · ${plural(run.found || 0, 'link')}`, tab.id);
         if (type.type === 'application/pdf') return {row: await readPdf(job, item, now)};
         return {row: rowOf(await capturePage(job, tab.id), item)};
       } finally {

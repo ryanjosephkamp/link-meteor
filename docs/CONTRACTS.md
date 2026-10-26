@@ -1645,9 +1645,9 @@ In the Export panel's *Download files*, the PDFs among the chosen links (the fil
   - it reads the page again and keeps only the links in frames that were in `left` and are read now, and in the frames inside them. A frame is the same frame when its site and its place are the same. So a frame that was read the first time is never added twice;
   - the links join the capture's own batch (`batchId`) and collection (`collectionId`), whichever collection is active now. *Skip saved* and *content links only* apply. Navigation links left out join those kept for *Include them*; when *Include them* was already used for this capture, they are added;
   - the page's citation isn't written again;
-  - the kept report is updated (`count`, `leftOut`, `skipped`, `warning`, `frames`, `capturedCount`), so a view opened later shows the same;
+  - the kept report is updated (`count`, `leftOut`, `skipped`, `warning`, `frames`, `capturedCount`), so a view opened later shows the same. It and the navigation links kept for *Include them* are written only while the kept report is still this capture's, with this page's result as it was when the page was read again;
   - `added.frames` counts the frames read now that weren't before.
-- Refusals, each in plain words: no kept report for that capture; nothing left unread; the tab closed; the tab moved to another page; the page can no longer be read; the capture's collection deleted.
+- Refusals, each in plain words: no kept report for that capture (also when a newer capture replaced it while the page was read again); nothing left unread; the tab closed; the tab moved to another page; the page can no longer be read; this capture's frames read again from another view meanwhile; the capture's collection deleted.
 - The notice: "Added 7 links from 6 more frames."; "Read 1 more frame: no links Link Meteor can read there."; or, when the frames still don't answer, "Link Meteor now has access to …, but the frames from those sites still couldn’t be read. The capture report says what is left." Focus stays in the report.
 - With all-sites access every frame is read, `sites` is empty and nothing is offered.
 

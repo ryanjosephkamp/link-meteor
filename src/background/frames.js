@@ -73,7 +73,8 @@ export async function scanTab(tabId, options, {left, top, ms = FRAMES_MS} = {}) 
 // capture.frames {tabId, batchId}: Allow these sites, after Chrome granted them. Reads that page
 // again and adds only the links in the frames the capture left unread (the kept report's
 // frames.left) that are read now, and in the frames inside them, to the capture's own batch and
-// collection. The kept report is updated, so a view opened later shows the same.
+// collection. The kept report is updated, so a view opened later shows the same; it is written
+// only while it is still this capture's, as it was when the page was read again.
 // Returns {state, report, added: {count, skipped, leftOut, frames}}.
 async function captureFrames(message) {
   if (!Number.isInteger(message.tabId) || typeof message.batchId !== 'string' || !message.batchId) throw new Error('Choose a capture to add its frames to.');
@@ -81,6 +82,15 @@ async function captureFrames(message) {
   const kept = stored?.report?.batchId === message.batchId ? (stored.report.results || []).find(result => result.tabId === message.tabId && result.status === 'success') : null;
   if (!kept) throw new Error('That capture’s report is no longer kept. Capture the page again to include its frames.');
   if (!kept.frames?.left?.length) throw new Error('That capture left no frames unread, so there is nothing to add.');
+  // The kept report as it is now, or why it is no longer this one (a newer capture, or this
+  // capture's frames added meanwhile from another view).
+  const same = JSON.stringify(kept);
+  const current = async () => {
+    const now = (await chrome.storage.session.get(REPORT_KEY).catch(() => ({})))[REPORT_KEY];
+    if (now?.report?.batchId !== message.batchId) return {problem: 'That capture’s report is no longer kept. Capture the page again to include its frames.'};
+    const item = (now.report.results || []).find(result => result.tabId === message.tabId && result.status === 'success');
+    return item && JSON.stringify(item) === same ? {now} : {problem: 'That capture’s frames were read again from another view meanwhile, so nothing more was added. The capture report says what is left.'};
+  };
   let tab;
   try { tab = await chrome.tabs.get(message.tabId); } catch { throw new Error('That tab is closed. Open the page and capture it again to include its frames.'); }
   if (tab.url && kept.url && tab.url !== kept.url) throw new Error('That tab has moved to another page since the capture. Capture the page again to include its frames.');
@@ -90,12 +100,15 @@ async function captureFrames(message) {
   let scanned;
   try { scanned = await scanTab(tab.id, {context: before.settings.saveContext !== false}, {left: kept.frames.left}); }
   catch (error) { throw new Error(`Link Meteor can no longer read that page, so its frames weren’t added (${String(error.message || error)}). Capture the page again.`); }
+  const {problem} = await current();
+  if (problem) throw new Error(problem);
   const found = occurrences(scanned.links, tab, message.batchId);
   const pageChrome = found.map((_, i) => contentOnly && scanned.links[i]?.pageChrome === true);
   const links = found.filter((_, i) => !pageChrome[i]), leftOut = found.filter((_, i) => pageChrome[i]);
   let state = before, count = 0, skipped = 0;
   if (links.length) ({state, count, skipped} = await appendLinks(links, {...(stored.report.collectionId ? {collectionId: stored.report.collectionId} : {}), missing: 'The collection this capture went to no longer exists, so nothing was added.'}));
-  if (leftOut.length) {
+  const {now} = await current();
+  if (now && leftOut.length) {
     const earlier = (await chrome.storage.session.get(LEFT_OUT_KEY).catch(() => ({})))[LEFT_OUT_KEY];
     const base = earlier?.batchId === message.batchId ? earlier : {links: [], total: 0};
     await keepLeftOut({batchId: message.batchId, collectionId: stored.report.collectionId || before.activeCollectionId, links: [...base.links, ...leftOut], total: base.total + leftOut.length});
@@ -103,8 +116,9 @@ async function captureFrames(message) {
   const {frames: _before, ...rest} = kept;
   const result = {...rest, count: kept.count + count, leftOut: (kept.leftOut || 0) + leftOut.length, skipped: (kept.skipped || 0) + skipped,
     warning: scanned.warnings.join(' '), ...(scanned.frames ? {frames: scanned.frames} : {})};
-  const report = {...stored.report, capturedCount: stored.report.capturedCount + count, results: stored.report.results.map(item => item === kept ? result : item)};
-  await chrome.storage.session.set({[REPORT_KEY]: {...stored, report}}).catch(() => {});
+  const into = (now || stored).report, mine = into.results.find(item => item.tabId === message.tabId && item.status === 'success');
+  const report = {...into, capturedCount: into.capturedCount + count, results: into.results.map(item => item === mine ? result : item)};
+  if (now) await chrome.storage.session.set({[REPORT_KEY]: {...now, report}}).catch(() => {});
   return {state, report, added: {count, skipped, leftOut: leftOut.length, frames: scanned.fresh}};
 }
 

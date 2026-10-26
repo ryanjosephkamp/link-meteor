@@ -143,6 +143,8 @@ globalThis.chrome = {
       if (all && page.frames === 'fail') throw new Error('Frame with ID 12 was removed.');
       if (all && page.frames === 'hang') return new Promise(() => {});
       if (spec.files) return [];
+      // A reading held until the check lets it go (`page.hold`, used once).
+      if (all && page.hold) { const {promise} = page.hold; page.hold = null; await promise; }
       if (spec.func.name === 'documentType') return [{frameId: 0, result: 'text/html'}];
       // The toolbar's temporary access reaches the page's own site, except a frame it seals off (`sealed`).
       const reached = (entry, origin = new URL(entry.result.url).origin) => page.allowed.has(origin) || (origin === A && !entry.sealed);
@@ -356,4 +358,34 @@ test('capture.frames refuses what it can’t do, in plain words', async () => {
   page.answers = [answer(0, {links: [link('Plain')]})];
   const plain = (await ok({type: 'capture.run', tabIds: [1]})).report;
   await refused({type: 'capture.frames', tabId: 1, batchId: plain.batchId}, /left no frames unread/);
+});
+
+test('capture.frames writes its report only while it is still that capture’s', async () => {
+  // A newer capture while the page is read again: nothing is added, and the newer report and its
+  // left-out links stay as they are.
+  await reset({settings: {contentOnly: true}});
+  await ok({type: 'state.mutate', action: {type: 'collection.create', name: 'Overtaken'}});
+  const first = (await ok({type: 'capture.run', tabIds: [1]})).report;
+  page.allowed = new Set([B, C]);
+  let release; page.hold = {promise: new Promise((done) => { release = done; })};
+  const pending = call({type: 'capture.frames', tabId: 1, batchId: first.batchId});
+  while (page.hold) await new Promise((done) => setTimeout(done, 1));
+  page.allowed = new Set();
+  const newer = (await ok({type: 'capture.run', tabIds: [1]})).report;
+  const keptLeftOut = structuredClone(session.linkMeteorLeftOut);
+  page.allowed = new Set([B, C]); release();
+  const reply = await pending;
+  assert.deepEqual([reply.ok, reply.error], [false, 'That capture’s report is no longer kept. Capture the page again to include its frames.']);
+  assert.deepEqual([session.linkMeteorCaptureReport.report, session.linkMeteorLeftOut, saved(first.batchId)], [newer, keptLeftOut, ['Top']]);
+  // The same capture's frames added from another view meanwhile: the slower reading adds nothing twice.
+  await reset();
+  await ok({type: 'state.mutate', action: {type: 'collection.create', name: 'Two views'}});
+  const once = (await ok({type: 'capture.run', tabIds: [1]})).report;
+  page.allowed = new Set([B, C]); page.hold = {promise: new Promise((done) => { release = done; })};
+  const slower = call({type: 'capture.frames', tabId: 1, batchId: once.batchId});
+  while (page.hold) await new Promise((done) => setTimeout(done, 1));
+  const faster = await ok({type: 'capture.frames', tabId: 1, batchId: once.batchId});
+  release();
+  assert.match((await slower).error, /read again from another view meanwhile, so nothing more was added/);
+  assert.deepEqual([saved(once.batchId), session.linkMeteorCaptureReport.report], [['Top', 'Nav', 'In B', 'In A, inside B', 'In C'], faster.report]);
 });

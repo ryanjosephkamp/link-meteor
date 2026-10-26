@@ -181,12 +181,15 @@ async function importFile(file, opener) {
   openView('file', opener);
   const run = view.run;
   try {
+    // A PDF whose name and type don't say so is known by its first bytes, before the limit for
+    // other files. Its own reader reports what goes wrong, so it isn't awaited here.
+    const head = new Uint8Array(await file.slice(0, 1024).arrayBuffer());
+    if (run !== view.run) return;
+    if (isPdfBytes(head)) return readPdfFile(file, opener);
     if (file.size > MAX_IMPORT_BYTES) throw new Error(`${file.name} is larger than ${MAX_IMPORT_BYTES / 1024 / 1024} MB, the most Link Meteor imports at once. Split it into smaller files, then import each.`);
     progress(`Reading ${file.name}…`);
     const bytes = new Uint8Array(await file.arrayBuffer());
     if (run !== view.run) return;
-    // A PDF whose name doesn't say so. Its own reader reports what goes wrong, so it isn't awaited here.
-    if (isPdfBytes(bytes)) return readPdfFile(file, opener, bytes);
     const table = await readFileTable(file, bytes, run);
     if (run !== view.run) return;
     setTable(table, { kind: 'file', name: file.name, label: file.name, collection: file.name.replace(/\.[a-z0-9]{1,8}$/i, '') || file.name });

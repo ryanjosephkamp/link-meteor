@@ -170,9 +170,10 @@ function rowOf(result, item) {
   if (result.status === 'success') {
     const how = !found ? 'No links on this page' : !added ? 'Captured: nothing new' : 'Captured';
     const scrolled = !result.scroll ? '' : result.scroll.ended === 'end' ? ` · scrolled ${plural(result.scroll.screens, 'screen')} to the end` : ` · ${result.scroll.text}`;
-    // Frames from other sites that couldn't be read, where the capture counts them (frames.unread).
+    // Frames that couldn't be read, where the capture counts them (frames.unread): frames from other
+    // sites, and also the page's own sandboxed frames and frames whose site can't be told.
     const unreadFrames = Number.isInteger(result.frames?.unread) && result.frames.unread > 0 ? result.frames.unread : 0;
-    const frames = unreadFrames ? ` · ${plural(unreadFrames, 'frame')} from other sites ${unreadFrames === 1 ? 'wasn’t' : 'weren’t'} read` : '';
+    const frames = unreadFrames ? ` · ${plural(unreadFrames, 'frame')} ${unreadFrames === 1 ? 'wasn’t' : 'weren’t'} read` : '';
     return {...row, status: found ? 'captured' : 'empty', how: how + scrolled + frames, ...(result.warning ? {warning: result.warning} : {})};
   }
   if (result.status === 'denied') return {...row, status: 'no-access', how: 'No access'};

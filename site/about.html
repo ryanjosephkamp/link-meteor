@@ -95,7 +95,7 @@
             <li>The steps you took, what you expected, and what happened instead.</li>
           </ul>
           <div class="note warn"><svg aria-hidden="true"><use href="assets/img/icons.svg#alert"/></svg><div><p><strong>Issues are public.</strong> Leave out private or work URLs, your collections, notes, screenshots of private pages and anything like a password or token. If you can, reproduce the problem on the <a href="practice.html">practice page</a> and describe that instead.</p></div></div>
-          <p>Before reporting missing links, check <a href="guide.html#limits">limits and coverage</a>. Some parts of pages, such as frames from other sites, can't be read by any extension.</p>
+          <p>Before reporting missing links, check <a href="guide.html#limits">limits and coverage</a>. Chrome's own pages and the Chrome Web Store can't be read by any extension, and frames from other sites are read only where Link Meteor has access to their sites.</p>
         </section>
 
         <section aria-labelledby="support">
@@ -107,11 +107,12 @@
 
         <section aria-labelledby="videos">
           <h2 id="videos">How the videos were made</h2>
-          <p>The <a href="./#watch">demo</a> and the <a href="install.html#watch">install walkthrough</a> were recorded with Link Meteor 0.2.2 in Chrome for Testing, the automated build of Chrome used for this project's tests, on macOS. They use a fresh test profile and only the synthetic content of the <a href="practice.html">practice page</a>: no personal browsing data or real collections.</p>
+          <p>The <a href="./#watch">demo</a> and the <a href="install.html#watch">install walkthrough</a> were recorded with Link Meteor 1.0.0 in Chrome for Testing, the automated build of Chrome used for this project's tests, on macOS. They use a fresh test profile and only synthetic content, the <a href="practice.html">practice page</a> and a short PDF written for the demo: no personal browsing data or real collections.</p>
           <ul>
             <li><strong>Recorded screens.</strong> The install page, Chrome's Extensions and Keyboard shortcuts pages, the practice page, the full view and the side panel's contents appear as they were recorded. The pointer is drawn from the recorded pointer positions. The key caps are an on-screen graphic; the selection was started by the same command the shortcut sends.</li>
             <li><strong>Selecting on the practice page.</strong> The test browser was given site access for the practice page through Chrome's Allow prompts, and the installed extension then ran its own selection script. The drag, highlights, count, card and saved links are all the extension's.</li>
-            <li><strong>Side panel.</strong> Its contents are shown at side-panel width next to a still of the page. Chrome's own side-panel frame isn't pictured.</li>
+            <li><strong>The PDF.</strong> A two-page article about the practice page's reading list, served from the same computer. Link Meteor's toolbar button was pressed on its tab through Chrome's own test controls, which gives the extension the same temporary access as a click on its icon. <em>Capture this PDF</em> then read it: the preview, page numbers and saved links are all the extension's.</li>
+            <li><strong>Side panel.</strong> Its contents are shown at side-panel width next to a still of the page or the PDF. Chrome's own side-panel frame isn't pictured.</li>
             <li><strong>Illustrations.</strong> Unzipping, Chrome's file picker and pinning from the toolbar are drawn diagrams, marked <em>Illustration</em> in the corner.</li>
             <li><strong>The spreadsheet.</strong> The workbook view is drawn from the file actually downloaded during recording, read with a file reader, not Microsoft Excel.</li>
           </ul>
@@ -121,7 +122,8 @@
         <section aria-labelledby="credits">
           <h2 id="credits">License and credits</h2>
           <dl class="defs">
-            <dt>Link Meteor</dt><dd>MIT license, © 2026 Ryan Kamp. The code, interface, mark and artwork are original. See the <a href="https://github.com/ryanjosephkamp/link-meteor/blob/main/LICENSE">license</a>.</dd>
+            <dt>Link Meteor</dt><dd>MIT license, © 2026 Ryan Kamp. The code, interface, mark and artwork are original, apart from the PDF reader below. See the <a href="https://github.com/ryanjosephkamp/link-meteor/blob/main/LICENSE">license</a>.</dd>
+            <dt>PDF reader</dt><dd>Link Meteor reads and combines PDFs with <a href="https://mozilla.github.io/pdf.js/">PDF.js</a> by Mozilla, under the Apache License 2.0. It is shipped unmodified inside the extension, with its license, and runs only in your browser.</dd>
             <dt>Fonts</dt><dd>Atkinson Hyperlegible Next and Atkinson Hyperlegible Mono by the Braille Institute, under the SIL Open Font License 1.1. Served from this site with their license files.</dd>
             <dt>Platform icons</dt><dd>The GitHub, LinkedIn, X and YouTube marks are based on <a href="https://simpleicons.org/">Simple Icons</a> (CC0 1.0). They are trademarks of their owners and are used only to link to profiles.</dd>
             <dt>Videos</dt><dd>Original recordings, captions and illustrations made for this site, with the Link Meteor artwork. No stock footage, sound or music. See <a href="#videos">how the videos were made</a>.</dd>

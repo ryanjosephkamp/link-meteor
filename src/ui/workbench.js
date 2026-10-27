@@ -8,6 +8,7 @@ import { bindCapture, startInventory, onCaptureStorageChange, restoreSessionRepo
 import { bindExport, renderColumns } from './workbench/export.js';
 import { bindBookmarks } from './workbench/bookmarks.js';
 import { bindImports } from './workbench/imports.js';
+import { bindLookup } from './workbench/lookup.js';
 import { bindOpen } from './workbench/open.js';
 import { bindSettings, loadShortcut, renderShortcut } from './workbench/settings.js';
 import { bootTheme } from './workbench/appearance.js';
@@ -25,6 +26,7 @@ function bindEvents() {
   bindCapture();
   bindBookmarks();
   bindImports();
+  bindLookup();
 }
 
 async function init() {

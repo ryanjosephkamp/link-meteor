@@ -7,7 +7,7 @@ import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { createState, migrateState, reduceState, SETTINGS_DEFAULTS, MAX_HOLD_EXCEPTIONS } from '../src/core/model.js';
-import { fileNamePart } from '../src/core/export.js';
+import { fileNamePart, exportFileName } from '../src/core/export.js';
 import { readPackagedMembers } from '../scripts/verify-package.mjs';
 
 const root = resolve(import.meta.dirname, '..');
@@ -146,6 +146,13 @@ test('export prefixes must already be safe file-name parts', () => {
   }
   // The Export settings can store whatever fileNamePart makes of typed text.
   assert.equal(set(fileNamePart('  My research: 2026 ', 40)), 'My-research-2026');
+  assert.equal(set(fileNamePart('データ 한국어', 40)), 'データ-한국어');
+  // Earlier versions stored a Korean prefix as separate jamo: such a state stays valid, and names come out composed.
+  const jamo = '한국어'.normalize('NFD');
+  const old = { ...state, settings: { ...state.settings, exportPrefix: jamo } };
+  assert.equal(reduceState(old, { type: 'settings.update', patch: { exportTimestamp: false } }).settings.exportPrefix, jamo);
+  assert.equal(set(jamo), jamo);
+  assert.equal(exportFileName({ collection: 'x', extension: 'csv', settings: { exportPrefix: jamo, exportTimestamp: false } }), '한국어_x.csv');
 });
 
 test('a site cannot be both a hold-drag site and an exception', () => {

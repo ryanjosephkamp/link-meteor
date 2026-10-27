@@ -12,6 +12,8 @@ import { fieldInputs, hasFieldValues, appendFieldValues, renderFill, bindFill } 
 import { linkDownload } from './downloads.js';
 import { renderInsights, insightsShown, setInsights, bindInsights } from './insights.js';
 import { renderMove, bindMove, detailMove } from './move.js';
+import { renderLookupSelection, detailLookup, lookupNote } from './lookup.js';
+import { renderPages, detailPages } from './runs.js';
 
 const PAGE_SIZE = 100;
 const DETAIL_PAGE_SIZE = 100;
@@ -67,6 +69,8 @@ export function renderLinks() {
   syncViewRemoval(collection);
   renderFill(collection);
   renderMove(collection);
+  renderLookupSelection(collection);
+  renderPages(collection);
   $('select-all').checked = !!pageIds.length && pageIds.every((id) => ui.selectedIds.has(id));
   $('select-all').indeterminate = pageIds.some((id) => ui.selectedIds.has(id)) && !$('select-all').checked;
   $('select-all').disabled = !pageIds.length;
@@ -336,6 +340,8 @@ export function renderOccurrence(link, grouped) {
   const page = node('span');
   appendTextLink(page, link.sourceUrl, link.sourceTitle || link.sourceUrl || '(unknown page)');
   if (link.sourceTitle && link.sourceUrl) { page.append(document.createElement('br')); page.append(node('span', 'exact', link.sourceUrl)); }
+  // 1.0.0: a link read from a PDF says which page of the PDF it is on.
+  if (link.pdfPage) { if (page.childNodes.length) page.append(document.createElement('br')); page.append(node('span', 'pdf-page', `Page ${count(link.pdfPage)} of the PDF`)); }
   fact(facts, 'Source page', page);
   if (link.frameUrl && link.frameUrl !== link.sourceUrl) {
     const frame = node('span'); appendTextLink(frame, link.frameUrl); fact(facts, 'Inside frame', frame);
@@ -345,7 +351,7 @@ export function renderOccurrence(link, grouped) {
   fact(facts, 'Capture batch', link.batchId, { exact: true, empty: 'Unknown' });
   fact(facts, 'Occurrence ID', link.id, { exact: true });
   const move = node('div', 'occurrence-move'); move.append(detailMove(link));
-  item.append(renderResearch(link), facts, linkDownload(link), move);
+  item.append(renderResearch(link), facts, linkDownload(link), move, detailPages(link));
 
   const form = document.createElement('form'); form.className = 'occurrence-form';
   const draft = ui.linkDrafts.get(link.id);
@@ -376,9 +382,12 @@ function renderResearch(link) {
   const ids = identifiersOf(link, pages);
   if (Object.keys(ids).length) block.append(occBlock('Identifiers', identifierList(ids)));
   const cited = pages[pageKey(link.sourceUrl)];
-  if (cited) block.append(occBlock('Cited from', citation(cited)));
+  if (cited) block.append(occBlock('Cited from', citation(cited, citedNote(cited))));
   const used = citationFor(link, pages);
   if (used && used.key !== pageKey(link.sourceUrl)) block.append(occBlock('Citation', citation(used.citation, usedNote(used))));
+  // Page details lookup (1.0.0): offered where the citation the link uses lacks something.
+  const lookup = detailLookup(link);
+  if (lookup) block.append(lookup);
   if (link.imported) block.append(occBlock('Imported from', node('p', 'imported-from', link.imported)));
   return block;
 }
@@ -443,27 +452,58 @@ function identifierList(ids) {
   return list;
 }
 
+// Where a citation was read, when it wasn't a page's own citation tags: the words for its
+// `source` (1.0.0), or '' for tags. 'pdf' is what a PDF says about itself; a lookup's services
+// have their own note (lookupNote), with the day it was looked up.
+export function citationSourceNote(source) {
+  return source === 'pdf' ? 'Read from the PDF itself.' : '';
+}
+const KEPT = 'Saved in this browser.';
+// Which other source filled in what this reading left empty: "Authors and journal were filled in from Crossref."
+const FILLED_FIELDS = { title: 'title', authors: 'authors', date: 'date', journal: 'journal', publisher: 'publisher', volume: 'volume', issue: 'issue', firstPage: 'pages', lastPage: 'pages', doi: 'DOI', pmid: 'PubMed ID', arxiv: 'arXiv ID', isbn: 'ISBN' };
+const FILLED_SOURCES = { pdf: 'the PDF itself', crossref: 'Crossref', datacite: 'DataCite', pubmed: 'NCBI' };
+export function filledNote(page) {
+  const by = new Map();
+  for (const [field, source] of Object.entries(page?.filled || {})) {
+    const word = FILLED_FIELDS[field];
+    if (!word || !FILLED_SOURCES[source]) continue;
+    if (!by.has(source)) by.set(source, []);
+    if (!by.get(source).includes(word)) by.get(source).push(word);
+  }
+  return [...by].map(([source, words]) => {
+    const list = words.length > 1 ? `${words.slice(0, -1).join(', ')} and ${words.at(-1)}` : words[0];
+    return `${list[0].toUpperCase()}${list.slice(1)} ${words.length > 1 || /s$/.test(words[0]) ? 'were' : 'was'} filled in from ${FILLED_SOURCES[source]}.`;
+  }).join(' ');
+}
+
 // Where a citation that isn't the source page's comes from, for its note.
 const BORROWED = { pdf: 'which names this link as its PDF', doi: 'which has the same DOI', arxiv: 'which has the same arXiv ID' };
 function usedNote({ key, citation: page, reason }) {
-  if (reason === 'own') return 'From this page’s own citation tags, read when Link Meteor had it open. Citation exports use it. Saved in this browser; nothing was looked up online.';
+  const read = citationSourceNote(page.source);
+  if (reason === 'own') return read ? `${read} Citation exports use it. ${KEPT}` : `From this page’s own citation tags, read when Link Meteor had it open. Citation exports use it. ${KEPT}`;
   const name = page.title ? `“${page.title}”` : hostOf(key) || 'a saved page';
-  return `From the citation tags of ${name}, ${BORROWED[reason]}. Citation exports use it. Saved in this browser; nothing was looked up online.`;
+  return `From ${read ? 'what Link Meteor read for' : 'the citation tags of'} ${name}, ${BORROWED[reason]}. ${read ? `${read} ` : ''}Citation exports use it. ${KEPT}`;
+}
+// The note under Cited from: where the source page's citation was read.
+function citedNote(page) {
+  const read = citationSourceNote(page.source);
+  return read ? `${read} ${KEPT}` : SOURCE_NOTE;
 }
 
-// A citation read from a page's own tags: title, then authors, journal, date and identifiers on
-// one line, and a note that nothing was looked up.
-const SOURCE_NOTE = 'From the source page’s own citation tags, read when you captured it. Saved in this browser; nothing was looked up online.';
+// A citation: title, then authors, journal, date and identifiers on one line, and a note saying
+// where it was read: a page's own tags, the PDF itself, or the service a lookup asked (lookupNote),
+// and which other source filled in what that reading left empty (filledNote).
+const SOURCE_NOTE = `From the source page’s own citation tags, read when you captured it. ${KEPT}`;
 function citation(page, note = SOURCE_NOTE) {
   const box = node('div', 'cited');
-  box.append(node('span', 'cited-title', page.title || 'Untitled page'));
+  box.append(node('span', 'cited-title', page.title || (page.source === 'pdf' ? 'Untitled PDF' : 'Untitled page')));
   const authors = page.authors || [];
   const named = authors.length > 4 ? `${authors.slice(0, 3).join(', ')} and ${plural(authors.length - 3, 'more author')}` : authors.join(', ');
   const venue = [page.journal || page.publisher, page.volume && `vol. ${page.volume}`, page.issue && `no. ${page.issue}`,
     page.firstPage && (page.lastPage ? `pp. ${page.firstPage}–${page.lastPage}` : `p. ${page.firstPage}`)].filter(Boolean).join(', ');
   const line = [named, venue, page.date, page.doi && `DOI ${page.doi}`, page.arxiv && `arXiv ${page.arxiv}`, page.pmid && `PubMed ${page.pmid}`, page.isbn && `ISBN ${page.isbn}`].filter(Boolean).join(' · ');
   if (line) box.append(node('span', 'cited-line', line));
-  box.append(node('span', 'cited-note', note));
+  box.append(node('span', 'cited-note', [lookupNote(page, note !== SOURCE_NOTE) || note, filledNote(page)].filter(Boolean).join(' ')));
   return box;
 }
 

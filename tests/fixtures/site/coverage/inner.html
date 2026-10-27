@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="en"><meta charset="utf-8"><title>Inner frame — coverage fixture</title>
+<style>body{margin:8px;font:14px/1.4 system-ui}a{color:#1f6655}iframe{width:45%;height:40px;border:1px solid #cbd3c5}</style>
+<!-- A frame that holds a link and two more frames: one from each of the two loopback sites. -->
+<p>Words around the frame’s own link: <a id="inner-link" href="/f/inner">Inner link</a>.</p>
+<iframe id="nested-this" title="Nested, from the top page’s site"></iframe>
+<iframe id="nested-other" title="Nested, from the other site"></iframe>
+<script>
+const name = location.search.slice(1) || 'inner';
+const link = document.getElementById('inner-link');
+link.textContent = 'Inner link ' + name; link.setAttribute('href', '/f/inner-' + name);
+const port = location.port ? ':' + location.port : '', folder = location.pathname.replace(/[^/]*$/, '');
+const site = (host) => location.protocol + '//' + host + port + folder;
+document.getElementById('nested-this').src = site('127.0.0.1') + 'leaf.html?' + name + '-nested-this';
+document.getElementById('nested-other').src = site('localhost') + 'leaf.html?' + name + '-nested-other';
+</script>
+</html>

@@ -1,0 +1,13 @@
+PASS Under Capture this page: Scroll to the end first and Follow Next, each with its limits in words; the number of pages takes 2 to 20 
+PASS Scroll to the end first: a counter with Stop in the workbench and on the page, every batch of the feed in one batch of links, and Undo {"links":61}
+PASS Follow Next reads three pages in the same tab after one toolbar click, 1.5 seconds apart, as one batch; the report lists each page; Undo removes them together {"links":40,"gapMs":1834}
+PASS The cap: with 2 pages set, the run stops at page 2 and says the page has a Next link; with Scroll to the end first, each page is scrolled 
+PASS Follow Next ends, each in its own words: a loop, a next page on a site without access (not opened), a page Chrome can’t load, and a page that doesn’t load in 30 seconds 
+PASS Stop in the workbench (by keyboard) and Escape on the page each end the run; what it had is kept, and the report says so {"rows":2}
+PASS Closing the tab ends the run, with what it had kept 
+PASS A PDF among selected pages: the view reads it in its tab and answers with its links, their pages and what the PDF says about itself; a tab it can’t read is answered with the reason {"links":15,"pages":3}
+PASS Capture their pages…: the panel says what will happen and which sites it needs; one request names exactly those sites; without real access every page is reported “No access” and none is opened {"simulated":"Chrome’s prompt was stubbed: a decline, then a grant"}
+PASS More than 20 pages are refused with “Choose up to 20 pages at a time.”; Escape closes the panel; a link’s details open it for that one page; a new collection needs a name 
+PASS At 320 px nothing overflows; text contrast is at least 4.5:1 in all 7 themes, light and dark, for the choices, the progress line, the report and the panel {"measured":406,"lowest":5.07}
+PASS Nothing was downloaded, and nothing but the fixture server was asked {"requests":46}
+PASS 12 checks

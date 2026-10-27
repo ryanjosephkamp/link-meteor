@@ -122,7 +122,7 @@ try {
   await row(1).locator('.row-details summary').focus(); await ui.keyboard.press('Enter');
   const details = row(1).locator('.occurrence');
   await details.waitFor();
-  assert.deepEqual(await details.locator('.occ-label').allInnerTexts(), ['Context', 'Identifiers', 'Cited from']);
+  assert.deepEqual(await details.locator('.occ-label').allInnerTexts(), ['Context', 'Identifiers', 'Cited from', 'Missing details']);
   const layout = await details.evaluate((item) => { const box = (el) => el.getBoundingClientRect(); const top = box(item.querySelector('.occ-new')), facts = box(item.querySelector('.facts')); return {first: item.firstElementChild.className, width: Math.round(top.width), factsWidth: Math.round(facts.width), above: top.bottom <= facts.top}; });
   assert.deepEqual(layout, {first: 'occ-new', width: layout.factsWidth, factsWidth: layout.factsWidth, above: true}, 'the new blocks sit above the facts, full width');
   await ui.keyboard.press('Tab');
@@ -168,7 +168,7 @@ try {
   assert.equal(await doi.locator('button').getAttribute('aria-label'), 'Copy DOI 10.5555/uhi.2024.0142');
   assert.equal(await details.locator('.cited-title').innerText(), titles[review]);
   assert.equal(await details.locator('.cited-line').innerText(), 'Amara Okafor, Jun Watanabe · Journal of Example Climate, vol. 12, no. 3, pp. 45–67 · March 2025 · DOI 10.5555/cool.2025.0007');
-  assert.equal(await details.locator('.cited-note').innerText(), 'From the source page’s own citation tags, read when you captured it. Saved in this browser; nothing was looked up online.');
+  assert.equal(await details.locator('.cited-note').innerText(), 'From the source page’s own citation tags, read when you captured it. Saved in this browser.');
   assert.equal(context.pages().length, pagesBefore, 'nothing opened on its own');
   pass('Details show the context with the anchor text marked, the DOI with Copy and a doi.org link, and the source page’s citation');
 
@@ -180,8 +180,8 @@ try {
     await toggle(i, false);
     return parts;
   };
-  assert.deepEqual(await partsOf(2), {labels: ['Identifiers', 'Cited from'], idents: [['arXiv', '2401.12345v2', 'SPAN']]});
-  assert.deepEqual(await partsOf(3), {labels: ['Identifiers', 'Cited from'], idents: [['PubMed', '31452104', 'SPAN']]});
+  assert.deepEqual(await partsOf(2), {labels: ['Identifiers', 'Cited from', 'Missing details'], idents: [['arXiv', '2401.12345v2', 'SPAN']]});
+  assert.deepEqual(await partsOf(3), {labels: ['Identifiers', 'Cited from', 'Missing details'], idents: [['PubMed', '31452104', 'SPAN']]});
   assert.deepEqual(await partsOf(5), {labels: [], idents: []}, 'a link with none of them shows only Reading');
   assert.deepEqual(await partsOf(6), {labels: ['Identifiers'], idents: [['ISBN', '9780262033848', 'SPAN']]});
   assert.deepEqual(await partsOf(8), {labels: ['Imported from'], idents: [], imported: 'labs-shortlist.csv, row 2'});

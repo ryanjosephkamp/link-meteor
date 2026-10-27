@@ -1,18 +1,18 @@
 {
   "id": "link-meteor-demo",
-  "title": "Link Meteor in under a minute",
+  "title": "Link Meteor in about a minute",
   "file": "site/assets/video/link-meteor-demo.mp4",
-  "bytes": 7834862,
-  "sha256": "264885efbbe06f7b20e638747139e2cd77e840955fb2949b80fa5c82b6c63622",
-  "seconds": 55.68,
+  "bytes": 8426824,
+  "sha256": "3229ae9905a939ae2a8e8efa32db15f736a53a1e8d7db8049efd77a2dd1fc7d8",
+  "seconds": 70.46,
   "fps": 30,
-  "frames": 1670,
+  "frames": 2114,
   "size": "1920x1080",
   "codec": "H.264 High, yuv420p, no audio track",
   "crf": 24,
-  "renderedAt": "2026-09-26T15:08:48.870Z",
-  "renderSeconds": 55,
-  "captions": 12,
+  "renderedAt": "2026-10-27T04:13:58.414Z",
+  "renderSeconds": 59,
+  "captions": 15,
   "sources": [
     {
       "scene": 0,
@@ -25,29 +25,44 @@
       "method": "recording",
       "capture": "the extension’s own injected script",
       "page": "Practice page",
-      "version": "0.2.2",
-      "build": "41f6195f64d662843e2d2bfa60e5afb06dd5ed334abae21cc3dd4272a56caeae",
-      "recordedAt": "2026-09-26T15:00:57.273Z",
-      "profile": "task-owned test profile"
+      "version": "1.0.0",
+      "build": "f96de11aa07ad99a92db189416330ad90813d3c847da55d3b8ee4eda0baaf148",
+      "chrome": "Chrome for Testing 151.0.7922.34",
+      "recordedAt": "2026-10-27T04:10:46.444Z",
+      "profile": "task-owned profile media-rec-1.0.0"
     },
     {
       "scene": 2,
       "clip": "demo-workbench",
       "method": "recording",
       "page": "Link Meteor full view",
-      "version": "0.2.2",
-      "build": "41f6195f64d662843e2d2bfa60e5afb06dd5ed334abae21cc3dd4272a56caeae",
-      "recordedAt": "2026-09-26T15:01:25.908Z",
-      "profile": "task-owned test profile"
+      "version": "1.0.0",
+      "build": "f96de11aa07ad99a92db189416330ad90813d3c847da55d3b8ee4eda0baaf148",
+      "chrome": "Chrome for Testing 151.0.7922.34",
+      "recordedAt": "2026-10-27T04:11:16.811Z",
+      "profile": "task-owned profile media-rec-1.0.0"
     },
     {
       "scene": 3,
       "method": "file rendering",
-      "note": "Rows read with openpyxl from the workbook downloaded during recording (demo-export.xlsx)",
+      "note": "Rows read with openpyxl from the workbook downloaded during recording (demo-export.xlsx, saved as Urban-heat-islands-sources_2026-10-27_0011.xlsx)",
       "rows": 7
     },
     {
       "scene": 4,
+      "clip": "demo-pdf",
+      "method": "recording",
+      "page": "Link Meteor side panel (panel width)",
+      "access": "Chrome’s toolbar action on the PDF’s tab",
+      "version": "1.0.0",
+      "build": "f96de11aa07ad99a92db189416330ad90813d3c847da55d3b8ee4eda0baaf148",
+      "chrome": "Chrome for Testing 151.0.7922.34",
+      "recordedAt": "2026-10-27T04:11:34.932Z",
+      "profile": "task-owned profile media-rec-1.0.0",
+      "still": "demo-pdf-still.jpg"
+    },
+    {
+      "scene": 5,
       "method": "artwork",
       "note": "Approved README artwork with the README animation’s flowing light, rendered at full resolution"
     }

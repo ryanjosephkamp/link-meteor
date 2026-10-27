@@ -106,7 +106,8 @@ globalThis.chrome = {
     async query() { return tabs; }, async get(id) { const tab = tabs.find((t) => t.id === id); if (!tab) throw Error('No tab'); return tab; },
     async sendMessage(tabId, message) {
       calls.tabMessages.push({tabId, ...message});
-      if (message.type === 'content.contextLink') { if (!contextLinks.has(tabId)) throw Error('Could not establish connection. Receiving end does not exist.'); return contextLinks.get(tabId); }
+      // The page script's real answer: {ok, data: {link, page}}, link null when no link has that address.
+      if (message.type === 'content.contextLink') { if (!contextLinks.has(tabId)) throw Error('Could not establish connection. Receiving end does not exist.'); return {ok: true, data: {link: contextLinks.get(tabId), page: null}}; }
     },
     async create(spec) { calls.created.push(spec); return {id: 99}; }, async update() {},
   },
@@ -173,8 +174,8 @@ test('the links are checked before anything downloads', async () => {
   await refused({type: 'downloads.start', links: [link('/a.pdf')], requestId: 'x'.repeat(101)}, /request ID/);
   await refused({type: 'downloads.start', links: [link('/a.pdf')], collectionName: 7}, /collection name must be text/);
   assert.equal(calls.download.length, 0, 'nothing downloaded');
-  // One file per address: twelve links to ten addresses need no confirmation.
-  const repeated = [...many.slice(0, 10), many[0], many[1]];
+  // One file per address, whatever the fragment: twelve links to ten addresses need no confirmation.
+  const repeated = [...many.slice(0, 10), many[0], {...many[1], url: `${many[1].url}#page=4`}];
   const result = await ok({type: 'downloads.start', links: repeated, collectionName: 'Repeats'});
   assert.equal(result.total, 10); assert.equal(calls.download.length, 10);
 });
@@ -310,11 +311,15 @@ test('Download linked file saves the right-clicked link into the active collecti
   const told = calls.tabMessages.find((message) => message.final);
   assert.equal(told.tabId, 1);
   assert.equal(told.text, `Saved “Quarterly-report.pdf” to ${folderLabel(folder)} in your downloads folder.`);
-  // Without an answer from the page, the address names the file.
-  contextLinks.delete(1); reset();
+  // When the page finds no link with that address, or doesn't answer, the address names the file.
+  contextLinks.set(1, null); reset();
   chrome.contextMenus.onClicked.listeners[0]({menuItemId: 'meteor-download', linkUrl: 'https://files.test/files/annual%20summary.pdf'}, tabs[0]);
   await until(() => calls.tabMessages.some((message) => message.final), 'the page is told again');
   assert.ok(disk.has(`${folder}/annual-summary.pdf`));
+  contextLinks.delete(1); reset();
+  chrome.contextMenus.onClicked.listeners[0]({menuItemId: 'meteor-download', linkUrl: 'https://files.test/files/minutes.pdf'}, tabs[0]);
+  await until(() => calls.tabMessages.some((message) => message.final), 'the page is told a third time');
+  assert.ok(disk.has(`${folder}/minutes.pdf`));
 });
 
 test('Download linked file without access opens the full view with the link waiting', async () => {

@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<title>Reading list</title>
+<h1 id="top">Reading list</h1>
+<!-- For tests/pdf-files-browser.mjs: PDFs to put in one ZIP or one combined PDF. Two links share
+     their words, so their files need different names. The other site is this same server at
+     localhost; /wait/… is answered by the suite, when it chooses. -->
+<ul>
+  <li><a href="/pdf/paper.pdf">A small paper about links</a> (3 pages)</li>
+  <li><a href="/pdf/journal.pdf">A study of things that link</a> (2 pages)</li>
+  <li><a href="/pdf-download/notes.pdf">Field notes</a> (sent as a download)</li>
+  <li><a href="/pdf/notes.pdf">Field notes</a> (the same words, another address)</li>
+  <li><a href="/pdf-moved/journal.pdf">The study, moved</a> (redirects to the other site)</li>
+  <li><a href="/pdf-signin/paper.pdf">A paper behind a sign-in page</a></li>
+  <li><a href="/pdf/password.pdf">A PDF that needs a password</a></li>
+  <li><a id="other" href="/pdf/journal.pdf?other">The study, on another site</a></li>
+  <li><a href="/pdf/missing.pdf">A PDF that is gone</a></li>
+  <li><a href="/files/figure.png">A figure</a> (a file, not a PDF)</li>
+  <li><a href="/site/pdf-files.html#top">This page</a> (not a file)</li>
+</ul>
+<script>document.getElementById('other').href = `http://localhost:${location.port}/pdf/journal.pdf`;</script>
+</html>

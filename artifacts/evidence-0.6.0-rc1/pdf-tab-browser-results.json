@@ -1,0 +1,191 @@
+{
+  "started": "2026-10-03T15:31:43.051Z",
+  "browser": "Chrome for Testing, headless, fresh temporary profile, real unpacked extension, no optional grants; Chrome’s real toolbar action",
+  "checks": [
+    {
+      "name": "pdf-tab-read-with-toolbar-access-only",
+      "links": 15,
+      "pages": 3,
+      "bytes": 7557
+    },
+    {
+      "name": "pdf-tab-read-without-pdf-in-the-address"
+    },
+    {
+      "name": "pdf-tab-sign-in-page-refused"
+    },
+    {
+      "name": "pdf-through-a-page-of-its-own-site",
+      "download": 1281
+    },
+    {
+      "name": "pdf-tab-local-file-not-readable",
+      "reason": "failed"
+    },
+    {
+      "name": "capture-this-pdf-previews-its-links",
+      "links": 15,
+      "summary": [
+        "Adds 15 links from 3 of 3 pages, and the PDF itself as a link.",
+        "Left out: 1 link to a place inside the PDF, 2 that aren’t web, email or phone addresses. 1 link is on a picture and has no words; its anchor text stays empty. You can undo this."
+      ]
+    },
+    {
+      "name": "capture-this-pdf-adds-one-batch",
+      "links": 16,
+      "citation": {
+        "arxiv": "2409.11211",
+        "arxivCategory": "cs.CV",
+        "arxivVersion": "v1",
+        "date": "17 Sep 2024",
+        "doi": "10.5555/fixture.2026.001",
+        "pdfUrl": "http://127.0.0.1:52478/pdf/paper.pdf",
+        "source": "pdf",
+        "title": "A Small Paper About Links"
+      }
+    },
+    {
+      "name": "capture-this-pdf-undo"
+    },
+    {
+      "name": "capture-this-pdf-without-pdf-in-the-address",
+      "links": 15
+    },
+    {
+      "name": "capture-this-pdf-nothing-to-add-in-plain-words"
+    },
+    {
+      "name": "local-pdf-tab-says-so-and-chooses-the-file",
+      "fileAddressAccess": true
+    },
+    {
+      "name": "select-a-region-on-a-pdf-says-so-on-the-page"
+    },
+    {
+      "name": "pdf-among-captured-tabs-is-not-an-error"
+    },
+    {
+      "name": "pdf-tab-320-and-contrast",
+      "themes": [
+        {
+          "theme": "meteor",
+          "scheme": "light",
+          "lowest": {
+            "name": "report detail",
+            "ratio": 5.42
+          }
+        },
+        {
+          "theme": "meteor",
+          "scheme": "dark",
+          "lowest": {
+            "name": "region note",
+            "ratio": 7.36
+          }
+        },
+        {
+          "theme": "comet",
+          "scheme": "light",
+          "lowest": {
+            "name": "report detail",
+            "ratio": 5.34
+          }
+        },
+        {
+          "theme": "comet",
+          "scheme": "dark",
+          "lowest": {
+            "name": "region note",
+            "ratio": 7.33
+          }
+        },
+        {
+          "theme": "aurora",
+          "scheme": "light",
+          "lowest": {
+            "name": "report detail",
+            "ratio": 5.37
+          }
+        },
+        {
+          "theme": "aurora",
+          "scheme": "dark",
+          "lowest": {
+            "name": "region note",
+            "ratio": 7.31
+          }
+        },
+        {
+          "theme": "ember",
+          "scheme": "light",
+          "lowest": {
+            "name": "report detail",
+            "ratio": 5.44
+          }
+        },
+        {
+          "theme": "ember",
+          "scheme": "dark",
+          "lowest": {
+            "name": "region note",
+            "ratio": 7.35
+          }
+        },
+        {
+          "theme": "nebula",
+          "scheme": "light",
+          "lowest": {
+            "name": "report detail",
+            "ratio": 5.45
+          }
+        },
+        {
+          "theme": "nebula",
+          "scheme": "dark",
+          "lowest": {
+            "name": "region note",
+            "ratio": 7.27
+          }
+        },
+        {
+          "theme": "graphite",
+          "scheme": "light",
+          "lowest": {
+            "name": "report detail",
+            "ratio": 5.41
+          }
+        },
+        {
+          "theme": "graphite",
+          "scheme": "dark",
+          "lowest": {
+            "name": "region note",
+            "ratio": 7.38
+          }
+        },
+        {
+          "theme": "contrast",
+          "scheme": "light",
+          "lowest": {
+            "name": "report detail",
+            "ratio": 12.13
+          }
+        },
+        {
+          "theme": "contrast",
+          "scheme": "dark",
+          "lowest": {
+            "name": "region note",
+            "ratio": 13.19
+          }
+        }
+      ]
+    },
+    {
+      "name": "pdf-tab-nothing-downloaded",
+      "requests": 33
+    }
+  ],
+  "status": "PASS",
+  "finished": "2026-10-03T15:32:41.276Z"
+}

@@ -1,25 +1,40 @@
-// Access and capture (0.3.0) with real grants, for the lead's owner session. Run it in the profile
+// Access and capture (0.3.0) with real grants. Run it in the profile
 // prepared with LINK_METEOR_GRANTS=all-sites node tests/prepare-grants.mjs (all sites, tab groups,
 // bookmarks, and a per-site grant for the fixture site), before tests/permission-browser.mjs.
 // It never shows a native prompt: every grant it uses already exists. 0.5.0: with all-sites access,
 // Save tabs as links reads each fixture tab's own citation tags into the collection's pages, without
-// asking (the fixture server serves tests/fixtures/research/). Headless unless
-// LINK_METEOR_HEADED=1; for a visible run, keep the pointer off the Chrome for Testing windows.
+// asking (the fixture server serves tests/fixtures/research/). 1.0.0: Capture this PDF on a tab whose
+// site Link Meteor already has access to, with no toolbar click on it; and Capture this page reads
+// every frame, from any site: each link once, with the frame it was in; and PDFs on two sites go
+// into one ZIP and one combined PDF, each fetched in a background tab on its own site (one of them
+// sent as a download; one address that Chrome downloads by itself, into this profile's own folder).
+// Headless unless LINK_METEOR_HEADED=1; for a visible run, keep the pointer off the Chrome for
+// Testing windows.
 //   LINK_METEOR_TEST_PROFILE=<all-sites profile> LINK_METEOR_FIXTURE_PORT=52481 node tests/access-granted.mjs
 // Writes access-granted-results.json to the evidence folder.
 import assert from 'node:assert/strict';
-import {writeFile} from 'node:fs/promises';
+import {readFile, readdir, writeFile} from 'node:fs/promises';
 import {resolve} from 'node:path';
-import {fixtureServer, launch, rpc, until, evidence} from './helpers/browser.mjs';
+import {fixtureServer, launch, rpc, until, evidence, scratch, downloadsFolder} from './helpers/browser.mjs';
 import {secondFixture} from './access-fixture.mjs';
+import {fixture as pdfFixture, readPdf, combinePdfs} from './helpers/pdf.mjs';
+import {readPackagedMembers} from '../scripts/verify-package.mjs';
 
 const ALL_SITES = ['http://*/*', 'https://*/*'];
 const profile = process.env.LINK_METEOR_TEST_PROFILE;
 if (!profile) throw new Error('Set LINK_METEOR_TEST_PROFILE to the profile prepared with LINK_METEOR_GRANTS=all-sites.');
 const result = {started: new Date().toISOString(), profile, browser: 'Chrome for Testing via Playwright, real unpacked extension, grants prepared through the product by the owner', checks: []};
 const pass = (name, data = {}) => { result.checks.push({name, ...data}); console.log('PASS', name, Object.keys(data).length ? JSON.stringify(data) : ''); };
+// A result's frames, with the key kept for each frame that was read (`seen`) checked and set aside.
+const counted = ({seen, ...frames}) => { assert.equal(seen.length, frames.read, 'a key is kept for each frame read'); return frames; };
 const sleep = (ms) => new Promise((done) => setTimeout(done, ms));
-const fixture = await fixtureServer();
+// /pdf-moved-download/<name> moves to the other site, which sends the PDF as a download (for PDF files).
+const fixture = await fixtureServer({routes: (req, res, url) => {
+  const moved = /^\/pdf-moved-download\/([a-z0-9-]+\.pdf)$/.exec(url.pathname);
+  if (!moved) return false;
+  res.writeHead(302, {Location: `http://localhost:${req.socket.localPort}/pdf-download/${moved[1]}`}); res.end();
+  return true;
+}});
 const second = await secondFixture();
 const localhost = fixture.base.replace('127.0.0.1', 'localhost');
 const modifier = process.platform === 'darwin' ? 'Meta' : 'Control';
@@ -149,9 +164,100 @@ try {
   await ui.bringToFront();
   await until(async () => (await ui.locator('#scope-preview').innerText()).includes(new URL(second.base).host), 'preview names the new origin');
   await ui.locator('#capture').click();
-  await until(async () => /37 links captured/.test(await ui.locator('#capture-report').innerText()), 'captured the never-visited origin');
+  // 1.0.0: 38, not 37. The page's frame from another site (localhost) is read too, so its link is
+  // saved beside the same link in the frame from the page's own site.
+  await until(async () => /38 links captured/.test(await ui.locator('#capture-report').innerText()), 'captured the never-visited origin');
   assert.deepEqual(await ui.evaluate(() => window.__requests), []);
-  pass('Capture this page on a never-visited origin needs no prompt with all-sites access', {origin: second.base});
+  const visited = (await ui.evaluate(async () => (await chrome.storage.session.get('linkMeteorCaptureReport')).linkMeteorCaptureReport)).report;
+  const visitedLinks = (await rpc(ui, {type: 'state.get'})).collections.flatMap((c) => c.links).filter((link) => link.batchId === visited.batchId);
+  assert.deepEqual(visitedLinks.filter((link) => link.originalHref === '/frame-source').map((link) => link.frameUrl).sort(), [second.base + '/frame.html', second.base.replace('127.0.0.1', 'localhost') + '/frame.html'].sort(), 'the link in each frame, with that frame’s address');
+  assert.deepEqual([visited.results[0].count, visited.results[0].warning, counted(visited.results[0].frames)], [38, '', {read: 1, unread: 0, sites: [], left: []}]);
+  pass('Capture this page on a never-visited origin needs no prompt with all-sites access, and reads its frame from another site', {origin: second.base});
+
+  // 1.0.0: frames from other sites (tests/fixtures/site/coverage/frames.html: frames from this site,
+  // localhost and third.localhost, nested, in a sidebar, inside a closed component, sandboxed and
+  // hidden). With all-sites access every frame is read: each link once, with the frame it was in,
+  // and nothing is asked for.
+  const framesUrl = `${fixture.base}/site/coverage/frames.html`, coverage = '/site/coverage/';
+  const otherSite = fixture.base.replace('127.0.0.1', 'localhost'), thirdSite = `http://third.localhost:${new URL(fixture.base).port}`;
+  await page.goto(framesUrl);
+  await page.waitForFunction(() => window.fixtureFramesLoaded());
+  for (const frame of page.frames()) await frame.waitForLoadState('load');
+  await sleep(800);
+  await ui.bringToFront();
+  const framesTab = (await rpc(ui, {type: 'tabs.list'})).tabs.find((tab) => tab.url === framesUrl);
+  assert.ok(framesTab, 'the frames page is listed');
+  const framesCollection = (await rpc(ui, {type: 'state.mutate', action: {type: 'collection.create', name: 'Frames from other sites'}})).activeCollectionId;
+  await ui.evaluate(() => { window.__requests = []; });
+  const framesRun = (await rpc(ui, {type: 'capture.run', tabIds: [framesTab.id]})).report;
+  const framed = (await rpc(ui, {type: 'state.get'})).collections.find((c) => c.id === framesCollection).links.filter((link) => link.batchId === framesRun.batchId);
+  assert.deepEqual(framed.map((link) => [link.anchorText, link.frameUrl]), [
+    ['Top link', framesUrl],
+    ['Inner link same', `${fixture.base}${coverage}inner.html?same`],
+    ['Leaf link same-nested-this', `${fixture.base}${coverage}leaf.html?same-nested-this`],
+    ['Written link', 'about:srcdoc'],
+    ['Leaf link same-nested-other', `${otherSite}${coverage}leaf.html?same-nested-other`],
+    ['Inner link other', `${otherSite}${coverage}inner.html?other`],
+    ['Leaf link other-nested-other', `${otherSite}${coverage}leaf.html?other-nested-other`],
+    ['Leaf link other-nested-this', `${fixture.base}${coverage}leaf.html?other-nested-this`],
+    ['Leaf link third', `${thirdSite}${coverage}leaf.html?third`],
+    ['Leaf link aside', `${otherSite}${coverage}leaf.html?aside`],
+    ['Leaf link component', `${otherSite}${coverage}leaf.html?component`],
+    ['Leaf link', `${fixture.base}${coverage}leaf.html?sandboxed`],
+  ], 'every frame’s links, each with the frame it was in; nothing from the hidden frame');
+  assert.equal(new Set(framed.map((link) => `${link.url} ${link.frameUrl}`)).size, framed.length, 'no link twice');
+  assert.ok(framed.every((link) => link.sourceUrl === framesUrl && link.sourceTitle === 'Frames from other sites — coverage fixture'), 'the page is every link’s source');
+  assert.equal(framed.find((link) => link.anchorText === 'Inner link other').context, 'Words around the frame’s own link: Inner link other.', 'context is read inside the frame');
+  assert.deepEqual([framesRun.results[0].status, framesRun.results[0].count, framesRun.results[0].warning, counted(framesRun.results[0].frames)], ['success', 12, '', {read: 7, unread: 0, sites: [], left: []}]);
+  assert.deepEqual(await ui.evaluate(() => window.__requests), [], 'reading the frames asks for nothing');
+  // Content links only: the sidebar frame from another site is page chrome, so its link is left out and counted.
+  await rpc(ui, {type: 'state.mutate', action: {type: 'settings.update', patch: {contentOnly: true}}});
+  const contentRun = (await rpc(ui, {type: 'capture.run', tabIds: [framesTab.id]})).report;
+  await rpc(ui, {type: 'state.mutate', action: {type: 'settings.update', patch: {contentOnly: false}}});
+  assert.deepEqual([contentRun.results[0].count, contentRun.results[0].leftOut], [11, 1]);
+  // Hold-key drag stays in the top document: the copy of the page script inside a frame from another
+  // site only reads links, so a drag that starts inside that frame selects nothing, there or in the page.
+  const holding = (await rpc(ui, {type: 'state.get'})).settings;
+  if (holding.holdTrigger === 'letter') {
+    const inFrame = await page.locator('#other').boundingBox();
+    await page.bringToFront(); await page.keyboard.down(holding.holdKey);
+    await page.mouse.move(inFrame.x + inFrame.width - 30, inFrame.y + inFrame.height - 12); await page.mouse.down();
+    await page.mouse.move(inFrame.x + inFrame.width - 120, inFrame.y + inFrame.height - 40, {steps: 6}); await page.mouse.up();
+    await page.keyboard.up(holding.holdKey); await sleep(300);
+    assert.deepEqual([await page.frameLocator('#other').locator('#link-meteor-overlay').count(), await page.locator('#link-meteor-overlay').count()], [0, 0], 'a drag inside a frame from another site selects nothing');
+  }
+  pass('Frames from other sites with all-sites access: every frame is read (nested, sidebar, inside a closed component, sandboxed), each link once with its frameUrl and context, a hidden frame not at all, with no prompt; content links only leaves the sidebar frame’s link out', {links: framed.length, frames: framesRun.results[0].frames});
+
+  // 1.0.0: Capture this PDF where Link Meteor already has access to the PDF's site (here, all sites)
+  // and the toolbar was never clicked on its tab. The tab is known as a PDF by its address, or, for
+  // an address without ".pdf", by asking the tab; its links are previewed, then added with the PDF as
+  // their source page and what it says about itself; and nothing is asked for.
+  for (const path of ['/pdf/paper.pdf', '/pdf-plain/paper']) {
+    const pdfUrl = fixture.base + path, name = `From the PDF at ${path}`;
+    const pdfCollection = (await rpc(ui, {type: 'state.mutate', action: {type: 'collection.create', name}})).activeCollectionId;
+    await page.goto(pdfUrl); await sleep(800);
+    const pdfTab = (await rpc(ui, {type: 'tabs.list'})).tabs.find((tab) => tab.url === pdfUrl);
+    assert.ok(pdfTab, `the PDF's tab is listed with its address: ${path}`);
+    // The workbench captures the page Link Meteor was last opened from. Here that page is named
+    // directly, as the toolbar click would name it, but without the click's temporary access.
+    await ui.evaluate((target) => chrome.storage.session.set({linkMeteorTarget: target}), {tabId: pdfTab.id, windowId: pdfTab.windowId});
+    await ui.bringToFront();
+    await until(async () => (await ui.locator('#capture-label').innerText()) === 'Capture this PDF', `Capture this PDF for ${path}`, 10000);
+    assert.match(await ui.locator('#scope-preview').innerText(), /A PDF\. Link Meteor reads the links inside it and shows them before adding any\.$/, 'no request for the site is announced');
+    assert.equal(await ui.locator('#arm').isDisabled(), true, 'Select a region is off on a PDF');
+    await ui.evaluate(() => { window.__requests = []; });
+    await ui.locator('#capture').click();
+    await until(() => ui.locator('#import-plan').isVisible(), `the links of ${path} previewed`, 20000);
+    assert.equal(await ui.locator('#import-source').innerText(), `“A Small Paper About Links” · 3 pages · from this tab (${new URL(fixture.base).host})`);
+    assert.equal(await ui.locator('#import-summary-main').innerText(), 'Adds 15 links from 3 of 3 pages, and the PDF itself as a link.');
+    await ui.locator('#import-commit').click();
+    await until(async () => (await ui.locator('#notice .msg').innerText().catch(() => '')).startsWith(`Added 15 links and the PDF itself to “${name}”.`), `the links of ${path} added`);
+    const savedFromPdf = (await rpc(ui, {type: 'state.get'})).collections.find((c) => c.id === pdfCollection);
+    assert.deepEqual([savedFromPdf.links.length, savedFromPdf.links[0].url, savedFromPdf.links[1].pdfPage, new Set(savedFromPdf.links.map((link) => link.sourceUrl)).size, savedFromPdf.links[1].sourceUrl, savedFromPdf.pages[pdfUrl].source, savedFromPdf.pages[pdfUrl].pdfUrl],
+      [16, pdfUrl, 1, 1, pdfUrl, 'pdf', pdfUrl]);
+    assert.deepEqual(await ui.evaluate(() => window.__requests), [], 'nothing is asked for');
+  }
+  pass('Capture this PDF where the site is already allowed and the toolbar was not clicked: known as a PDF with or without ".pdf" in its address, previewed, added with the PDF as the source page, and no prompt');
 
   // 0.5.0: Save tabs as links reads each tab's citation tags where Link Meteor has access (here, all
   // sites), keyed by the tab's own address, and says how many; a page without tags gives none.
@@ -211,6 +317,123 @@ try {
   assert.ok(folders.some((node) => !node.url));
   await page.keyboard.press('Escape');
   pass('Card: Open as a tab group is named after the destination; Bookmark this selection saves a folder');
+
+  // 1.0.0, runs. Capture their pages… with all-sites access: nothing to ask; each page is read in a
+  // background tab and closed; a PDF among them is read as a PDF by this open workbench; everything
+  // is one batch with one Undo. The pages are on two sites (127.0.0.1 and localhost).
+  const pagesHome = (await rpc(ui, {type: 'state.mutate', action: {type: 'collection.create', name: 'Selected pages'}})).activeCollectionId;
+  const runPages = [`${fixture.base}/site/runs/page.html?of=1&source=a`, `${localhost}/site/runs/page.html?of=1&source=b`, `${fixture.base}/pdf/paper.pdf`];
+  await rpc(ui, {type: 'state.mutate', action: {type: 'links.append', collectionId: pagesHome, links: runPages.map((url, i) => ({id: `run-page-${Date.now()}-${i}`, anchorText: `Source ${i + 1}`, accessibleLabel: '', url, originalHref: url,
+    sourceUrl: fixture.base, sourceTitle: 'Sources', frameUrl: '', capturedAt: new Date().toISOString(), batchId: 'run-pages-seed', notes: '', tags: []}))}});
+  await until(async () => (await ui.locator('#collection-heading').innerText()) === 'Selected pages' && (await ui.locator('.link-row').count()) === 3, 'the three sources');
+  await ui.evaluate(() => { window.__requests = []; });
+  await ui.locator('#select-all').check();
+  await ui.locator('#pages-selected').click();
+  await until(async () => (await ui.locator('#pages-access').innerText()) === 'Link Meteor has access to these pages: you allowed all sites.', 'nothing to ask with all sites allowed');
+  assert.equal(await ui.locator('#pages-allow').isVisible(), false);
+  assert.equal(await ui.locator('#pages-title').innerText(), 'Capture the links on 3 selected pages');
+  const tabsBeforeRun = context.pages().length;
+  await ui.locator('#pages-apply').click();
+  await until(() => ui.locator('#run-progress').isVisible(), 'the run’s progress line');
+  assert.equal(await ui.locator('#run-title').innerText(), 'Capturing selected pages');
+  await until(async () => /^Captured 3 selected pages: added 39 links to “Selected pages”\.$/.test(await ui.locator('#notice .msg').innerText().catch(() => '')), 'the run of three pages', 90000);
+  const runRows = await ui.locator('#capture-report .run-table tbody tr').evaluateAll((rows) => rows.map((row) => [...row.cells].map((cell) => cell.innerText)));
+  assert.deepEqual(runRows.map((row) => [row[0], row[2], row[3]]), [['1', '12', '12'], ['2', '12', '12'], ['3', '15', '15']]);
+  assert.deepEqual(runRows.slice(0, 2).map((row) => row[4]), ['Captured', 'Captured']);
+  assert.match(runRows[2][4], /^Captured: a PDF, \d+ pages?$/);
+  const runAdded = (await rpc(ui, {type: 'state.get'})).collections.find((c) => c.id === pagesHome).links.filter((link) => link.batchId !== 'run-pages-seed');
+  assert.equal(runAdded.length, 39);
+  assert.equal(new Set(runAdded.map((link) => link.batchId)).size, 1, 'one batch');
+  const fromPdf = runAdded.filter((link) => link.pdfPage);
+  assert.equal(fromPdf.length, 15);
+  assert.ok(fromPdf.every((link) => link.sourceUrl === runPages[2] && Number.isInteger(link.pdfPage)), 'a PDF’s links keep the PDF as their source page, and their page numbers');
+  assert.deepEqual([...new Set(runAdded.filter((link) => !link.pdfPage).map((link) => new URL(link.sourceUrl).host))], [new URL(fixture.base).host, new URL(localhost).host], 'pages on both sites were read');
+  assert.equal(context.pages().length, tabsBeforeRun, 'every background tab is closed');
+  assert.deepEqual(await ui.evaluate(() => window.__requests), [], 'no prompt');
+  await ui.locator('#notice button', {hasText: 'Undo'}).click();
+  await until(async () => (await ui.locator('#notice .msg').innerText().catch(() => '')) === 'Undone: removed 39 links from “Selected pages”.', 'Undo for the run');
+  assert.equal((await rpc(ui, {type: 'state.get'})).collections.find((c) => c.id === pagesHome).links.length, 3);
+  pass('Capture their pages with all-sites access: pages on two sites and a PDF, each in a background tab that is closed, one batch, one Undo, no prompt', {links: 39});
+
+  // 1.0.0: with all-sites access, Follow Next may cross to another site.
+  await page.goto(`${fixture.base}/site/runs/page.html?of=1&next=text&after=other`); await sleep(800);
+  const crossingTab = (await rpc(ui, {type: 'tabs.list'})).tabs.find((tab) => tab.url === page.url());
+  const crossingHome = (await rpc(ui, {type: 'state.mutate', action: {type: 'collection.create', name: 'Crossing Next'}})).activeCollectionId;
+  await rpc(ui, {type: 'run.start', kind: 'next', tabId: crossingTab.id, collectionId: crossingHome});
+  await until(async () => (await rpc(ui, {type: 'run.status'})).run?.state === 'done', 'the run that crosses sites', 60000);
+  const crossing = (await rpc(ui, {type: 'run.status'})).run;
+  assert.deepEqual([crossing.summary, crossing.ended.text], ['Followed Next through 2 pages: added 25 links to “Crossing Next”.', 'Page 2 has no Next link.']);
+  assert.equal(new URL(page.url()).hostname, 'localhost', 'the tab moved to the other site');
+  pass('Follow Next crosses to another site where Link Meteor has access to it');
+
+  // 1.0.0, PDF files. With all-sites access nothing is asked for. PDFs on two sites (127.0.0.1 and
+  // localhost) go into one ZIP and one combined PDF: each is fetched through a page of its own site in
+  // a background tab that is closed again, including one the site sends as a download, which Chrome
+  // never downloads; an address that moves to the other site is opened by itself and read where it
+  // lands; one that moves to a download is downloaded by Chrome, into this profile's own folder, and
+  // the report says so. The person's own tab is on a third site, so no PDF can be had through it.
+  const paperPdf = await pdfFixture('paper.pdf'), journalPdf = await pdfFixture('journal.pdf'), notesPdf = await pdfFixture('notes.pdf');
+  const profileDownloads = downloadsFolder(profile), profileHome = resolve(scratch, profile + '-home', 'Downloads');
+  const fileNames = async (folder) => (await readdir(folder).catch(() => [])).sort();
+  await page.goto(second.base + '/index.html'); await sleep(800);
+  const filesTab = (await rpc(ui, {type: 'tabs.list'})).tabs.find((tab) => tab.url === page.url());
+  await ui.evaluate((target) => chrome.storage.session.set({linkMeteorTarget: target}), {tabId: filesTab.id, windowId: filesTab.windowId});
+  const filesHome = (await rpc(ui, {type: 'state.mutate', action: {type: 'collection.create', name: 'PDF files'}})).activeCollectionId;
+  const filePdfs = [['A small paper about links', `${fixture.base}/pdf/paper.pdf`], ['Field notes', `${localhost}/pdf-download/notes.pdf`], ['The study, moved', `${fixture.base}/pdf-moved/journal.pdf`],
+    ['Sent elsewhere', `${fixture.base}/pdf-moved-download/notes.pdf`], ['Behind a sign-in page', `${fixture.base}/pdf-signin/paper.pdf`]];
+  await rpc(ui, {type: 'state.mutate', action: {type: 'links.append', collectionId: filesHome, links: filePdfs.map(([anchorText, url], i) => ({id: `pdf-file-${Date.now()}-${i}`, anchorText, accessibleLabel: '', url, originalHref: url,
+    sourceUrl: `${fixture.base}/site/pdf-files.html`, sourceTitle: 'Reading list', frameUrl: '', capturedAt: new Date().toISOString(), batchId: 'pdf-files-seed', notes: '', tags: []}))}});
+  await ui.bringToFront();
+  await until(async () => (await ui.locator('#collection-heading').innerText()) === 'PDF files' && (await ui.locator('#pdf-set-title').innerText()) === 'The 5 PDFs', 'the five PDFs');
+  await until(async () => (await ui.locator('#scope-preview').innerText()).includes(new URL(second.base).host), 'the person’s own tab is on a third site');
+  assert.equal(await ui.locator('#pdf-access').isVisible(), false, 'nothing to ask for with all sites allowed');
+  await ui.evaluate(() => { window.__requests = []; });
+  const filesBefore = await rpc(ui, {type: 'state.get'}), tabsBeforeFiles = context.pages().length, savedBefore = await fileNames(profileDownloads), homeBefore = await fileNames(profileHome);
+  const opened = [];
+  const watchTabs = (tab) => opened.push(tab);
+  context.on('page', watchTabs);
+  const [zipDownload] = await Promise.all([ui.waitForEvent('download', {timeout: 120000}), ui.locator('#pdf-zip').click()]);
+  await until(async () => /^Downloaded /.test(await ui.locator('#pdf-result p').innerText().catch(() => '')), 'the ZIP’s report', 30000);
+  const DOWNLOADED = 'Chrome downloaded this one instead of showing it. It is in your Downloads folder, not in this file.';
+  assert.match(zipDownload.suggestedFilename(), /^PDF-files_\d{4}-\d{2}-\d{2}_\d{4}\.zip$/);
+  assert.match(await ui.locator('#pdf-result p').innerText(), /^Downloaded PDF-files_[\d_-]+\.zip with 3 of 5 PDFs, /);
+  assert.deepEqual(await ui.locator('#pdf-result li').allInnerTexts(), ['A-small-paper-about-links.pdf: In the ZIP · 7 KB', 'Field-notes.pdf: In the ZIP · 1 KB', 'The-study-moved.pdf: In the ZIP · 2 KB', `Sent-elsewhere.pdf: ${DOWNLOADED}`,
+    'Behind-a-sign-in-page.pdf: Not a PDF: the site asked to sign in, or the address has expired.']);
+  const zipMembers = readPackagedMembers(await readFile(await zipDownload.path()));
+  assert.deepEqual([...zipMembers.keys()], ['A-small-paper-about-links.pdf', 'Field-notes.pdf', 'The-study-moved.pdf']);
+  assert.ok(zipMembers.get('A-small-paper-about-links.pdf').equals(paperPdf) && zipMembers.get('Field-notes.pdf').equals(notesPdf) && zipMembers.get('The-study-moved.pdf').equals(journalPdf), 'each PDF byte for byte, from both sites');
+  assert.deepEqual(await ui.evaluate(() => window.__requests), [], 'no prompt');
+  await until(() => context.pages().length === tabsBeforeFiles, 'every background tab is closed');
+  assert.deepEqual(await rpc(ui, {type: 'state.get'}), filesBefore, 'nothing is saved');
+  // Background tabs: a page of each PDF's own site (the page the link came from, or the site's
+  // front page), and the two addresses that move, each by itself.
+  assert.ok(opened.length >= 5, `background tabs were opened: ${opened.length}`);
+  // What Chrome downloaded by itself landed in this profile's own folder, and nowhere else. It is
+  // one file: the PDF sent as a download from its own address was fetched by a page, and not downloaded.
+  const savedNow = (await fileNames(profileDownloads)).filter((name) => !savedBefore.includes(name));
+  assert.equal(savedNow.length, 2, `the ZIP, and the one file Chrome downloaded by itself: ${savedNow}`);
+  const savedBytes = await Promise.all(savedNow.map((name) => readFile(resolve(profileDownloads, name))));
+  assert.ok(savedBytes.some((bytes) => bytes.equals(notesPdf)), 'Chrome’s own download is the PDF the other site sent');
+  assert.deepEqual((await fileNames(profileHome)).filter((name) => !homeBefore.includes(name)), [], 'nothing in the Downloads folder of the browser’s home');
+  pass('PDF files with all-sites access: PDFs on two sites into one ZIP, each through a background tab on its own site that is closed again; one sent as a download; one that moves to the other site; one Chrome downloads by itself, into the profile’s own folder; no prompt', {zip: zipDownload.suggestedFilename(), tabs: opened.length});
+
+  // The same PDFs combined, without the one Chrome would download again.
+  await ui.locator('#pdf-combine').click();
+  await ui.locator('#combine-list button[aria-label="Leave out Sent-elsewhere.pdf"]').click();
+  await ui.locator('#combine-apply').click();
+  await until(async () => (await ui.locator('#combine-skip li').allInnerTexts().catch(() => [])).length === 1 && !(await ui.locator('#combine-apply').isDisabled()), 'the files fetched, one left out', 60000);
+  assert.deepEqual(await ui.locator('#combine-skip li').allInnerTexts(), ['Behind-a-sign-in-page.pdf: Not a PDF: the site asked to sign in, or the address has expired.']);
+  assert.deepEqual(await ui.locator('#combine-list .name small').allInnerTexts(), ['A small paper about links · 3 pages · 7 KB', 'Field notes · 2 pages · 1 KB', 'The study, moved · 2 pages · 2 KB']);
+  assert.equal((await ui.locator('#combine-apply').innerText()).trim(), 'Combine 3 PDFs');
+  const [pdfDownload] = await Promise.all([ui.waitForEvent('download', {timeout: 60000}), ui.locator('#combine-apply').click()]);
+  assert.match(pdfDownload.suggestedFilename(), /^PDF-files_\d{4}-\d{2}-\d{2}_\d{4}\.pdf$/);
+  const combinedHere = await readPdf(await readFile(await pdfDownload.path())), combinedInNode = await readPdf((await combinePdfs([paperPdf, notesPdf, journalPdf])).bytes);
+  assert.equal(combinedHere.pageCount, 7);
+  assert.deepEqual(combinedHere.links.map((link) => [link.url, link.pdfPage]), combinedInNode.links.map((link) => [link.url, link.pdfPage]), 'every page and link, in the list’s order');
+  await until(() => context.pages().length === tabsBeforeFiles, 'every background tab is closed');
+  assert.deepEqual(await ui.evaluate(() => window.__requests), [], 'no prompt');
+  context.off('page', watchTabs);
+  pass('PDF files with all-sites access: the PDFs of two sites combined into one PDF, in the list’s order', {name: pdfDownload.suggestedFilename(), pages: combinedHere.pageCount});
 
   // The all-sites switch off keeps Chrome's grant and offers to remove it; on again needs no prompt.
   await ui.bringToFront();

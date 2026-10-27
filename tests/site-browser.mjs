@@ -77,8 +77,9 @@ try{
   assert.ok(links.some(l=>l.url==='https://components.example.net/sources/tree-survey'),'shadow root link');
   result.pageFieldChecks='formula and markup labels kept as text; icon-only link empty with ARIA label; hidden text and hidden/script links excluded; frame and shadow-root links present';
 
-  // Workbench screenshots with the captured practice data.
+  // Workbench screenshots with the captured practice data, past the first-run welcome card.
   await ui.bringToFront();await ui.setViewportSize({width:1440,height:1000});await ui.reload();await ui.locator('.link-row').first().waitFor();
+  if(await ui.locator('#welcome-later').isVisible()){await ui.locator('#welcome-later').click();await ui.locator('#welcome').waitFor({state:'hidden'});await ui.locator('#notice').waitFor({state:'hidden',timeout:10000});}
   await ui.locator('#filters-toggle').click();await ui.locator('#dedupe').selectOption('url');await ui.locator('#filters-toggle').click();
   await ui.locator('.row-details summary').first().click();await ui.evaluate(()=>scrollTo(0,0));await ui.waitForTimeout(300);
   await shot(ui,'site-workbench.png');

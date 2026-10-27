@@ -154,15 +154,40 @@
         <p id="appearance-help" class="help">The theme also colors the capture card on webpages and the toolbar icon. System follows your computer’s light or dark setting.</p>
       </section>
 
+      <section id="online-panel" class="rail-section online" aria-labelledby="online-title">
+        <h2 id="online-title" class="rail-title">Online lookups</h2>
+        <p class="help">Link Meteor works without the internet. These are extras: each is off until you turn it on, and each says exactly what it sends.</p>
+        <div class="online-item">
+          <div class="hold-row">
+            <input id="lookup-details" type="checkbox" role="switch" class="switch" aria-describedby="lookup-help lookup-sends">
+            <label for="lookup-details">Page details lookup</label>
+          </div>
+          <p id="lookup-help" class="help">Fills in a paper’s title, authors, date and journal when you click Look up details.</p>
+          <div id="lookup-sends" class="sends">
+            <p class="sends-title">What it sends, and where</p>
+            <p class="sends-what">Page details lookup is off unless you turn it on. When it is on and you click Look up details, Link Meteor sends the paper’s DOI, arXiv ID or PubMed ID, and nothing else, to:</p>
+            <ul>
+              <li><b>Crossref</b> (<code>api.crossref.org</code>) for DOIs</li>
+              <li><b>DataCite</b> (<code>api.datacite.org</code>) for DOIs Crossref doesn’t have, including arXiv’s</li>
+              <li><b>NCBI</b> (<code>eutils.ncbi.nlm.nih.gov</code>) for PubMed IDs</li>
+            </ul>
+            <p class="sends-not">No page address, link text, note or collection name is sent. No cookies are sent or kept.</p>
+            <p class="sends-not">Like any website you visit, those services see your IP address and your browser’s version and language.</p>
+            <p class="sends-not">What they return (title, authors, date, journal) is saved in this browser with the link.</p>
+          </div>
+        </div>
+      </section>
+
       <section id="import-panel" class="rail-section import-panel" aria-labelledby="import-panel-title">
         <h2 id="import-panel-title" class="rail-title">Import links</h2>
-        <p id="import-panel-help" class="help">From a spreadsheet, a list, a web page or bookmarks file, pasted text or a bookmark folder. You see what will be added before anything is. Files are read in this browser and never uploaded.</p>
+        <p id="import-panel-help" class="help">From a spreadsheet, a list, a PDF, a web page or bookmarks file, pasted text or a bookmark folder. You see what will be added before anything is. Files are read in this browser and never uploaded.</p>
         <div class="import-sources">
-          <input id="import-file" class="import-file sr-only" type="file" accept=".csv,.tsv,.tab,.xlsx,.xlsm,.txt,.text,.md,.markdown,.html,.htm,.json,text/csv,text/tab-separated-values,text/plain,text/markdown,text/html,application/json,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet">
+          <input id="import-file" class="import-file sr-only" type="file" accept=".csv,.tsv,.tab,.xlsx,.xlsm,.txt,.text,.md,.markdown,.html,.htm,.json,.pdf,application/pdf,text/csv,text/tab-separated-values,text/plain,text/markdown,text/html,application/json,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet">
           <label for="import-file" class="btn import-choose"><svg class="icon" aria-hidden="true"><use href="#i-import"/></svg><span>Choose a file…</span></label>
           <button id="import-paste" class="btn" type="button"><svg class="icon" aria-hidden="true"><use href="#i-clipboard"/></svg><span>Paste links</span></button>
           <button id="import-bookmarks" class="btn" type="button"><svg class="icon" aria-hidden="true"><use href="#i-bookmark"/></svg><span>From a bookmark folder…</span></button>
         </div>
+        <p id="import-drop-hint" class="drop-hint"><svg class="icon" aria-hidden="true"><use href="#i-import"/></svg><span>Or drop a file here: a PDF’s links are read with their page numbers.</span></p>
       </section>
 
       <section id="backup-panel" class="rail-section backup" aria-labelledby="backup-title">
@@ -209,6 +234,7 @@
               <li><a href="https://github.com/ryanjosephkamp/link-meteor" target="_blank" rel="noopener noreferrer"><svg class="icon" aria-hidden="true"><use href="#i-code"/></svg>Source code</a></li>
               <li><a href="https://github.com/sponsors/ryanjosephkamp" target="_blank" rel="noopener noreferrer"><svg class="icon heart" aria-hidden="true"><use href="#i-heart"/></svg>Sponsor on GitHub (optional)</a></li>
             </ul>
+            <p id="about-pdfjs" class="help">Reads PDFs with PDF.js by Mozilla (Apache License 2.0), which is part of Link Meteor. PDFs are read in this browser and never uploaded.</p>
             <p class="help">Every feature is free. Sponsoring never unlocks anything. These links open in a new tab only when you choose them.</p>
             <p class="help">Bug reports are public on GitHub. Leave out private URLs, collection contents and notes; the practice page makes a good example.</p>
             <div class="about-diagnostics">
@@ -315,9 +341,19 @@
           <div class="tab-tools"><button id="tabs-all" class="link-btn" type="button">Select all</button><button id="tabs-none" class="link-btn" type="button">Clear</button><span id="tab-picked" class="tab-picked"></span></div>
           <div id="tab-options" class="tab-options"></div>
         </fieldset>
+        <div id="capture-further" class="capture-further" role="group" aria-label="Go further than this screen">
+          <label class="name-check"><input id="further-scroll" type="checkbox" aria-describedby="further-scroll-help"><span>Scroll to the end first<small id="further-scroll-help">For pages that load more as you scroll. Stops at the end, at 50 screens, at 5,000 links or after 2 minutes.</small></span></label>
+          <div class="name-check"><input id="further-next" type="checkbox" aria-label="Follow Next" aria-describedby="further-next-help"><span><label for="further-next">Follow Next, up to</label> <input id="follow-pages" class="follow-pages" type="number" min="2" max="20" step="1" value="20" inputmode="numeric" aria-label="Pages to follow, 2 to 20"> <label for="follow-pages">pages</label><small id="further-next-help">Moves this tab to the page’s own Next link and captures each page. Stops when there is no Next or the next page is on a site Link Meteor can’t read.</small></span></div>
+        </div>
         <div class="capture-actions">
           <button id="capture" class="btn primary" type="button"><svg class="icon" aria-hidden="true"><use href="#i-download"/></svg><span id="capture-label">Capture this page</span></button>
           <button id="arm" class="btn" type="button"><svg class="icon" aria-hidden="true"><use href="#i-region"/></svg><span>Select a region</span><span id="arm-keys" class="btn-keys" aria-hidden="true"></span></button>
+        </div>
+        <p id="pdf-note" class="help pdf-note" hidden></p>
+        <div id="run-progress" class="run-progress" role="status" hidden>
+          <div class="run-text"><strong id="run-title"></strong><span id="run-text"></span></div>
+          <button id="run-stop" class="btn small" type="button">Stop</button>
+          <div class="run-bar" aria-hidden="true"><i id="run-bar"></i></div>
         </div>
         <div id="capture-report" class="report" hidden></div>
       </section>
@@ -341,7 +377,8 @@
         </div>
         <p id="import-progress" class="import-progress" role="status" hidden></p>
         <div id="import-plan" class="import-plan" hidden>
-          <div class="import-options">
+          <dl id="pdf-facts" class="pdf-facts" aria-label="What the PDF says about itself" hidden></dl>
+          <div id="import-options" class="import-options">
             <label id="import-sheet-row" hidden>Sheet <select id="import-sheet"></select></label>
             <label id="import-header-row" class="name-check"><input id="import-header" type="checkbox"><span>First row is column names</span></label>
           </div>
@@ -352,12 +389,13 @@
           </div>
           <div class="import-table-foot">
             <p id="import-table-note" class="help"></p>
-            <label class="name-check"><input id="import-only-skipped" type="checkbox"><span>Show only skipped rows</span></label>
+            <label class="name-check"><input id="import-only-skipped" type="checkbox"><span id="import-only-skipped-label">Show only skipped rows</span></label>
           </div>
           <div class="import-row">
             <label>Add to <select id="import-destination"></select></label>
             <label class="name-check"><input id="import-skip-saved" type="checkbox" checked><span>Skip links already saved there</span></label>
           </div>
+          <label id="pdf-self-row" class="name-check pdf-self" hidden><input id="pdf-self" type="checkbox"><span id="pdf-self-label"></span></label>
           <div id="import-summary" class="import-summary" aria-live="polite"><strong id="import-summary-main"></strong><span id="import-summary-skips" class="skips"></span></div>
         </div>
         <div class="import-actions">
@@ -414,6 +452,8 @@
             <button id="fill-fields" class="btn quiet small" type="button" aria-expanded="false" aria-controls="fill-panel" hidden>Fill for selected links</button>
             <button id="move-selected" class="btn quiet small" type="button" aria-expanded="false" aria-controls="move-panel" hidden><svg class="icon" aria-hidden="true"><use href="#i-folders"/></svg>Move to…</button>
             <button id="copy-selected" class="btn quiet small" type="button" aria-expanded="false" aria-controls="move-panel" hidden><svg class="icon" aria-hidden="true"><use href="#i-copy"/></svg>Copy to…</button>
+            <button id="lookup-selected" class="btn quiet small" type="button" hidden><svg class="icon" aria-hidden="true"><use href="#i-search"/></svg>Look up details</button>
+            <button id="pages-selected" class="btn quiet small" type="button" aria-expanded="false" aria-controls="pages-panel" hidden><svg class="icon" aria-hidden="true"><use href="#i-tabs"/></svg>Capture their pages…</button>
           </div>
           <form id="fill-panel" class="fill-panel" aria-labelledby="fill-title" hidden>
             <p id="fill-title" class="fill-title"></p>
@@ -428,6 +468,29 @@
             <label id="move-new-row" hidden>Name <input id="move-new" autocomplete="off" maxlength="200" aria-describedby="move-help"></label>
             <p id="move-help" class="help" aria-live="polite"></p>
             <div class="confirm-actions"><button id="move-apply" class="btn primary small" type="submit">Move</button><button id="move-cancel" class="btn quiet small" type="button">Cancel</button></div>
+          </form>
+          <div id="lookup-toolbar-host" class="lookup-host">
+            <div id="lookup-status" class="lookup-status" hidden>
+              <div id="lookup-progress" class="lookup-progress" hidden>
+                <div class="lookup-text"><strong id="lookup-count" role="status"></strong><span>Sending only each DOI, arXiv ID or PubMed ID to Crossref, DataCite and NCBI.</span></div>
+                <button id="lookup-stop" class="btn small" type="button" aria-label="Stop the lookup">Stop</button>
+                <progress id="lookup-bar" max="1" value="0" aria-labelledby="lookup-count"></progress>
+              </div>
+              <p id="lookup-done" class="lookup-done" hidden><span id="lookup-done-text" role="status"></span><button id="lookup-undo" class="link-btn" type="button">Undo<span class="sr-only"> the lookup</span></button><button id="lookup-dismiss" class="link-btn" type="button">Dismiss<span class="sr-only"> the lookup’s result</span></button></p>
+            </div>
+          </div>
+          <form id="pages-panel" class="fill-panel pages-panel" aria-labelledby="pages-title" hidden>
+            <p id="pages-title" class="fill-title"></p>
+            <ul class="pages-facts">
+              <li>Each page opens in a background tab, one at a time, is captured and closed.</li>
+              <li>20 pages at most in one run, 2 seconds apart. You can stop at any time.</li>
+              <li id="pages-only"></li>
+            </ul>
+            <div class="pages-access"><p id="pages-access" aria-live="polite"></p><button id="pages-allow" class="btn small" type="button" hidden></button></div>
+            <label>Add to <select id="pages-destination" aria-describedby="pages-help"></select></label>
+            <label id="pages-new-row" hidden>Name <input id="pages-new" autocomplete="off" maxlength="200" aria-describedby="pages-help"></label>
+            <p id="pages-help" class="help" aria-live="polite"></p>
+            <div class="confirm-actions"><button id="pages-apply" class="btn primary small" type="submit" disabled>Capture pages</button><button id="pages-cancel" class="btn quiet small" type="button">Cancel</button></div>
           </form>
           <div id="remove-view-confirm" class="confirm danger-confirm toolbar-confirm" role="group" aria-labelledby="remove-view-confirm-text" hidden>
             <p id="remove-view-confirm-text"></p>
@@ -505,6 +568,10 @@
         </fieldset>
         <div id="cite-block" class="cite-block" hidden>
           <ul id="cite-facts" class="cite-facts" aria-label="What the file holds"></ul>
+          <div id="lookup-box" class="lookup-box" hidden>
+            <p id="lookup-line" class="lookup-line" hidden><span id="lookup-line-text"></span><button id="lookup-authors" class="btn small" type="button"><svg class="icon" aria-hidden="true"><use href="#i-search"/></svg><span>Look up details</span></button></p>
+            <div id="lookup-export-host" class="lookup-host"></div>
+          </div>
           <p id="cite-first-label" class="help">First entry</p>
           <pre id="cite-first" class="cite-preview" tabindex="0" role="region" aria-labelledby="cite-first-label"></pre>
         </div>
@@ -543,6 +610,37 @@
         <div id="downloads-result" class="downloads-result" role="status" hidden></div>
         <p id="downloads-help" class="help"></p>
         <p id="downloads-access" class="help downloads-access"></p>
+        <div id="pdf-set" class="pdf-set" role="group" aria-labelledby="pdf-set-title">
+          <p id="pdf-set-title" class="pdf-set-title">PDF files</p>
+          <div class="pdf-set-actions">
+            <button id="pdf-zip" class="btn" type="button" aria-describedby="pdf-set-help pdf-access" hidden><svg class="icon" aria-hidden="true"><use href="#i-download"/></svg><span>Download as one ZIP</span></button>
+            <button id="pdf-combine" class="btn" type="button" aria-expanded="false" aria-controls="combine-panel" aria-describedby="pdf-set-help"><svg class="icon" aria-hidden="true"><use href="#i-import"/></svg><span>Combine into one PDF…</span></button>
+          </div>
+          <p id="pdf-set-help" class="help"></p>
+          <p id="pdf-access" class="help pdf-access" hidden></p>
+          <form id="combine-panel" class="combine-panel" aria-labelledby="combine-title" hidden>
+            <p id="combine-title" class="pdf-set-title">Combine into one PDF, in this order</p>
+            <ol id="combine-list" class="column-list combine-list" aria-labelledby="combine-title"></ol>
+            <p id="combine-empty" class="drop-hint" hidden><svg class="icon" aria-hidden="true"><use href="#i-import"/></svg><span>No PDFs yet. Add PDF files from your computer, or drop them here.</span></p>
+            <div class="pdf-set-actions">
+              <button id="combine-add" class="btn small" type="button"><svg class="icon" aria-hidden="true"><use href="#i-plus"/></svg><span>Add PDF files…</span></button>
+              <span class="help">or drop them on the list</span>
+              <input id="combine-file" type="file" accept=".pdf,application/pdf" multiple tabindex="-1" aria-hidden="true" hidden>
+            </div>
+            <div id="combine-skip" class="combine-skip" role="status" hidden></div>
+            <label for="combine-name">File name <input id="combine-name" maxlength="160" autocomplete="off" spellcheck="false"></label>
+            <p id="combine-total" class="combine-total"></p>
+            <p id="combine-access" class="help pdf-access" hidden></p>
+            <p id="combine-help" class="help" aria-live="polite" hidden></p>
+            <div class="confirm-actions"><button id="combine-apply" class="btn primary" type="submit" aria-describedby="combine-total combine-access combine-help"><svg class="icon" aria-hidden="true"><use href="#i-download"/></svg><span id="combine-apply-label">Combine PDFs</span></button><button id="combine-cancel" class="btn quiet" type="button">Cancel</button></div>
+          </form>
+          <div id="pdf-progress" class="run-progress" role="status" hidden>
+            <div class="run-text"><strong id="pdf-progress-title"></strong><span id="pdf-progress-text"></span></div>
+            <button id="pdf-stop" class="btn small" type="button">Stop</button>
+            <div class="run-bar" aria-hidden="true"><i id="pdf-progress-bar"></i></div>
+          </div>
+          <div id="pdf-result" class="downloads-result pdf-result" role="status" hidden></div>
+        </div>
       </section>
 
       <section class="export-group" aria-labelledby="bookmark-title">

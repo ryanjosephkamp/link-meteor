@@ -1,0 +1,9 @@
+PASS Collection creation, notes and tags save through the UI
+PASS Both UI and background ask before opening more than 20 links; nothing opens first
+PASS Changing the target invalidates inline confirmation without opening a tab
+PASS Up to 20 links open at once, without a confirmation, at the exact local destination
+PASS Visible removal and positional Undo preserve all occurrence fields
+PASS Reversible URL grouping keeps separately labeled occurrences
+PASS Per-link note draft survives a state update and leaves anchor text untouched
+PASS Real missing-grant and closed-tab failures preserve the existing collection
+PASS Exact schema-v1 state survives a full isolated browser and worker restart

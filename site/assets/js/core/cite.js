@@ -50,12 +50,14 @@ export function dateParts(text) {
   return [year, month, day];
 }
 
-// {family, given} for a name printed "Family, Given"; any other name stays whole.
+// {family, given, suffix?} for a name printed "Family, Given" or "Family, Given, Jr" (RIS's order);
+// any other name stays whole.
+const SUFFIX = /^(?:Jr|Sr|II|III|IV|[2-9](?:nd|rd|th))\.?$/u;
 function personName(name) {
-  const parts = name.split(',');
-  if (parts.length !== 2) return null;
-  const [family, given] = parts.map(oneLine);
-  return family && given ? { family, given } : null;
+  const parts = name.split(',').map(oneLine);
+  if (parts.length !== 2 && !(parts.length === 3 && SUFFIX.test(parts[2]))) return null;
+  const [family, given, suffix] = parts;
+  return family && given ? { family, given, ...(suffix ? { suffix } : {}) } : null;
 }
 
 // What every format needs from one row. Titles come from the citation the link uses (its own
@@ -141,7 +143,8 @@ function bibName(name) {
   const person = personName(name);
   if (!person) return `{${tex(name)}}`;
   const part = (text) => (/\band\b/i.test(text) ? `{${tex(text)}}` : tex(text));
-  return `${part(person.family)}, ${part(person.given)}`;
+  // BibTeX's order is "von Last, Jr, First".
+  return [person.family, person.suffix, person.given].filter(Boolean).map(part).join(', ');
 }
 function bibtexEntry(entry, key) {
   const { ids } = entry;
@@ -180,7 +183,7 @@ function cslItem(entry, key) {
   const { ids } = entry;
   // An arXiv preprint is an "article" with arXiv as its publisher and its ID as its number, as Zotero writes one.
   const item = { id: key, type: entry.journal ? 'article-journal' : entry.preprint ? 'article' : 'webpage', title: entry.title };
-  if (entry.authors.length) item.author = entry.authors.map((name) => { const person = personName(name); return person ? { family: person.family, given: person.given } : { literal: name }; });
+  if (entry.authors.length) item.author = entry.authors.map((name) => personName(name) || { literal: name });
   if (entry.year) item.issued = { 'date-parts': [[entry.year, entry.month, entry.day].filter(Boolean)] };
   else if (entry.date) item.issued = { literal: entry.date };
   const site = siteName(entry.url);

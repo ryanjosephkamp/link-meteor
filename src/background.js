@@ -1,5 +1,5 @@
 import {serial, readState, mutate, onStateWritten} from './background/store.js';
-import {ordinaryUrl, captureRefusal, PDF_REFUSAL, FILE_REFUSAL} from './background/urls.js';
+import {ordinaryUrl, addressKind, captureRefusal, PDF_REGION_REFUSAL, PDF_TAB_NOTE, PDF_FILE_NOTE, FILE_REFUSAL} from './background/urls.js';
 import {workbenchMessages as bookmarkMessages} from './background/bookmarks.js';
 import {workbenchMessages as backupMessages} from './background/backup.js';
 import {workbenchMessages as importMessages} from './background/imports.js';
@@ -13,12 +13,14 @@ import {createMenus, menuClicked, followMenuWrites, syncMenuTitle, MENU} from '.
 import {tabsMessage} from './background/tabs.js';
 import {citationPages} from './background/citations.js';
 import {workbenchMessages as downloadMessages, pageMessages as downloadPageMessages, cancelDownloads, downloadMenuItem, downloadFromMenu, DOWNLOAD_MENU_ID} from './background/downloads.js';
+import {workbenchMessages as frameMessages, scanTab} from './background/frames.js';
+import {workbenchMessages as runMessages, pageMessages as runPageMessages, scrollCapture, useCapture} from './background/runs.js';
 
 const LAST_TARGET_KEY = 'linkMeteorTarget';
 
 // Workbench-only messages answered by area modules. A type may be claimed by one module only.
 const AREA_MESSAGES = new Map();
-for (const table of [bookmarkMessages, backupMessages, holdMessages, diagnosticsMessages, downloadMessages, importMessages, transferMessages]) {
+for (const table of [bookmarkMessages, backupMessages, holdMessages, diagnosticsMessages, downloadMessages, importMessages, transferMessages, frameMessages, runMessages]) {
   for (const [type, handler] of Object.entries(table)) {
     if (AREA_MESSAGES.has(type)) throw new Error(`Duplicate Link Meteor message handler: ${type}`);
     AREA_MESSAGES.set(type, handler);
@@ -58,17 +60,45 @@ async function inventory(callerTabId) {
 // and Copy link work on a PDF and on a file too, where the script can show a notice but read no links.
 async function injectScript(tab) {
   if (tab.incognito) throw new Error('Incognito collection is not enabled in this release.');
-  await chrome.scripting.executeScript({target:{tabId:tab.id},files:['content/capture.js']});
+  return chrome.scripting.executeScript({target:{tabId:tab.id},files:['content/capture.js']});
+}
+
+// Whether the tab still shows this document (Chrome's documentId): a page that changes its own
+// address (a # part, history.replaceState) has not navigated.
+async function sameDocument(tabId, documentId) {
+  if (!documentId) return false;
+  try { return (await chrome.scripting.executeScript({target:{tabId},func:() => true}))[0]?.documentId === documentId; } catch { return false; }
+}
+
+// Whether the tab shows a PDF on the web: by its address, or by asking the tab, for a PDF whose
+// address doesn't say so. Chrome's viewer shows it, and the page script can read no links there:
+// the workbench reads a PDF's links from its file (ui/workbench/pdf.js).
+async function showsPdf(tab) {
+  if (addressKind(tab.url) === 'pdf') return true;
+  const [probe] = await chrome.scripting.executeScript({target:{tabId:tab.id},func:function documentType() { return document.contentType; }});
+  return probe?.result === 'application/pdf';
 }
 
 // For capturing a page or a region: only where there are links the script can read.
 async function inject(tab) {
   if (tab.incognito) throw new Error('Incognito collection is not enabled in this release.');
-  if (tab.url && (!ordinaryUrl(tab.url) || captureRefusal(tab.url) === PDF_REFUSAL)) throw new Error(captureRefusal(tab.url));
-  // A PDF whose address doesn't say so: Chrome's viewer shows it, and no extension can read that.
-  const [probe] = await chrome.scripting.executeScript({target:{tabId:tab.id},func:function documentType() { return document.contentType; }});
-  if (probe?.result === 'application/pdf') throw new Error(PDF_REFUSAL);
+  if (tab.url && !ordinaryUrl(tab.url)) throw new Error(captureRefusal(tab.url));
+  if (await showsPdf(tab)) throw new Error(PDF_REGION_REFUSAL);
   await injectScript(tab);
+}
+
+// Select a region from the shortcut or the right-click menu. On a PDF, the page itself says why
+// no region can be drawn there, where its script can show a notice; otherwise the full view does.
+async function armFromPage(tabId) {
+  try { return await arm(tabId); }
+  catch (error) {
+    if (String(error.message || error) !== PDF_REGION_REFUSAL) throw error;
+    try {
+      await injectScript(await chrome.tabs.get(tabId));
+      const reply = await chrome.tabs.sendMessage(tabId,{type:'content.notice',text:PDF_REGION_REFUSAL},{frameId:0});
+      if (!reply?.ok) throw error;
+    } catch { throw error; }
+  }
 }
 
 async function arm(tabId, callerTabId) {
@@ -86,27 +116,43 @@ async function arm(tabId, callerTabId) {
 // are left out, counted per page and kept for the workbench's Include them. With skipSaved, links
 // the collection already holds are skipped and counted. 0.5.0: each link keeps the words around it
 // (unless saveContext is off), and each page its own citation tags, keyed by its address.
-async function captureTabs(tabIds,callerTabId) {
+// 1.0.0: the page is read in every frame Link Meteor has access to (background/frames.js); a result's
+// `frames` says how many frames from other sites were read and weren't, and which sites could be allowed.
+// `run` is for a step of a run (background/runs.js): its batch and collection, and `scan`, options
+// for the page script, such as scrolling to the end first.
+async function captureTabs(tabIds,callerTabId,run={}) {
   const stateBefore = await serial(readState);
-  const collectionId = stateBefore.activeCollectionId, contentOnly = stateBefore.settings.contentOnly === true, context = stateBefore.settings.saveContext !== false;
+  const collectionId = run.collectionId || stateBefore.activeCollectionId, contentOnly = stateBefore.settings.contentOnly === true, context = stateBefore.settings.saveContext !== false;
   const ids = Array.isArray(tabIds) && tabIds.length ? [...new Set(tabIds)] : [(await resolveTarget(undefined,callerTabId)).id];
   if (ids.length > 100 || ids.some(id => !Number.isInteger(id))) throw new Error('Choose at most 100 tabs per capture. You can append another batch.');
-  const batchId = crypto.randomUUID(), results = [], leftOutLinks = [];
+  const batchId = run.batchId || crypto.randomUUID(), results = [], leftOutLinks = [];
   let state = stateBefore, capturedCount = 0, leftOutTotal = 0;
   for (const tabId of ids) {
     let tab;
     try {
       tab = await chrome.tabs.get(tabId);
       if (tab.incognito || (tab.url && !ordinaryUrl(tab.url))) {
-        const refusal = !tab.incognito && captureRefusal(tab.url);
-        results.push({tabId,title:tab.title || 'Restricted page',url:tab.url || '',status:'unsupported',count:0,leftOut:0,skipped:0,
-          warning:[PDF_REFUSAL,FILE_REFUSAL].includes(refusal) ? refusal : 'Browser-internal pages, the Chrome Web Store, and incognito pages cannot be captured.',error:''});
+        const kind = tab.incognito ? '' : addressKind(tab.url);
+        results.push({tabId,title:tab.title || 'Restricted page',url:tab.url || '',status:kind === 'pdf-file' ? 'pdf' : 'unsupported',count:0,leftOut:0,skipped:0,
+          warning:kind === 'pdf-file' ? PDF_FILE_NOTE : kind === 'file' ? FILE_REFUSAL : 'Browser-internal pages, the Chrome Web Store, and incognito pages cannot be captured.',error:''});
         continue;
       }
-      await inject(tab);
-      const [{result}] = await chrome.scripting.executeScript({target:{tabId},func:options => globalThis.__linkMeteor.scan(options),args:[{context}]});
+      // A PDF is not an error: its links are read by themselves, with Capture this PDF.
+      if (await showsPdf(tab)) {
+        results.push({tabId,title:tab.title || '',url:tab.url || '',status:'pdf',count:0,leftOut:0,skipped:0,warning:PDF_TAB_NOTE,error:''});
+        continue;
+      }
+      // The tab was asked once what it shows, just above; inject() would ask again.
+      const [injected] = await injectScript(tab) || [];
+      // Scroll to the end first: the top document scrolls in its own call (it may take 2 minutes);
+      // the frames are then read as usual and joined to it.
+      const top = run.scan?.scroll ? (await chrome.scripting.executeScript({target:{tabId},func:options => globalThis.__linkMeteor.scan(options),args:[{context,...run.scan}]}))[0].result : undefined;
+      const result = await scanTab(tabId,{context},top ? {top} : undefined);
+      if (top?.scroll && !result.scroll) result.scroll = top.scroll;
       const after = await chrome.tabs.get(tabId);
-      if (tab.url && after.url !== tab.url) throw new Error('The tab navigated during capture; retry on the new page.');
+      // A page may change its own address as it is read or scrolled; only another document is a move.
+      // A scroll's answer comes from one document.
+      if (tab.url && after.url !== tab.url && !result.scroll && !(await sameDocument(tabId,injected?.documentId))) throw new Error('The tab navigated during capture; retry on the new page.');
       const found = occurrences(result.links, tab, batchId);
       const pageChrome = found.map((_, i) => contentOnly && result.links[i]?.pageChrome === true);
       const links = found.filter((_, i) => !pageChrome[i]), leftOut = found.filter((_, i) => pageChrome[i]);
@@ -117,18 +163,26 @@ async function captureTabs(tabIds,callerTabId) {
       leftOutTotal += leftOut.length;
       capturedCount += count;
       results.push({tabId,title:tab.title || '',url:tab.url || '',status:'success',count,leftOut:leftOut.length,skipped,
-        warning:(result.warnings || []).join(' '),error:''});
-      await rememberTarget(tab).catch(() => {});
+        warning:(result.warnings || []).join(' '),error:'',...(result.frames ? {frames:result.frames} : {})});
+      if (result.scroll) results.at(-1).scroll = result.scroll;
+      // A tab a run reads never becomes the target: a run's background tab is closed afterward, and
+      // Follow Next's tab already is the target.
+      if (!run.batchId) await rememberTarget(tab).catch(() => {});
     } catch (error) {
       const message = String(error.message || error);
       results.push({tabId,title:tab?.title || 'Unavailable page',url:tab?.url || '',status:/permission|access.*contents|host permission/i.test(message)?'denied':'error',count:0,leftOut:0,skipped:0,warning:'',error:message});
     }
   }
-  const report = {batchId,results,capturedCount};
+  const report = {batchId,collectionId,results,capturedCount};
+  // A step of a run: the run keeps its own report, and what it left out is only counted.
+  if (run.batchId) return {state,report};
   await keepLeftOut({batchId,collectionId,links:leftOutLinks,total:leftOutTotal});
   await chrome.storage.session.set({linkMeteorCaptureReport:{report,createdAt:new Date().toISOString()}}).catch(() => {});
   return {state,report};
 }
+
+// Each page of a run is captured as Capture this page captures it.
+useCapture({captureTabs,resolveTarget});
 
 async function handle(message, sender) {
   const ui = sender.url?.startsWith(WORKBENCH);
@@ -143,6 +197,7 @@ async function handle(message, sender) {
   if (message.type === 'capture.commit') return commitCapture(message,sender,{remember:rememberTarget});
   if (Object.hasOwn(pageMessages,message.type)) return pageMessages[message.type](message,sender);
   if (Object.hasOwn(downloadPageMessages,message.type)) return downloadPageMessages[message.type](message,sender);
+  if (Object.hasOwn(runPageMessages,message.type)) return runPageMessages[message.type](message,sender);
   if (message.type === 'ui.open' && (ui || sender.tab?.id)) return openWorkbench(message);
   // A page may cancel only the opening it started from its own capture card.
   if (message.type === 'links.cancel' && !ui && sender.tab?.id) return cancelOpen(message,{senderTabId:sender.tab.id});
@@ -152,7 +207,7 @@ async function handle(message, sender) {
   switch (message.type) {
     case 'state.mutate': return mutate(message.action);
     case 'tabs.list': return inventory(sender.tab?.id);
-    case 'capture.run': return captureTabs(message.tabIds,sender.tab?.id);
+    case 'capture.run': return message.scroll === true ? scrollCapture(message,sender) : captureTabs(message.tabIds,sender.tab?.id);
     case 'capture.tabs': return tabsMessage(message,{target:() => resolveTarget(undefined,sender.tab?.id)});
     case 'capture.includeLeftOut': return includeLeftOut(message);
     case 'capture.arm': return arm(message.tabId,sender.tab?.id);
@@ -176,12 +231,12 @@ chrome.action.onClicked.addListener(tab => {
   chrome.runtime.sendMessage({type:'panel.toggle',windowId:tab.windowId}).catch(() => {});
 });
 chrome.commands.onCommand.addListener((command, tab) => {
-  if (command === 'select-region') arm(tab?.id).catch(error => reportActivationError(error));
+  if (command === 'select-region') armFromPage(tab?.id).catch(error => reportActivationError(error));
 });
 // The right-click and toolbar menus (background/menus.js); Download linked file is background/downloads.js's.
 chrome.contextMenus.onClicked.addListener((info,tab) => info.menuItemId === DOWNLOAD_MENU_ID
   ? downloadFromMenu(info,tab).catch(error => reportActivationError(error))
-  : menuClicked(info,tab,{arm,captureTabs,inject:injectScript,reportError:reportActivationError}));
+  : menuClicked(info,tab,{arm:armFromPage,captureTabs,inject:injectScript,reportError:reportActivationError}));
 async function reportActivationError(error) {
   await chrome.storage.session.set({linkMeteorActivationError:String(error.message || error)});
   await chrome.tabs.create({url:WORKBENCH});

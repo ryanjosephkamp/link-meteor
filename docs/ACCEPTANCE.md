@@ -1,18 +1,114 @@
 # Testing and compatibility
 
-The current development build is **0.5.0**, "Research tools". It adds:
-- the words around each link on its page, as context;
-- page citations, read from the tags pages publish about themselves, and identifiers read from addresses;
-- citations borrowed from a saved page about the same work;
-- reading status, stars and Insights;
-- citation exports (BibTeX, RIS, CSL-JSON, an annotated bibliography and an Obsidian note) and new export columns;
-- importing links from files, pasted text and bookmark folders;
-- moving and copying links between collections;
-- the toolbar icon closing the side panel, a labeled Full view button and the last backup's date.
+The current build is **1.0.0**, "Beyond one page". It adds:
+- the links inside PDFs, from a tab or a file;
+- *Scroll to the end first*, *Follow Next* and *Capture their pages…*, each within a stated limit;
+- links inside closed components and frames from other sites, with *Allow these sites*;
+- an optional page details lookup, from a sandboxed frame;
+- the PDFs behind chosen links as one ZIP, or combined into one PDF.
 
-Its automated checks passed on October 1, 2026, as release candidate 3. They ran in Chrome for Testing on macOS, both without optional grants and after the project owner clicked Allow on every native prompt. The checks without grants also passed on Windows and Linux, and in Chrome for Testing 116, except the toolbar-button checks, which can't run there. The owner checked release candidates 1 and 2 by hand in everyday Chrome; what they found is fixed in release candidate 3. This is evidence for those workflows and environments, not universal browser/site compatibility.
+It also fixes about 50 problems found by reviewing the code and trying it on real pages.
 
-## Current build (0.5.0)
+Its automated checks passed on October 27, 2026. They ran in Chrome for Testing on macOS, both without optional grants and after Allow was clicked by hand on every native prompt. The checks without grants also passed on Windows and Linux. In Chrome for Testing 116 they passed except where the test tool can't run there. The build was checked by hand in everyday Chrome on macOS before it was packaged, and no problems were reported. This is evidence for those workflows and environments, not universal browser/site compatibility.
+
+1.0.0's results are summarized here; unlike earlier versions, its logs are not kept in this repository.
+
+## Current build (1.0.0)
+
+- Package: [`artifacts/link-meteor-1.0.0.zip`](../artifacts/link-meteor-1.0.0.zip), 2976335 bytes.
+- SHA-256: `4c862132f068423231dd66d864ac09b4b8121f7dfe869db50dc9328cae3933bf`.
+- Product source: `src/` as last changed at `8e8f998bb91f70c0ea60f814db2aea9558150c05` (release candidate 2), unchanged when packaged at `6b370571740842dd47f2132b75f6c872f63eac9d`.
+- [Per-file receipt](../artifacts/link-meteor-1.0.0.sha256.json): 79 package members, each matching `src/`. The ZIP's contents are byte-identical to the copy checked by hand.
+- It includes PDF.js 6.3.289 (Apache-2.0) as two unmodified files, checked by `tests/vendor.test.mjs` against the hashes recorded beside them.
+
+### Checks without optional grants
+
+`npm run check` on macOS, headless Chrome for Testing 151, fresh task-owned profiles, on the packaged build: 24 of 24 checks passed.
+
+| Check | Result | What it establishes and its limits |
+| --- | --- | --- |
+| `npm test` | 362/362 | Model, migration, backup format 4, exports and every citation format, imports, moving and copying, opening limits, storage and races; PDFs read in Node with the shipped PDF.js, the ZIP writer, the vendored files' hashes, lookup plans and answers, frames joined, and runs (the queue, pacing, Stop, a restarted worker) with a clock the test moves; the package's members against `src/`. |
+| `tests/access-browser.mjs` | 36/36 | The welcome card, Site access, opening tiers, the capture card through Chrome's real toolbar action, the toolbar closing the side panel, and restart in place. |
+| `tests/capture-page-access.mjs` | Pass | *Capture this page* after the tab moves to a new site. |
+| `tests/access-content.mjs` | 56/56, simulation | The page script with real input and a stubbed `chrome` object, including closed shadow roots and frames. |
+| `tests/coverage-browser.mjs` | 12/12 | Closed components and frames from other sites with only the toolbar's access: the report names their sites and offers *Allow these sites* (Chrome's prompt stubbed); frames still loading; 320 px and contrast. |
+| `tests/scroll-content.mjs` | 12/12, simulation | *Scroll to the end first* on endless, lazy, never-ending and self-trimming feeds, each limit, Stop and Escape; the page's Next link in its spellings; the run's notice at 320 px. |
+| `tests/runs-browser.mjs` | 14/14 | Runs with Chrome's real toolbar action: *Scroll to the end first*, *Follow Next* and each way it ends, Stop, one batch and Undo, the report, and the *Capture their pages…* panel (Chrome's prompt stubbed); 320 px and contrast in every theme. |
+| `tests/pdf-browser.mjs` | 13/13 | The PDF reader inside the extension, loaded only when used, against every fixture as Node reads it; Import links with a PDF file: the preview, every refusal, Cancel, the keyboard, 320 px and contrast. |
+| `tests/pdf-tab-browser.mjs` | 16/16 | A PDF's file through its tab with only the toolbar's temporary access, including one sent as a download and one without `.pdf` in its address; *Capture this PDF*: preview, add and Undo; a local PDF's tab; each refusal. Nothing downloads. |
+| `tests/pdf-files-browser.mjs` | 15/15 | *Download as one ZIP* (compared byte for byte, and read by Python's `zipfile`) and *Combine into one PDF…* (read back), with same-site PDFs fetched for real and other sites refused; the limits, Stop, 320 px and contrast. Every download lands in the profile's own folder. |
+| `tests/lookup-browser.mjs` | 20/20 | Page details lookup with the test answering in the services' place: nothing requested while it is off; the sandboxed frame (one request per identifier, origin `null`, no cookies, no referrer, everything else refused); requests 350 ms apart; Undo, Stop and bad answers; 320 px and contrast in every theme. No test contacts a real service. |
+| `tests/exports-browser.mjs` | 28/28 | File names, the formatted workbook (openpyxl), rich links, Copy diagnostics, custom columns and every citation format. |
+| `tests/backup-browser.mjs` | 23/23 | Backup and restore, a synthetic 20,000-link restore, custom columns in a merge, and the last backup's date. |
+| `tests/downloads-browser.mjs` | 9/9 | Downloads with Chrome's prompt stubbed. Nothing downloads. |
+| `tests/reading-browser.mjs`, `imports-browser.mjs`, `move-browser.mjs` | 12/12, 13/13, 6/6 | Reading status, stars and Insights; imports from files (a PDF among them), pasted links and a bookmark folder; Move to… and Copy to…; each at 320 px and with measured contrast. |
+| `tests/audit-overlay.mjs`, `audit-actions.mjs`, `audit-regressions.mjs` | 4, 9 and 7 checks, pass | Earlier fixes still hold. |
+| `tests/visual-browser.mjs` | 15 checks, pass | Widths from 320 px, labels, focus and measured contrast, for every theme in light and dark. |
+| `tests/site-check.mjs`, `scripts/sync-site.mjs --check` | Pass | The website's pages, and its match with the packaged build. |
+
+**On Windows and Linux**, and on macOS again, GitHub's runners ran the same checks on this source (workflow run 40427345688). All passed. An earlier CI run had found one test problem on Windows and Linux: a test drag that started inside a frame from another site went into that frame, so the test now starts on the heading above it.
+
+### Allow clicks and granted suites
+
+Allow was clicked by hand on every native prompt, in visible Chrome for Testing windows, in two new profiles. Each request came from the product with an active user gesture:
+- **Per-site profile, 5 prompts:** tabs, the fixture site, bookmarks, downloads, and a newly visited site through *Capture this page*.
+- **All-sites profile, 5 prompts:** tabs, the fixture site, all sites from the welcome card, tab groups and bookmarks.
+- **Two more prompts in the per-site profile, each naming two sites:** *Allow these sites* in a capture report (`frames-granted`), and *Allow these 2 sites* in the *Capture their pages…* panel (`runs-granted`). Each suite removed its two grants afterward.
+
+The suites then ran with the pointer parked away from the test windows. All passed on the first run.
+
+| Check | Result | What it establishes and its limits |
+| --- | --- | --- |
+| `tests/browser.mjs` | 27/27 | Capture, clipboard, collections, filtering, Undo, exports and restart persistence. |
+| `tests/verify-downloads.py` | Pass | The seven downloaded formats, read with openpyxl 3.0.10 and Python's own readers, not Microsoft Excel: 53 exact anchor/URL pairs. |
+| `tests/extended-browser.mjs` | 10/10 | 5,037 captured links with bounded rendering, bookmark folders with Chrome's real bookmark API, importing a real bookmark folder with Undo, and the opening caps. |
+| `tests/site-browser.mjs` | 9/9 | Every practice-page answer key by a real region drag, and the site's screenshots. |
+| `tests/audit-granted-regressions.mjs` | 4/4 | Earlier fixes still hold with real grants. |
+| `tests/downloads-granted.mjs` | 6/6 | Chrome saved and named every file itself, inside the profile's test folder and none in the Downloads folder of the person running it. |
+| `tests/access-granted.mjs` | 17/17 | With all-sites access and no prompt: hold-drag on every site, named tab groups, citation tags from saved tabs, a PDF captured without a toolbar click, every frame of a page read once with its frame's address, selected pages on two sites (one a PDF), and PDFs on two sites into one ZIP and one combined PDF. |
+| `tests/frames-granted.mjs` | 3/3 | One prompt for exactly `localhost` and `third.localhost`; only the links in those frames joined the capture, none twice; then a new capture read every frame with no prompt. |
+| `tests/runs-granted.mjs` | 4/4 | One request for exactly two sites; three pages read in background tabs and closed, as one batch with one Undo. |
+| `tests/permission-browser.mjs` | 10/10, run last | Removing a site's access and all-sites access. |
+
+The right-click menus can't be opened by automated Chrome, so their handlers are tested in simulation (`tests/menus.test.mjs` and `access-content`).
+
+### Chrome 116
+
+The manifest declares Chrome 116 as the oldest supported version. The checks that need no grants ran on Chrome for Testing 116.0.5845.96 for macOS, with the packaged build:
+- the unit tests (361), `scroll-content` 12/12, `exports-browser` 28/28, `backup-browser` 23/23 and `downloads-browser` 9/9;
+- `reading-browser` 12/12, `imports-browser` 13/13 and `move-browser` 6/6;
+- `pdf-browser` 13/13, which proves the PDF reader's shims for Chrome 116, and `lookup-browser` 20/20;
+- the three audits, `visual-browser` (15 checks) and the site.
+
+**Stopped partway:** `access-content`, the page script's simulation, passed its first 45 of 56 checks; then Chrome 116 stopped opening new test pages, and the run timed out. A shorter version of the suite passed 50 of 50 there for 0.5.0, and the full suite passes 56 of 56 on current Chrome. This looks like a limit of the test tool on Chrome 116, but it was not proven.
+
+**Couldn't run:** the suites that press Chrome's toolbar button (`access-browser`, `capture-page-access`, `coverage-browser`, `pdf-tab-browser`, `runs-browser` and `pdf-files-browser`), through DevTools commands that Chrome 116 doesn't have. The granted suites were not run on 116.
+
+### Real pages
+
+Before the hands-on check, a release candidate was tried on real pages in Chrome for Testing 151, driven by scripts with Chrome's real toolbar action:
+- arXiv's PDF of 2409.11211: 9 links on 2 of its 27 pages, 7 ORCID icons with empty anchor text, and the arXiv stamp and title.
+- dev.to with *Scroll to the end first*: 861 links over 50 screens, then the 50-screen limit, as one batch. The report named a YouTube frame and offered access.
+- An arXiv listing with *Follow Next*: correctly reported no Next link (the page has only "more").
+- w3schools' YouTube page: 142 links; about 30 zero-size frames were left unnamed, as designed.
+- The lookup, once, against the real services: a DOI (Crossref), an arXiv ID (DataCite, 7 authors) and a PubMed ID (NCBI), each answered; Undo cleared all three.
+- Three arXiv PDFs as one ZIP (99.3 MB) and as one combined PDF (87 pages, in the chosen order). No tabs were left open.
+
+Two problems found there are fixed in 1.0.0: files named `pdf.pdf` because arXiv's link text is "pdf", and a PubMed name with "Jr" left unsplit. The linked titles in two real papers' reference lists were also compared with the papers.
+
+### Hands-on use (1.0.0)
+
+Release candidate 2, the build that was packaged, was checked by hand in everyday Google Chrome on macOS, beside the everyday 0.5.0 installation. These are human observations, kept separate from the automated results.
+
+| Walkthrough | Its checklist | Result |
+| --- | --- | --- |
+| Release candidate 2, before packaging on October 27, 2026 | A PDF from a tab and from a file, a local PDF's tab, *Scroll to the end first* on dev.to with Stop and Undo, *Follow Next* on a results page, *Capture their pages…* with and without all-sites access, a page with a frame from another site, the lookup with a DOI, an arXiv ID and a PubMed ID exported to a reference manager, one ZIP and one combined PDF from arXiv, *Download linked file*, and the everyday capture, copy and Excel export. | No problems reported. |
+
+Windows, Linux, Brave and Edge were not part of this walkthrough.
+
+## Earlier build (0.5.0)
+
+0.5.0, "Research tools", added context around each link, page citations and identifiers, borrowed citations, reading status, stars and Insights, citation exports, imports, and moving and copying links between collections. Its automated checks passed on October 1, 2026, as release candidate 3.
 
 - Package: [`artifacts/link-meteor-0.5.0.zip`](../artifacts/link-meteor-0.5.0.zip), 801611 bytes.
 - SHA-256: `57020852b82b26d8d0562707bddeb00ef4ffcd5875264c23ba0e6da875ff589f`.
@@ -309,11 +405,11 @@ Optional tabs, local-origin and bookmark permissions were established through ac
 
 ## Presentation and website checks
 
-The 0.4.0 visual results are listed above, and the site checks for the 0.4.0 release are in [`artifacts/evidence-0.4.0-release/`](../artifacts/evidence-0.4.0-release/README.md); those for 0.3.0 are in [`artifacts/evidence-0.3.0-release/`](../artifacts/evidence-0.3.0-release/README.md). The site's four product screenshots still come from the 0.2.2 `tests/site-browser.mjs` run, and their alt text describes what each one shows, including the 0.2.2 version. The 0.2.1 [visual results](../artifacts/audit-0.2.0/repair-ui/visual-results.json) cover responsive widths, long names, labeled controls, keyboard focus and sampled contrast. They are not a complete screen-reader or WCAG audit. Panel-width screenshots render the workbench at a compact width; they do not prove native side-panel framing or resizing.
+The 0.4.0 visual results are listed above, and the site checks for the 0.4.0 release are in [`artifacts/evidence-0.4.0-release/`](../artifacts/evidence-0.4.0-release/README.md); those for 0.3.0 are in [`artifacts/evidence-0.3.0-release/`](../artifacts/evidence-0.3.0-release/README.md). The site's four product screenshots come from the 1.0.0 `tests/site-browser.mjs` run in a task-owned profile with real grants, and their alt text describes what each one shows. The 0.2.1 [visual results](../artifacts/audit-0.2.0/repair-ui/visual-results.json) cover responsive widths, long names, labeled controls, keyboard focus and sampled contrast. They are not a complete screen-reader or WCAG audit. Panel-width screenshots render the workbench at a compact width; they do not prove native side-panel framing or resizing.
 
 The 0.2.1-era [site results](../artifacts/audit-0.2.0/repair-ui/site-results.json) checked five pages across five widths and light/dark themes, internal links, semantic structure, sampled contrast, keyboard menu use, interactive demo, nested 404 handling and export preview contents. These are automated Chromium checks.
 
-The site's two videos were recorded with the 0.2.2 build, including selection on the practice page with the extension's own injected script. [`media/README.md`](../media/README.md) says which scenes are recordings and which are illustrations. The videos are demonstrations, not test evidence. The site is available at [Link Meteor](https://ryanjosephkamp.github.io/link-meteor/); real-device and non-Chromium testing remain separate.
+The site's two videos were recorded with the 1.0.0 build, including selection on the practice page with the extension's own injected script, after Allow was clicked by hand for the recording profile, and *Capture this PDF* through Chrome's real toolbar action. [`media/README.md`](../media/README.md) says which scenes are recordings and which are illustrations. The videos are demonstrations, not test evidence. The site is available at [Link Meteor](https://ryanjosephkamp.github.io/link-meteor/); real-device and non-Chromium testing remain separate.
 
 `node scripts/sync-site.mjs --check` verifies the site's package, hashes, icons, export modules, shared header/footer and version metadata against current source. `tests/design-preview.mjs` and `tests/overlay-preview.mjs` use simulated extension APIs for presentation work; their images are not functional acceptance evidence.
 
@@ -327,16 +423,16 @@ See the [README](../README.md#develop-and-verify) and [`AGENTS.md`](../AGENTS.md
 
 ## Remaining compatibility and human checks
 
-- A wider range of real research and admin sites, beyond the owner's hands-on use.
-- Native side-panel resizing, beyond the owner's check of its frame.
+- A wider range of real research and admin sites, beyond the hands-on checks.
+- Native side-panel resizing, beyond a check of its frame by hand.
 - Spreadsheet applications other than Microsoft Excel.
 - Screen readers and other assistive technologies.
-- Windows and Linux by hand, and native shortcuts on those systems. The automated checks without grants pass on both.
-- Chrome 116 by hand, its toolbar-button behavior, and the checks that need Allow clicks. The automated checks that could run there passed (see above).
-- 0.5.0 and 0.4.0 in Brave and Microsoft Edge (0.3.0 was checked there by hand), other Chromium-based browsers, and Brave and Edge on Windows and Linux.
-- The real right-click menus beyond the owner's hands-on check; automated checks simulate them.
-- Release candidate 3's three changes by hand: Add link on PDFs, the Full view button and the Export panel's line about authors.
-- Citation files in reference managers other than the ones the owner tried.
+- Windows and Linux by hand, including a drag that starts on a frame from another site, and native shortcuts on those systems. The automated checks without grants pass on both.
+- Chrome 116 by hand, its toolbar-button behavior, the checks that need Allow clicks, and the rest of the page-script simulation there (see above).
+- 1.0.0, 0.5.0 and 0.4.0 in Brave and Microsoft Edge (0.3.0 was checked there by hand), other Chromium-based browsers, and Brave and Edge on Windows and Linux.
+- The real right-click menus beyond the hands-on checks; automated checks simulate them.
+- PDFs near the 50 MB and 200 MB limits; the limits were checked with made-up sizes.
+- Citation files in reference managers other than the ones tried by hand.
 - The website on physical phones and non-Chromium browsers.
 
-Version 0.2.0 received an informal report of successful everyday Chrome use without itemized steps. The 0.5.0 hands-on results above are the owner's report for the current build. Firefox and Safari are not supported ports. Chrome Web Store submission is planned for a later version.
+Version 0.2.0 received an informal report of successful everyday Chrome use without itemized steps. The 1.0.0 hands-on results above are the report for the current build. Firefox and Safari are not supported ports. No version has been submitted to the Chrome Web Store.

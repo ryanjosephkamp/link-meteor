@@ -36,6 +36,19 @@ const PDF_LABEL = /^\s*\[PDF\]/i;
 const LABEL_PREFIX = /^\s*\[(PDF|HTML|DOC|DOCX|PS|BOOK|CITATION)\]\s*/i;
 // Windows device names can't be file names, with or without an extension.
 const WINDOWS_RESERVED = /^(con|prn|aux|nul|com[1-9]|lpt[1-9])$/i;
+// Words that say a link is a file, not which file: arXiv's "pdf", "Download PDF", "Full text
+// (PDF, 1.2 MB)", "click here". A label of nothing else doesn't name the file, and neither does a
+// [PDF] label's host name (Google Scholar's "[PDF] arxiv.org").
+const GENERIC_WORDS = new Set('access article as book chapter click download downloads epdf epub file full fulltext get go here html link online open paper pdf pdfs preprint read save see slides tap text the this to version view'.split(' '));
+const SIZES = /\b\d+(?:[.,]\d+)?\s*(?:[kmg]i?b|bytes?|pages?|pp)\b/gi;
+const HOST = /^(?:from\s+)?(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+([a-z]{2,63})$/i;
+function generic(text) {
+  const words = String(text).replace(SIZES, ' ').toLowerCase().split(/[^\p{L}\p{N}]+/u).filter(Boolean);
+  return words.length > 0 && words.every((word) => GENERIC_WORDS.has(word));
+}
+// A name has room for Chrome's or uniqueNames' " (100)" and its extension within 255 UTF-8 bytes,
+// the most a file name (or a ZIP entry, once extracted) can have on Linux, macOS and ChromeOS.
+const NAME_BYTES = 255, REPEAT_ROOM = ' (100)'.length;
 
 function webUrl(value) {
   try { const url = new URL(String(value ?? '')); return ['http:', 'https:'].includes(url.protocol) ? url : null; } catch { return null; }
@@ -62,15 +75,42 @@ export function isFileLink(link) {
   return !!webUrl(url) && (!!urlFileType(url) || PDF_LABEL.test(String(link.anchorText ?? '')) || knownPdf(url));
 }
 
-// The file links among these links, one per address, in order.
+// The file links among these links, one per address, in order. The fragment doesn't count:
+// a.pdf#page=3 and a.pdf#page=9 are one file.
 export function fileLinks(links) {
   const seen = new Set();
   return links.filter((link) => {
     if (!isFileLink(link)) return false;
-    const url = webUrl(link.url).href;
-    if (seen.has(url)) return false;
-    seen.add(url);
+    const url = webUrl(link.url);
+    url.hash = '';
+    if (seen.has(url.href)) return false;
+    seen.add(url.href);
     return true;
+  });
+}
+
+// A PDF link (1.0.0): a file link whose address ends in .pdf or is a known PDF address, or one
+// labeled [PDF] whose address names no other file type.
+export function isPdfLink(link) {
+  if (!isFileLink(link)) return false;
+  const type = urlFileType(link.url);
+  return type === 'pdf' || (!type && (knownPdf(link.url) || PDF_LABEL.test(String(link.anchorText ?? ''))));
+}
+// The PDF links among these links, one per address, in order.
+export function pdfLinks(links) { return fileLinks(links).filter(isPdfLink); }
+// A PDF's file name, as Download files names it: after its anchor text, ending .pdf.
+export function pdfFileName(link) { return downloadName(link, { mime: 'application/pdf' }); }
+// File names for one folder or one ZIP: a repeat gets " (2)", " (3)" before its extension. Names
+// that differ only in case count as repeats, as they do on most computers.
+export function uniqueNames(names) {
+  const seen = new Set();
+  return names.map((value) => {
+    const name = String(value), dot = name.lastIndexOf('.');
+    const stem = dot > 0 ? name.slice(0, dot) : name, ext = dot > 0 ? name.slice(dot) : '';
+    let unique = name;
+    for (let n = 2; seen.has(unique.toLowerCase()); n++) unique = `${stem} (${n})${ext}`;
+    seen.add(unique.toLowerCase());
+    return unique;
   });
 }
 
@@ -106,8 +146,8 @@ export function downloadExtension(url, { mime = '', suggested = '' } = {}) {
   return urlFileType(url) || MIME_EXTENSIONS[mimeBase(mime)] || fromName || (knownPdf(url) ? 'pdf' : '');
 }
 
-function safePart(text, max) {
-  const part = fileNamePart(text, max);
+function safePart(text, max, maxBytes) {
+  const part = fileNamePart(text, max, maxBytes);
   const dot = part.indexOf('.');
   return WINDOWS_RESERVED.test(dot < 0 ? part : part.slice(0, dot)) ? (dot < 0 ? `${part}_` : `${part.slice(0, dot)}_${part.slice(dot)}`) : part;
 }
@@ -116,19 +156,28 @@ function safePart(text, max) {
 export function downloadFolder(collectionName) { return `Link Meteor/${safePart(collectionName, 80) || 'links'}`; }
 
 // A file named after its anchor text (without a leading [PDF] label), else its accessible label,
-// else the address's own file name, with the extension from downloadExtension.
+// else the address's own file name, else its id= value (OpenReview's /pdf?id=…), passing over
+// generic ones (see GENERIC_WORDS) unless nothing better is there; with the extension from
+// downloadExtension.
 export function downloadName(link, info = {}) {
   const ext = downloadExtension(link.url, info);
-  const label = String(link.anchorText ?? '').replace(LABEL_PREFIX, '').trim() || String(link.accessibleLabel ?? '');
-  let stem = fileNamePart(label, 100);
-  if (ext && stem.toLowerCase().endsWith(`.${ext}`)) stem = stem.slice(0, -ext.length - 1).replace(/[.-]+$/, '');
-  if (!stem) {
-    const url = webUrl(link.url);
-    const last = url ? decodeURIComponentSafe(url.pathname.slice(url.pathname.lastIndexOf('/') + 1)) : '';
-    const own = last.match(/\.([a-z0-9]{1,8})$/i)?.[1].toLowerCase();
-    stem = fileNamePart(own && (FILE_TYPES.has(own) || own === ext) ? last.slice(0, -own.length - 1) : last, 100);
+  const anchor = String(link.anchorText ?? ''), text = anchor.replace(LABEL_PREFIX, '').trim();
+  // "[PDF] arxiv.org" is a host name; "[PDF] report.pdf" is a file name.
+  const tld = LABEL_PREFIX.test(anchor) ? text.match(HOST)?.[1].toLowerCase() : '';
+  const onlyHost = !!tld && !FILE_TYPES.has(tld);
+  const url = webUrl(link.url);
+  const last = url ? decodeURIComponentSafe(url.pathname.slice(url.pathname.lastIndexOf('/') + 1)) : '';
+  const own = last.match(/\.([a-z0-9]{1,8})$/i)?.[1].toLowerCase();
+  const candidates = [text, String(link.accessibleLabel ?? ''), own && (FILE_TYPES.has(own) || own === ext) ? last.slice(0, -own.length - 1) : last, url?.searchParams.get('id') || ''];
+  let stem = '', fallback = '';
+  for (const [index, value] of candidates.entries()) {
+    let part = fileNamePart(value, 100);
+    if (ext && part.toLowerCase().endsWith(`.${ext}`)) part = part.slice(0, -ext.length - 1).replace(/[.-]+$/, '');
+    if (!part) continue;
+    if (!generic(value) && !(index === 0 && onlyHost)) { stem = part; break; }
+    fallback ||= part;
   }
-  stem = safePart(stem || 'file', 100);
+  stem = safePart(stem || fallback || 'file', 100, NAME_BYTES - REPEAT_ROOM - (ext ? ext.length + 1 : 0));
   return ext ? `${stem}.${ext}` : stem;
 }
 function decodeURIComponentSafe(value) { try { return decodeURIComponent(value); } catch { return value; } }

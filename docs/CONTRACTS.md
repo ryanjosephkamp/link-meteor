@@ -95,7 +95,7 @@ The storage schema stays version 1. Version 0.2.2 keeps unknown settings fields 
 | `holdScope` | `'sites'` or `'all'`, `'sites'` | `'all'` runs hold-drag on every HTTP(S) site except `holdExceptions`, and needs Chrome's all-sites access. |
 | `holdExceptions` | HTTP(S) origins, `[]`, at most 1,000 | "Never on these sites": hold-drag does not run there in either scope. |
 | `welcomeSeen` | boolean, `false` | The first-run welcome card was answered or dismissed. Upgrading installs see the card once. |
-| `exportPrefix` | string, `''`, at most 40 characters | Optional prefix for default export names. Stored already safe: it must equal `fileNamePart(value, 40)`. |
+| `exportPrefix` | string, `''`, at most 40 characters | Optional prefix for default export names. Stored already safe: it must equal `fileNamePart(value, 40)`, compared in composed form (NFC), since earlier versions stored a Korean prefix as separate jamo. |
 | `exportTimestamp` | boolean, `true` | Add the export date to default file names. |
 | `exportTimestampFormat` | `'datetime'` or `'date'`, `'datetime'` | Date and time (`YYYY-MM-DD_HHmm`) or date only. |
 
@@ -132,18 +132,19 @@ planRestore(state, backup, 'merge'|'replace')     // {state, summary}; saves not
 
 ### Export file names
 
-`src/core/export.js` exports `exportFileName({collection, extension, settings, date, override})` and `fileNamePart(text, max = 80)`.
+`src/core/export.js` exports `exportFileName({collection, extension, settings, date, override})` and `fileNamePart(text, max = 80, maxBytes = Infinity)`.
 
 - The default is `<prefix_><collection>_<YYYY-MM-DD>_<HHmm>.<ext>` in local time with no colons, for example `Urban-heat-islands-sources_2026-09-26_1432.xlsx`. With `exportPrefix` set to `link-meteor-research`, that becomes `link-meteor-research_Urban-heat-islands-sources_2026-09-26_1432.xlsx`. `exportTimestamp: false` drops the date and time; `exportTimestampFormat: 'date'` drops the time.
 - `override` is the Export panel's File name field for one export. When it contains anything usable, it replaces the pattern, and a typed matching extension is not doubled.
-- `fileNamePart` folds accents to plain letters and turns every run of other characters outside letters, digits, `.`, `_` and `-` into one hyphen. It removes leading and trailing dots and hyphens and cuts to `max`. An empty collection name becomes `links`, and Windows device names (`CON`, `NUL`, `COM1` and so on) get a trailing underscore.
+- The whole name fits in 255 UTF-8 bytes with room for Chrome's ` (100)`: a typed name is cut to fit, and in the pattern the collection's name gives way, so the prefix and the date and time stay.
+- `fileNamePart` folds accents off Latin letters (`Café résumé` gives `Cafe-resume`), keeps every other script's marks, in composed form (`データ分析`, `한국어`, `й`), and turns every run of other characters outside letters, marks, digits, `.`, `_` and `-` into one hyphen. It removes leading and trailing dots and hyphens and cuts to `max` UTF-16 units and `maxBytes` UTF-8 bytes, never inside a character. An empty collection name becomes `links`, and Windows device names (`CON`, `NUL`, `COM1` and so on) get a trailing underscore.
 - The Export panel and the capture card's download both use this function.
 
 ### Export content
 
 - `makeExport(rows, {format, columns, about})` stays compatible: without `about`, every format is byte-for-byte what 0.2.2 produces.
 - With `about` (`{exportedAt: Date, collection, count, view, filters: string[], columns, version}`), XLSX adds a second sheet, About, with the export time in local time and UTC, the collection, the link count, the view (grouping and sort) and filters, the columns and the Link Meteor version. JSON becomes `{about: {...}, rows: [...]}`, and `rows` is exactly the 0.2.2 array.
-- The formatted XLSX first sheet has a bold header row that stays visible while scrolling, filter buttons and column widths fitted to the content. HTTP(S) and `mailto:` URLs are clickable through sheet hyperlinks, never `HYPERLINK` formulas, and the cell text stays the exact URL. Every cell stays a string, with no formulas anywhere.
+- The formatted XLSX first sheet has a bold header row that stays visible while scrolling, filter buttons and column widths fitted to the content. HTTP(S) and `mailto:` URLs are clickable through sheet hyperlinks, never `HYPERLINK` formulas, and the cell text stays the exact URL. Every cell stays a string, with no formulas anywhere. Characters XML can't hold (C0 controls other than tab and line breaks, U+FFFE, U+FFFF and lone surrogates) are written as Excel's `_xHHHH_` escapes, so every sheet stays well-formed; a URL holding one is not made a link.
 - CSV and TSV stay plain and unchanged.
 
 ### Messages
@@ -596,16 +597,16 @@ Chrome shows several items from one extension under a "Link Meteor" submenu, so 
 - `FILE_TYPES`, by kind: documents (`pdf ps eps`), office (`doc docx docm dot dotx xls xlsx xlsm xlt xltx ppt pptx pptm pps ppsx pot potx rtf`), OpenDocument (`odt ods odp odg odf ott ots otp`), text and data (`txt md markdown csv tsv json jsonl xml yaml yml bib ris enw nbib tex ipynb`), e-books (`epub mobi azw azw3 djvu fb2`), archives (`zip gz tgz tar bz2 xz 7z rar zst`), images (`png jpg jpeg gif webp svg tif tiff bmp avif heic heif ico`), audio (`mp3 wav m4a aac ogg oga flac opus`), video (`mp4 m4v mov webm mkv avi ogv`). Web pages and programs are never file types. The extension is the last path segment's, in any case; the query and fragment don't count.
 - Anchor text that starts with `[PDF]`, in any case.
 - Known PDF addresses: arXiv `/pdf/…` (any `arxiv.org` host), OpenReview `/pdf?id=…`, the ACM Digital Library `dl.acm.org/doi/pdf/…`, and PubMed Central `…/pmc/articles/PMC…/pdf` and `pmc.ncbi.nlm.nih.gov/articles/PMC…/pdf`.
-- `isFileLink(link)`, `fileLinks(links)` (one per address, in order), `urlFileType`, `knownPdf`.
+- `isFileLink(link)`, `fileLinks(links)` (one per address, in order; the fragment doesn't count, so `report.pdf#page=12` and `report.pdf#page=40` are one file), `urlFileType`, `knownPdf`.
 
 **Names and folders:**
 - The folder is `Link Meteor/<fileNamePart(collection name, 80)>`, or `Link Meteor/links` without a name.
-- The file is `fileNamePart(anchor text, 100)`, without a leading `[PDF]`, `[HTML]`, `[DOC]`, `[DOCX]`, `[PS]`, `[BOOK]` or `[CITATION]` label; else the accessible label; else the address's own file name; else `file`. An anchor that already ends in the extension isn't doubled. Windows device names get `_` (`CON_.pdf`).
+- The file is `fileNamePart(anchor text, 100)`, without a leading `[PDF]`, `[HTML]`, `[DOC]`, `[DOCX]`, `[PS]`, `[BOOK]` or `[CITATION]` label; else the accessible label; else the address's own file name; else, when that is generic too (OpenReview's `/pdf?id=…`), the address's `id` value; else `file`. Generic text doesn't name a file: words that only say it is one (arXiv's "pdf", "Download PDF", "View PDF", "Full text (PDF, 1.2 MB)", "click here", "link", "file", "open", "view", "Paper", "Slides" and the like, with sizes and page counts), and a `[PDF]` label's host name (Google Scholar's "[PDF] arxiv.org"). It is used only when nothing else is there: arXiv's "pdf" link to `https://arxiv.org/pdf/2409.11211v1` saves `2409.11211v1.pdf`. An anchor that already ends in the extension isn't doubled. Windows device names get `_` (`CON_.pdf`). The name, with ` (100)` and its extension, fits in 255 UTF-8 bytes, cut between characters.
 - The extension (`downloadExtension`): **a web page is saved as `.html`**, so a sign-in page never becomes a fake PDF; otherwise the address's file type, then the type Chrome reports, then the extension of the name Chrome suggests, then `pdf` for a known PDF address.
 - Chrome names the file through `onDeterminingFilename`, once it knows the type, with `conflictAction: 'uniquify'` (Chrome adds " (1)"). `download()` also gets `saveAs: false` and a fallback name from the address alone.
 
 **The background** (`src/background/downloads.js`):
-- `downloads.start {links:[{url, anchorText?, accessibleLabel?}], collectionName?, requestId?, confirmed?}`. Workbench. Web (HTTP(S)) links only, one per address; 1 to 100; more than 10 need `confirmed: true`. Any link may be downloaded; a file link that brings back a web page counts as a web page.
+- `downloads.start {links:[{url, anchorText?, accessibleLabel?}], collectionName?, requestId?, confirmed?}`. Workbench. Web (HTTP(S)) links only, one per address (whatever the fragment); 1 to 100; more than 10 need `confirmed: true`. Any link may be downloaded; a file link that brings back a web page counts as a web page.
 - `capture.download {links, collectionId?, requestId?, confirmed?}`. Page. Only the file links among the links are downloaded, into the folder of the destination collection (default: the active one). With no file links it is refused.
 - The result of both: `{requestId, folder, total, done, saved, webPages, failed, cancelled, held, results, summary}`. Each result is `{url, anchorText, file, mime, status}`, with `status` one of `saved`, `web-page`, `failed` (with `error`, Chrome's interruption code, and `reason`, in plain words with the code), `cancelled` or `held` (Chrome holds a file it considers dangerous for the person to review; Link Meteor doesn't wait for it). `file` is the base name only, and empty when nothing was saved. `summary` is one sentence, for example "Saved 4 files to Link Meteor › Thesis-sources in your downloads folder. 1 link gave a web page instead of a file, often a sign-in page. 1 download failed."
 - `downloads.progress {requestId, total, done, saved, webPages, failed, cancelled, held}`: once at the start and after each file, to the workbench (`runtime.sendMessage`) or to the card's tab. The menu's download ends with one more to its tab, with `final: true` and `text` (the summary).
@@ -623,7 +624,7 @@ Chrome shows several items from one extension under a "Link Meteor" submenu, so 
 - Each link's details offer *Download* (`.occurrence-download`), for any link, into the collection's folder.
 - Files waiting at `linkMeteorPendingDownloads` are shown once by the next full view that opens, if they are at most 10 minutes old: at compact widths it switches to the export view, and it focuses their button. The key is removed when read.
 
-**The capture card:** *Download N files* (`.m-files`, shortcut F) in the More menu, after *Download this selection*, counts the file links among the ticked ones, one per address. Above 10 it asks first (`.fconfirm`: "Download 12 files into your downloads folder?", Download 12, Cancel; Escape closes it). While downloading, the status shows progress (`.fstatus-text`) and Cancel (`.fcancel`), then the summary. Without access it shows the error and *Open the full view* (`ui.open`), where the files wait. After the menu's download, the final `downloads.progress` text goes in an open card's status, or in a small notice (`#link-meteor-download-notice`, marked like the card, in the card's colors, `.notice-text` with `role="status"`, `.notice-close`), which closes itself 8 seconds after it last had the pointer or focus.
+**The capture card:** *Download N files* (`.m-files`, shortcut F) in the More menu, after *Download this selection*, counts the file links among the ticked ones, one per address (whatever the fragment). Above 10 it asks first (`.fconfirm`: "Download 12 files into your downloads folder?", Download 12, Cancel; Escape closes it). While downloading, the status shows progress (`.fstatus-text`) and Cancel (`.fcancel`), then the summary. Without access it shows the error and *Open the full view* (`ui.open`), where the files wait. After the menu's download, the final `downloads.progress` text goes in an open card's status, or in a small notice (`#link-meteor-download-notice`, marked like the card, in the card's colors, `.notice-text` with `role="status"`, `.notice-close`), which closes itself 8 seconds after it last had the pointer or focus.
 
 **Stable element IDs:** `#downloads-section`, `#downloads-title`, `#downloads-start`, `#downloads-label`, `#downloads-help`, `#downloads-access`, `#downloads-confirm`, `#downloads-confirm-text`, `#downloads-confirm-yes`, `#downloads-confirm-no`, `#downloads-progress`, `#downloads-progress-text`, `#downloads-progress-bar`, `#downloads-cancel`, `#downloads-result`, `#downloads-pending`, `#downloads-pending-text`, `#downloads-pending-start`, `#downloads-pending-dismiss`.
 
@@ -762,7 +763,7 @@ Files: `content/capture.js`, `background/citations.js` (new), `background/card.j
 ### Identifiers (`src/core/identifiers.js`, pure)
 
 `identifiersOf(link, pages?)` returns `{doi?, arxiv?, pmid?, pmcid?, isbn?}`, found in `url` and `originalHref`, and in the citation the link uses (its own page's, or since release candidate 2 one borrowed from a page about the same work: see `citationFor` below). They are derived each time, never stored.
-- **DOI:** Crossref's pattern (`10.` followed by 4 to 9 digits, `/` and a suffix of letters, digits and `-._;()/:`), from `doi.org/…`, `dx.doi.org/…`, `/doi/…` paths and `doi=` query values. Percent-encoding is decoded, trailing punctuation is trimmed, and DOIs compare ignoring case. An arXiv DOI (`10.48550/arXiv.<id>`) also gives the arXiv ID.
+- **DOI:** Crossref's pattern (`10.` followed by 4 to 9 digits, `/` and a suffix of letters, digits and `-._;()/:`), from `doi.org/…`, `dx.doi.org/…`, `/doi/…` paths and `doi=` query values. Percent-encoding is decoded, trailing punctuation is trimmed, and DOIs compare ignoring case. What an address adds after a DOI is left out: bioRxiv's and medRxiv's version and page (`10.1101/2020.03.15.992883v1.full.pdf` gives `10.1101/2020.03.15.992883`), and a publisher's page name as the last part of the path (`/full`, `/abstract`, `/summary`, `/fulltext`, `/full-text`, `/pdf`, `/epdf`, `/epub`, `/html`, `/meta`, `/references`), unless nothing of the DOI's suffix would be left. An arXiv DOI (`10.48550/arXiv.<id>`) also gives the arXiv ID.
 - **arXiv:** new-style `YYMM.NNNN(N)` and old-style `archive/YYMMNNN`, with an optional `vN`, from `arxiv.org/abs/…` and `arxiv.org/pdf/…`.
 - **PubMed:** a PMID from `pubmed.ncbi.nlm.nih.gov/<id>/` and `ncbi.nlm.nih.gov/pubmed/<id>`; a PMCID `PMC<digits>` from `pmc.ncbi.nlm.nih.gov/articles/…` and the older `ncbi.nlm.nih.gov/pmc/articles/…`.
 - **ISBN:** ISBN-13 (978 or 979, weights 1 and 3) or ISBN-10 (weights 10 to 1, check digit 0 to 9 or X) with a valid check digit, from `/isbn/…` paths (Open Library, WorldCat) and `isbn=`, `ean=` or `vid=ISBN` values. Shop product codes are not read as ISBNs.
@@ -842,7 +843,7 @@ Files: `content/capture.js`, `background/citations.js` (new), `background/card.j
 | --- | --- | --- |
 | `bibtex` | `.bib` | `@article` when the link's citation has a journal, otherwise `@misc`, as Zotero writes web pages: `title`, `author`, `year`, `howpublished` (only for an arXiv preprint: `arXiv preprint arXiv:<id>`), `journal`, `volume`, `number`, `pages`, `doi`, `eprint` with `archivePrefix = {arXiv}` (as arXiv's own export does), `isbn`, `url`, `urldate`, `note` (the link's note) and `keywords` (its tags). Otherwise no `howpublished`, so the address isn't printed twice. Keys are the first author's family name or the title's first word, plus the year, made unique with `a`, `b`… Escaping follows Zotero: `# $ % & _` get a backslash; `\ ~ ^ { }` and `< > |` become macros or escaped braces; `url` and `doi` stay raw. |
 | `ris` | `.ris` | `TY  - JOUR` when there is a journal, `UNPB` for an arXiv preprint, otherwise `ELEC`; `TI`, `AU` (one per author), `PY`, `DA`, `T2`, `PB` and `AN` (a preprint's `arXiv` and `arXiv:<id>`), `VL`, `IS`, `SP`, `EP`, `SN` (the ISBN), `DO`, `UR`, `Y2` (the capture date, as `YYYY/MM/DD/`), `N1` (the note), `KW` (one per tag) and `ER  - `. Each line is a two-letter tag, two spaces, a hyphen and a space; CRLF line endings. |
-| `csl` | `.json` | An array of CSL-JSON items with `id` and `type` (`article-journal`, `article` for an arXiv preprint, or `webpage`), `title`, `author` (split into family and given names when printed as "Family, Given", otherwise `literal`), `issued`, `container-title`, `publisher` and `number` (a preprint's `arXiv` and `arXiv:<id>`), `volume`, `issue`, `page`, `DOI`, `PMID`, `PMCID`, `ISBN`, `URL`, `accessed` (`date-parts`), `note` and `keyword`. `container-title` is the journal, or for a web page the source site's name; a preprint has none. |
+| `csl` | `.json` | An array of CSL-JSON items with `id` and `type` (`article-journal`, `article` for an arXiv preprint, or `webpage`), `title`, `author` (split into family and given names when printed as "Family, Given", and a `suffix` for "Family, Given, Jr", otherwise `literal`), `issued`, `container-title`, `publisher` and `number` (a preprint's `arXiv` and `arXiv:<id>`), `volume`, `issue`, `page`, `DOI`, `PMID`, `PMCID`, `ISBN`, `URL`, `accessed` (`date-parts`), `note` and `keyword`. `container-title` is the journal, or for a web page the source site's name; a preprint has none. |
 | `annotated` | `.md` | An annotated bibliography: the collection's name, then per link a citation line (authors, year, title, journal, DOI or address), its note, its context as a quote, and its tags. |
 | `obsidian` | `.md` | An Obsidian note: YAML front matter (`title`, `created`, `tags`, `source: Link Meteor`), then one list item per link, `[anchor text](url)`, with its note, custom columns as `name:: value` fields, and its context as an indented quote. |
 
@@ -872,7 +873,7 @@ The title is the title of the citation the link uses when there is one, otherwis
   - Layout: two spaces, the field name padded to 12, ` = {value}`, one field per line; a blank line between entries; a final newline; an empty file for no rows. Every value is on one line.
   - Escaping as Zotero writes it: `# $ % & _` get a backslash; `\ ~ ^ < > |` become `{\textbackslash}`, `{\textasciitilde}`, `{\textasciicircum}`, `{\textless}`, `{\textgreater}` and `{\textbar}`; `{` and `}` become `\{\vphantom{\}}` and `\vphantom{\{}\}`, so braces stay balanced.
   - `url` and `doi` stay raw, except that `{`, `}`, `\` and spaces are percent-encoded, so a brace in an address can't unbalance the entry.
-  - `author`: "Family, Given" as printed (a part containing the word "and" is braced); any other name is braced whole, `{Jun Watanabe}`, so readers keep it as one name. `pages` uses `--`. `eprint` is the arXiv ID with its version, if the address has one. `note` is the link's note; `keywords` its tags, joined with ", ".
+  - `author`: "Family, Given" as printed, and "Family, Given, Jr" as `Family, Jr, Given` (a part containing the word "and" is braced); any other name is braced whole, `{Jun Watanabe}`, so readers keep it as one name. `pages` uses `--`. `eprint` is the arXiv ID with its version, if the address has one. `note` is the link's note; `keywords` its tags, joined with ", ".
   - Titles (release candidate 2): a word with a capital letter after its first character (an acronym, `3D`, `COVID-19`, `iPhone`) is braced, `{DNA}`, so classic styles keep it as written. Other capitals stay free.
   - Not written: `month`, `publisher`, and PubMed and PMC IDs (BibTeX has no standard field for them).
 - **RIS:**
@@ -1079,7 +1080,7 @@ The plan recommends building these later. Here is what the browser allows, so th
 - When a second computer first syncs, Chrome replaces that computer's synced settings with the account's.
 - Settings would travel through Google's Chrome Sync. Collections never would.
 
-**Frames from other sites and closed components** (recommended for 0.6.0):
+**Frames from other sites and closed components** (recommended for 1.0.0):
 - `chrome.dom.openOrClosedShadowRoot` works in the page script with no permission.
 - `scripting.executeScript` with `allFrames` reaches every frame Link Meteor has access to, and silently skips the rest.
 - Listing every frame, to say which were skipped, would need `webNavigation`, which Chrome describes as "Read your browsing history". The plan avoids it: frames that didn't answer are reported as a count.
@@ -1165,7 +1166,7 @@ After the owner's hands-on check of release candidate 1. It adds no permission a
   - for a `file:` page: "Link Meteor can’t capture from files on your computer. …", with the same advice.
 - For other web pages, it first reads `document.contentType` (a named function, `documentType`) and refuses a PDF the same way. Chrome's PDF viewer shows a PDF, and no extension can read that.
 - *Capture this page* and the capture report use the same words, in place of "Choose an ordinary HTTP or HTTPS webpage".
-- Reading the links inside PDFs is planned for 0.6.0.
+- Reading the links inside PDFs is planned for 1.0.0.
 - The right-click menu is not gated this way: see release candidate 3 below.
 
 ### The Star button
@@ -1195,3 +1196,650 @@ Release candidate 2's capture gate also stopped *Add link* on PDFs, which had wo
 ### Papers with no authors yet
 
 For BibTeX, RIS, CSL-JSON and the annotated bibliography, `#cite-facts` gains a line when `unauthored` is above zero: "2 with a DOI or arXiv ID but no authors yet. Capture from the paper’s own page (on arXiv, its abstract page) or save that page as a tab, and its authors and date fill in". Nothing is looked up online, so authors come only from a saved page about the paper.
+
+## Added in 1.0.0
+
+These contracts are for 1.0.0 "Beyond one page": the links inside PDFs, capturing more than one screen or one page, frames from other sites, closed components, the PDFs behind links as one ZIP or one combined PDF, and the first optional online feature. They were written before building, and each area's "as built" part records what was settled while building; where the two differ, the "as built" part is what the code does. Release candidate 1 holds all of it.
+
+The facts they rest on were tested first, in throwaway profiles with small diagnostic extensions: which PDF reader build runs on the oldest supported Chrome, how a PDF's file can be read from its tab or from a page of its site, whether the reader can combine PDFs, how long the toolbar's temporary access lasts, and what a lookup request carries.
+
+### The promise, restated
+
+Until 1.0.0 nothing leaves the browser. From 1.0.0: **nothing leaves your browser unless you turn on a feature that says exactly what it sends, and where.** 1.0.0 has one such feature, [Page details lookup](#page-details-lookup), off by default. Link Meteor's own pages keep `connect-src 'none'`.
+
+### The bundled PDF reader
+
+- **What:** Mozilla's PDF.js, package `pdfjs-dist` 6.3.289, its legacy build, two files, unmodified: `src/vendor/pdfjs/pdf.min.mjs` (518,555 bytes) and `src/vendor/pdfjs/pdf.worker.min.mjs` (1,317,034 bytes), with its `LICENSE` (Apache-2.0) and a `README.md` naming the version, the source and each file's SHA-256. It is committed like any other source file; Link Meteor still has no package dependencies. About and help says "Reads PDFs with PDF.js by Mozilla (Apache License 2.0)".
+- **Updating it** is a maintainer's step: `scripts/vendor-pdfjs.mjs <version>` fetches that exact package from the npm registry, checks the registry's integrity value, and copies the two files and the license. No test and no build step contacts the network. A unit test checks the committed files against the recorded hashes.
+- **Chrome 116 to 123** lack two things the reader uses. `src/ui/workbench/pdf-shims.js` supplies them, only where missing: `Promise.withResolvers`, and async iteration of `ReadableStream`. Two wrapper modules load the shims before the reader, in the page and in its worker. With them, the same build reads PDFs on Chrome 116.
+- **Where it runs:** only in Link Meteor's own pages (the side panel and the full view), and only once a PDF is read: the reader is loaded with `import()` at that moment, and its worker is a module worker from the bundled file. It never runs in the background worker or in a web page, and it is not web-accessible.
+- **How it is called:** `getDocument({data, isEvalSupported: false, disableFontFace: true, useSystemFonts: false, useWorkerFetch: false, enableXfa: false})`. Link Meteor reads annotations, text and metadata, and combines PDFs with `extractPages` (see [PDF files](#pdf-files-one-zip-or-one-combined-pdf)); it never draws a page. The character maps, standard fonts and image decoders are not bundled. In the few PDFs whose fonts need those character maps, a link's words can come out empty; its address and page number are still read.
+- **Limits (`src/core/pdf.js`):** `MAX_PDF_BYTES` 50 MB, `MAX_PDF_PAGES` 2,000, and the existing `MAX_IMPORT_LINKS` (20,000). A file over a limit is refused with the reason, before reading or as soon as the page count is known.
+
+### Reading a PDF's file
+
+**From a web PDF's tab.** The workbench runs one function in the tab's top frame with `chrome.scripting.executeScript`, under the access rules *Capture this page* already has: the toolbar's temporary access, the site's access, or all sites; when none is there, the same click asks for the site, as today.
+- The function requests the tab's own address, `fetch(location.href, {cache: 'force-cache'})`, checks that the answer starts with `%PDF-` within its first 1,024 bytes, and returns `{ok, size, type, base64}` or `{ok: false, reason}`. It leaves nothing in the page.
+- That request is made as the page itself. Chrome answers from its cache when it can; otherwise the site is asked again, with that site's cookies, exactly as reloading the tab would. Nothing goes to any other address.
+- Refusals, each in plain words: the answer wasn't a PDF (a sign-in page, an expired address); over `MAX_PDF_BYTES`; the site stopped sending it (nothing for 60 seconds, before its answer or between two parts of it); the request failed. Each ends with "Download the PDF, then choose Import links, PDF file."
+- Cancel ends the request in the tab and the reading at once, and the capture button is ready again.
+
+**From a PDF file.** *Import links* accepts `.pdf` in its file chooser, and a PDF dropped on the Import links panel or on the list. The file is read in the browser and never uploaded. This needs no access of any kind.
+
+**A PDF opened from the computer (`file:`).** Chrome doesn't let a script in that tab read the file, with or without "Allow access to file URLs", and Link Meteor's own pages can read a file address only with a permission for every file address, that browser setting, and a looser page policy. Link Meteor asks for none of them. In that tab the Capture section says "This PDF is a file on your computer. Chrome doesn’t let Link Meteor read it from the tab. Choose the file instead." with a *Choose this PDF…* button that opens the file chooser.
+
+**Messages.** None are new for reading: the workbench reads the tab itself, and saving uses `import.commit`, which gains `pages` (below).
+
+**As built** (`src/ui/workbench/pdf.js`, with small hooks in `capture.js` and `imports.js`):
+- **Which tabs hold a PDF.** A web tab whose address path ends in `.pdf`, or one that answered `application/pdf` when asked for its `document.contentType`. The workbench asks the current tab whenever its tab list refreshes, where it can already read the tab, and once more in the click after access is settled. So a PDF at an address without `.pdf` reads "Capture this PDF" as soon as the tab is readable, and takes the same path even when it is found only in the click.
+- **The click** (`capturePdf`) uses `currentPagePlan` exactly as *Capture this page* does: when the site must be asked for, the same click asks. Then `readPdfTab`, then the preview. The links' source page is the tab's address at that moment, without its fragment.
+  - Declined: "You declined Chrome’s request for access to <site>, so Link Meteor could not read this PDF. Capture it again to be asked again. Nothing was added."
+  - No access: "Link Meteor has no access to this PDF’s tab. Click the Link Meteor toolbar icon while on the PDF, then choose Capture this PDF again. Nothing was added."
+  - A tab whose address ends in `.pdf` but shows a web page (a sign-in page, say) is treated as a PDF's tab, and the click ends with the words for an answer that wasn't a PDF.
+- **The Capture section on a PDF's tab:**
+  - `#capture-label`: "Capture this PDF".
+  - `#scope-preview`: the tab's title and site, then "A PDF. Link Meteor reads the links inside it and shows them before adding any.", and the usual sentence when Chrome will be asked for the site.
+  - `#arm` is disabled and described by `#pdf-note`: "Regions can’t be drawn on a PDF."
+- **A PDF opened from the computer** (a `file:` address ending in `.pdf`):
+  - `#scope-preview` has the words above, and `#capture-label` reads "Choose this PDF…".
+  - `#pdf-note`: "You can also drop the file here. It is read in this browser and never uploaded, and Link Meteor needs no access for it. Regions can’t be drawn on a PDF."
+  - The click opens the Import links file chooser, limited to PDFs for that one choice. Link Meteor asks for no access.
+- **A PDF file** is known by its name (`.pdf`), its type (`application/pdf`) or its first bytes (`%PDF-` within the first 1,024, which are read before the limit for other files), and may be up to `MAX_PDF_BYTES`. Other files keep the 20 MB limit. `#import-file` accepts `.pdf` and `application/pdf`.
+- **Dropped files.** A file dropped on `#import-panel` (which shows `#import-drop-hint`) or anywhere in `#main` (the list, the Capture section, an open preview) is read like one from the chooser, whatever kind of importable file it is. The place that will take it gets the class `is-drop` while the file is over it. More than one file: "Drop one file at a time. Nothing was imported." A file dropped anywhere else does nothing, and the browser doesn't open it.
+- **In the background** (`src/background/urls.js`, `src/background.js`), in place of the 0.5.0 words:
+  - *Select a region* on a PDF is refused with `PDF_REGION_REFUSAL`, "Regions can’t be drawn on a PDF. Open Link Meteor’s side panel and choose Capture this PDF." From the shortcut or the right-click menu, the PDF's own page shows those words (`content.notice`); the full view shows them only where the page script can't load. For a PDF opened from the computer the words end "…and choose the PDF’s file there." (`PDF_FILE_REGION_REFUSAL`).
+  - In `capture.run`, a PDF's tab gets a result with `status: 'pdf'`, no error, and the `warning` "A PDF: capture it by itself with Capture this PDF." (`PDF_TAB_NOTE`), or "A PDF on your computer: choose its file with Import links." (`PDF_FILE_NOTE`). The capture report lists it as "PDF". The other tabs are captured as usual.
+  - `addressKind(address)` says what an address alone tells: `'pdf'`, `'pdf-file'`, `'file'` or `''`.
+- **The reader is loaded on first use.** `ui/workbench/pdf.js` loads with the workbench; `pdf-reader.js`, `pdf-tab.js`, `core/pdf.js` and PDF.js load when the first PDF is read.
+
+### What is read from a PDF (`src/core/pdf.js`, pure)
+
+`src/core/pdf.js` imports nothing from the reader. The workbench hands it plain data, so it is unit-tested with and without real PDFs.
+
+- `pdfLinks(pages)` takes `[{number, annotations, items}]` (each page's link annotations and text items, as the reader returns them) and returns `{links, internal, skipped}`:
+  - **A link** is an annotation of subtype `Link` with an address. Its `url` is the reader's checked address, validated again by the model's own rules (web, email and phone addresses); `originalHref` is the address as written in the PDF.
+  - **Its page** is the page the annotation is on: `pdfPage`, counting from 1.
+  - **Its words** (`anchorText`) are the whole words of that page's text under the annotation's rectangles (its `QuadPoints`, one per line, when the PDF gives them), for text at least half inside them vertically. The reader gives the width of a run of text, often a whole line, so each character is placed by how wide it usually is (evenly in a typewriter face), and a word is the link's when most of it is inside; a word is never cut. Punctuation at a word's edges is the link's only where it is well inside, and sentence punctuation after the last word is left out, except a dot after an abbreviation. Text turned sideways (a landscape page) is read in its own direction when no upright text is under the link. A link over a picture has empty anchor text, and stays empty.
+  - **Spacing:** items are joined with a space only where there is a gap between them, so an address typeset letter by letter reads as one word.
+  - **A wrapped link** is two or more annotations in a row with the same address: on the next line, when the first piece ends its line and the second starts its own; at the top of the next column, or across a page break, only when the pieces are a printed address. They become one link, on its first page, with the words joined. The same words again, or a piece after the whole address, is another occurrence (a mirror's line, a table's rows). When the joined words are the address or its end, they are joined without the spaces at line breaks and beside the address's punctuation, never between two words, and punctuation around the address is not part of it.
+  - The same address elsewhere in the PDF is another occurrence, kept, as on web pages.
+  - `internal` counts links to places inside the PDF, which have no address. `skipped` lists `{page, reason}` for links that aren't web, email or phone addresses (another file, a script, an attachment).
+- `pdfCitation({info, xmp, firstPage, links, address})` returns a `PageCitation` or `null`:
+  - `arxiv`, `arxivVersion`, `arxivCategory` and `date` from arXiv's stamp on the first page, read exactly (`arXiv:2409.11211v1 [cs.CV] 17 Sep 2024`);
+  - `doi` from the PDF's metadata; otherwise from the first page's text or links, and only when the first page names exactly one DOI. A code or data repository's DOI (Zenodo, figshare, Dryad, OSF projects, Mendeley Data, Dataverse, Code Ocean, PANGAEA) names the paper's code or data, so it doesn't count;
+  - `title` from the metadata when it isn't a file name (no extension such as `.indd`, `.tex` or `.dvi`, and not "untitled"); otherwise the largest text in the upper part of the first page;
+  - `authors` from the metadata only when each name is also printed on the first page; otherwise none. PDFs rarely name their authors reliably, which is what the lookup is for;
+  - `journal` and a publication `date` from the metadata's PRISM and Dublin Core fields when present. The file's creation date is never used as a publication date;
+  - `pdfUrl`, the PDF's own address when it has one, of at most 2,000 characters (`MAX_PDF_URL`; a longer one is left out, as a web page's own `citation_pdf_url` is, and the citation is still kept under the address); and `source: 'pdf'`.
+- `pdfContext(items, link)`: with *Save the words around each link* on, the words on the line or lines the link sits on, at most `MAX_CONTEXT` characters. In a reference list it is the whole reference: from the line that starts it (with a label such as `[12]` or `12.`, or set out to the left of the lines below it) to the line before the next, in the link's column, when the reference before or after it starts the same way.
+
+### Link and collection data
+
+New optional fields; absent means none, so a 0.5.0 state needs no migration.
+
+| Field | Where | Type and limits | Meaning |
+| --- | --- | --- | --- |
+| `pdfPage` | link | integer, 1 to `MAX_PDF_PAGES` | The page of the PDF the link is on. Absent for links from web pages. |
+| `arxivVersion` | page citation | string, at most 8 characters (`v1`) | The version on arXiv's stamp. |
+| `arxivCategory` | page citation | string, at most 40 characters (`cs.CV`) | The primary category on arXiv's stamp. |
+| `source` | page citation | `'pdf'`, `'crossref'`, `'datacite'` or `'pubmed'` | Where the citation was read. Absent means the page's own citation tags, as in 0.5.0. |
+| `filled` | page citation | `{[field]: source}` | Which other source filled a field this reading left empty. Absent when none did. |
+
+- **Links from a PDF in a tab** have `sourceUrl` the PDF's address, `sourceTitle` its title, `pdfPage`, and the PDF's citation as their source citation, `pages[sourceUrl]`.
+- **Links from a PDF file** have empty `sourceUrl`, and `imported` such as `paper.pdf, page 3`. Rows and details show *Imported*.
+- **The PDF itself as a link:** the preview's *Also save this PDF as a link* adds one link whose address is the PDF's (for a file: its arXiv abstract page or its DOI address, when the PDF names one; otherwise the choice isn't offered) and whose own citation is the PDF's.
+- `import.commit` accepts `pages: {[pageUrl]: PageCitation}` beside `links`, as `links.append` does.
+- A citation read from a page's own tags is never replaced by one read from a PDF; a PDF's citation fills only the fields the page didn't give.
+- **Backup format 4.** `BACKUP_FORMAT_VERSION` becomes 4, so 0.5.0 refuses a 1.0.0 backup with its update message instead of dropping fields. `readBackup` accepts formats 1 to 4.
+- **Exports** gain a `PDF page` column beside the capture details in CSV, TSV, the workbook and JSON. Citation formats use the PDF's citation like any other page citation.
+- **A link's details** show "Page 3 of the PDF" beside its source, and the *Cited from* note says "Read from the PDF itself" for `source: 'pdf'`.
+
+**As built:**
+- **From a tab**, each link is sent to `import.commit` as `{anchorText, url, originalHref, pdfPage, context?, sourceUrl, sourceTitle}`. `sourceUrl` is the PDF's address without its fragment, and `sourceTitle` is the title the PDF gave, else the tab's title. `pages[sourceUrl]` is the PDF's citation with `readAt`, when the PDF said anything about itself.
+- **From a file**, each link is `{anchorText, url, originalHref, pdfPage, context?, imported}`, with `imported` such as `paper.pdf, page 3` (a long file name is cut so the label fits).
+- **The PDF itself as a link** is the first link of the batch and has no `pdfPage`:
+  - from a tab, `{anchorText: <title>, url, originalHref, sourceUrl, sourceTitle}` with `url` and `sourceUrl` both the PDF's address. `import.commit` lets a link without a page name a source page only when that page is the link's own address, as a saved tab does;
+  - from a file, `{anchorText: <title>, url, originalHref, imported: <file name>}`, where `url` is `https://arxiv.org/abs/<id>` (the stamp's ID, without its version) or else `https://doi.org/<doi>`. The PDF's citation is saved as `pages[url]`. Without that link, a file's citation is not saved, because no link would use it.
+- **Repeats are kept.** The same address twice in a PDF is two occurrences, as on web pages; nothing is left out as a repeat.
+- **Undo** (`import.undo`) removes the batch. The citation stays until no link uses it and the saved data is next tidied, as for every import and capture.
+- **Exports:** the column key is `pdfPage`, labeled "PDF page", after Frame URL. Its cell is the page number as text, or empty. JSON rows keep `pdfPage` as stored. Importing a Link Meteor export offers "PDF page" as a new column without choosing it.
+- **A link's details:** "Page 3 of the PDF" is a line (`.pdf-page`) under *Source page*. `citationSourceNote(source)` in `src/ui/workbench/review.js` returns the words for where a citation was read: "Read from the PDF itself." for `'pdf'`, and nothing for a page's own tags. The lookup's sources get their words there. A PDF's citation with no title is shown as "Untitled PDF".
+- **Two rules of `src/core/pdf.js` were tightened** against a real book:
+  - A printed address cut off at the end of a page is one link, on the page it starts on. Some PDFs carry such a link on as a strip across the next page's running head; that strip is known by the piece below it that completes the address, and its words (the heading) are not the link's.
+  - An apostrophe typeset as ’ no longer keeps a printed address in pieces.
+
+### Settings: additive schema-v1 fields
+
+| Field | Type and default | Meaning |
+| --- | --- | --- |
+| `followPages` | integer 2 to 20, `20` | The most pages one Follow Next run reads. |
+| `lookupDetails` | boolean, `false` | Page details lookup is on. Off, Link Meteor requests nothing from any service. |
+
+### The PDF preview in the workbench
+
+A PDF's links are shown before anything is saved, in the Import links view (`#import`), from a tab or from a file alike.
+
+- **Capture section:** while the active tab is a web PDF, `#capture-label` reads "Capture this PDF" and `#scope-preview` says "A PDF. Link Meteor reads the links inside it." *Select a region* is disabled there with "Regions can’t be drawn on a PDF." The shortcut shows the same words on the page.
+- `#import-source`: the PDF's title, its page count, and "from this tab (arxiv.org)" or "from a file".
+- `#pdf-facts`: what the PDF says about itself, each with where it was read: "arXiv:2409.11211v1 · cs.CV · 17 Sep 2024, from the stamp on page 1", "DOI 10.1371/…, from page 1", "Title from the first page’s largest text", "No authors: PDFs rarely name them reliably."
+- `#import-table`: one row per link with its page (`p. 3`), its words and its address. Links left out are listed with their reason when *Show only skipped rows* is on.
+- `#import-summary`: "18 links on 9 of 15 pages", then what was left out: links to places inside the PDF, repeats, links already saved, and addresses that aren't web, email or phone addresses.
+- `#import-destination`, *Skip links already saved there*, and `#pdf-self` (*Also save this PDF as a link*).
+- `#import-commit` ("Add 18 links") saves one batch with `import.commit`. The notice has Undo (`import.undo`).
+- **Nothing to add,** each in plain words: a PDF with no links ("This PDF has no links Link Meteor can read. Scanned pages are pictures, and addresses printed without a link aren’t picked up."); a PDF that needs a password ("Link Meteor doesn’t ask for passwords."); a damaged file; a file over a limit.
+- While reading, `#import-progress` says "Reading page 12 of 244…" with Cancel.
+
+**As built** (`src/ui/workbench/pdf.js`; the view is the Import links view, with the column mapping and its options hidden):
+- `#import-title`: "Links in this PDF".
+- `#import-source`: `“<title>” · 15 pages · from this tab (<site>)`, or `<file name> · 27 pages · from a file`. For a tab, the title is the PDF's own, else the tab's.
+- `#pdf-facts` (a description list labeled "What the PDF says about itself"; each value is `.pdf-fact` and where it was read is `.pdf-how`), hidden when the PDF says nothing usable:
+  - arXiv: `arXiv:2409.11211v1 · cs.CV · 17 Sep 2024`, "from the stamp on page 1";
+  - DOI: the DOI, "from page 1" or "from the PDF’s own details";
+  - Title, with where it was read;
+  - Authors: the names, or "None read" with "PDFs rarely name them reliably.", followed by "Look up details can fill them in." when the PDF has a DOI or an arXiv ID;
+  - Journal (or Date), when the PDF's own details give them.
+- `#import-table`: Page (`p. 3`), Anchor text, Address, and a last column headed "Left out because" for screen readers. Empty anchor text shows "(no words: a picture)" in `td.empty-text` and is saved empty. Links already saved in the destination are struck through with "Already saved there". The first 100 rows are shown; `#import-table-note` says "All 17 links." or "Showing the first 100 of 117 links."
+- `#import-only-skipped`, labeled "Show what was left out" (`#import-only-skipped-label`) and shown only when something was: one row counting the links to places inside the PDF ("No address"), one counting links over the 20,000-link limit, a row for each link that isn't a web, email or phone address ("(not read)", with its page), and the links already saved there.
+- `#import-destination`: the open collection by default, any other collection, or a new one named after the PDF. *Skip links already saved there* (`#import-skip-saved`) is on by default.
+- `#pdf-self` (in `#pdf-self-row`, labeled by `#pdf-self-label`):
+  - "Also save this PDF as a link, with what it says about itself" for a tab;
+  - "Also save this paper as a link (its arXiv page), with what the PDF says about itself", or "(its DOI address)", for a file that names one. For a file that names neither, the choice isn't offered.
+  - It is on unless the destination already holds that address, and it follows the destination until the person changes it. While *Skip links already saved there* is on and the address is saved there, it is off and disabled.
+- `#import-summary-main`: "Adds 17 links from 3 of 15 pages, and the PDF itself as a link." A file's links are "marked Imported", and the paper is "the paper’s arXiv page" or "the paper’s DOI address". With no links to add: "Adds the PDF itself as a link." or "Nothing to add."
+- `#import-summary-skips`, as they apply:
+  - "This PDF has no links Link Meteor can read. Scanned pages are pictures, and addresses printed without a link aren’t picked up."
+  - "Every link in this PDF is already saved there. Untick “Skip links already saved there” to add them again."
+  - "Left out: 95 links to places inside the PDF, 2 that aren’t web, email or phone addresses, 3 already saved there."
+  - "7 links are on pictures and have no words; their anchor text stays empty."
+  - "You can undo this."
+- `#import-commit`: "Add 17 links"; "Add this PDF as a link" or "Add this paper as a link" when only the PDF itself is added; disabled as "Add links" when there is nothing to add. The count never includes the PDF itself, which the summary names.
+- One batch holds at most `MAX_IMPORT_LINKS` (20,000) links, the PDF itself among them; links past that are left out and counted as over the limit.
+- **The notice:** "Added 17 links and the PDF itself to “<collection>”." with Undo, which answers "Undone: removed 18 links."
+- **Reading:** `#import-progress` (a status) says "Getting the PDF from its tab…" or "Reading <file name>…", then "Reading page 12 of 244…". Cancel, or Escape, stops the reading through an `AbortController`, including a request for the file still running in the tab, and says "Canceled. Nothing was added."
+- **Nothing to add,** each ending "Nothing was added." and closing the view:
+  - "This PDF needs a password. Link Meteor doesn’t ask for passwords."
+  - "This PDF is damaged, or it isn’t a PDF, so it couldn’t be read."
+  - "This file isn’t a PDF."
+  - "<file name> is larger than 50 MB, the most Link Meteor reads."
+  - "This PDF has 2,001 pages. Link Meteor reads PDFs of up to 2,000 pages."
+  - each of `PDF_TAB_REASONS`, with "Download the PDF, then choose Import links, PDF file."
+  A PDF with no links still opens the preview, so the PDF itself can be saved as a link when it has an address.
+- The preview follows what is saved: when the destination's links change while it is open, it is planned again.
+- **About and help** (`#about-pdfjs`): "Reads PDFs with PDF.js by Mozilla (Apache License 2.0), which is part of Link Meteor. PDFs are read in this browser and never uploaded."
+- **Tested** in the loaded extension by `tests/pdf-browser.mjs` (a PDF file: the chooser, drops, every refusal, Cancel, the keyboard, 320 px and contrast; it needs no toolbar action, so it also runs on the oldest supported Chrome), `tests/pdf-tab-browser.mjs` (Capture this PDF through Chrome's real toolbar action, a local PDF's tab, regions and several tabs) and `tests/imports-browser.mjs` (a PDF beside the other sources). `tests/access-granted.mjs` checks a PDF captured where the site is already allowed and the toolbar wasn't clicked.
+
+### Runs: auto-scroll, Follow Next and selected pages
+
+A **run** is a capture that takes more than one step. Every run:
+- starts only from a click;
+- shows a counter and **Stop** the whole time, on the page it is reading and in the workbench; Escape on that page stops it too;
+- has a firm cap, stated before it starts;
+- saves what it found as one batch with one Undo, and keeps what it has when stopped;
+- ends with a report: each page with what was found, what was added and how it ended.
+
+**Auto-scroll** (*Scroll to the end first*, a check box under *Capture this page*):
+- The page script scrolls the page one screen at a time (90% of the window's height), collecting links after each step, so links a page later removes are kept.
+- It waits for the page to settle after each step: 600 ms, and up to 2 seconds more while the page is still growing.
+- It ends when the page's height and link count haven't changed for three steps in a row ("Reached the end"), or at a cap: 50 screens, 5,000 links or 2 minutes ("Stopped at 50 screens. The page may have more.").
+- It then scrolls back to where the person was.
+- Counter: "Scrolling: screen 9 of up to 50 · 412 links".
+- It needs no access beyond what capturing that page needs.
+
+**Follow Next** (*Follow Next, up to N pages*, a check box under *Capture this page*; N is `followPages`):
+- After capturing a page, the page script looks for the next page, in this order: `<link rel="next">` or `<a rel="next">`; a link labeled next by `aria-label` or its text ("Next", "Next page", "Older", "›", "»", "→", and the like, listed in the code); otherwise none. A next address must be a web address not yet read in this run.
+- The background moves **the same tab** to it, waits for the page to load (at most 30 seconds), pauses 1.5 seconds, and captures it. The person sees every page it reads.
+- The toolbar's temporary access lasts while the tab stays on the same site, so one toolbar click is enough there. Where Link Meteor has the sites' access, Next may cross sites.
+- It ends, each said in the report: no next page; the next page is on a site Link Meteor can't read ("Next goes to example.org, which Link Meteor has no access to."); a page already read (a loop); a page that didn't load; the cap; Stop; the tab closed or moved by the person.
+- Counter: "Page 4 of up to 20 · 212 links".
+- With *Scroll to the end first* also on, each page is scrolled first.
+
+**Capture selected pages** (*Capture their pages…* in the list toolbar while links are selected, and in a link's details):
+- `#pages-panel` says beforehand: how many pages; that each opens in a background tab, one at a time, is captured and closed; the cap of 20 pages a run; the 2-second pause; which sites it needs, with *Allow these N sites* where access is missing; and where the links go.
+- More than 20 selected pages are refused with "Choose up to 20 pages at a time."
+- Each page: `chrome.tabs.create({url, active: false})`, wait for it to load (at most 30 seconds), capture the whole page, close the tab, pause.
+- A page that is a PDF is read as a PDF (above). A page Link Meteor has no access to is not opened, and is reported as "No access". A page that redirects to a site without access is closed and reported the same way.
+- It goes one level deep, never further: links found are saved, not followed.
+- Counter: "Page 3 of 12 · 148 links".
+
+**Messages** (`src/background/runs.js`):
+- `run.start {kind: 'next' | 'pages' | 'files', tabId?, urls?, collectionId, scroll: boolean}` returns `{runId}`, or a refusal; `files` is the kind [PDF files](#pdf-files-one-zip-or-one-combined-pdf) uses, and saves no links;
+- `run.stop {runId}`;
+- `run.status {}` returns the run in progress, for a workbench opened meanwhile;
+- `run.progress {runId, kind, step, of, links, state}` is sent to Link Meteor's pages as the run moves;
+- `run.undo {collectionId, batchId}` removes the run's batch, as `import.undo` does.
+
+Auto-scroll alone is one page and uses `capture.run` with `scroll: true`.
+
+**Storage:** session key `linkMeteorRun`: the run in progress (its kind, queue, counts and batch), so a restarted background worker either continues it or reports it as interrupted. It holds no page content, and lives until the browser closes. Only one run at a time.
+
+### Runs, as built
+
+Where this differs from the draft above, this is what the code does.
+
+**The page script** (`src/content/capture.js`):
+- `__linkMeteor.scan(options)` with `options.scroll` scrolls the top frame to the end first and answers with a promise of the same answer as a plain scan, plus `scroll: {screens, of, ended, text}`. `ended` is `'end'`, `'screens'`, `'links'`, `'time'` or `'stopped'`; `text` says it ("Reached the end after 12 screens.", "Stopped at 50 screens. The page may have more.", "Stopped at 5,000 links. …", "Stopped after 2 minutes. …", "Stopped at screen 9: you pressed Stop. …").
+- `options.scroll` is `{runId, lead?, links?, limits?}`. `lead` and `links` are a longer run's own counter, shown before the page's. `limits` can only lower a limit (the checks use it for the time limit).
+- **Where it scrolls:** from where the person is, not from the top. It scrolls the document; where the document itself doesn't scroll, the largest scrolling box that fills at least half of the window.
+- **A step** is 90% of the window's height. It settles for 600 ms, then up to 2 seconds more while the height still changes (checked every 200 ms).
+- **The end** is three steps in a row that couldn't scroll further and found nothing new (same height, same number of links). A step that scrolls through what was already loaded is not such a step, so a long page is scrolled to its end before it is called the end. A feed therefore has about 2.4 seconds to load more once its end is reached; one that takes longer is called finished.
+- **A screen** is counted when the page moves; the count starts at 1. The 50th screen is the cap.
+- **What is kept:** the collector runs after every step. A link is kept the first time its element shows that address and those words, with its context read at that moment. So what the page removes later stays, and nothing is counted twice while its element stays.
+- `__linkMeteor.next()` returns `{url, how: 'rel' | 'label'}`, `{button: true}` or `null`:
+  - first `<link rel="next">`, `<a rel="next">` or `<area rel="next">`;
+  - then a visible link named next by its `aria-label`, its `title`, its text or its image's `alt`. The words are listed in the code (`NEXT_WORDS`, `NEXT_MARKS`): "next", "next page", "older", "older posts", "more results", their like in a few other languages, and "›", "»", "→", ">", with arrows on either side ignored ("← Older posts", "Next »"). A label is matched whole, so "Next: how it works" is not Next.
+  - A link in the page's own pager (`nav`, a navigation landmark, or a class or id with "pagination", "pager" or "paging") wins; otherwise the last such link on the page.
+  - Not a next page: a link switched off (`aria-disabled`, `disabled`, a `disabled` class), a link to this same page (the address without its `#` part), and anything but a web address.
+  - `{button: true}`: Next is a button, which has no address to go to. The report says so.
+- **The notice** is its own small panel (`#link-meteor-run-notice`, in the card's colors, marked so the collector never reads it): the counter (`role="status"`) and one Stop button. Escape stops too, unless a capture card is open, which takes Escape first. When the run is over the notice says how it ended, has a Close button, and closes itself after 8 seconds.
+- `content.run` from the background: `{runId, text}` shows the counter; `{runId, done: true, text}` says how the run ended; `{runId, halt: true}` is Stop from the workbench. A Stop that reaches the page before its scroll begins (from the workbench, or the page's own Stop or Escape between pages) is kept, and that run's scroll ends at once.
+
+**Messages** (`src/background/runs.js`; from the workbench unless said):
+- `run.start {kind: 'next' | 'pages', tabId?, urls?, collectionId, scroll?}` answers `{runId}` at once; the run goes on by itself. Refusals: an unknown kind, no collection, a collection that is gone, more than 20 pages ("Choose up to 20 pages at a time."), addresses that aren't web pages, and a run already going ("Link Meteor is already running a capture. Stop it, or wait for it to finish."). The kind `files` is described under [PDF files](#pdf-files-one-zip-or-one-combined-pdf), as built.
+- `run.stop {runId}` from the workbench, or from the page the run is reading (its Stop button or Escape). Any other page is refused.
+- `run.status {}` answers `{run}`: the run in progress, or the last one that ended, or `null`.
+- `run.progress {runId, kind, step, of, links, state, title, text, page, startedAt}` goes to Link Meteor's pages as the run moves. `state` is `'running'`, `'stopping'` or `'done'`; `text` is the counter ("Page 4 of up to 20 · 212 links"); `page` is the title of the page being read. With `'done'` it also has `ended {reason, text}`, `summary`, `batchId`, `collectionId`, `name`, `count`, `undone` and `results`.
+- `run.undo {collectionId, batchId}` answers `{state, count, name}`. It removes the last run's batch only while that batch is as the run left it: the same number of links, none with a note, tag, reading status, star or custom value. After Scroll to the end first, what its report added to the batch since (*Include them*, frames from *Allow these sites*) counts as the run's, so Undo removes it too; after Undo, its left-out navigation links are no longer kept, and *Include them* is not offered. The workbench's own removal Undo is kept.
+- `run.scroll {runId, screen, of, links}` from the page that is scrolling: its counter, passed on in `run.progress`. Once Stop was pressed it answers `{halt: true}`, and the page ends its scroll: a page that missed Stop (its scroll began just after, or it had no page script when Stop was sent) hears it there.
+- `run.pdf {runId, step, tabId, url, title}` goes to Link Meteor's pages when a selected page is a PDF. A page answers with `run.pdfLinks {runId, step, links, pages, internal, pageCount}`, or `{runId, step, error}`. The first answer is used. Each link is `{url, originalHref, anchorText, pdfPage, context?, sourceUrl, sourceTitle}`; the background saves it with the PDF's own address as its source page.
+- `capture.run {tabIds, scroll: true}` is Scroll to the end first by itself, for one tab. Its answer is a capture's, with `report.results[0].scroll` and `report.collectionId`. While it runs it counts as the one run (`kind: 'scroll'`), so the workbench shows its counter and Stop, and its batch has `run.undo`.
+
+**The session record** `linkMeteorRun`: `{runId, kind, state: 'running' | 'done', stopping, collectionId, name, batchId, scroll, tabId?, cap?, queue: [{url}], at, seen, results, links, found, doing, live, page, ended, summary, count, undone, startedAt, finishedAt}`. It is the run in progress, and afterward the last run, for its report and Undo. `links` counts the links added so far; `found`, every link found so far (left out and skipped ones too), which is what the counter shows: a page that is scrolling adds what it has found to it, so the count only goes up. `results` holds each page's line in the report: `{page, url, title, status, found, added, skipped, leftOut, how}`. It never holds a page's links.
+
+**The report** is kept in `linkMeteorCaptureReport`, as a capture's is, with `kind: 'run'`: `{kind, run, runId, batchId, collectionId, name, results, head, summary, note, ended, capturedCount, found, skipped, leftOut, read, undone?}`. Every open view shows it, and a view opened later shows it too.
+
+**Each page is captured as *Capture this page* captures it:** a run calls the same pipeline (`captureTabs`) with its own batch and collection. So *Leave out navigation links* and *Skip links already saved* apply to every page of a run, context and page citations are kept, and what is left out or skipped is counted in the report. A run only counts what it leaves out: *Include them* is offered after a one-page capture, not after a run. Where a page's capture counts frames it couldn't read (from other sites, and also the page's own sandboxed frames and frames whose site can't be told), that page's line says so ("Captured · 2 frames weren’t read").
+
+**Follow Next:**
+- The first page is the tab's own page; nothing is loaded for it. Each next page: the tab is moved, it gets 30 seconds to load, the notice is shown, 1.5 seconds pass, and it is captured. With *Scroll to the end first*, it is scrolled first.
+- "The same site" is the same origin (scheme, host and port), which is how long Chrome keeps the toolbar's temporary access. A Next link to another origin is followed only where Link Meteor has that site's access; otherwise the tab is not moved, and the report says "Next goes to example.org, which Link Meteor has no access to."
+- Chrome hides a tab from Link Meteor once the toolbar's access is gone, and it is gone on Chrome's own error page as on another site. So a next page that Chrome couldn't load, and one whose address moved to another site, end the same way: "Next led to a page Link Meteor can’t read: it didn’t load, or it is on a site Link Meteor has no access to."
+- How a run ends, as the report says it: "Page 5 has no Next link."; "On page 5, Next is a button without an address, which Follow Next can’t use."; "Stopped at 20 pages, the limit you set." (and "The last page has a Next link." when it has one); "Next goes to a page already read in this run."; "The next page didn’t load within 30 seconds."; "You pressed Stop."; "The tab was closed."; "The tab went to another page."; "Next led to a PDF, which Follow Next doesn’t read."; and, for the first page, "Link Meteor has no access to this page. Click the Link Meteor toolbar icon on it, then try again."
+- The report says where the tab is ("Your tab is on page 3.") when the run ends with the tab on the last page read. When Next led back to a page already read, it says "Your tab is back on page 1."
+- "The tab went to another page" means another document (Chrome's `documentId`). A page that changes its own address, with a `#` part or `history.replaceState`, has not moved, and is read as usual; so does *Capture this page* on such a page.
+- A page read once is not read again: its address without the `#` part is remembered for the run, as is the address a next link landed on.
+
+**Capture selected pages:**
+- The pages are the selected links' web addresses, each once, without their `#` part. Email and phone links, and links to files that aren't pages (by their file type; a PDF is a page), are left out, and the panel says how many.
+- A page's line in the report: "Captured"; "Captured: nothing new"; "No links on this page"; "No access" (not opened); "No access: it moved to another site" (opened, then closed unread); "Didn’t load within 30 seconds"; "Didn’t load: Chrome showed an error page"; "Captured: a PDF, 15 pages"; "A PDF: keep Link Meteor open during the run to read PDFs." (no Link Meteor page was open to read it); "A PDF: reading it took more than 60 seconds, so its links weren’t saved. Capture it by itself to read them."; "The tab closed before it was read. Chrome may have downloaded this address as a file instead of showing it." (the person closed it, or Chrome did after a download; which one isn't known); "Not read: you pressed Stop".
+- A background tab is never remembered as the tab *This page*, *Select a region* and Follow Next use. Chrome won't close a tab while the person drags one, so closing is tried again for up to 10 seconds; a tab that still won't close is told the run is done there, so it shows no Stop.
+- The 2-second pause is between pages, after one tab is closed and before the next is opened.
+- The background tab shows the notice too, with the counter ("Capturing selected pages: page 3 of 12 · 148 links") and Stop, should the person look at it.
+- *Scroll to the end first* is not offered for selected pages: a background tab doesn't load more as it is scrolled.
+- With *New collection…*, the workbench creates the collection first and keeps the open one open. Undo removes the links, not the collection.
+
+**One run at a time, and a restarted worker:**
+- A second `run.start`, or `capture.run` with `scroll`, is refused while one is going. A worker that a `run.start` wakes first finishes looking for a run the last worker left (below), so the request isn't refused for that.
+- While a run is going, the background makes a small call every 20 seconds, so Chrome doesn't stop it between pages.
+- When the worker starts and finds `linkMeteorRun` still `'running'`, no worker is driving that run. The step it was on is reported as "Interrupted: Chrome stopped Link Meteor’s background worker", and a background tab it had opened is closed. A run of selected pages then goes on with the rest of its queue. Follow Next ends there, because the tab may be anywhere, and says "Chrome stopped Link Meteor’s background worker, so the run ended early." A scroll's own answer is lost with the worker; its record is closed. What was saved stays in every case.
+
+**Another kind of run.** The engine (the queue, pacing, Stop, progress, the session record and the report) is apart from what one step does. `KINDS` in `src/background/runs.js` has one entry for each kind: `{title, begin, step, pause, counter, words, scrolls?, resumes?, endsOnFailure?, onPage?, saves?, report?}`. `begin` checks the request and returns the queue. `step(job, item)` returns `{row, next?, end?, quick?}`: the item's line in the report, one more item for the queue, the reason the run ends, or that no site was asked for anything, so the next step needn't wait. `engine` holds what a step may use: `pause`, `ask` (a question to Link Meteor's pages, answered by a message type listed in `ANSWERS`; it gives `null` when no page heard it or Stop was pressed, and `LATE` when no answer came in time), `closeTab` (a background tab, tried again while Chrome refuses), `loaded`, `hasAccess`, `documentType`, `capturePage`, `rowOf`, `unread`, `save` and `progress`. `saves: false` is for a kind that saves no links: it needs no collection, and no Undo is offered. `report: false` is for a kind that shows its own report: nothing is put in `linkMeteorCaptureReport`, and `run.status` and the last `run.progress` carry `results`.
+
+**The workbench** (`src/ui/workbench/runs.js`):
+- `#capture-further` (`role="group"`, "Go further than this screen") holds `#further-scroll`, `#further-next` and `#follow-pages` (2 to 20, saved as `followPages`). It shows for *This page* and *Links in the pages*, and not on a PDF. The two choices last while the view is open; nothing is ticked when it opens.
+- `#run-progress` (`role="status"`) holds `#run-title`, `#run-text` ("Page 4 of up to 20 · 212 links so far · now on “Listing, page 4”"), `#run-stop` and a bar. It shows in every open view while a run is going, and in a view opened meanwhile. Starting a run moves focus to Stop. While a run is going, *Capture*, *Select a region* and the choices are disabled.
+- The report, in `#capture-report`: what the run added (`.run-head`, with Undo), a table (`.run-table`: Page, Title, Found, Added, How it ended) in a scrolling region that takes focus, and a note that says why the run ended (`.run-note`). At 520 px and narrower each page's cells stack (its number, then its title, what was found and added, and how it ended); the table keeps its roles for screen readers. After a one-page capture that scrolled, the usual report has one more line (`.report-scroll`): how the scroll ended, and Undo.
+- The notice when a run ends says the same, with Undo.
+- `#pages-selected` (*Capture their pages…*) shows while links in the view are selected; a link's details have *Capture its page…* (`.occurrence-pages`; not for an email or phone link). Both open `#pages-panel`: `#pages-title`, three facts (`.pages-facts`, the last in `#pages-only`), `#pages-access` with `#pages-allow` (*Allow these N sites*: one `chrome.permissions.request` naming exactly the sites without access, in the click), `#pages-destination` with `#pages-new` for a new collection, `#pages-help`, `#pages-apply` ("Capture 3 pages") and `#pages-cancel`. *Capture* is disabled until every site has access, while a run is going, above 20 pages ("Choose up to 20 pages at a time.") and while a new collection has no name. Escape closes the panel and returns focus.
+- A PDF among selected pages is read by the view with `readPdfTab`, when the background asks. Every open view answers; the background uses the first answer.
+
+**Tested** without grants: the page script with a stub `chrome` (`tests/scroll-content.mjs`); the background with Chrome's APIs simulated and a clock the test moves (`tests/runs.test.mjs`); and the real extension with Chrome's real toolbar action (`tests/runs-browser.mjs`). With grants, for the owner's session: selected pages on two sites and a PDF, and Next across sites, with all sites allowed (`tests/access-granted.mjs`); and *Allow these 2 sites*, which needs one native prompt (`tests/runs-granted.mjs`, in the per-site profile).
+
+### PDF files: one ZIP, or one combined PDF
+
+In the Export panel's *Download files*, the PDFs among the chosen links (the file links `src/core/files.js` types as `pdf`) get two more actions. *Download files* itself is unchanged: it still saves every file one by one through Chrome's downloads.
+
+**Getting each PDF's file.** A page of the PDF's own site requests it, `fetch(url, {credentials: 'include'})`, as when the link is clicked, with that site's cookies. Which page:
+1. the active tab, when it is on the PDF's site and Link Meteor can run there (the toolbar's temporary access is enough);
+2. otherwise a background tab, opened at the page the link was captured from when that page is on the PDF's site, else at the site's front page, and closed afterward;
+3. when the address redirects to another site, a background tab opened at the PDF's own address, read there as [a PDF in a tab](#reading-a-pdfs-file) once Chrome shows it.
+
+- Background tabs need access to those sites, asked for by name in the click, as *Capture selected pages* does. Files on sites without access are reported as "No access" and left out.
+- Chrome saves a PDF to the Downloads folder by itself when a tab is opened at an address the site sends as a download. Steps 1 and 2 avoid that. When step 3 meets one, the report says "Chrome downloaded this one instead of showing it. It is in your Downloads folder, not in this file."
+- Every answer must start with `%PDF-` within its first 1,024 bytes; a sign-in page is reported as "Not a PDF: the site asked to sign in, or the address has expired."
+- It is a run of kind `files`: one file at a time, 2 seconds apart, a counter with Stop ("Getting PDF 3 of 5"), and a report of each file with how it ended.
+- **Limits (`src/core/pdf.js`):** `MAX_PDF_SET` 20 PDFs a run; `MAX_PDF_BYTES` 50 MB each; `MAX_PDF_SET_BYTES` 200 MB in all; and for combining, `MAX_COMBINED_PAGES` 5,000 pages in all, because the reader holds every page while it writes (about 200 KB a page: 5,000 pages took 1.2 GB in Node). More than 20 are refused with "Choose up to 20 PDFs at a time."; more than 5,000 pages with "A combined PDF can have at most 5,000 pages, and these have 26,460. Leave some out."
+- The files are held in the workbench's memory until the download is made, and nowhere else.
+
+**Download as one ZIP** (`#pdf-zip`):
+- `src/core/zip.js` (pure) holds the ZIP writer the workbook writer has used since 0.3.0 (`zip(files)` and `crc32`, moved from `src/core/xlsx.js`, which imports it). Entries are stored, not compressed: PDFs are compressed already, and each file's bytes stay exactly what the site sent.
+- Entry names come from `downloadName` in `src/core/files.js`, as *Download files* names them; repeats get ` (2)`, ` (3)`. Each fits in 255 UTF-8 bytes, so it can be extracted on Linux, macOS and ChromeOS; `zip()` refuses a longer name part.
+- The ZIP is named like an export, `<collection>_<date>_<time>.zip`, and is handed to Chrome's download as exports are. It holds no index and nothing but the PDFs.
+
+**Combine into one PDF…** (`#pdf-combine`, opening `#combine-panel`):
+- `#combine-list`: the PDFs in the order of the list, each with its file name, its link's anchor text, its page count and size once read, and buttons to move it up or down or leave it out (the same controls as *Columns, in order*, with the same labels and focus handling).
+- *Add PDF files…* and dropping files on the list add PDFs from the computer, read in the browser; they count toward the limits. With no links chosen, the panel still combines files from the computer.
+- `#combine-name`: the file name, by the export name pattern, ending `.pdf`.
+- The summary says the number of PDFs, pages and megabytes, and lists what is left out with the reason: needs a password, damaged, not a PDF, no access, over a limit.
+- `#combine-apply` ("Combine 5 PDFs") gets the files still missing, then writes one PDF with the reader's `extractPages([{document: null}, {document: bytes}, …])` on the first PDF, in the list's order, and hands it to Chrome's download.
+- **What the combined PDF keeps** (tested): every page, its text, its web links, the links inside each document, and each document's bookmarks. **Not kept:** page labels (such as i, ii, iii), form fields' behavior and document-level attachments are not promised. A PDF that needs a password can't be combined, and goes into a ZIP as it is.
+- Whole PDFs only: choosing single pages is not in 1.0.0.
+
+**As built** (`src/ui/workbench/pdf-files.js`, the `files` kind in `src/background/runs.js`, and four functions in `src/core/files.js`). Where this differs from the draft above, this is what the code does.
+
+**Which links, and their names** (`src/core/files.js`, pure):
+- `isPdfLink(link)`: a file link whose address ends in `.pdf` or is a known PDF address, or one labeled `[PDF]` whose address names no other file type. `pdfLinks(links)` gives the PDF links among the chosen links, one per address (whatever the fragment, so a report linked at two of its pages is fetched once), in the list's order.
+- `pdfFileName(link)` is `downloadName` for a PDF: named after the anchor text, else the accessible label, else the address's own file name, passing over generic text, always ending `.pdf`. A ZIP of arXiv's "pdf" links holds `2409.11211v1.pdf`, `2409.11212v1.pdf`, not `pdf.pdf`, `pdf (2).pdf`.
+- `uniqueNames(names)` numbers repeats before the extension: `Field-notes.pdf`, `Field-notes (2).pdf`. Names that differ only in case count as repeats.
+
+**The section** (`#pdf-set`, a group at the end of *Download files*, labeled by `#pdf-set-title`):
+- `#pdf-set-title`: "The 9 PDFs", "The PDF" for one, and "PDF files" when the chosen links hold none.
+- `#pdf-zip` (*Download as one ZIP*) shows while the chosen links hold at least one PDF. `#pdf-combine` (*Combine into one PDF…*) always shows, because the panel also combines files from the computer.
+- `#pdf-set-help`:
+  - "Link Meteor gets each PDF through a page of its own site, as when you click the link, and puts them together in this browser. Nothing is uploaded. 20 PDFs at most."
+  - with no PDF links: "No PDF links in this view. PDF links end in .pdf or are labeled [PDF]. You can still combine PDF files from your computer: they are read in this browser and never uploaded."
+  - above 20: "Choose up to 20 PDFs at a time. This view has 21 PDF links: select fewer or filter the view, or leave some out under Combine into one PDF…" (`is-problem`), and *Download as one ZIP* is disabled.
+  - while another run is going: "Another capture is running. Wait for it to finish, or stop it." is added, and both actions wait.
+- `#pdf-access`, shown when a start would ask Chrome for sites: "Needs access to 1 site: journal.example.org (2 PDFs). Chrome asks when you start. PDFs on sites you don’t allow are left out." The panel has the same line for its own list (`#combine-access`).
+- `#pdf-progress` (`role="status"`): `#pdf-progress-title` ("Getting PDF 3 of 5", "Stopping…", "Writing the ZIP…", "Combining the PDFs…"), `#pdf-progress-text` ("journal.example.org · 3.5 MB so far. Keep Link Meteor open until this is done."), `#pdf-stop` and a bar. It sits under the two buttons for a ZIP and inside the panel while it combines. Starting moves focus to Stop. The Capture section's own progress line shows the run too, in every open view.
+- `#pdf-result` (`role="status"`): one sentence, then each file with how it ended.
+- *Download files* itself is unchanged.
+
+**Access.** PDFs on the site of the person's own tab, where Link Meteor can read that tab, need nothing more. For the other sites, the click that starts (*Download as one ZIP*, or *Combine N PDFs*) makes one `chrome.permissions.request` naming exactly those sites, before anything else happens. Whatever Chrome answers, the run starts: the background checks each site itself, and a PDF on a site without access is reported as "No access" and never asked for.
+
+**Getting the files: a run of kind `files`.**
+- `run.start {kind: 'files', tabId?, files: [{url, from?, name?}]}` answers `{runId}`. It names no collection and saves nothing. `tabId` is the person's own tab; `from` is the page the link was captured from, kept only when it is on the PDF's own site and is not itself a file (a link read out of a PDF names that PDF); `name` is the file's name, shown in the counter. Refusals: "Choose at least one PDF.", "Choose up to 20 PDFs at a time.", "Choose PDFs at web addresses.", and a run already going.
+- For each file the background finds a tab, in the draft's order, and sends `run.file {runId, step, tabId, url}` to Link Meteor's pages; `url` is empty for the tab's own address. Only the page that started the run answers: it fetches the file through that tab (`pdfThroughTab`), keeps it, and sends `run.fileDone {runId, step, ok: true, size}` or `{runId, step, reason}` (`'not-pdf'`, `'size'`, `'status'`, `'stalled'`, `'failed'`, `'access'`, or `'set-size'` when the files would pass 200 MB together). The answer to `run.fileDone` is `{taken}`: a file the run did not take (Stop, or an answer that came too late) is dropped. A step may ask about the same file again, through another tab; each question has its own 2 minutes, and a question asked after Stop is not sent.
+- **Which tab:**
+  1. the person's own tab, when Chrome shows its address (so Link Meteor can read it) and it is on the PDF's site;
+  2. otherwise, where Link Meteor has access to the PDF's site, a background tab at `from`, else at the site's front page;
+  3. when a page of the site could not get the file at all (most often because the address moves to another site), a background tab at the PDF's own address, read from that tab's own address once Chrome shows it, where Link Meteor has access to the site it landed on.
+  A background tab is opened only on a site Link Meteor has access to, and is always closed again.
+- **How a file ends** (`results[n]`: `{page, url, title, status, how, size?}`; `title` is the file's name):
+  - `got`: "Fetched";
+  - `no-access`: "No access" (not asked for), "No access: it moved to example.org", or, when the person's own tab could not get it and no background tab may be opened, "Not fetched: the address may move to another site, which Link Meteor has no access to";
+  - `not-pdf`: "Not a PDF: the site asked to sign in, or the address has expired.";
+  - `too-large`: "A PDF can be at most 50 MB.", or "These PDFs are more than 200 MB together. Choose fewer.", which ends the run;
+  - `status`: "The site answered with an error instead of the PDF.";
+  - `stalled`: "The site stopped sending the PDF." (the page that fetches it gave up on a site that sent nothing more for a while, `reason: 'stalled'`); the run goes on;
+  - `downloaded`: "Chrome downloaded this one instead of showing it. It is in your Downloads folder, not in this file." Chrome closes such a tab within a moment of opening it; a tab that shows no address is given 2 seconds to close before it is taken for a page on a site without access;
+  - `not-loaded`: "Didn’t load within 30 seconds", or "Didn’t load: Chrome showed an error page";
+  - `failed`: "Chrome couldn’t get this PDF’s file";
+  - `timeout`: "Not fetched within 2 minutes, so it was left out. Download files saves it by itself." The page gets 2 minutes for each file (a large file on a slow connection can take longer); that file alone is left out, and the run goes on, so a ZIP holds the others;
+  - `no-answer`: "The Link Meteor page that started this didn’t answer, so the run ended. Keep it open until the PDFs are fetched." No Link Meteor page heard the question, or, when a file's 2 minutes are up, the page that started the run is gone (looked up with `chrome.runtime.getContexts`: a full view by its `documentId`, a side panel as any open side panel, since a side panel's messages name no document), and the run ends there;
+  - `not-read`: "Not read: you pressed Stop", and `interrupted`, as for every run.
+- **Pacing:** one file at a time, 2 seconds apart. A file that was never asked for ("No access") costs no pause: a step may answer `quick: true`, which the engine honors for any kind.
+- **The session record** is the run's, as for other kinds, with `own` (the person's tab), `owner` (the page that started the run: a full view's `documentId`, or `'side-panel'`) and each queue item's `{url, name, from?}`. It holds no file. A restarted background worker goes on with the rest of the queue. The summary is "Fetched 4 of 5 PDFs."
+- The page shows its own report, so nothing is put in `linkMeteorCaptureReport`, and no notice is shown by the other views.
+
+**Download as one ZIP:**
+- Every chosen PDF is fetched; the ZIP is made from those that were, in the list's order, and downloaded at once. A PDF that needs a password goes in as it is: a ZIP reads no PDF, and PDF.js is not loaded for it.
+- The name is the export name pattern with `.zip` (the *File name* field of an export does not apply).
+- `#pdf-result`: "Downloaded Thesis_2026-10-02_1412.zip with 4 of 5 PDFs, 9.4 MB.", then each file: "In the ZIP · 2.1 MB", or why it is not there. When Chrome's request for sites was declined, the sentence adds "Chrome’s request for access was declined, so PDFs on the sites it named were left out."
+- No ZIP is made when no PDF could be fetched ("No PDF could be fetched, so no ZIP was made."), after Stop ("You pressed Stop. No ZIP was made."; a file already fetched is listed as "Fetched, then dropped"), or when the run ended early. A file that took more than 2 minutes doesn't end the run: the ZIP is made from the others, and that file is listed with why it is not there.
+
+**Combine into one PDF…** (`#combine-panel`, a form labeled by `#combine-title`, "Combine into one PDF, in this order"):
+- `#combine-list` (an ordered list): each PDF's file name, then its link's anchor text (its address when it has none) or "Added from your computer", then "14 pages · 2.1 MB" once the file is here. Each row has *Move … up*, *Move … down* and *Leave out …*, labeled with the file's name. After a move, focus stays on the same button of the moved PDF, or on the button beside it at an end of the list; after *Leave out*, focus goes to *Add PDF files…*. The list is taken from the chosen links when the panel opens; a link removed meanwhile leaves the list, and another collection closes the panel.
+- `#combine-add` (*Add PDF files…*) opens a chooser for PDFs (`#combine-file`, several at once). Files dropped anywhere on the panel are added too; `#combine-empty` says so while the list is empty. Each file is read at once, in this page. They join the end of the list and count toward the limits.
+- `#combine-skip` (`role="status"`, "Left out"): each PDF that can't go in, by name, with the reason: "Needs a password, so it can’t be combined", "Damaged, so it couldn’t be read", "Not a PDF", "A PDF can be at most 50 MB.", or how its file ended in the run. A PDF the person leaves out is not listed.
+- `#combine-name`: filled with the export name pattern ending `.pdf`. Left as filled, the PDF is named by the pattern when it is written, with that moment's time and the collection's name then; what is typed instead is made safe as an export's file name is.
+- `#combine-total`: "5 PDFs · 71 pages · 9.4 MB. Pages keep their links and bookmarks." Until every file is here: "9 PDFs. 2 are ready (5 pages · 9 KB). Link Meteor fetches the other 7 when you press Combine; their pages and sizes show then. …"
+- `#combine-help`: a limit that is passed ("Choose up to 20 PDFs at a time. Leave out 1.", or, once the files that are here have more than 5,000 pages, "A combined PDF can have at most 5,000 pages, and these have 6,120. Leave some out."), or that another run is going.
+- `#combine-apply` ("Combine 5 PDFs") and `#combine-cancel`. Escape closes the panel and returns focus to *Combine into one PDF…*. Closing drops every file the panel held. While files are fetched or the PDF is written, the list, the name and Cancel are held, and Stop is the way out. While files from the computer are read, the panel and both buttons are held too, and focus then returns to *Add PDF files…*.
+- **Combine** fetches the files still missing as one run, counting each PDF's pages as it arrives. When every PDF in the list is here, it writes the PDF and downloads it in the same click. When a PDF had to be left out, or the run was stopped, it stops there instead: the panel shows what is left out, the files already fetched are kept while the panel stays open, and the next *Combine N PDFs* makes the PDF from what is in the list (fetching only what is still missing). When the fetched files have more than 5,000 pages in all, it stops there too, with the same words as `#combine-help`, and nothing is written.
+- `#pdf-result` afterward: "Downloaded Thesis_2026-10-02_1412.pdf: 5 PDFs, 71 pages, 9.4 MB.", then each PDF with its pages and the page it starts on, and what was left out.
+- Files from the computer are refused before they are read when they would pass a limit: "Choose up to 20 PDFs at a time. Nothing was added.", "These PDFs are more than 200 MB together. Choose fewer. Nothing was added.", and a file over 50 MB is left out by name.
+
+**What loads when.** `pdf-files.js` loads with the workbench. `core/pdf.js` (the limits and their words) loads once the chosen links hold a PDF, or the panel is used; `pdf-tab.js` and `pdf-reader.js` when the first file is fetched; PDF.js only when a PDF's pages are counted, which a ZIP never does.
+
+**Tested** without grants: the names, the ZIP's bytes and a combined PDF's order (`tests/pdf-files.test.mjs`); the run with Chrome's APIs simulated, each way of finding a tab among them (`tests/runs.test.mjs`); and the real extension with Chrome's real toolbar action, where same-site PDFs are fetched for real and other sites end as "No access" (`tests/pdf-files-browser.mjs`). With all sites allowed, for the owner's session: PDFs on two sites into one ZIP and one combined PDF, through background tabs, one of them sent as a download and one that Chrome downloads by itself (`tests/access-granted.mjs`).
+
+### Frames from other sites, and closed components
+
+- **Frames.** *Capture this page* runs the collector in every frame Link Meteor has access to (`allFrames`), and each frame's links keep their `frameUrl`. With only the toolbar's temporary access, frames from other sites can't be read; the report names their sites, from the frames' addresses in the page, and offers *Allow these sites* to include them. Frames whose sites can't be named are reported as a count. No `webNavigation` permission is used.
+- **Closed components.** The collector looks inside closed shadow roots with `chrome.dom.openOrClosedShadowRoot`, which needs no permission. Region selection includes their links too.
+
+**As built** (`src/content/capture.js`, `src/background/frames.js`, `src/background/frame-join.js`, `src/ui/workbench/frames.js`). Where this differs from the draft above, this is what the code does.
+
+**What was tested first,** in a throwaway profile with a small diagnostic extension:
+- `chrome.dom.openOrClosedShadowRoot` returns a page's own shadow roots, open or closed, and none of the browser's own (a text field, a video, a details element). It throws for anything that isn't an HTML element (an SVG element), and it accepts elements of a same-site frame's document. A call takes under a microsecond.
+- `window.frames` lists the frames in a document, but not a frame inside a shadow root. From inside any frame, another site's too, `parent[i] === window` finds that frame's own index. Both hold in the page script's isolated world.
+- `scripting.executeScript` with `allFrames` and Chrome's default timing doesn't answer while any frame is still loading, or while the page holds a lazy frame it hasn't loaded yet. With `injectImmediately` it answers at once.
+- With a grant for a site, `allFrames` also reaches that site's sandboxed frames, and frames written in the page (`srcdoc`, and `data:` on the current Chrome but not on Chrome 116). The toolbar's temporary access reaches the page's own site, including a frame of that site inside another site's frame, but not a sandboxed frame.
+- All of this holds on Chrome 116 too, except the `data:` frames.
+
+**Closed components** (the page script):
+- `shadowOf(element)` returns `element.shadowRoot`, or `chrome.dom.openOrClosedShadowRoot(element)` for the elements that can hold a shadow root: custom elements, and the eighteen HTML elements `attachShadow` accepts. Where Chrome has no `chrome.dom`, only open roots are seen, as before.
+- Everything that reads the page uses the one collector, so all of these see links inside closed roots: *Capture this page*, region selection and hold-key drag with their highlights, the links of a selection (`content.selectionLinks`), and the right-click lookup's search by address (`content.contextLink`).
+- A closed root hides the right-clicked link from the `contextmenu` event. The page script then finds the link under the pointer (`elementFromPoint`, followed into each shadow root), so the right-clicked one of two links with the same address is still the one saved.
+- Visibility, page chrome and context work as before, looking out through a closed root to its host. A link the page hands to a closed component (a slotted link) is counted once.
+
+**Frames** (the page script):
+- *Capture this page* loads the page script in every frame Chrome lets it into. What a copy does depends on where it is:
+  - **the top document:** everything, as before;
+  - **a frame the document around it can reach** (the same site, not sandboxed): nothing. It returns before defining anything, because that frame is read from outside, as it always was. This is what keeps a link from being read twice;
+  - **any other frame** (another site, or a sandboxed one): it defines `scan` and nothing else. It adds no listeners, asks for no settings, answers no messages, and shows no card. Region selection, hold-key drag and the menus stay in the top document.
+- `scan(options)` returns `{links, warnings, page, inaccessibleFrames, frames, at, url, title, malformed, capped}`:
+  - `frames`: the visible frames this document couldn't read, in page order, each `{site, at, chrome, key, area}`, with `sealed`, `loading` and `url` where they apply:
+    - `site`: the origin its `src` names, when that is a web address other than the origin of the document the frame sits in. A frame of that document's own site, or with no web address, belongs to that document only when the page seals it off (`sealed`) or it hasn't loaded yet (`loading`); any other such frame that can't be read has gone to a site that can't be told (the page sent it elsewhere, or its address redirected), and its site is `''`;
+    - `at`: where the frame sits: its index among its parent's frames at each level from the top, joined with dots (`"2.0"`), or `null` for a frame inside a shadow root, which has no index. Chrome numbers a document's frames in the order they were added to it, so removing a frame moves those after it up a place;
+    - `chrome`: the frame sits in page chrome (navigation, a sidebar);
+    - `key`: the frame element's key, which the copy of the script in that document keeps for as long as it runs, so a later reading knows the frame again when its place has changed;
+    - `area`: how much of its document the frame covers, in CSS pixels;
+    - `sealed`: the page seals the frame off from itself: sandboxed without `allow-same-origin`, at a `data:` address, or inside a sandboxed document;
+    - `loading`: the frame still shows the empty page every frame starts with although its `src` names a web address: a lazy frame not scrolled to yet, or one still waiting for its page;
+    - `url`: for a frame without a place, the address it was sent to (`about:srcdoc` for one written in the page), at most 2,048 characters;
+  - `at`: this document's own place (`""` for the top), `url` and `title`: its address and title;
+  - `malformed` and `capped`: what `warnings` says, as a count and a yes or no;
+  - `warnings` no longer has a sentence about frames: the background writes it. `page` is `null` in a frame.
+- A frame hidden in the page (by the rules that hide a link), with no size (under 2 px either way) or placed wholly before the start of its document, where it can't be scrolled to (a tracking frame), is neither read nor counted.
+- A frame's place is worked out from the frames' own order. Nothing is sent through the page, and no `webNavigation` permission is used.
+
+**The pipeline** (the background):
+- `scanTab(tabId, options, {left?, top?, ms?})` in `src/background/frames.js`. `captureTabs` loads the script in the top document as before, then calls it. It makes two `executeScript` calls with `allFrames: true` and `injectImmediately: true`: the script file, then `scan`. It returns `{links, warnings, page, fresh, frames?}`. With `top`, a scan answer the caller already holds for the top document stands in for that document's, and only the frames' answers are new.
+- The frames are read as they are at that moment, and have `FRAMES_MS` (10 seconds) to answer. After that, or when Chrome refuses the call, the top document is read alone and its frames are reported as not read.
+- `joinFrames(results, {left?})` in `src/background/frame-join.js` (pure) joins the answers:
+  - starting at the top document, each entry of `frames` is paired with the answer whose `at` is the same; an entry with no place is paired with an unused answer with no place at its `url`, or else from its site (a frame that moved on within its site). A frame inside a shadow root that redirected to another site can't be paired;
+  - a paired frame's links follow the top document's. They keep their own `frameUrl`, take the page's address and title as `sourceUrl` and `sourceTitle`, and carry `pageChrome` when their frame sits in page chrome, so *content links only* leaves a sidebar frame out;
+  - an answer nobody pairs is left out. That is a frame hidden in the page, or a frame inside a frame that wasn't read: it is not read either, even where Link Meteor has access to its site;
+  - limits: 20,000 links for the page, 1,000 frames in one document, 32 frames deep.
+- **The sites to ask for:** each unread frame's site, those whose frames cover the most of the page first (then in page order), at most 20 (`MAX_FRAME_SITES`). Asking can't help, so these frames are only counted: a frame whose site can't be told, a frame of the page's own site that the page doesn't seal off, a frame that hasn't loaded yet, and a frame of a site Chrome says Link Meteor already has access to. Frames of sites past the 20 are counted by themselves; once those 20 are allowed, the next reading offers them.
+- **In the report.** `CaptureReport` gains `collectionId` (the collection the capture went to). A page's result gains `frames` when the page has frames of this kind:
+
+  | Field | Meaning |
+  | --- | --- |
+  | `read` | How many frames were read by their own copy of the page script. |
+  | `unread` | How many visible frames weren't read. |
+  | `sites` | The origins *Allow these sites* asks for, those whose frames cover the most of the page first. Empty when there is nothing to ask for. |
+  | `left` | The unread frames, each `{site, at, key}`, kept so a later reading can tell which frames are new. |
+  | `seen` | The keys of the frames read by their own copy of the script whose links are in the capture. |
+
+- **The words** (`framesWarning`), at the end of the result's `warning`:
+  - "2 frames from other sites weren’t read, because Link Meteor has no access to a.example and b.example. Allow those sites to include their links." (one site: "1 frame from another site wasn’t read, … Allow that site to include its links."; more than three sites: "a.example, b.example, c.example and 2 more");
+  - a sandboxed frame of the page's own site, which the toolbar's temporary access doesn't reach: "1 sandboxed frame of this site wasn’t read: the toolbar’s temporary access covers the page, not the frames it seals off. Allow this site (a.example) to include its links.";
+  - both kinds: "3 frames weren’t read: 2 from another site (b.example), which Link Meteor has no access to, and 1 sandboxed frame of this site, which the toolbar’s temporary access doesn’t cover. Allow that site and this one (a.example) to include their links.";
+  - frames of sites past the 20: "3 more frames from 2 more sites weren’t read: Link Meteor asks for at most 20 sites at a time, and offers the rest once these are allowed.";
+  - frames there is nothing to ask for: "1 frame couldn’t be read: Chrome didn’t let Link Meteor into it." ("1 more frame…" after one of the sentences above);
+  - frames that hadn't loaded yet: "1 frame hadn’t loaded yet, so it wasn’t read: scroll to it, let it load, and capture the page again." ("1 more frame…" after one of the sentences above).
+- Malformed links are counted across the frames, in one sentence.
+
+**Allow these sites** (the workbench, `src/ui/workbench/frames.js`):
+- A result whose `frames.sites` isn't empty gets a button in its report item, `.report-frames-allow` (also `.report-allow`): *Allow these sites*, or *Allow this site* for one. Its `title` names every site.
+- The click calls `chrome.permissions.request({origins})` once, before anything is awaited, with exactly `sites` as `<origin>/*`. A decline changes nothing and says "Chrome’s request for access to … was declined, so nothing changed. The frames from those sites are still not read."
+- After Allow, the workbench sends `capture.frames {tabId, batchId}` (workbench only), which answers `{state, report, added: {count, skipped, leftOut, frames}}`:
+  - it needs the kept report of that capture (session key `linkMeteorCaptureReport`), with a successful result for that tab that left frames unread, and the tab still at the same address;
+  - it reads the page again and keeps only the links in frames that were in `left` and are read now, and in the frames inside them. A frame is the same frame when its key is the same (without keys, when its site and its place are the same). A frame the page put in place of one in `left` (whose element is gone), of the same site, counts as that frame unless its key is in `seen`. So a frame that was read the first time is never added twice;
+  - the links join the capture's own batch (`batchId`) and collection (`collectionId`), whichever collection is active now. *Skip saved* and *content links only* apply. Navigation links left out join those kept for *Include them*; when *Include them* was already used for this capture, they are added;
+  - the page's citation isn't written again;
+  - the kept report is updated (`count`, `leftOut`, `skipped`, `warning`, `frames`, `capturedCount`), so a view opened later shows the same. It and the navigation links kept for *Include them* are written only while the kept report is still this capture's, with this page's result as it was when the page was read again;
+  - `added.frames` counts the frames read now that weren't before.
+- Refusals, each in plain words: no kept report for that capture (also when a newer capture replaced it while the page was read again); nothing left unread; the tab closed; the tab moved to another page; the page can no longer be read; this capture's frames read again from another view meanwhile; the capture's collection deleted.
+- The notice: "Added 7 links from 6 more frames."; "Read 1 more frame: no links Link Meteor can read there."; or, when the frames still don't answer, "Link Meteor now has access to …, but the frames from those sites still couldn’t be read. The capture report says what is left." Focus stays in the report.
+- With all-sites access every frame is read, `sites` is empty and nothing is offered.
+
+**Region selection, hold-key drag and the menus** stay in the top document. They read the frames the top document can reach, as before, and the card says what it left out of the region, counting only the frames the region touches: "Links inside 6 frames aren’t included: a selection can’t reach into frames from other sites (a.example and b.example) or sandboxed frames. Capture this page reads them where Link Meteor has access."
+
+**Tests.**
+- `tests/frames.test.mjs` (unit): joining, pairing by place, by address and by site, `left` and `seen` (keys, places that changed, a frame put in another's place), the limits, every sentence, and the pipeline with Chrome's APIs simulated (the calls made, the fallback, the sites offered and their order, *content links only* and *Skip saved* per frame, `capture.frames`, its refusals and a newer capture meanwhile).
+- `tests/access-content.mjs` (the page script with a stub `chrome`): closed roots with a stand-in for `chrome.dom` and without it, in a scan, a hold-key region, the right-click lookup and a selection; and the frames fixtures, where the script runs in every frame and the real `joinFrames` joins the answers for each kind of access, also after the page removes a frame ahead of the others (`edges.html`: frames sent away, with no size, off the page, and sandboxed or hidden inside a closed component).
+- `tests/coverage-browser.mjs` (the loaded extension, Chrome's real toolbar action, no grants): closed components through *Capture this page*, a region and the right-click lookup, with the real `chrome.dom`; frames with only the toolbar's access, and the frames at the edges; regions that name only the frames they touch; *Allow these sites* with Chrome's answer stood in for; frames still loading, and lazy ones reported; 320 px and contrast in light and dark. Fixtures: `tests/fixtures/site/coverage/`.
+- Granted, for the owner's session: `tests/access-granted.mjs` (all sites: every frame read, each link once with its `frameUrl`) and `tests/frames-granted.mjs` (the per-site profile: *Allow these sites* with Chrome's real prompt, which names two sites).
+
+### Page details lookup
+
+Off by default (`lookupDetails`). It fills in a paper's title, authors, date and journal from its identifier.
+
+- **When it runs:** only on a click: *Look up details* for the selected links, in a link's details, or beside the Export panel's "no authors yet" line. Never by itself, never in the background, and never for links without a DOI, an arXiv ID or a PubMed ID.
+- **Where the request is made:** a sandboxed frame, `ui/lookup-frame.html`, created when a lookup starts and removed when it ends. Its origin is `null`; it has no access to collections, storage or Chrome's APIs. The workbench hands it one identifier at a time and receives the service's answer. Its policy is `sandbox allow-scripts; default-src 'none'; script-src 'self'; connect-src https://api.crossref.org https://api.datacite.org https://eutils.ncbi.nlm.nih.gov`. Link Meteor's own pages keep `connect-src 'none'`.
+- **What is sent, and where:**
+
+  | Identifier | Request | Service |
+  | --- | --- | --- |
+  | A DOI | `GET https://api.crossref.org/works/<DOI>` | Crossref |
+  | A DOI Crossref doesn't have, or an arXiv ID as `10.48550/arXiv.<ID>` | `GET https://api.datacite.org/dois/<DOI>` | DataCite |
+  | A PubMed ID | `GET https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?db=pubmed&id=<ID>&retmode=json` | NCBI (the US National Library of Medicine) |
+
+  Each request carries that one identifier and nothing else of the person's: no page address, no link text, no collection name, no notes. It is sent with `credentials: 'omit'` and `referrerPolicy: 'no-referrer'`: no cookies are sent or kept, and there is no referrer. Its `Origin` is `null`, so it doesn't carry Link Meteor's ID. Like any request, it shows the service the person's IP address, and the browser's version and language list.
+- **Pace and limits:** one request at a time, at least 350 ms apart; at most 200 identifiers a run; a counter with Stop ("Looking up 7 of 31"). A service that answers "too many requests" ends the run with what it has.
+- **What comes back** (`src/core/lookup.js`, pure): each service's answer mapped to a `PageCitation` with `source: 'crossref'`, `'datacite'` or `'pubmed'` and `readAt`. Text is treated as untrusted: tags are removed, lengths are capped as for every page citation. A tag is `<` and a name, with attributes only as `name=value`, so "x < 5 and y > 3" stays text; tags sent encoded (`&lt;i&gt;`) are removed once decoded.
+- **Where it goes:** the link's own citation, `pages[link.url]`. A lookup fills only fields that are empty; it never replaces what a page's own tags or the person gave. The notice says what changed ("Filled in authors for 6 papers, dates for 2. 1 wasn’t found.") and has Undo.
+- **Turning it on:** *Online lookups* in the workbench's settings shows the explanation below and a switch. The first *Look up details* click with the switch off opens that explanation instead of sending anything.
+
+### Page details lookup, as built
+
+`src/ui/workbench/lookup.js` runs it, and `src/core/lookup.js` (pure) plans a run and says what it changed. Where this differs from the draft above, this is what the code does.
+
+**Turning it on.** `#online-panel` (*Online lookups*) in the rail, before *Import links*:
+- `#lookup-details`, a switch saved as `lookupDetails` with `settings.update`, described by `#lookup-help` and `#lookup-sends`.
+- `#lookup-sends` holds [the words to use](#permissions-browser-settings-and-network-requests), word for word, with the three services as a list (`.sends-what`, three `li`, three `.sends-not`). A unit test compares the page with this file, `docs/PRIVACY.md`, `CHROMEWEBSTORE.md` and `site/privacy.html`.
+- Turning it on says "Page details lookup is on. Nothing is sent until you click Look up details."; turning it off, "Page details lookup is off. Link Meteor requests nothing from any service."
+- **A click with the switch off** (every one, not only the first) requests nothing and creates no frame. It shows the rail on narrow widths, scrolls `#online-panel` into view, moves focus to `#lookup-details`, and says "Page details lookup is off, so nothing was sent. Online lookups says what it sends and where. Turn it on there, then click Look up details again." The saved setting is read again at every click.
+
+**Where it starts.** Each control is labeled *Look up details*:
+- `#lookup-selected` in the list toolbar, shown while the selection in this view holds a link with a DOI, an arXiv ID or a PubMed ID.
+- `.occ-lookup` in a link's details (a group labeled "Missing details"), only where the citation the link uses lacks something: "No authors or journal saved for this paper yet." with a button labeled "Look up details for <the link's text>".
+- `#lookup-box` in the Export panel, under `#cite-facts`: `#lookup-line` with `#lookup-line-text` ("Page details lookup can fill in the 5 with no authors yet, from their DOI or arXiv ID.") and `#lookup-authors`. It shows for BibTeX, RIS, CSL-JSON and the annotated bibliography while the "no authors yet" line does, and looks up exactly the rows that line counts (`unauthored(rows, pages)`).
+
+**What is asked** (`lookupPlan(links, pages, {seen})`, returning `{asks, without, complete, over}`):
+- One ask per identifier, however many links share it: `{key, requests, targets, links}`, with `requests` from `lookupRequests(identifiersOf(link, pages))`.
+- **A link to arXiv** (its own address names an arXiv ID) is asked about by that ID only, as arXiv's DOI at DataCite (`linkRequests(link, pages)`), never by a DOI its citation names: a PDF's first page can name another work's DOI, such as its code's, whose details would replace the paper's.
+- **A link is asked about** only when the citation it uses lacks a title, authors, a date or a journal (`lookupMissing`, `LOOKUP_FIELDS`). A paper asked about only as arXiv's own DOI isn't missing a journal: a preprint has none.
+- **Where an answer goes** (`targets`): the citation the link uses, `citationFor(link, pages)`: its key when the link already uses one (its own page's, or one borrowed from a saved page about the same work), otherwise the link's own address, `pageKey(link.url)`. This replaces the draft's `pages[link.url]`, so a PDF link that borrows its abstract page's citation fills that citation, not a second copy.
+- `without` counts links with no DOI, arXiv ID or PubMed ID, and `complete` links whose citation lacks nothing; neither is asked about. `over` counts identifiers past `MAX_LOOKUPS`; only then, identifiers already asked about since the workbench opened, with nothing to add, go last, so another click reaches the rest.
+
+**A run:**
+- The frame is `iframe#lookup-frame`: hidden, `aria-hidden`, appended to the page when the run starts and removed when it ends, and at once on Stop, which also drops the request in it. One frame a run. Its address is `ui/lookup-frame.html` with nothing added, and each message to it is `{type: 'lookup', id, service, identifier}`.
+- One request at a time; the next starts at least `LOOKUP_PAUSE_MS` after the last answer. For each identifier the services are tried in order until one has the paper. When Crossref can't answer, DataCite is still asked.
+- **It ends** when every identifier was asked about, or early, keeping what it has: *Stop*; a service that answers "too many requests" ("NCBI asked Link Meteor to slow down, so the lookup stopped here."); a service that hasn't answered after 20 seconds ("Crossref took too long to answer, so the lookup stopped here."); `MAX_LOOKUP_FAILURES` (3) papers in a row that couldn't be looked up, as when the computer is offline; or the setting turned off, here or in another Link Meteor page.
+- **Progress:** `#lookup-status` holds `#lookup-progress`: `#lookup-count` (`role="status"`, "Looking up 7 of 31"), "Sending only each DOI, arXiv ID or PubMed ID to Crossref, DataCite and NCBI.", `#lookup-stop` (labeled "Stop the lookup") and `#lookup-bar` (a `progress`). It shows in `#lookup-toolbar-host`, in the list toolbar, for a run started from the list or a link's details, and in `#lookup-export-host` for one started in the Export panel. Focus moves to *Stop* when a run starts, and to *Undo* (or *Dismiss*) when it ends, unless the person moved it elsewhere meanwhile.
+- One run at a time in a page: the two buttons are disabled meanwhile, and a details button says "A lookup is already running. Wait for it to finish, or press Stop."
+- **Saving:** once, when the run ends: `state.mutate` with `links.append` (`links: []`, `pages`), each citation being `readAnswer`'s plus `readAt`, so `mergeCitation` decides what wins. What changed is worked out against the citations as they are at that moment (`lookupOutcome(results, pages, readAt)`). An answer that adds nothing is not saved. A workbench closed in the middle of a run saves nothing from it.
+
+**The result:** `#lookup-done`, in the same place as the progress, with `#lookup-done-text` (`role="status"`), `#lookup-undo` and `#lookup-dismiss`. It stays until dismissed or the next run, and shows only while its collection is open. The words are `lookupReport`'s, counting papers (identifiers):
+- "Filled in titles for 3 papers, authors for 5, dates for 3, journals for 3." For one paper: "Filled in the title, authors, date and journal."
+- "Added other details for 2." when a lookup added only a publisher, volume, pages or the like.
+- "Replaced details read from a PDF for 1." when a title, authors, date or journal read from the PDF itself gave way to the lookup's.
+- "2 had nothing new." "1 wasn’t found." "1 couldn’t be looked up: Crossref answered 503." (the first reason).
+- How it ended, when early: "You stopped the lookup. 12 papers weren’t asked about."; the service's sentence; "The lookup stopped after 3 papers in a row couldn’t be looked up."; "Page details lookup was turned off, so the lookup stopped."
+- "Not looked up: 3 links with no DOI, arXiv ID or PubMed ID, and 2 links that already have these details." When nothing was asked, it starts "Nothing to look up:".
+- "Link Meteor looks up 200 papers at a time. 14 more are waiting: click Look up details again."
+
+**Undo** sends `pages.restore` with what each address held before (`null` where it held nothing), for the addresses that still hold what the lookup left; one that changed again since is left alone, and the result says so. So is one saved again between the run's last read and its save (a capture, say): it holds more than the lookup gave, and what it held before isn't known. "Lookup undone: the details are as they were before." Undo requests nothing.
+
+**In a link's details,** a citation with `source` `crossref`, `datacite` or `pubmed` has the note "From Crossref, looked up on Oct 2, 2026. Citation exports use it. Saved in this browser." (`lookupNote`; "From DataCite", "From NCBI"; the date in the browser's own format; "Citation exports use it." only for the citation the link uses).
+
+**Words that changed elsewhere,** because a citation may now hold what a lookup filled in:
+- The notes under a citation read from a page's own tags end "Saved in this browser." They no longer add "nothing was looked up online".
+- `#cite-facts` says "2 with authors and a date", without "read from the pages themselves".
+- `#format-help` for BibTeX, RIS and CSL-JSON says "Built from the details saved with each link; while exporting, nothing is looked up online.", and for the annotated bibliography "While exporting, nothing is looked up online."
+
+**A citation's tags, filled in by a lookup, stay the page's:** it keeps no `source`, so its note still names the page's tags. `filled` records which fields the lookup gave (`{authors: 'crossref'}`); a link's details don't show it.
+
+**Tested** in `tests/lookup-browser.mjs`, with the test answering in the services' place: with the switch off, no frame and no request from any of the three starting places; the requests of a run, in order, at least 350 ms apart, each a `GET` with origin `null`, no cookie, no referrer and no body; what is saved, tags kept, a PDF's guessed title replaced; Undo exact; Stop in the middle; "too many requests"; an answer that isn't JSON; three failures in a row; the switch turned off during a run; BibTeX with the looked-up authors; 320 px; and text contrast in every theme, light and dark. `tests/lookup.test.mjs` covers the plan, what is saved, every sentence of the result, the wording against the privacy texts, and that only the frame's script can make a request.
+
+### Permissions, browser settings and network requests
+
+**1.0.0 adds no permission to the manifest, asks for no browser setting, and adds one optional online feature.**
+
+| What | New? | Reason shown |
+| --- | --- | --- |
+| Manifest permissions | None new | |
+| Optional site access (`http://*/*`, `https://*/*`, from 0.3.0) | Three new uses | *Capture selected pages* reads pages in background tabs, whole-page capture can include frames from other sites, and *Download as one ZIP* and *Combine into one PDF* get PDFs through a page of their site. Each asks only for the sites it names, in the click, or uses all-sites access where it was already given. |
+| `chrome.dom.openOrClosedShadowRoot` | New use, no permission | Reads links inside closed components. |
+| A sandboxed page in the manifest (`sandbox.pages`, `content_security_policy.sandbox`) | New | The only place a lookup request can be made. |
+| `content_security_policy.extension_pages` | Unchanged | `connect-src 'none'` stays. |
+| "Allow access to file URLs" | Not asked for | It doesn't make a local PDF readable. The file chooser needs no access. |
+| "Allow in Incognito" | Not asked for | `incognito` stays `not_allowed`. |
+| A PDF's file, requested again from its own address | New request | See below. |
+| Pages loaded by Follow Next and by *Capture selected pages* | New requests | See below. |
+| PDF files requested for a ZIP or a combined PDF | New requests | See below. Saving them needs no permission: the file is handed to Chrome's download, as exports are. |
+| Page details lookup | New, optional, off by default | See below. |
+
+**The words to use.** `docs/PRIVACY.md`, `site/privacy.html` and `CHROMEWEBSTORE.md` say these in the foundation, and the workbench shows the same words where each feature starts.
+
+- **PDFs.** "To read the links in a PDF that is open in a tab, Link Meteor asks Chrome for the file again from the same address, as that page. Chrome usually answers from its own cache; otherwise the site is asked again, as when you reload the tab. The PDF is read inside your browser by PDF.js, which is part of Link Meteor. It is never uploaded. A PDF you choose from your computer is read the same way, and Link Meteor needs no access for it."
+- **Auto-scroll.** "*Scroll to the end first* scrolls the page for you, so the page loads the rest of itself as it would if you scrolled. It stops at the end, at 50 screens, at 5,000 links, after 2 minutes, or when you press Stop."
+- **Follow Next.** "*Follow Next* moves your tab to the page’s own Next link and captures each page, up to the number you set (20 at most). Each page loads as it would if you clicked Next yourself. It stops when there is no Next, at a site Link Meteor can’t read, at the limit, or when you press Stop."
+- **Capture selected pages.** "*Capture their pages* opens each page you chose in a background tab, one at a time, saves its links and closes the tab: 20 pages at most, with a pause between pages. Each page loads as it would if you opened it yourself, signed in as you are. Link Meteor asks first for access to the sites it will read, unless you allowed all sites. It never follows the links it finds."
+- **One ZIP, or one combined PDF.** "*Download as one ZIP* and *Combine into one PDF* get each PDF you chose through a page of its own site, as when you click the link, signed in as you are: 20 PDFs at most, one at a time. Where that needs a background tab, Link Meteor asks first for access to the sites it will read, unless you allowed all sites. The files are put together inside your browser by Link Meteor and saved through Chrome's download. They are never uploaded, and Link Meteor keeps no copy."
+- **Page details lookup.** "*Page details lookup* is off unless you turn it on. When it is on and you click *Look up details*, Link Meteor sends the paper’s DOI, arXiv ID or PubMed ID, and nothing else, to: Crossref (api.crossref.org) for DOIs; DataCite (api.datacite.org) for DOIs Crossref doesn’t have, including arXiv’s; and NCBI (eutils.ncbi.nlm.nih.gov) for PubMed IDs. No page address, link text, note or collection name is sent. No cookies are sent or kept. Like any website you visit, those services see your IP address and your browser’s version and language. What they return (title, authors, date, journal) is saved in this browser with the link."
+- **`CHROMEWEBSTORE.md`** adds, under remote code: "Link Meteor includes PDF.js (Mozilla, Apache-2.0) as files inside the package. It loads no code from anywhere else." Under data use: the lookup's sentence above, and that it is optional and off by default.
+
+### Later, stated now so the wording is settled
+
+These are not built in 1.0.0. The wording is settled in case they are built later.
+
+- **Dead-link check** (optional, off by default). "When you click *Check links*, Link Meteor sends one request to each chosen link’s own site, to see whether the page still answers. Each site sees your IP address and your browser’s version, as when you visit it. No cookies are sent. Nothing is sent to anyone else." It needs all-sites access to read an answer, and `connect-src` opened to web addresses on Link Meteor's pages, which is why it is a release of its own.
+- **Wayback** (optional, off by default). "When you click *Find an archived copy*, Link Meteor sends that link’s address to the Internet Archive (archive.org) and saves the archived copy’s address and date with the link. The Internet Archive sees the address and your IP address." It never asks the Archive to save a page.
+- **Incognito session collections.** Needs the manifest's `incognito` key changed and Chrome's "Allow in Incognito" turned on by the person. Until then Link Meteor doesn't run in incognito windows.
+
+### The 1.0.0 foundation, as built
+
+The parts every lane builds on. Where this differs from the draft above, this is what the code does.
+
+**PDF.js, vendored** (`src/vendor/pdfjs/`): the two files, `LICENSE` and `README.md` (version, source address, the package's integrity value, each file's size and SHA-256). `scripts/vendor-pdfjs.mjs <version>` writes them; `tests/vendor.test.mjs` checks them offline. The release list (`scripts/release-files.mjs`) names all four, with `core/pdf.js`, `core/zip.js`, `core/lookup.js`, `ui/lookup-frame.html` and `ui/lookup-frame.js`.
+
+**The reader in Link Meteor's pages** (`src/ui/workbench/`):
+- `pdf-shims.js`, and the two wrappers that load it first: `pdfjs.js` (the library) and `pdfjs-worker.js` (its worker).
+- `pdf-reader.js`:
+  - `readPdf(bytes, {address?, saveContext?, onProgress?, signal?})` returns `{pageCount, links, internal, skipped, capped, linkPages, citation, notes}`. It refuses a file over `MAX_PDF_BYTES` and one without `%PDF-` in its first 1,024 bytes, in plain words.
+  - `combinePdfs([bytes, …])` returns `{bytes, pages, counts}`.
+  - `withPdf(bytes, fn, signal?)` runs `fn` on an open PDF.js document and closes it; when `signal` aborts, it closes the document at once and rejects with "Reading the PDF was canceled." (`reason: 'canceled'`).
+  - `pdfProblem(error)` gives the words for a PDF that can't be read: "This PDF needs a password. Link Meteor doesn’t ask for passwords." or "This PDF is damaged, or it isn’t a PDF, so it couldn’t be read."
+- The library is imported the first time a PDF is read, and one module worker (`pdfjs-worker.js`) is started then and kept while the page is open.
+- PDF.js takes over the bytes it is given, so the reader hands it a copy.
+
+**A PDF's file through a tab** (`src/ui/workbench/pdf-tab.js`):
+- `pdfThroughTab(tabId, url?, {signal?, quiet?})` runs one function in that tab with `chrome.scripting.executeScript` and returns `{bytes, type, url}`. When `signal` aborts, a second small function ends the request in the tab and the call rejects at once (`reason: 'canceled'`); the request is given up when the site sends nothing for `quiet` milliseconds (`PDF_QUIET_MS`, 60 seconds). Without `url` it asks for the tab's own address (`cache: 'force-cache'`); with `url`, for a PDF on the same site as the page in the tab. The function checks the size and the `%PDF-` start in the tab, before anything is handed over.
+- It throws an `Error` in plain words with a `reason`: `'access'` (Chrome refused the tab: the caller may ask for the site), `'not-pdf'` ("The site didn’t send a PDF: it asked to sign in, or the address has expired."), `'size'`, `'status'` ("The site answered with an error instead of the PDF."), `'stalled'` ("The site stopped sending the PDF.") or `'failed'` ("Chrome couldn’t get this PDF’s file from that page."). For the tab's own address the words end with "Download the PDF, then choose Import links, PDF file."
+- `readPdfTab(tabId, options)` returns `readPdf`'s result with `bytes` and `address`.
+- Tested with Chrome's real toolbar action and no other access (`tests/pdf-tab-browser.mjs`): a PDF in a tab, with or without `.pdf` in its address; PDFs on a page's own site, including one sent as a download; a PDF on another site or one that moves there (`'failed'`); a sign-in page; a tab without access; a PDF opened from the computer (`'failed'`); Cancel while the site has stopped sending, and a stalled site given up on (`'stalled'`). Nothing is downloaded.
+
+**`src/core/pdf.js`** (pure; imports limits and the address rule from `model.js`, `imports.js` and `identifiers.js`):
+- `pdfPages(doc, {onProgress?, signal?})` reads a PDF.js document into plain data: `[{number, width, height, annotations: [{rect, quads?, url, unsafeUrl, internal}], items: [{str, x, y, w, h, rotated, turn, mono}]}]`. `quads` are a link's rectangles from its `QuadPoints`; `turn` is how far an item's text is turned (0, 90, 180 or 270 degrees), and `mono` marks a typewriter face. Items that hold only spaces are dropped; the gaps say the same.
+- `pdfLinks(pages, {saveContext?})` returns `{links: [{url, originalHref, anchorText, pdfPage, context?}], internal, skipped: [{page, reason: 'not-link'}], capped}`.
+  - A word less than half inside the link's rectangle belongs to a neighbor and is left out whole, unless the rectangle is small and mostly over it (a link on part of a word). This is what makes "arXiv:1610.10099" exact where the rectangle reaches into the word before it.
+  - A wrapped link: the next link annotation, with the same address, on a lower line close by (within two and a half line heights), starting left of where the first piece ended, with no word after the first piece on its line or before the second on its own, nearer than one and a half line heights. Across a page break or at the top of the next column, only a printed address in two pieces is joined.
+  - A printed address (the words, without spaces, are the web address or its end) is kept in one piece. Email and phone links keep their words as printed.
+  - `capped` counts links past `MAX_IMPORT_LINKS`.
+- `pdfContext(items, rects, anchorText, turn?)`: the link's line or lines, within its own column (neighbors are followed until a gap wider than one and a half line heights), or the whole reference in a reference list; empty when it holds fewer than 8 letters besides the link's own words.
+- `pdfCitation({info, xmp, firstPage, links, address})`:
+  - the title from the PDF's details only when it is also printed on the first page and isn't a file name; otherwise the largest text in the upper part of the first page, when it is at least 15% larger than the page's body text and at most four lines;
+  - authors from the details only when every name is printed on the first page;
+  - a DOI from the details (`prism:doi`, `pdfx:doi`, `crossmark:doi`, `dc:identifier`); otherwise the first page's, when it names exactly one besides arXiv's own DOI for the stamped paper and code or data repositories' DOIs;
+  - `journal` and `date` from `prism:publicationName` and `prism:publicationDate` or `prism:coverDate`.
+- `pdfCitationNotes(citation, {info, xmp})` says where each part was read, for the preview.
+- `readPdfDocument(doc, options)` does all of the above for one open document. `combinePdfs(list, withDocument)` opens every part first, so one that needs a password or is damaged is refused by name (`error.part` is its index) before anything is written, and opens the result again: PDF.js's writer returns an empty file instead of failing.
+- `isPdf(bytes)`, `pdfProblem(error)`, `pdfSetProblem(sizes)` and the limits `MAX_PDF_BYTES`, `MAX_PDF_PAGES`, `MAX_PDF_SET`, `MAX_PDF_SET_BYTES`.
+
+**`src/core/zip.js`**: `zip(files)` takes `[[name, text or bytes], …]` and returns one `Uint8Array`; `crc32(bytes)`. It refuses repeated or unsafe names, more than 65,535 entries, and more than 4 GB.
+
+**The data** (`src/core/model.js`):
+- `pdfPage` on links; `arxivVersion`, `arxivCategory` and `source` on page citations; `MAX_PDF_PAGES`, `CITATION_SOURCES`.
+- **Which reading of a citation wins** (`mergeCitation(older, newer)`, used by `links.append` with `pages`): a page's own citation tags first, then a lookup, then the PDF. The stronger reading keeps its fields, and the weaker one fills only the fields left empty. So a lookup replaces a title that was only guessed from a PDF's largest text, and never replaces anything a page's tags gave. Tags read again, or a PDF read again, replace the earlier reading of the same kind; a second lookup only fills gaps. A backup restored by Merge doesn't use it: an address already here keeps its local citation as it is, whatever it was read from, and only the backup's other pages are added.
+  - `filled: {[field]: source}` on a page citation records which source gave each field the stronger reading had left empty, such as `{authors: 'crossref', journal: 'crossref'}`, so a link's details can say so. Marks for fields that aren't there are dropped.
+  - When a page is captured again, its new tags replace its old ones, and the fields another source had filled in are kept wherever the page still doesn't give them.
+- `pages.restore {collectionId?, pages: {[address]: PageCitation | null}}` sets or removes citations exactly: Undo for a lookup.
+- Settings `followPages` (`MIN_FOLLOW_PAGES` 2 to `MAX_FOLLOW_PAGES` 20) and `lookupDetails`; both are in Copy diagnostics, as a number and yes or no.
+- Backup format 4.
+
+**`import.commit`** (`src/background/imports.js`) accepts, per link, `pdfPage` and `context`, and for a link read from a PDF in a tab (it has `pdfPage` and no `imported` label) `sourceUrl` and `sourceTitle`. A link with an `imported` label never names a source page. It accepts `pages` beside `links`. An import's Undo removes its links; citations it added stay until no link uses them, as elsewhere.
+
+**`src/core/lookup.js`** (pure): `LOOKUP_SERVICES`, `lookupRequests(ids)`, `lookupUrl(service, identifier)`, `lookupAllowed`, `readCrossref`, `readDatacite`, `readPubmed`, `readAnswer(service, identifier, {status, body})` (a citation, `{missing: true}`, or `{error, stop?}`), `plainText`, `filled(older, newer)`, `LOOKUP_PAUSE_MS` (350) and `MAX_LOOKUPS` (200).
+- Names are stored as "Family, Given", which the citation formats read as family and given names. PubMed's "Family Initials" gains the comma, and its "Family Initials Jr" (Jr, Sr, II, III, IV, 2nd to 9th) becomes "Family, Initials, Jr", RIS's own order, which BibTeX writes as `Family, Jr, Initials` and CSL-JSON as `suffix`.
+- A page range is saved as its first and last page in full: MEDLINE's short last page ("1123-9" is 1123 to 1129) is completed, and what follows the range ("; quiz 1130") is left out.
+- A preprint's date is the day it was submitted; a chapter's journal is its book. A whole book (`book`, `edited-book`, `monograph`, `reference-book`, `book-set`, `book-series`) has no journal, since its last container title is its series; books and their parts keep their ISBN.
+
+**The lookup frame** (`src/ui/lookup-frame.html`, `lookup-frame.js`):
+- The workbench posts `{type: 'lookup', id, service, identifier}` to it and receives `{type: 'lookup.answer', id, status, body}` or `{type: 'lookup.answer', id, error}`. It posts `{type: 'lookup.ready'}` once loaded.
+- It builds the address itself from the service and a checked identifier, so nothing else can be requested through it; anything else is answered with "Link Meteor looks up only a DOI, an arXiv ID or a PubMed ID."
+- Tested in the real extension: its requests carry `Origin: null`, no cookie and no referrer; a cookie a service sets is not kept; it cannot reach any other address, Chrome's APIs, storage or its parent page.

@@ -1,0 +1,20 @@
+PASS lookup-off-nothing-is-requested {"requests":0,"frames":0}
+PASS lookup-own-pages-cannot-connect {"own":"blocked: TypeError"}
+PASS lookup-frame-sends-only-the-identifier {"headers":{"crossref":"accept origin sec-ch-ua sec-ch-ua-mobile sec-ch-ua-platform user-agent","datacite":"accept origin sec-ch-ua sec-ch-ua-mobile sec-ch-ua-platform user-agent","pubmed":"accept origin sec-ch-ua sec-ch-ua-mobile sec-ch-ua-platform user-agent"}}
+PASS lookup-frame-refuses-everything-else 
+PASS lookup-frame-is-sealed {"origin":"null","chromeStorage":"undefined","chromeRuntimeSend":"undefined","other":"blocked: TypeError","http":"blocked: TypeError","storage":"blocked: SecurityError","parent":"blocked: SecurityError"}
+PASS lookup-turning-it-on-sends-nothing 
+PASS lookup-run-requests-in-order {"requests":8,"gaps":[375,372,357,363,358,373,367]}
+PASS lookup-saves-only-what-was-missing {"citations":6}
+PASS lookup-undo-puts-every-citation-back 
+PASS lookup-in-a-links-details {"note":"From Crossref, looked up on Oct 3, 2026. Citation exports use it. Saved in this browser."}
+PASS lookup-in-the-export-panel-and-bibtex {"entry":"@article{ioannidis2005,"}
+PASS lookup-stop-in-the-middle 
+PASS lookup-too-many-requests-ends-the-run 
+PASS lookup-an-answer-that-is-not-json 
+PASS lookup-three-failures-in-a-row-end-the-run 
+PASS lookup-turned-off-during-a-run 
+PASS lookup-fits-at-320 
+PASS lookup-contrast-in-every-theme-light-and-dark {"themes":7,"measured":322,"lowest":5.07}
+PASS lookup-only-three-addresses {"requests":50}
+PASS 19 checks

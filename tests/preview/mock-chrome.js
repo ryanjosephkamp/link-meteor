@@ -71,7 +71,7 @@ const tabs = [
 const report = {
   batchId: batch('c'), capturedCount: 4,
   results: scenario === 'mixed' ? [
-    { tabId: 3, title: portal.title, url: portal.url, status: 'success', count: 4, warning: '1 inaccessible frame was excluded. Same-origin frames and open shadow roots are supported.', error: '' },
+    { tabId: 3, title: portal.title, url: portal.url, status: 'success', count: 4, warning: '1 frame from another site wasn’t read, because Link Meteor has no access to video.example.org. Allow that site to include its links.', error: '', frames: { read: 0, unread: 1, sites: ['https://video.example.org'], left: [{ site: 'https://video.example.org', at: '0' }] } },
     { tabId: 6, title: 'Example Domain', url: 'https://example.com/', status: 'success', count: 0, warning: '', error: '' },
     { tabId: 5, title: tickets.title, url: tickets.url, status: 'denied', count: 0, warning: '', error: 'Cannot access contents of the page. Extension manifest must request permission to access the respective host.' },
     { tabId: 4, title: 'Settings', url: 'chrome://settings/', status: 'unsupported', count: 0, warning: 'Browser-internal pages, the Chrome Web Store, and incognito pages cannot be captured.', error: '' },

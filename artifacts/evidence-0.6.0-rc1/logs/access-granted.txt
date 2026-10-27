@@ -1,0 +1,17 @@
+PASS A page opened as the browser starts gets hold-drag within seconds, without a reload {"attempts":1,"seconds":0}
+PASS All-sites scope: one registered script covers http and https; the switch shows it on {"registered":1}
+PASS Hold-drag works on a second origin with no per-site grant and no prompt {"origin":"http://localhost:52478"}
+PASS Modifier trigger on a real page: Meta-drag selects; a plain Meta-click opens the link as usual 
+PASS Never on these sites: off at once in the open tab, off after a reload, and back on without a reload 
+PASS This site, in all-sites scope, is the Never on this site toggle 
+PASS Capture this page on a never-visited origin needs no prompt with all-sites access, and reads its frame from another site {"origin":"http://127.0.0.1:52488"}
+PASS Frames from other sites with all-sites access: every frame is read (nested, sidebar, inside a closed component, sandboxed), each link once with its frameUrl and context, a hidden frame not at all, with no prompt; content links only leaves the sidebar frame’s link out {"links":12,"frames":{"read":7,"unread":0,"sites":[],"left":[]}}
+PASS Capture this PDF where the site is already allowed and the toolbar was not clicked: known as a PDF with or without ".pdf" in its address, previewed, added with the PDF as the source page, and no prompt 
+PASS Save tabs as links with all-sites access reads each tab’s own citation tags (Highwire, PRISM, JSON-LD, Dublin Core) into the collection’s pages, without a prompt {"read":5,"found":4}
+PASS Open as a tab group names the group after the collection when tab groups are allowed 
+PASS Card: Open as a tab group is named after the destination; Bookmark this selection saves a folder 
+PASS Capture their pages with all-sites access: pages on two sites and a PDF, each in a background tab that is closed, one batch, one Undo, no prompt {"links":39}
+PASS Follow Next crosses to another site where Link Meteor has access to it 
+PASS PDF files with all-sites access: PDFs on two sites into one ZIP, each through a background tab on its own site that is closed again; one sent as a download; one that moves to the other site; one Chrome downloads by itself, into the profile’s own folder; no prompt {"zip":"PDF-files_2026-10-03_1114.zip","tabs":7}
+PASS PDF files with all-sites access: the PDFs of two sites combined into one PDF, in the list’s order {"name":"PDF-files_2026-10-03_1114.pdf","pages":7}
+PASS The switch turns all-sites off (offering to remove Chrome’s grant) and on again 

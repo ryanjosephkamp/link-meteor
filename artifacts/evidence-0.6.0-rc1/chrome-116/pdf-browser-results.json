@@ -1,0 +1,213 @@
+{
+  "started": "2026-10-03T16:20:02.672Z",
+  "profile": "check-pdf-browser-2026-10-03T16-16-48-269Z",
+  "browser": "Chrome for Testing via Playwright, headless, fresh profile, real unpacked extension, no optional grants",
+  "checks": [
+    {
+      "name": "pdf-reader-not-loaded-until-used",
+      "chrome": "Chrome/116.0.0.0",
+      "native": {
+        "withResolvers": false,
+        "streamIteration": false
+      }
+    },
+    {
+      "name": "pdf-reader-reads-fixtures-as-node-does",
+      "paper.pdf": "15 links, 3 pages",
+      "journal.pdf": "2 links, 2 pages",
+      "notes.pdf": "1 links, 2 pages",
+      "no-links.pdf": "0 links, 1 pages",
+      "empty.pdf": "0 links, 1 pages"
+    },
+    {
+      "name": "pdf-reader-runs-in-one-module-worker",
+      "workers": [
+        "ui/workbench/pdfjs-worker.js"
+      ]
+    },
+    {
+      "name": "pdf-reader-refuses-in-plain-words",
+      "password.pdf": "This PDF needs a password. Link Meteor doesn’t ask for passwords.",
+      "damaged.pdf": "This PDF is damaged, or it isn’t a PDF, so it couldn’t be read.",
+      "not-a-pdf.pdf": "This file isn’t a PDF."
+    },
+    {
+      "name": "pdf-reader-combines-in-order",
+      "pages": 7,
+      "bytes": 5997,
+      "links": 18
+    },
+    {
+      "name": "pdf-file-previews-its-links",
+      "summary": [
+        "Adds 15 links from 3 of 3 pages, marked Imported, and the paper’s arXiv page as a link.",
+        "Left out: 1 link to a place inside the PDF, 2 that aren’t web, email or phone addresses. 1 link is on a picture and has no words; its anchor text stays empty. You can undo this."
+      ]
+    },
+    {
+      "name": "pdf-file-adds-one-batch-and-undoes-it",
+      "links": 16,
+      "citation": {
+        "arxiv": "2409.11211",
+        "arxivCategory": "cs.CV",
+        "arxivVersion": "v1",
+        "date": "17 Sep 2024",
+        "doi": "10.5555/fixture.2026.001",
+        "source": "pdf",
+        "title": "A Small Paper About Links"
+      }
+    },
+    {
+      "name": "pdf-file-dropped-on-the-panel-or-the-list",
+      "marked": []
+    },
+    {
+      "name": "pdf-file-nothing-to-add-in-plain-words",
+      "largeBytes": 52428800
+    },
+    {
+      "name": "pdf-file-cancel-while-reading",
+      "counter": "Reading page 1 of 1,500…"
+    },
+    {
+      "name": "pdf-file-by-keyboard",
+      "stops": [
+        "table-scroll",
+        "import-only-skipped",
+        "import-destination",
+        "import-skip-saved",
+        "pdf-self",
+        "import-commit",
+        "import-cancel"
+      ]
+    },
+    {
+      "name": "pdf-file-320-labels-and-contrast",
+      "themes": [
+        {
+          "theme": "meteor",
+          "scheme": "light",
+          "lowest": {
+            "name": "saved reason",
+            "ratio": 5.7
+          }
+        },
+        {
+          "theme": "meteor",
+          "scheme": "dark",
+          "lowest": {
+            "name": "no words",
+            "ratio": 7.37
+          }
+        },
+        {
+          "theme": "comet",
+          "scheme": "light",
+          "lowest": {
+            "name": "saved reason",
+            "ratio": 5.7
+          }
+        },
+        {
+          "theme": "comet",
+          "scheme": "dark",
+          "lowest": {
+            "name": "no words",
+            "ratio": 7.33
+          }
+        },
+        {
+          "theme": "aurora",
+          "scheme": "light",
+          "lowest": {
+            "name": "saved reason",
+            "ratio": 5.7
+          }
+        },
+        {
+          "theme": "aurora",
+          "scheme": "dark",
+          "lowest": {
+            "name": "no words",
+            "ratio": 7.31
+          }
+        },
+        {
+          "theme": "ember",
+          "scheme": "light",
+          "lowest": {
+            "name": "saved reason",
+            "ratio": 5.7
+          }
+        },
+        {
+          "theme": "ember",
+          "scheme": "dark",
+          "lowest": {
+            "name": "no words",
+            "ratio": 7.35
+          }
+        },
+        {
+          "theme": "nebula",
+          "scheme": "light",
+          "lowest": {
+            "name": "saved reason",
+            "ratio": 5.7
+          }
+        },
+        {
+          "theme": "nebula",
+          "scheme": "dark",
+          "lowest": {
+            "name": "no words",
+            "ratio": 7.27
+          }
+        },
+        {
+          "theme": "graphite",
+          "scheme": "light",
+          "lowest": {
+            "name": "saved reason",
+            "ratio": 5.7
+          }
+        },
+        {
+          "theme": "graphite",
+          "scheme": "dark",
+          "lowest": {
+            "name": "no words",
+            "ratio": 7.38
+          }
+        },
+        {
+          "theme": "contrast",
+          "scheme": "light",
+          "lowest": {
+            "name": "saved reason",
+            "ratio": 8.77
+          }
+        },
+        {
+          "theme": "contrast",
+          "scheme": "dark",
+          "lowest": {
+            "name": "no words",
+            "ratio": 13.19
+          }
+        }
+      ]
+    },
+    {
+      "name": "pdf-reader-keeps-the-page-rules"
+    }
+  ],
+  "screenshots": [
+    "pdf-file-full-meteor-light.png",
+    "pdf-file-320-meteor-light.png",
+    "pdf-file-panel-nebula-dark.png"
+  ],
+  "chrome": "Chrome/116.0.0.0",
+  "status": "PASS",
+  "finished": "2026-10-03T16:20:14.232Z"
+}

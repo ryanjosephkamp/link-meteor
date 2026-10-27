@@ -1,0 +1,1400 @@
+{
+  "started": "2026-10-03T15:32:51.368Z",
+  "profile": "check-lookup-browser-2026-10-03T15-26-13-780Z",
+  "browser": "Chrome for Testing via Playwright, headless, fresh profile, real unpacked extension, no optional grants; the three services are answered by the test",
+  "checks": [
+    {
+      "name": "lookup-off-nothing-is-requested",
+      "requests": 0,
+      "frames": 0
+    },
+    {
+      "name": "lookup-own-pages-cannot-connect",
+      "own": "blocked: TypeError"
+    },
+    {
+      "name": "lookup-frame-sends-only-the-identifier",
+      "headers": {
+        "crossref": "accept origin sec-ch-ua sec-ch-ua-mobile sec-ch-ua-platform user-agent",
+        "datacite": "accept origin sec-ch-ua sec-ch-ua-mobile sec-ch-ua-platform user-agent",
+        "pubmed": "accept origin sec-ch-ua sec-ch-ua-mobile sec-ch-ua-platform user-agent"
+      }
+    },
+    {
+      "name": "lookup-frame-refuses-everything-else"
+    },
+    {
+      "name": "lookup-frame-is-sealed",
+      "origin": "null",
+      "chromeStorage": "undefined",
+      "chromeRuntimeSend": "undefined",
+      "other": "blocked: TypeError",
+      "http": "blocked: TypeError",
+      "storage": "blocked: SecurityError",
+      "parent": "blocked: SecurityError"
+    },
+    {
+      "name": "lookup-turning-it-on-sends-nothing"
+    },
+    {
+      "name": "lookup-run-requests-in-order",
+      "requests": 8,
+      "gaps": [
+        357,
+        356,
+        359,
+        357,
+        356,
+        357,
+        357
+      ]
+    },
+    {
+      "name": "lookup-saves-only-what-was-missing",
+      "citations": 6
+    },
+    {
+      "name": "lookup-undo-puts-every-citation-back"
+    },
+    {
+      "name": "lookup-in-a-links-details",
+      "note": "From Crossref, looked up on Oct 3, 2026. Citation exports use it. Saved in this browser."
+    },
+    {
+      "name": "lookup-in-the-export-panel-and-bibtex",
+      "entry": "@article{ioannidis2005,"
+    },
+    {
+      "name": "lookup-stop-in-the-middle"
+    },
+    {
+      "name": "lookup-too-many-requests-ends-the-run"
+    },
+    {
+      "name": "lookup-an-answer-that-is-not-json"
+    },
+    {
+      "name": "lookup-three-failures-in-a-row-end-the-run"
+    },
+    {
+      "name": "lookup-turned-off-during-a-run"
+    },
+    {
+      "name": "lookup-fits-at-320"
+    },
+    {
+      "name": "lookup-contrast-in-every-theme-light-and-dark",
+      "themes": 7,
+      "measured": 322,
+      "lowest": 5.07
+    },
+    {
+      "name": "lookup-only-three-addresses",
+      "requests": 50
+    }
+  ],
+  "screenshots": [
+    "lookup-settings-320.png",
+    "lookup-progress-320-light.png",
+    "lookup-progress-320-dark.png",
+    "lookup-done-320-light.png",
+    "lookup-done-320-dark.png",
+    "lookup-details-side-panel.png",
+    "lookup-export-320.png",
+    "lookup-full-view-meteor-dark.png",
+    "lookup-progress-nebula-dark.png"
+  ],
+  "chrome": "Chrome/151.0.0.0",
+  "contrast": [
+    {
+      "name": "meteor light counter",
+      "ratio": 15.2
+    },
+    {
+      "name": "meteor light what is sent",
+      "ratio": 9.6
+    },
+    {
+      "name": "meteor light Stop",
+      "ratio": 14.98
+    },
+    {
+      "name": "meteor dark counter",
+      "ratio": 13.68
+    },
+    {
+      "name": "meteor dark what is sent",
+      "ratio": 10.19
+    },
+    {
+      "name": "meteor dark Stop",
+      "ratio": 14.27
+    },
+    {
+      "name": "meteor light result",
+      "ratio": 14.83
+    },
+    {
+      "name": "meteor light Undo",
+      "ratio": 5.1
+    },
+    {
+      "name": "meteor light Dismiss",
+      "ratio": 5.1
+    },
+    {
+      "name": "meteor light section title",
+      "ratio": 9.37
+    },
+    {
+      "name": "meteor light introduction",
+      "ratio": 5.42
+    },
+    {
+      "name": "meteor light switch label",
+      "ratio": 14.83
+    },
+    {
+      "name": "meteor light what it does",
+      "ratio": 5.42
+    },
+    {
+      "name": "meteor light box title",
+      "ratio": 5.42
+    },
+    {
+      "name": "meteor light what is sent",
+      "ratio": 9.37
+    },
+    {
+      "name": "meteor light service",
+      "ratio": 9.37
+    },
+    {
+      "name": "meteor light service name",
+      "ratio": 14.83
+    },
+    {
+      "name": "meteor light address",
+      "ratio": 9.37
+    },
+    {
+      "name": "meteor light never sent",
+      "ratio": 9.37
+    },
+    {
+      "name": "meteor light Look up details for the selection",
+      "ratio": 9.97
+    },
+    {
+      "name": "meteor light missing details label",
+      "ratio": 6.02
+    },
+    {
+      "name": "meteor light missing details",
+      "ratio": 10.41
+    },
+    {
+      "name": "meteor light Look up details in details",
+      "ratio": 16.48
+    },
+    {
+      "name": "meteor light looked-up note",
+      "ratio": 6.02
+    },
+    {
+      "name": "meteor light Export panel line",
+      "ratio": 10.41
+    },
+    {
+      "name": "meteor light Look up details in the Export panel",
+      "ratio": 16.48
+    },
+    {
+      "name": "meteor dark result",
+      "ratio": 16.92
+    },
+    {
+      "name": "meteor dark Undo",
+      "ratio": 14
+    },
+    {
+      "name": "meteor dark Dismiss",
+      "ratio": 14
+    },
+    {
+      "name": "meteor dark section title",
+      "ratio": 12.61
+    },
+    {
+      "name": "meteor dark introduction",
+      "ratio": 8.07
+    },
+    {
+      "name": "meteor dark switch label",
+      "ratio": 16.92
+    },
+    {
+      "name": "meteor dark what it does",
+      "ratio": 8.07
+    },
+    {
+      "name": "meteor dark box title",
+      "ratio": 8.07
+    },
+    {
+      "name": "meteor dark what is sent",
+      "ratio": 12.61
+    },
+    {
+      "name": "meteor dark service",
+      "ratio": 12.61
+    },
+    {
+      "name": "meteor dark service name",
+      "ratio": 16.92
+    },
+    {
+      "name": "meteor dark address",
+      "ratio": 12.61
+    },
+    {
+      "name": "meteor dark never sent",
+      "ratio": 12.61
+    },
+    {
+      "name": "meteor dark Look up details for the selection",
+      "ratio": 12.16
+    },
+    {
+      "name": "meteor dark missing details label",
+      "ratio": 7.36
+    },
+    {
+      "name": "meteor dark missing details",
+      "ratio": 11.49
+    },
+    {
+      "name": "meteor dark Look up details in details",
+      "ratio": 15.41
+    },
+    {
+      "name": "meteor dark looked-up note",
+      "ratio": 7.36
+    },
+    {
+      "name": "meteor dark Export panel line",
+      "ratio": 11.49
+    },
+    {
+      "name": "meteor dark Look up details in the Export panel",
+      "ratio": 15.41
+    },
+    {
+      "name": "comet light counter",
+      "ratio": 15.06
+    },
+    {
+      "name": "comet light what is sent",
+      "ratio": 9.5
+    },
+    {
+      "name": "comet light Stop",
+      "ratio": 14.87
+    },
+    {
+      "name": "comet dark counter",
+      "ratio": 13.71
+    },
+    {
+      "name": "comet dark what is sent",
+      "ratio": 10.2
+    },
+    {
+      "name": "comet dark Stop",
+      "ratio": 14.23
+    },
+    {
+      "name": "comet light result",
+      "ratio": 14.64
+    },
+    {
+      "name": "comet light Undo",
+      "ratio": 5.07
+    },
+    {
+      "name": "comet light Dismiss",
+      "ratio": 5.07
+    },
+    {
+      "name": "comet light section title",
+      "ratio": 9.23
+    },
+    {
+      "name": "comet light introduction",
+      "ratio": 5.34
+    },
+    {
+      "name": "comet light switch label",
+      "ratio": 14.64
+    },
+    {
+      "name": "comet light what it does",
+      "ratio": 5.34
+    },
+    {
+      "name": "comet light box title",
+      "ratio": 5.34
+    },
+    {
+      "name": "comet light what is sent",
+      "ratio": 9.23
+    },
+    {
+      "name": "comet light service",
+      "ratio": 9.23
+    },
+    {
+      "name": "comet light service name",
+      "ratio": 14.64
+    },
+    {
+      "name": "comet light address",
+      "ratio": 9.23
+    },
+    {
+      "name": "comet light never sent",
+      "ratio": 9.23
+    },
+    {
+      "name": "comet light Look up details for the selection",
+      "ratio": 9.91
+    },
+    {
+      "name": "comet light missing details label",
+      "ratio": 5.96
+    },
+    {
+      "name": "comet light missing details",
+      "ratio": 10.3
+    },
+    {
+      "name": "comet light Look up details in details",
+      "ratio": 16.33
+    },
+    {
+      "name": "comet light looked-up note",
+      "ratio": 5.96
+    },
+    {
+      "name": "comet light Export panel line",
+      "ratio": 10.3
+    },
+    {
+      "name": "comet light Look up details in the Export panel",
+      "ratio": 16.33
+    },
+    {
+      "name": "comet dark result",
+      "ratio": 16.95
+    },
+    {
+      "name": "comet dark Undo",
+      "ratio": 13.09
+    },
+    {
+      "name": "comet dark Dismiss",
+      "ratio": 13.09
+    },
+    {
+      "name": "comet dark section title",
+      "ratio": 12.6
+    },
+    {
+      "name": "comet dark introduction",
+      "ratio": 8.1
+    },
+    {
+      "name": "comet dark switch label",
+      "ratio": 16.95
+    },
+    {
+      "name": "comet dark what it does",
+      "ratio": 8.1
+    },
+    {
+      "name": "comet dark box title",
+      "ratio": 8.1
+    },
+    {
+      "name": "comet dark what is sent",
+      "ratio": 12.6
+    },
+    {
+      "name": "comet dark service",
+      "ratio": 12.6
+    },
+    {
+      "name": "comet dark service name",
+      "ratio": 16.95
+    },
+    {
+      "name": "comet dark address",
+      "ratio": 12.6
+    },
+    {
+      "name": "comet dark never sent",
+      "ratio": 12.6
+    },
+    {
+      "name": "comet dark Look up details for the selection",
+      "ratio": 12.15
+    },
+    {
+      "name": "comet dark missing details label",
+      "ratio": 7.33
+    },
+    {
+      "name": "comet dark missing details",
+      "ratio": 11.41
+    },
+    {
+      "name": "comet dark Look up details in details",
+      "ratio": 15.35
+    },
+    {
+      "name": "comet dark looked-up note",
+      "ratio": 7.33
+    },
+    {
+      "name": "comet dark Export panel line",
+      "ratio": 11.41
+    },
+    {
+      "name": "comet dark Look up details in the Export panel",
+      "ratio": 15.35
+    },
+    {
+      "name": "aurora light counter",
+      "ratio": 15.08
+    },
+    {
+      "name": "aurora light what is sent",
+      "ratio": 9.53
+    },
+    {
+      "name": "aurora light Stop",
+      "ratio": 14.84
+    },
+    {
+      "name": "aurora dark counter",
+      "ratio": 13.67
+    },
+    {
+      "name": "aurora dark what is sent",
+      "ratio": 10.2
+    },
+    {
+      "name": "aurora dark Stop",
+      "ratio": 14.18
+    },
+    {
+      "name": "aurora light result",
+      "ratio": 14.74
+    },
+    {
+      "name": "aurora light Undo",
+      "ratio": 5.11
+    },
+    {
+      "name": "aurora light Dismiss",
+      "ratio": 5.11
+    },
+    {
+      "name": "aurora light section title",
+      "ratio": 9.31
+    },
+    {
+      "name": "aurora light introduction",
+      "ratio": 5.37
+    },
+    {
+      "name": "aurora light switch label",
+      "ratio": 14.74
+    },
+    {
+      "name": "aurora light what it does",
+      "ratio": 5.37
+    },
+    {
+      "name": "aurora light box title",
+      "ratio": 5.37
+    },
+    {
+      "name": "aurora light what is sent",
+      "ratio": 9.31
+    },
+    {
+      "name": "aurora light service",
+      "ratio": 9.31
+    },
+    {
+      "name": "aurora light service name",
+      "ratio": 14.74
+    },
+    {
+      "name": "aurora light address",
+      "ratio": 9.31
+    },
+    {
+      "name": "aurora light never sent",
+      "ratio": 9.31
+    },
+    {
+      "name": "aurora light Look up details for the selection",
+      "ratio": 9.92
+    },
+    {
+      "name": "aurora light missing details label",
+      "ratio": 5.96
+    },
+    {
+      "name": "aurora light missing details",
+      "ratio": 10.34
+    },
+    {
+      "name": "aurora light Look up details in details",
+      "ratio": 16.36
+    },
+    {
+      "name": "aurora light looked-up note",
+      "ratio": 5.96
+    },
+    {
+      "name": "aurora light Export panel line",
+      "ratio": 10.34
+    },
+    {
+      "name": "aurora light Look up details in the Export panel",
+      "ratio": 16.36
+    },
+    {
+      "name": "aurora dark result",
+      "ratio": 16.89
+    },
+    {
+      "name": "aurora dark Undo",
+      "ratio": 13.17
+    },
+    {
+      "name": "aurora dark Dismiss",
+      "ratio": 13.17
+    },
+    {
+      "name": "aurora dark section title",
+      "ratio": 12.6
+    },
+    {
+      "name": "aurora dark introduction",
+      "ratio": 8.08
+    },
+    {
+      "name": "aurora dark switch label",
+      "ratio": 16.89
+    },
+    {
+      "name": "aurora dark what it does",
+      "ratio": 8.08
+    },
+    {
+      "name": "aurora dark box title",
+      "ratio": 8.08
+    },
+    {
+      "name": "aurora dark what is sent",
+      "ratio": 12.6
+    },
+    {
+      "name": "aurora dark service",
+      "ratio": 12.6
+    },
+    {
+      "name": "aurora dark service name",
+      "ratio": 16.89
+    },
+    {
+      "name": "aurora dark address",
+      "ratio": 12.6
+    },
+    {
+      "name": "aurora dark never sent",
+      "ratio": 12.6
+    },
+    {
+      "name": "aurora dark Look up details for the selection",
+      "ratio": 12.14
+    },
+    {
+      "name": "aurora dark missing details label",
+      "ratio": 7.31
+    },
+    {
+      "name": "aurora dark missing details",
+      "ratio": 11.4
+    },
+    {
+      "name": "aurora dark Look up details in details",
+      "ratio": 15.29
+    },
+    {
+      "name": "aurora dark looked-up note",
+      "ratio": 7.31
+    },
+    {
+      "name": "aurora dark Export panel line",
+      "ratio": 11.4
+    },
+    {
+      "name": "aurora dark Look up details in the Export panel",
+      "ratio": 15.29
+    },
+    {
+      "name": "ember light counter",
+      "ratio": 14.52
+    },
+    {
+      "name": "ember light what is sent",
+      "ratio": 9.25
+    },
+    {
+      "name": "ember light Stop",
+      "ratio": 15
+    },
+    {
+      "name": "ember dark counter",
+      "ratio": 13.96
+    },
+    {
+      "name": "ember dark what is sent",
+      "ratio": 10.4
+    },
+    {
+      "name": "ember dark Stop",
+      "ratio": 14.28
+    },
+    {
+      "name": "ember light result",
+      "ratio": 14.84
+    },
+    {
+      "name": "ember light Undo",
+      "ratio": 5.32
+    },
+    {
+      "name": "ember light Dismiss",
+      "ratio": 5.32
+    },
+    {
+      "name": "ember light section title",
+      "ratio": 9.45
+    },
+    {
+      "name": "ember light introduction",
+      "ratio": 5.44
+    },
+    {
+      "name": "ember light switch label",
+      "ratio": 14.84
+    },
+    {
+      "name": "ember light what it does",
+      "ratio": 5.44
+    },
+    {
+      "name": "ember light box title",
+      "ratio": 5.44
+    },
+    {
+      "name": "ember light what is sent",
+      "ratio": 9.45
+    },
+    {
+      "name": "ember light service",
+      "ratio": 9.45
+    },
+    {
+      "name": "ember light service name",
+      "ratio": 14.84
+    },
+    {
+      "name": "ember light address",
+      "ratio": 9.45
+    },
+    {
+      "name": "ember light never sent",
+      "ratio": 9.45
+    },
+    {
+      "name": "ember light Look up details for the selection",
+      "ratio": 10.04
+    },
+    {
+      "name": "ember light missing details label",
+      "ratio": 6.05
+    },
+    {
+      "name": "ember light missing details",
+      "ratio": 10.52
+    },
+    {
+      "name": "ember light Look up details in details",
+      "ratio": 16.51
+    },
+    {
+      "name": "ember light looked-up note",
+      "ratio": 6.05
+    },
+    {
+      "name": "ember light Export panel line",
+      "ratio": 10.52
+    },
+    {
+      "name": "ember light Look up details in the Export panel",
+      "ratio": 16.51
+    },
+    {
+      "name": "ember dark result",
+      "ratio": 16.87
+    },
+    {
+      "name": "ember dark Undo",
+      "ratio": 10.64
+    },
+    {
+      "name": "ember dark Dismiss",
+      "ratio": 10.64
+    },
+    {
+      "name": "ember dark section title",
+      "ratio": 12.56
+    },
+    {
+      "name": "ember dark introduction",
+      "ratio": 8.04
+    },
+    {
+      "name": "ember dark switch label",
+      "ratio": 16.87
+    },
+    {
+      "name": "ember dark what it does",
+      "ratio": 8.04
+    },
+    {
+      "name": "ember dark box title",
+      "ratio": 8.04
+    },
+    {
+      "name": "ember dark what is sent",
+      "ratio": 12.56
+    },
+    {
+      "name": "ember dark service",
+      "ratio": 12.56
+    },
+    {
+      "name": "ember dark service name",
+      "ratio": 16.87
+    },
+    {
+      "name": "ember dark address",
+      "ratio": 12.56
+    },
+    {
+      "name": "ember dark never sent",
+      "ratio": 12.56
+    },
+    {
+      "name": "ember dark Look up details for the selection",
+      "ratio": 12.16
+    },
+    {
+      "name": "ember dark missing details label",
+      "ratio": 7.35
+    },
+    {
+      "name": "ember dark missing details",
+      "ratio": 11.49
+    },
+    {
+      "name": "ember dark Look up details in details",
+      "ratio": 15.43
+    },
+    {
+      "name": "ember dark looked-up note",
+      "ratio": 7.35
+    },
+    {
+      "name": "ember dark Export panel line",
+      "ratio": 11.49
+    },
+    {
+      "name": "ember dark Look up details in the Export panel",
+      "ratio": 15.43
+    },
+    {
+      "name": "nebula light counter",
+      "ratio": 14.89
+    },
+    {
+      "name": "nebula light what is sent",
+      "ratio": 9.48
+    },
+    {
+      "name": "nebula light Stop",
+      "ratio": 15.06
+    },
+    {
+      "name": "nebula dark counter",
+      "ratio": 13.99
+    },
+    {
+      "name": "nebula dark what is sent",
+      "ratio": 10.41
+    },
+    {
+      "name": "nebula dark Stop",
+      "ratio": 14.28
+    },
+    {
+      "name": "nebula light result",
+      "ratio": 14.89
+    },
+    {
+      "name": "nebula light Undo",
+      "ratio": 5.44
+    },
+    {
+      "name": "nebula light Dismiss",
+      "ratio": 5.44
+    },
+    {
+      "name": "nebula light section title",
+      "ratio": 9.48
+    },
+    {
+      "name": "nebula light introduction",
+      "ratio": 5.45
+    },
+    {
+      "name": "nebula light switch label",
+      "ratio": 14.89
+    },
+    {
+      "name": "nebula light what it does",
+      "ratio": 5.45
+    },
+    {
+      "name": "nebula light box title",
+      "ratio": 5.45
+    },
+    {
+      "name": "nebula light what is sent",
+      "ratio": 9.48
+    },
+    {
+      "name": "nebula light service",
+      "ratio": 9.48
+    },
+    {
+      "name": "nebula light service name",
+      "ratio": 14.89
+    },
+    {
+      "name": "nebula light address",
+      "ratio": 9.48
+    },
+    {
+      "name": "nebula light never sent",
+      "ratio": 9.48
+    },
+    {
+      "name": "nebula light Look up details for the selection",
+      "ratio": 10.07
+    },
+    {
+      "name": "nebula light missing details label",
+      "ratio": 6.08
+    },
+    {
+      "name": "nebula light missing details",
+      "ratio": 10.56
+    },
+    {
+      "name": "nebula light Look up details in details",
+      "ratio": 16.59
+    },
+    {
+      "name": "nebula light looked-up note",
+      "ratio": 6.08
+    },
+    {
+      "name": "nebula light Export panel line",
+      "ratio": 10.56
+    },
+    {
+      "name": "nebula light Look up details in the Export panel",
+      "ratio": 16.59
+    },
+    {
+      "name": "nebula dark result",
+      "ratio": 16.87
+    },
+    {
+      "name": "nebula dark Undo",
+      "ratio": 11.33
+    },
+    {
+      "name": "nebula dark Dismiss",
+      "ratio": 11.33
+    },
+    {
+      "name": "nebula dark section title",
+      "ratio": 12.55
+    },
+    {
+      "name": "nebula dark introduction",
+      "ratio": 8.01
+    },
+    {
+      "name": "nebula dark switch label",
+      "ratio": 16.87
+    },
+    {
+      "name": "nebula dark what it does",
+      "ratio": 8.01
+    },
+    {
+      "name": "nebula dark box title",
+      "ratio": 8.01
+    },
+    {
+      "name": "nebula dark what is sent",
+      "ratio": 12.55
+    },
+    {
+      "name": "nebula dark service",
+      "ratio": 12.55
+    },
+    {
+      "name": "nebula dark service name",
+      "ratio": 16.87
+    },
+    {
+      "name": "nebula dark address",
+      "ratio": 12.55
+    },
+    {
+      "name": "nebula dark never sent",
+      "ratio": 12.55
+    },
+    {
+      "name": "nebula dark Look up details for the selection",
+      "ratio": 12.15
+    },
+    {
+      "name": "nebula dark missing details label",
+      "ratio": 7.27
+    },
+    {
+      "name": "nebula dark missing details",
+      "ratio": 11.39
+    },
+    {
+      "name": "nebula dark Look up details in details",
+      "ratio": 15.31
+    },
+    {
+      "name": "nebula dark looked-up note",
+      "ratio": 7.27
+    },
+    {
+      "name": "nebula dark Export panel line",
+      "ratio": 11.39
+    },
+    {
+      "name": "nebula dark Look up details in the Export panel",
+      "ratio": 15.31
+    },
+    {
+      "name": "graphite light counter",
+      "ratio": 14.46
+    },
+    {
+      "name": "graphite light what is sent",
+      "ratio": 9.1
+    },
+    {
+      "name": "graphite light Stop",
+      "ratio": 14.99
+    },
+    {
+      "name": "graphite dark counter",
+      "ratio": 13.28
+    },
+    {
+      "name": "graphite dark what is sent",
+      "ratio": 9.91
+    },
+    {
+      "name": "graphite dark Stop",
+      "ratio": 14.3
+    },
+    {
+      "name": "graphite light result",
+      "ratio": 14.85
+    },
+    {
+      "name": "graphite light Undo",
+      "ratio": 12.24
+    },
+    {
+      "name": "graphite light Dismiss",
+      "ratio": 12.24
+    },
+    {
+      "name": "graphite light section title",
+      "ratio": 9.34
+    },
+    {
+      "name": "graphite light introduction",
+      "ratio": 5.41
+    },
+    {
+      "name": "graphite light switch label",
+      "ratio": 14.85
+    },
+    {
+      "name": "graphite light what it does",
+      "ratio": 5.41
+    },
+    {
+      "name": "graphite light box title",
+      "ratio": 5.41
+    },
+    {
+      "name": "graphite light what is sent",
+      "ratio": 9.34
+    },
+    {
+      "name": "graphite light service",
+      "ratio": 9.34
+    },
+    {
+      "name": "graphite light service name",
+      "ratio": 14.85
+    },
+    {
+      "name": "graphite light address",
+      "ratio": 9.34
+    },
+    {
+      "name": "graphite light never sent",
+      "ratio": 9.34
+    },
+    {
+      "name": "graphite light Look up details for the selection",
+      "ratio": 9.93
+    },
+    {
+      "name": "graphite light missing details label",
+      "ratio": 6.01
+    },
+    {
+      "name": "graphite light missing details",
+      "ratio": 10.37
+    },
+    {
+      "name": "graphite light Look up details in details",
+      "ratio": 16.48
+    },
+    {
+      "name": "graphite light looked-up note",
+      "ratio": 6.01
+    },
+    {
+      "name": "graphite light Export panel line",
+      "ratio": 10.37
+    },
+    {
+      "name": "graphite light Look up details in the Export panel",
+      "ratio": 16.48
+    },
+    {
+      "name": "graphite dark result",
+      "ratio": 16.94
+    },
+    {
+      "name": "graphite dark Undo",
+      "ratio": 15.18
+    },
+    {
+      "name": "graphite dark Dismiss",
+      "ratio": 15.18
+    },
+    {
+      "name": "graphite dark section title",
+      "ratio": 12.64
+    },
+    {
+      "name": "graphite dark introduction",
+      "ratio": 8.1
+    },
+    {
+      "name": "graphite dark switch label",
+      "ratio": 16.94
+    },
+    {
+      "name": "graphite dark what it does",
+      "ratio": 8.1
+    },
+    {
+      "name": "graphite dark box title",
+      "ratio": 8.1
+    },
+    {
+      "name": "graphite dark what is sent",
+      "ratio": 12.64
+    },
+    {
+      "name": "graphite dark service",
+      "ratio": 12.64
+    },
+    {
+      "name": "graphite dark service name",
+      "ratio": 16.94
+    },
+    {
+      "name": "graphite dark address",
+      "ratio": 12.64
+    },
+    {
+      "name": "graphite dark never sent",
+      "ratio": 12.64
+    },
+    {
+      "name": "graphite dark Look up details for the selection",
+      "ratio": 12.17
+    },
+    {
+      "name": "graphite dark missing details label",
+      "ratio": 7.38
+    },
+    {
+      "name": "graphite dark missing details",
+      "ratio": 11.51
+    },
+    {
+      "name": "graphite dark Look up details in details",
+      "ratio": 15.43
+    },
+    {
+      "name": "graphite dark looked-up note",
+      "ratio": 7.38
+    },
+    {
+      "name": "graphite dark Export panel line",
+      "ratio": 11.51
+    },
+    {
+      "name": "graphite dark Look up details in the Export panel",
+      "ratio": 15.43
+    },
+    {
+      "name": "contrast light counter",
+      "ratio": 17.64
+    },
+    {
+      "name": "contrast light what is sent",
+      "ratio": 16.54
+    },
+    {
+      "name": "contrast light Stop",
+      "ratio": 17.14
+    },
+    {
+      "name": "contrast dark counter",
+      "ratio": 15.91
+    },
+    {
+      "name": "contrast dark what is sent",
+      "ratio": 13.35
+    },
+    {
+      "name": "contrast dark Stop",
+      "ratio": 17.22
+    },
+    {
+      "name": "contrast light result",
+      "ratio": 18.76
+    },
+    {
+      "name": "contrast light Undo",
+      "ratio": 8.4
+    },
+    {
+      "name": "contrast light Dismiss",
+      "ratio": 8.4
+    },
+    {
+      "name": "contrast light section title",
+      "ratio": 17.58
+    },
+    {
+      "name": "contrast light introduction",
+      "ratio": 12.13
+    },
+    {
+      "name": "contrast light switch label",
+      "ratio": 18.76
+    },
+    {
+      "name": "contrast light what it does",
+      "ratio": 12.13
+    },
+    {
+      "name": "contrast light box title",
+      "ratio": 12.13
+    },
+    {
+      "name": "contrast light what is sent",
+      "ratio": 17.58
+    },
+    {
+      "name": "contrast light service",
+      "ratio": 17.58
+    },
+    {
+      "name": "contrast light service name",
+      "ratio": 18.76
+    },
+    {
+      "name": "contrast light address",
+      "ratio": 17.58
+    },
+    {
+      "name": "contrast light never sent",
+      "ratio": 17.58
+    },
+    {
+      "name": "contrast light Look up details for the selection",
+      "ratio": 19.68
+    },
+    {
+      "name": "contrast light missing details label",
+      "ratio": 13.58
+    },
+    {
+      "name": "contrast light missing details",
+      "ratio": 19.68
+    },
+    {
+      "name": "contrast light Look up details in details",
+      "ratio": 21
+    },
+    {
+      "name": "contrast light looked-up note",
+      "ratio": 13.58
+    },
+    {
+      "name": "contrast light Export panel line",
+      "ratio": 19.68
+    },
+    {
+      "name": "contrast light Look up details in the Export panel",
+      "ratio": 21
+    },
+    {
+      "name": "contrast dark result",
+      "ratio": 20.87
+    },
+    {
+      "name": "contrast dark Undo",
+      "ratio": 16.68
+    },
+    {
+      "name": "contrast dark Dismiss",
+      "ratio": 16.68
+    },
+    {
+      "name": "contrast dark section title",
+      "ratio": 17.51
+    },
+    {
+      "name": "contrast dark introduction",
+      "ratio": 13.67
+    },
+    {
+      "name": "contrast dark switch label",
+      "ratio": 20.87
+    },
+    {
+      "name": "contrast dark what it does",
+      "ratio": 13.67
+    },
+    {
+      "name": "contrast dark box title",
+      "ratio": 13.67
+    },
+    {
+      "name": "contrast dark what is sent",
+      "ratio": 17.51
+    },
+    {
+      "name": "contrast dark service",
+      "ratio": 17.51
+    },
+    {
+      "name": "contrast dark service name",
+      "ratio": 20.87
+    },
+    {
+      "name": "contrast dark address",
+      "ratio": 17.51
+    },
+    {
+      "name": "contrast dark never sent",
+      "ratio": 17.51
+    },
+    {
+      "name": "contrast dark Look up details for the selection",
+      "ratio": 17.62
+    },
+    {
+      "name": "contrast dark missing details label",
+      "ratio": 13.19
+    },
+    {
+      "name": "contrast dark missing details",
+      "ratio": 16.9
+    },
+    {
+      "name": "contrast dark Look up details in details",
+      "ratio": 20.14
+    },
+    {
+      "name": "contrast dark looked-up note",
+      "ratio": 13.19
+    },
+    {
+      "name": "contrast dark Export panel line",
+      "ratio": 16.9
+    },
+    {
+      "name": "contrast dark Look up details in the Export panel",
+      "ratio": 20.14
+    }
+  ],
+  "status": "PASS",
+  "finished": "2026-10-03T15:33:22.117Z"
+}

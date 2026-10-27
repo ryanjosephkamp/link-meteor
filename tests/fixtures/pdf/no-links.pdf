@@ -1,0 +1,37 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Courier /Encoding /WinAnsiEncoding >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [4 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Length 188 >>
+stream
+BT /F1 16 Tf 1 0 0 1 72.00 720 Tm (Words Without Links) Tj ET
+BT /F1 11 Tf 1 0 0 1 72.00 694 Tm (This page has text and an address printed without a link: https://example.org/plain) Tj ET
+endstream
+endobj
+4 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 1 0 R >> >> /Contents 3 0 R /Annots [] >>
+endobj
+5 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+6 0 obj
+<<  >>
+endobj
+xref
+0 7
+0000000000 65535 f 
+0000000009 00000 n 
+0000000104 00000 n 
+0000000161 00000 n 
+0000000399 00000 n 
+0000000536 00000 n 
+0000000585 00000 n 
+trailer
+<< /Size 7 /Root 5 0 R /Info 6 0 R >>
+startxref
+607
+%%EOF

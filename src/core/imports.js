@@ -298,7 +298,7 @@ const TARGET_NAMES = {
 export const TARGETS = Object.freeze(Object.keys(TARGET_NAMES));
 // Link Meteor's own export columns that have no place on an imported link. They are offered as
 // new columns, but not chosen.
-const EXPORT_ONLY = new Set(['accessible label', 'original href', 'source page url', 'source page title', 'frame url', 'captured at', 'capture batch id',
+const EXPORT_ONLY = new Set(['accessible label', 'original href', 'source page url', 'source page title', 'frame url', 'pdf page', 'captured at', 'capture batch id',
   'occurrence id', 'context', 'doi', 'arxiv id', 'pubmed id', 'isbn', 'imported from']);
 const KNOWN_HEADERS = new Set([...Object.values(TARGET_NAMES).flat(), ...EXPORT_ONLY]);
 const headerKey = (value) => String(value ?? '').toLowerCase().replace(/[^\p{L}\p{N}]+/gu, ' ').trim();

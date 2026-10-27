@@ -1,0 +1,12 @@
+PASS An endless feed: Scroll to the end first reads every batch once, shows its counter with Stop, and scrolls back {"links":81,"screens":10}
+PASS A lazy feed: batches that take 900 ms and 1,500 ms to arrive are waited for 
+PASS A page with nothing to load ends at once; a feed that scrolls inside its own box is scrolled there 
+PASS A feed that removes old items as it scrolls: links the page removed are kept, none twice {"links":101}
+PASS A feed that never ends stops at 50 screens, and says the page may have more {"seconds":30,"links":421}
+PASS It also stops at 5,000 links, and when its time is up (2 minutes; checked here with a lowered limit) 
+PASS Stop on the page, Escape, and Stop from the workbench each end the scroll at once, keep what it had, and scroll back 
+PASS Inside a longer run the notice shows the run’s counter and keeps Stop; the background’s messages update it; Escape stops the run; afterward it closes itself 
+PASS Next is found as <link rel="next">, <a rel="next">, and a link named next by its text, aria-label or title, in 12 spellings {"spellings":["rel-link","rel-a","text","text-page","raquo","arrow","arrows","aria","title","hidden","older","upper"]}
+PASS No Next: none, a link switched off, a link to this same page, a script address, a hidden link, and words that only look like it; a button is told apart 
+PASS At 320 px the notice fits, and its text and Stop have at least 4.5:1 contrast in light and dark themes {"lowest":16.83}
+PASS 11 checks

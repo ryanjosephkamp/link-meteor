@@ -1,0 +1,32 @@
+{
+  "about": {
+    "exportedAt": "2026-10-03T16:19:50.502Z",
+    "exportedAtLocal": "2026-10-03T12:19:50.502-04:00",
+    "collection": "Reading list",
+    "count": 1,
+    "view": "",
+    "filters": [],
+    "version": "",
+    "fields": [
+      {
+        "id": "f-x",
+        "name": "Quarter"
+      }
+    ]
+  },
+  "rows": [
+    {
+      "anchorText": "Cool roofs",
+      "url": "https://roofs.example/",
+      "notes": "n",
+      "tags": [
+        "roofs"
+      ],
+      "status": "read",
+      "starred": true,
+      "fields": {
+        "f-x": "Q3"
+      }
+    }
+  ]
+}

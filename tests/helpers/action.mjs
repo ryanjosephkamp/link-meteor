@@ -110,6 +110,14 @@ export async function launchWithAction({extension = resolve(root, process.env.LI
         return result.value;
       },
       navigate: (sessionId, url) => send('Page.navigate', {url}, sessionId),
+      // A picture of an attached page as a PNG Buffer, or null when Chrome doesn't hand one over
+      // within `ms` (seen on Windows runners while another tab is in front). A picture is evidence,
+      // never a check, so a suite goes on without it. `targetId` brings that page to the front first.
+      screenshot: async (sessionId, {targetId, ms = 20000} = {}) => {
+        if (targetId) await send('Target.activateTarget', {targetId}).catch(() => {});
+        const picture = send('Page.captureScreenshot', {format: 'png'}, sessionId).then(({data}) => Buffer.from(data, 'base64'), () => null);
+        return Promise.race([picture, sleep(ms).then(() => null)]);
+      },
       // Presses the toolbar action for the first tab whose URL starts with urlPrefix. The action
       // needs the tab's "tab" target, not its page target. Resolves 'clicked' or Chrome's error.
       clickAction: async (urlPrefix) => {

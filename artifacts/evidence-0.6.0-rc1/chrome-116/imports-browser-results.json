@@ -1,0 +1,194 @@
+{
+  "started": "2026-10-03T16:19:48.682Z",
+  "profile": "check-imports-browser-2026-10-03T16-16-48-269Z",
+  "browser": "Chrome for Testing via Playwright, headless, fresh profile, real unpacked extension, no optional grants; the bookmark permission prompt is stubbed",
+  "checks": [
+    {
+      "name": "A CSV through the file chooser: header found, columns mapped by name, two new columns proposed, and each skipped row with its reason; nothing added yet",
+      "summary": [
+        "Adds 4 links, marked Imported, and 2 new custom columns.",
+        "Skips 3 rows: 1 has no address, 1 isn’t a web, email or phone address, 1 repeats an earlier row. You can undo the import."
+      ]
+    },
+    {
+      "name": "Import to a new collection named after the file, with one new custom column: addresses as written kept, one batch, marked Imported; Undo removes it all",
+      "ms": 73
+    },
+    {
+      "name": "Import into an existing collection: its own column mapped by choice, links already saved there skipped and counted; Undo refused once an imported link changed",
+      "links": 3
+    },
+    {
+      "name": "Link Meteor’s own Excel export: both sheets listed, its columns mapped by name, text read exactly (a formula-like anchor stays text)"
+    },
+    {
+      "name": "A deflated workbook (DecompressionStream) with shared strings, a cached formula value and two sheets: tags and reading status mapped by name, the other sheet chosen and back"
+    },
+    {
+      "name": "A browser’s bookmarks HTML file: folder paths as where each came from, tags and descriptions mapped, a bookmarklet skipped"
+    },
+    {
+      "name": "A Link Meteor JSON export maps every column itself; a backup, an .xls, a damaged workbook, a file with no links and one over 20 MB are refused with the reason"
+    },
+    {
+      "name": "A PDF file, beside the other sources: its links with their pages in the same view, no column mapping, the open collection by default, and Undo"
+    },
+    {
+      "name": "Pasted links: a list with anchor text from the words around, spreadsheet cells with their header (and without), and HTML from a web page keeping its anchor text; Escape cancels"
+    },
+    {
+      "name": "A bookmark folder: asked in the click (simulated decline, then a simulated grant the background refuses), then a simulated bookmarks tree: folders searched and chosen, subfolders on and off, imported with folder paths, and undone"
+    },
+    {
+      "name": "A 60,000-row CSV: counted while read, 20,000 links added and the rest skipped as over the limit, then undone",
+      "progress": [
+        "Reading large-list.csv: 10,000 rows so far…",
+        "Reading large-list.csv: 20,000 rows so far…",
+        "Reading large-list.csv: 30,000 rows so far…",
+        "Reading large-list.csv: 40,000 rows so far…",
+        "Reading large-list.csv: 50,000 rows so far…",
+        "Reading large-list.csv: 60,000 rows so far…"
+      ],
+      "importSmallMs": 73,
+      "readLargeMs": 161,
+      "import20000Ms": 1486,
+      "undo20000Ms": 416
+    },
+    {
+      "name": "320 px with no overflow, every control labeled, and text contrast at least 4.5:1 in every theme, light and dark",
+      "themes": [
+        {
+          "theme": "meteor",
+          "scheme": "light",
+          "lowest": {
+            "name": "skip reason",
+            "ratio": 5.7
+          }
+        },
+        {
+          "theme": "meteor",
+          "scheme": "dark",
+          "lowest": {
+            "name": "map note",
+            "ratio": 7.37
+          }
+        },
+        {
+          "theme": "comet",
+          "scheme": "light",
+          "lowest": {
+            "name": "skip reason",
+            "ratio": 5.7
+          }
+        },
+        {
+          "theme": "comet",
+          "scheme": "dark",
+          "lowest": {
+            "name": "map note",
+            "ratio": 7.33
+          }
+        },
+        {
+          "theme": "aurora",
+          "scheme": "light",
+          "lowest": {
+            "name": "skip reason",
+            "ratio": 5.7
+          }
+        },
+        {
+          "theme": "aurora",
+          "scheme": "dark",
+          "lowest": {
+            "name": "map note",
+            "ratio": 7.31
+          }
+        },
+        {
+          "theme": "ember",
+          "scheme": "light",
+          "lowest": {
+            "name": "skip reason",
+            "ratio": 5.7
+          }
+        },
+        {
+          "theme": "ember",
+          "scheme": "dark",
+          "lowest": {
+            "name": "map note",
+            "ratio": 7.35
+          }
+        },
+        {
+          "theme": "nebula",
+          "scheme": "light",
+          "lowest": {
+            "name": "skip reason",
+            "ratio": 5.7
+          }
+        },
+        {
+          "theme": "nebula",
+          "scheme": "dark",
+          "lowest": {
+            "name": "map note",
+            "ratio": 7.27
+          }
+        },
+        {
+          "theme": "graphite",
+          "scheme": "light",
+          "lowest": {
+            "name": "skip reason",
+            "ratio": 5.7
+          }
+        },
+        {
+          "theme": "graphite",
+          "scheme": "dark",
+          "lowest": {
+            "name": "map note",
+            "ratio": 7.38
+          }
+        },
+        {
+          "theme": "contrast",
+          "scheme": "light",
+          "lowest": {
+            "name": "skip reason",
+            "ratio": 8.77
+          }
+        },
+        {
+          "theme": "contrast",
+          "scheme": "dark",
+          "lowest": {
+            "name": "map note",
+            "ratio": 13.19
+          }
+        }
+      ]
+    },
+    {
+      "name": "No request left the extension while importing, and the page logged no errors"
+    }
+  ],
+  "screenshots": [
+    "import-full-meteor-light.png",
+    "import-320-meteor-light.png",
+    "import-panel-graphite-dark.png"
+  ],
+  "timings": {
+    "importSmallMs": 73,
+    "readLargeMs": 161,
+    "import20000Ms": 1486,
+    "undo20000Ms": 416
+  },
+  "limits": [
+    "Headless Chrome for Testing on one machine with synthetic files; the real bookmarks permission and a real bookmark folder are checked by tests/extended-browser.mjs in a granted profile."
+  ],
+  "result": "PASS",
+  "finished": "2026-10-03T16:19:59.250Z"
+}

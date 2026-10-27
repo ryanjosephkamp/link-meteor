@@ -119,6 +119,23 @@ test('XLSX escapes OOXML control tokens and supports columns past Z', () => {
   assert.equal(encodedCell?.replace(/_x([0-9a-fA-F]{4})_/g, (_, hex) => String.fromCharCode(parseInt(hex, 16))), values[26]);
 });
 
+test('XLSX writes U+FFFE, U+FFFF and lone surrogates as _xHHHH_, so every sheet stays well-formed XML', () => {
+  const odd = 'Figure\uffff 3 \ufffe, lone \ud800 and \udc00, a pair 𠮷 😀';
+  const decode = (text) => text.replace(/_x([0-9a-fA-F]{4})_/g, (_, hex) => String.fromCharCode(parseInt(hex, 16)));
+  const plain = readPackagedMembers(Buffer.from(writeXlsx(['Anchor text'], [[odd]]))).get('xl/worksheets/sheet1.xml').toString('utf8');
+  const book = readPackagedMembers(Buffer.from(makeExport([{ id: '1', anchorText: odd, url: 'https://e.org/a\uffff.pdf' }], { format: 'xlsx', columns: ['anchorText', 'url'], about: { exportedAt: new Date(2026, 9, 26), collection: 'T', version: '1.0.0' } }).data));
+  const formatted = book.get('xl/worksheets/sheet1.xml').toString('utf8');
+  for (const xml of [plain, formatted]) {
+    assert.doesNotMatch(xml, /[\ufffe\uffff\ufffd]/u, 'no noncharacter, and no lone surrogate turned into U+FFFD');
+    assert.equal(decode(xml.match(/<t>(Figure.*?)<\/t>/su)?.[1] ?? ''), odd);
+  }
+  assert.match(formatted, /Figure_xFFFF_ 3 _xFFFE_, lone _xD800_ and _xDC00_, a pair 𠮷 😀/);
+  // A web address holding one is not made a link, since a link's target can't be escaped.
+  assert.equal(hyperlinkTarget('https://e.org/a\uffff.pdf'), '');
+  assert.equal(book.has('xl/worksheets/_rels/sheet1.xml.rels'), false);
+  assert.equal(hyperlinkTarget('https://e.org/𠮷.pdf'), 'https://e.org/𠮷.pdf');
+});
+
 test('Markdown preserves a genuinely empty anchor label', () => {
   assert.equal(makeExport([{anchorText:'',url:'https://example.org/image'}],{format:'markdown'}).data,'[](https://example.org/image)');
 });
@@ -144,8 +161,36 @@ test('typed file names and collection names become safe file names', () => {
   assert.equal(exportFileName({ collection: '..\\..\\secret', extension: 'json', date, settings: { exportTimestamp: false } }), 'secret.json');
   assert.equal(fileNamePart('雪 研究'), '雪-研究');
   assert.equal(fileNamePart('x'.repeat(200)).length, 80);
+  assert.equal(exportFileName({ collection: 'データ分析ガイド', extension: 'csv', date, settings: { exportTimestamp: false } }), 'データ分析ガイド.csv');
+  // 80 Japanese characters are 240 bytes: the name gives way so the whole file name, with room for
+  // " (100)", fits in 255 bytes, and the date stays.
+  const bytes = (text) => new TextEncoder().encode(text).length;
+  const long = exportFileName({ collection: 'データ'.repeat(30), extension: 'xlsx', date, settings: { exportPrefix: '研究ノート' } });
+  assert.match(long, /^研究ノート_(データ)+デ?_2026-09-26_0905\.xlsx$/);
+  assert.ok(bytes(long) + ' (100)'.length <= 255, `${bytes(long)} bytes`);
+  assert.ok(bytes(exportFileName({ collection: 'x', extension: 'md', date, override: '한국어'.repeat(60) })) + 6 <= 255, 'a typed name too');
   assert.throws(() => exportFileName({ collection: 'x', extension: '.xlsx', date }), /extension/);
   assert.throws(() => exportFileName({ collection: 'x', extension: 'xlsx', date: new Date('nope') }), /valid date/);
+});
+
+test('file-name parts fold accents off Latin letters only, and are cut between characters', () => {
+  // Kana keep their voicing marks, Hangul stays in syllables, Cyrillic й and Greek accents stay.
+  for (const [text, part] of [['データ分析', 'データ分析'], ['ガイド', 'ガイド'], ['ｶﾞｲﾄﾞ', 'ガイド'], ['한국어 자료', '한국어-자료'], ['Привет йод', 'Привет-йод'], ['Ελληνικά άρθρα', 'Ελληνικά-άρθρα'], ['हिन्दी लेख', 'हिन्दी-लेख']]) {
+    assert.equal(fileNamePart(text), part, text);
+  }
+  // Latin letters lose their accents, as before, also when the text arrives decomposed; full-width letters are plain.
+  for (const [text, part] of [['Café résumé', 'Cafe-resume'], ['Cafe\u0301', 'Cafe'], ['Ｒｅｐｏｒｔ ２０２６', 'Report-2026'], ['Việt Nam', 'Viet-Nam'], ['Größe', 'Große'], ['\u0301Orphan mark', 'Orphan-mark']]) {
+    assert.equal(fileNamePart(text), part, text);
+  }
+  for (const text of ['한'.repeat(100), 'ガ'.repeat(100), `a${'𠮷'.repeat(50)}`, 'कि'.repeat(50)]) {
+    const part = fileNamePart(text, 80);
+    assert.ok(part.length <= 80 && text.startsWith(part) && part.isWellFormed() && !/^\p{M}/u.test(text.slice(part.length)), part);
+  }
+  assert.equal(fileNamePart('한'.repeat(100), 80), '한'.repeat(80));
+  assert.equal(fileNamePart('é'.repeat(100), 80, 30), 'e'.repeat(30), 'and to a number of UTF-8 bytes');
+  assert.equal(fileNamePart('ガ'.repeat(100), 80, 31), 'ガ'.repeat(10));
+  // A part made by fileNamePart is made again unchanged, so a saved prefix stays valid.
+  for (const text of ['データ分析', '한국어 자료', 'Café résumé', 'हिन्दी लेख', 'Ελληνικά άρθρα', 'ｶﾞｲﾄﾞ']) assert.equal(fileNamePart(fileNamePart(text)), fileNamePart(text), text);
 });
 
 /* 0.3.0: about blocks, formatted workbooks and compatibility with 0.2.2 ------------------- */
@@ -402,4 +447,31 @@ test('research columns (0.5.0): context, reading status, star, identifiers from 
   const json = JSON.parse(makeExport(links, { format: 'json', columns: keys, about, pages }).data);
   assert.deepEqual(json.rows, links);
   assert.throws(() => makeExport(links, { format: 'csv', columns: keys, pages: 'x' }), /pages must be an object/);
+});
+
+test('PDF page (1.0.0): a choosable column beside the capture details, empty for links that came from no PDF', () => {
+  const at = COLUMNS.findIndex(column => column.key === 'pdfPage');
+  assert.deepEqual([COLUMNS[at - 1].key, COLUMNS[at], COLUMNS[at + 1].key], ['frameUrl', { key: 'pdfPage', label: 'PDF page' }, 'capturedAt']);
+  const pdf = 'https://arxiv.org/pdf/2409.11211v1';
+  const links = [
+    { anchorText: 'markomih.github.io/SplatFields', url: 'https://markomih.github.io/SplatFields', sourceUrl: pdf, sourceTitle: 'SplatFields', pdfPage: 3 },
+    { anchorText: '', url: 'https://orcid.org/0000-0001-6305-3896', imported: 'paper.pdf, page 1', pdfPage: 1 },
+    { anchorText: 'From a web page', url: 'https://example.org/' },
+  ];
+  const columns = ['anchorText', 'url', 'sourceUrl', 'pdfPage'];
+  assert.equal(makeExport(links, { format: 'csv', columns }).data, ['Anchor text,URL,Source page URL,PDF page',
+    `markomih.github.io/SplatFields,https://markomih.github.io/SplatFields,${pdf},3`, ',https://orcid.org/0000-0001-6305-3896,,1', 'From a web page,https://example.org/,,', ''].join('\r\n'));
+  assert.equal(makeExport(links, { format: 'tsv', columns: ['pdfPage', 'url'] }).data, 'PDF page\tURL\r\n3\thttps://markomih.github.io/SplatFields\r\n1\thttps://orcid.org/0000-0001-6305-3896\r\n\thttps://example.org/\r\n');
+  assert.match(makeExport(links, { format: 'html', columns: ['pdfPage'] }).data, /<th scope="col">PDF page<\/th>.*<td>3<\/td><\/tr><tr><td>1<\/td><\/tr><tr><td><\/td>/);
+  // The workbook: the page is text like every cell, never a number or a link, and About names the column.
+  const about = { exportedAt: new Date(Date.UTC(2026, 9, 2, 12)), collection: 'Papers', columns };
+  const parts = members(makeExport(links, { format: 'xlsx', columns, about }).data);
+  const sheet = parts.get('xl/worksheets/sheet1.xml');
+  assert.match(sheet, /<c r="D2" [^>]*t="inlineStr"><is><t[^>]*>3<\/t>/);
+  assert.match(sheet, /<c r="D3" [^>]*t="inlineStr"><is><t[^>]*>1<\/t>/);
+  assert.ok([...sheet.match(/<hyperlinks>(.*?)<\/hyperlinks>/s)[1].matchAll(/ref="([A-Z]+)\d+"/g)].every(([, column]) => column !== 'D'), 'a page number is never a link');
+  assert.match(parts.get('xl/worksheets/sheet2.xml'), /Anchor text, URL, Source page URL, PDF page/);
+  // JSON keeps the page as stored, and nothing for links without one.
+  const json = JSON.parse(makeExport(links, { format: 'json', columns, about }).data);
+  assert.deepEqual(json.rows.map(row => row.pdfPage), [3, 1, undefined]);
 });

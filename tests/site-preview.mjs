@@ -13,8 +13,10 @@ catch { playwright = require(process.env.LINK_METEOR_PLAYWRIGHT || resolve(homed
 const root = resolve(import.meta.dirname, '../site');
 const out = resolve(import.meta.dirname, '../.scratch/site-preview');
 const types = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.png': 'image/png', '.webp': 'image/webp', '.woff2': 'font/woff2', '.json': 'application/json', '.zip': 'application/zip', '.txt': 'text/plain', '.jpg': 'image/jpeg', '.mp4': 'video/mp4', '.vtt': 'text/vtt; charset=utf-8', '.xml': 'application/xml' };
-export async function serve(port = 0) {
+// `routes(req, res)` may answer a request itself (return true), for files that aren't in site/.
+export async function serve(port = 0, { routes } = {}) {
   const server = createServer(async (req, res) => {
+    if (routes && await routes(req, res)) return;
     let path = decodeURIComponent(new URL(req.url, 'http://x').pathname);
     if (path === '/link-meteor') path = '/link-meteor/';
     if (path.startsWith('/link-meteor/')) path = path.slice('/link-meteor'.length); // GitHub Pages project path

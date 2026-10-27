@@ -41,6 +41,25 @@
 - The download is now 1.0.0.
 - The guide covers PDFs, the three bounded captures, frames, the lookup and the PDFs as one ZIP or one PDF; the home and install pages cover the new features; the privacy page says what the lookup sends and where.
 
+### Download
+
+`link-meteor-1.0.0.zip`, 2,976,335 bytes, SHA-256 `4c862132f068423231dd66d864ac09b4b8121f7dfe869db50dc9328cae3933bf`. To update from 0.5.0, replace the contents of the same folder, then reload Link Meteor at `chrome://extensions`. Your collections stay with that folder. Make a backup first if you might go back to 0.5.0: it can't restore a 1.0.0 backup.
+
+### Known issues
+
+- In a PDF, a link whose address has neither `https://` nor `www.`, such as `example.com`, is left out; the preview counts it. A linked title's words can lose a final question mark, or a colon in the middle.
+- Links in components that other extensions add to a page, such as a password manager's menu, can be captured with the page's own.
+- A frame inside a closed component that moved to another site after loading can't be matched with what was read in it, so its links are reported as not read.
+- Names printed without a comma, such as "Jun Watanabe", stay whole in citations, so reference managers show them as one name.
+- Removing all-sites access can also remove access to sites you allowed one at a time. That is Chrome's behavior, as before.
+- Tested so far:
+  - automated checks without grants in Chrome for Testing 151 on macOS, Windows and Linux;
+  - the checks that need Allow clicks, on macOS;
+  - the checks that need no grants on Chrome for Testing 116, except the toolbar button, which the test tool can't press there, and part of the page-script simulation, where the test tool stops opening pages;
+  - a hands-on check of this build in everyday Chrome on macOS, with real pages and papers, which found no problems.
+
+  The right-click menus can't be opened by automated Chrome, so their automated checks are simulations. Nobody has tried 1.0.0 by hand on Windows or Linux, and screen readers are not yet tested. See [testing and compatibility](docs/ACCEPTANCE.md).
+
 ## 0.5.0 (2026-10-01)
 
 "Research tools": Link Meteor now keeps what a research workflow needs around each link, and gets links in and out in more ways:

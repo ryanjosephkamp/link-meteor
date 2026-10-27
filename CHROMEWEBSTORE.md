@@ -2,7 +2,7 @@
 
 > Last Updated: 2026-09-27
 >
-> **Status: draft.** Link Meteor is not on the Chrome Web Store yet. Version 0.3.0 is packaged, and the owner's hands-on check of it passed on 2026-09-27. Submission comes after 0.3.0 is released. Before submitting, create the screenshots and promo tiles below and check this text against the released build. This file is not part of the extension package.
+> **Status: draft.** Link Meteor is not on the Chrome Web Store yet. Version 1.0.0 is packaged, and a hands-on check of it, reported on 2026-10-27, found no problems. No submission is scheduled. Before submitting, create the screenshots and promo tiles below and check this text against the released build. This file is not part of the extension package.
 
 ## Store Listing
 
@@ -188,11 +188,12 @@ https://ryanjosephkamp.github.io/link-meteor/
 
 | Version | Date | Changes | Status |
 |---------|------|---------|--------|
-| 0.5.0 | 2026-10-01 (packaged) | Context around each link; page citations read from pages' own tags; identifiers (DOI, arXiv, PubMed, PMC, ISBN) read from addresses; citations borrowed from a saved page about the same work; reading status, stars and Insights; citation exports (BibTeX, RIS, CSL-JSON, annotated bibliography, Obsidian note) and new export columns; importing links from files, pasted text and bookmark folders; moving and copying links between collections; the toolbar icon closing the side panel and a labeled Full view button; the last backup's date; clearer messages on PDFs. No new permission. Backup format 3. ZIP SHA-256 `57020852b82b26d8d0562707bddeb00ef4ffcd5875264c23ba0e6da875ff589f`. | Packaged, not yet submitted |
+| 1.0.0 | 2026-10-27 (packaged) | The links inside PDFs, from a tab or a file, with their words, pages and context; Scroll to the end first, Follow Next (up to 20 pages) and Capture their pages (up to 20 links), each as one batch with one Undo; links inside closed components and frames from other sites, with Allow these sites; an optional page details lookup (Crossref, DataCite, NCBI) from a sandboxed frame; chosen PDFs as one ZIP or combined into one PDF; a PDF page column. Includes PDF.js. No new permission. Backup format 4. ZIP SHA-256 `4c862132f068423231dd66d864ac09b4b8121f7dfe869db50dc9328cae3933bf`. | Packaged, not yet submitted |
+| 0.5.0 | 2026-10-01 (released on GitHub) | Context around each link; page citations read from pages' own tags; identifiers (DOI, arXiv, PubMed, PMC, ISBN) read from addresses; citations borrowed from a saved page about the same work; reading status, stars and Insights; citation exports (BibTeX, RIS, CSL-JSON, annotated bibliography, Obsidian note) and new export columns; importing links from files, pasted text and bookmark folders; moving and copying links between collections; the toolbar icon closing the side panel and a labeled Full view button; the last backup's date; clearer messages on PDFs. No new permission. Backup format 3. ZIP SHA-256 `57020852b82b26d8d0562707bddeb00ef4ffcd5875264c23ba0e6da875ff589f`. | Released as a ZIP, not submitted |
 | 0.4.0 | 2026-09-29 (released on GitHub) | Seven themes with light and dark, and a themed toolbar icon; after-a-drag choices (show the card, copy right away, add right away); leaving out navigation links; card filters; marking and skipping links already saved; copy as rich links; saving tabs as links; custom columns; downloading the files behind links; highlights that follow their links while scrolling; more right-click and toolbar menu actions; Copy diagnostics. New permission: optional `downloads`. ZIP SHA-256 `68105db8e9dc47e1a222a2f668e5cbc22df315f8a24f09d83f57f036f6bc7036`. | Released as a ZIP, not submitted |
 | 0.3.0 | 2026-09-27 (released on GitHub) | All-sites choice with exceptions and a Command or Ctrl hold key, a welcome card, more capture card actions, opening up to 500 links, export file names and formatted workbooks, existing bookmark folders, backup and restore. New permissions: optional `tabGroups`, and `unlimitedStorage`. ZIP SHA-256 `25463687d2f0a7b9e280de7d4f905753cb9b8cc57b359129937f8ea5e98302c7`. | Released as a ZIP, not submitted |
 
-Versions 0.1.0 to 0.4.0 were distributed only as a ZIP for Load unpacked and were never submitted.
+Versions 0.1.0 to 0.5.0 were distributed only as a ZIP for Load unpacked and were never submitted.
 
 ## Review Notes
 

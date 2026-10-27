@@ -1,4 +1,4 @@
-// Allow these sites (1.0.0) with Chrome's real prompt, for the lead's owner session. Never run in CI.
+// Allow these sites (1.0.0) with Chrome's real prompt. Never run in CI.
 // Run it in the per-site profile (prepared with `node tests/prepare-grants.mjs`, which grants the
 // fixture site, 127.0.0.1), AFTER tests/browser.mjs and the other per-site suites and BEFORE
 // tests/permission-browser.mjs, with the same fixture port as the preparation.

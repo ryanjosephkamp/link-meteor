@@ -1,7 +1,7 @@
 // Prepares optional-permission grants in a NEW task-owned test profile by
 // driving the product's own permission paths in Chrome for Testing (headed by default).
-// The owner, or Codex computer use at the owner's direction, clicks Allow on each native
-// prompt; each 'awaiting-native-allow' line names the prompt that is waiting.
+// A person clicks Allow on each native prompt; each 'awaiting-native-allow' line names the
+// prompt that is waiting.
 // Under automation requests may resolve without an observed click. Successful
 // grants are not evidence that native Allow/Deny sheets were exercised.
 //

@@ -1,4 +1,4 @@
-// Access and capture (0.3.0) with real grants, for the lead's owner session. Run it in the profile
+// Access and capture (0.3.0) with real grants. Run it in the profile
 // prepared with LINK_METEOR_GRANTS=all-sites node tests/prepare-grants.mjs (all sites, tab groups,
 // bookmarks, and a per-site grant for the fixture site), before tests/permission-browser.mjs.
 // It never shows a native prompt: every grant it uses already exists. 0.5.0: with all-sites access,

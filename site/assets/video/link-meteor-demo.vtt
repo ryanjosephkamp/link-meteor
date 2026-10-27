@@ -1,61 +1,61 @@
 WEBVTT
 
 1
-00:00:03.600 --> 00:00:07.146
+00:00:03.600 --> 00:00:07.051
 Press the shortcut on any page to select a region.
 
 2
-00:00:07.246 --> 00:00:11.223
+00:00:07.151 --> 00:00:11.018
 Drag across the links you want. Each match lights up.
 
 3
-00:00:11.323 --> 00:00:13.849
+00:00:11.118 --> 00:00:13.637
 7 links selected, and the card says where they’ll go.
 
 4
-00:00:13.949 --> 00:00:16.507
+00:00:13.737 --> 00:00:16.309
 Add them to a collection, or copy two columns right away.
 
 5
-00:00:16.907 --> 00:00:20.673
+00:00:16.709 --> 00:00:20.394
 Anchor text, URL and source page stay in separate fields.
 
 6
-00:00:20.773 --> 00:00:25.206
+00:00:20.494 --> 00:00:24.881
 An image link keeps empty anchor text. Its alt text is kept as a separate label.
 
 7
-00:00:25.306 --> 00:00:31.898
+00:00:24.981 --> 00:00:31.154
 Group by URL when you want. Every label stays visible.
 
 8
-00:00:31.998 --> 00:00:39.990
+00:00:31.254 --> 00:00:38.865
 Open a group to see each occurrence and where it came from.
 
 9
-00:00:40.090 --> 00:00:44.123
+00:00:38.965 --> 00:00:42.938
 Switch back any time. All 7 occurrences are still there.
 
 10
-00:00:44.223 --> 00:00:46.533
+00:00:43.038 --> 00:00:45.342
 Download Excel, CSV, JSON, BibTeX and more.
 
 11
-00:00:46.933 --> 00:00:49.433
+00:00:45.742 --> 00:00:48.242
 Two clean columns: anchor text and URL.
 
 12
-00:00:49.533 --> 00:00:52.333
+00:00:48.342 --> 00:00:51.142
 The image link’s anchor text stays empty. Nothing is invented.
 
 13
-00:00:52.733 --> 00:00:56.631
+00:00:51.542 --> 00:00:55.470
 New in 1.0: on a PDF’s tab, Link Meteor reads the links inside the PDF.
 
 14
-00:00:56.731 --> 00:01:01.189
+00:00:55.570 --> 00:00:59.965
 A preview shows every link with its page. Nothing is saved yet.
 
 15
-00:01:01.289 --> 00:01:06.454
+00:01:00.065 --> 00:01:05.259
 Add them in one step, with the PDF itself as a link.

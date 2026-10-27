@@ -1,73 +1,73 @@
 WEBVTT
 
 1
-00:00:03.400 --> 00:00:07.475
+00:00:03.400 --> 00:00:07.504
 Step 1: Download the ZIP from the install page.
 
 2
-00:00:07.875 --> 00:00:11.875
+00:00:07.904 --> 00:00:11.904
 Step 2: Unzip it into a folder you’ll keep. Chrome loads Link Meteor from there.
 
 3
-00:00:12.275 --> 00:00:14.998
+00:00:12.304 --> 00:00:15.008
 Step 3: Open chrome://extensions and turn on Developer mode.
 
 4
-00:00:15.098 --> 00:00:18.412
+00:00:15.108 --> 00:00:18.303
 Step 3: Then choose Load unpacked.
 
 5
-00:00:18.812 --> 00:00:22.612
+00:00:18.703 --> 00:00:22.503
 Select the unzipped folder, the one that contains manifest.json.
 
 6
-00:00:23.012 --> 00:00:26.578
+00:00:22.903 --> 00:00:26.397
 Link Meteor 1.0.0 now appears in your extensions.
 
 7
-00:00:26.978 --> 00:00:30.578
+00:00:26.797 --> 00:00:30.397
 Step 4: Pin it from the puzzle-piece menu so the icon stays in view.
 
 8
-00:00:30.978 --> 00:00:34.215
+00:00:30.797 --> 00:00:34.063
 Step 5: On the practice page, press the shortcut…
 
 9
-00:00:34.315 --> 00:00:37.821
+00:00:34.163 --> 00:00:37.683
 Step 5: …and drag across one section.
 
 10
-00:00:37.921 --> 00:00:40.412
+00:00:37.783 --> 00:00:40.273
 Compare the count with the section’s answer key: 9 links.
 
 11
-00:00:40.512 --> 00:00:43.439
+00:00:40.373 --> 00:00:43.240
 Copy text + URL puts two columns on your clipboard.
 
 12
-00:00:43.539 --> 00:00:45.996
+00:00:43.340 --> 00:00:45.799
 Or add them to a collection to review later.
 
 13
-00:00:46.396 --> 00:00:50.187
+00:00:46.199 --> 00:00:49.926
 Step 6: Click the Link Meteor icon to open its side panel beside the page.
 
 14
-00:00:50.287 --> 00:00:54.962
+00:00:50.026 --> 00:00:54.640
 Step 6: Export shows exactly which links it will use.
 
 15
-00:00:55.062 --> 00:00:57.565
+00:00:54.740 --> 00:00:57.243
 Step 6: Pick a format and download. Here, CSV.
 
 16
-00:00:57.965 --> 00:01:01.476
+00:00:57.643 --> 00:01:01.131
 If the shortcut doesn’t work, change it at chrome://extensions/shortcuts.
 
 17
-00:01:01.876 --> 00:01:06.433
+00:01:01.531 --> 00:01:06.111
 Help, bug reports and suggestions are under About and help.
 
 18
-00:01:06.533 --> 00:01:09.533
+00:01:06.211 --> 00:01:09.211
 Reports are public, so leave out private URLs and data.

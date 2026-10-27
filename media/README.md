@@ -4,8 +4,8 @@ Two silent videos for the website, made from recordings of Link Meteor 1.0.0 on 
 
 | Video | Page | Length | File |
 | --- | --- | --- | --- |
-| Link Meteor in about a minute | [Home](../site/index.html#watch) | 71.7 s | `site/assets/video/link-meteor-demo.mp4`, 8.4 MB |
-| Install Link Meteor and make your first capture | [Install](../site/install.html#watch) | 74.7 s | `site/assets/video/link-meteor-install.mp4`, 8.3 MB |
+| Link Meteor in about a minute | [Home](../site/index.html#watch) | 70.5 s | `site/assets/video/link-meteor-demo.mp4`, 8.4 MB |
+| Install Link Meteor and make your first capture | [Install](../site/install.html#watch) | 74.4 s | `site/assets/video/link-meteor-install.mp4`, 8.1 MB |
 
 Both are 1920×1080 H.264 (High profile, yuv420p, 30 fps) with no audio track and `+faststart`. Each has a poster JPEG, WebVTT captions and a transcript on its page. Captions are also burned into the picture, so the videos make sense without sound or a caption menu. The pages use `controls preload="none"` with no autoplay or loop, so nothing downloads until a visitor presses play. The poster is the still-image alternative, and the transcript is the text alternative.
 

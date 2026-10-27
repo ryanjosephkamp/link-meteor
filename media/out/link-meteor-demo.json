@@ -2,15 +2,15 @@
   "id": "link-meteor-demo",
   "title": "Link Meteor in about a minute",
   "file": "site/assets/video/link-meteor-demo.mp4",
-  "bytes": 8406183,
-  "sha256": "cf340afa0e99862c0ea2152d422728387ce5ccbd300110f369b2873b4aff116b",
-  "seconds": 71.65,
+  "bytes": 8426824,
+  "sha256": "3229ae9905a939ae2a8e8efa32db15f736a53a1e8d7db8049efd77a2dd1fc7d8",
+  "seconds": 70.46,
   "fps": 30,
-  "frames": 2150,
+  "frames": 2114,
   "size": "1920x1080",
   "codec": "H.264 High, yuv420p, no audio track",
   "crf": 24,
-  "renderedAt": "2026-10-26T23:57:09.121Z",
+  "renderedAt": "2026-10-27T04:13:58.414Z",
   "renderSeconds": 59,
   "captions": 15,
   "sources": [
@@ -22,14 +22,14 @@
     {
       "scene": 1,
       "clip": "demo-select",
-      "method": "reconstruction",
-      "capture": "extension script bridged to the loaded extension",
+      "method": "recording",
+      "capture": "the extension’s own injected script",
       "page": "Practice page",
       "version": "1.0.0",
       "build": "f96de11aa07ad99a92db189416330ad90813d3c847da55d3b8ee4eda0baaf148",
       "chrome": "Chrome for Testing 151.0.7922.34",
-      "recordedAt": "2026-10-26T23:53:42.393Z",
-      "profile": "task-owned profile media-rehearsal-a"
+      "recordedAt": "2026-10-27T04:10:46.444Z",
+      "profile": "task-owned profile media-rec-1.0.0"
     },
     {
       "scene": 2,
@@ -39,13 +39,13 @@
       "version": "1.0.0",
       "build": "f96de11aa07ad99a92db189416330ad90813d3c847da55d3b8ee4eda0baaf148",
       "chrome": "Chrome for Testing 151.0.7922.34",
-      "recordedAt": "2026-10-26T23:54:13.783Z",
-      "profile": "task-owned profile media-rehearsal-a"
+      "recordedAt": "2026-10-27T04:11:16.811Z",
+      "profile": "task-owned profile media-rec-1.0.0"
     },
     {
       "scene": 3,
       "method": "file rendering",
-      "note": "Rows read with openpyxl from the workbook downloaded during recording (demo-export.xlsx, saved as Urban-heat-islands-sources_2026-10-26_1954.xlsx)",
+      "note": "Rows read with openpyxl from the workbook downloaded during recording (demo-export.xlsx, saved as Urban-heat-islands-sources_2026-10-27_0011.xlsx)",
       "rows": 7
     },
     {
@@ -57,8 +57,8 @@
       "version": "1.0.0",
       "build": "f96de11aa07ad99a92db189416330ad90813d3c847da55d3b8ee4eda0baaf148",
       "chrome": "Chrome for Testing 151.0.7922.34",
-      "recordedAt": "2026-10-26T23:54:31.913Z",
-      "profile": "task-owned profile media-rehearsal-a",
+      "recordedAt": "2026-10-27T04:11:34.932Z",
+      "profile": "task-owned profile media-rec-1.0.0",
       "still": "demo-pdf-still.jpg"
     },
     {

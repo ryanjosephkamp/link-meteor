@@ -2,15 +2,15 @@
   "id": "link-meteor-install",
   "title": "Install Link Meteor and make your first capture",
   "file": "site/assets/video/link-meteor-install.mp4",
-  "bytes": 8296026,
-  "sha256": "843b03380f06c14ef201c7b390e0c455724e51f9bc2c5001fbc1211ece269ff7",
-  "seconds": 74.73,
+  "bytes": 8104031,
+  "sha256": "2461b8d7d81e3c0cebc398ea3a908c6942335bf38d35a01fd6c086164b302410",
+  "seconds": 74.41,
   "fps": 30,
-  "frames": 2242,
+  "frames": 2232,
   "size": "1920x1080",
   "codec": "H.264 High, yuv420p, no audio track",
   "crf": 24,
-  "renderedAt": "2026-10-26T23:58:06.943Z",
+  "renderedAt": "2026-10-27T04:14:56.920Z",
   "renderSeconds": 58,
   "captions": 18,
   "sources": [
@@ -27,8 +27,8 @@
       "version": "1.0.0",
       "build": "f96de11aa07ad99a92db189416330ad90813d3c847da55d3b8ee4eda0baaf148",
       "chrome": "Chrome for Testing 151.0.7922.34",
-      "recordedAt": "2026-10-26T23:54:39.122Z",
-      "profile": "task-owned profile media-rehearsal-a"
+      "recordedAt": "2026-10-27T04:11:42.011Z",
+      "profile": "task-owned profile media-rec-1.0.0"
     },
     {
       "scene": 2,
@@ -43,8 +43,8 @@
       "version": "1.0.0",
       "build": "f96de11aa07ad99a92db189416330ad90813d3c847da55d3b8ee4eda0baaf148",
       "chrome": "Chrome for Testing 151.0.7922.34",
-      "recordedAt": "2026-10-26T23:55:45.309Z",
-      "profile": "separate task-owned profile media-rehearsal-a-plain, without Link Meteor"
+      "recordedAt": "2026-10-27T04:12:47.495Z",
+      "profile": "separate task-owned profile media-rec-1.0.0-plain, without Link Meteor"
     },
     {
       "scene": 4,
@@ -59,8 +59,8 @@
       "version": "1.0.0",
       "build": "f96de11aa07ad99a92db189416330ad90813d3c847da55d3b8ee4eda0baaf148",
       "chrome": "Chrome for Testing 151.0.7922.34",
-      "recordedAt": "2026-10-26T23:55:29.042Z",
-      "profile": "task-owned profile media-rehearsal-a"
+      "recordedAt": "2026-10-27T04:12:31.776Z",
+      "profile": "task-owned profile media-rec-1.0.0"
     },
     {
       "scene": 6,
@@ -70,14 +70,14 @@
     {
       "scene": 7,
       "clip": "tut-capture",
-      "method": "reconstruction",
-      "capture": "extension script bridged to the loaded extension",
+      "method": "recording",
+      "capture": "the extension’s own injected script",
       "page": "Practice page",
       "version": "1.0.0",
       "build": "f96de11aa07ad99a92db189416330ad90813d3c847da55d3b8ee4eda0baaf148",
       "chrome": "Chrome for Testing 151.0.7922.34",
-      "recordedAt": "2026-10-26T23:54:56.336Z",
-      "profile": "task-owned profile media-rehearsal-a"
+      "recordedAt": "2026-10-27T04:11:59.192Z",
+      "profile": "task-owned profile media-rec-1.0.0"
     },
     {
       "scene": 8,
@@ -87,8 +87,8 @@
       "version": "1.0.0",
       "build": "f96de11aa07ad99a92db189416330ad90813d3c847da55d3b8ee4eda0baaf148",
       "chrome": "Chrome for Testing 151.0.7922.34",
-      "recordedAt": "2026-10-26T23:55:12.563Z",
-      "profile": "task-owned profile media-rehearsal-a",
+      "recordedAt": "2026-10-27T04:12:15.279Z",
+      "profile": "task-owned profile media-rec-1.0.0",
       "still": "tut-capture-still.jpg"
     },
     {
@@ -99,8 +99,8 @@
       "version": "1.0.0",
       "build": "f96de11aa07ad99a92db189416330ad90813d3c847da55d3b8ee4eda0baaf148",
       "chrome": "Chrome for Testing 151.0.7922.34",
-      "recordedAt": "2026-10-26T23:55:35.501Z",
-      "profile": "task-owned profile media-rehearsal-a"
+      "recordedAt": "2026-10-27T04:12:38.234Z",
+      "profile": "task-owned profile media-rec-1.0.0"
     },
     {
       "scene": 10,
@@ -110,8 +110,8 @@
       "version": "1.0.0",
       "build": "f96de11aa07ad99a92db189416330ad90813d3c847da55d3b8ee4eda0baaf148",
       "chrome": "Chrome for Testing 151.0.7922.34",
-      "recordedAt": "2026-10-26T23:55:21.951Z",
-      "profile": "task-owned profile media-rehearsal-a",
+      "recordedAt": "2026-10-27T04:12:24.693Z",
+      "profile": "task-owned profile media-rec-1.0.0",
       "still": "tut-capture-still.jpg"
     },
     {

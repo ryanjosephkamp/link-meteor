@@ -13,15 +13,18 @@ function parse(value) {
 }
 function decode(text) { try { return decodeURIComponent(text); } catch { return text; } }
 
-// Trims what a DOI can't end with: trailing punctuation, an unbalanced closing parenthesis and a
-// file extension that belongs to the address, not the DOI.
+// bioRxiv's and medRxiv's DOIs (10.1101/2020.03.15.992883, or six digits before 2020), with what
+// their addresses add: the version and the page (v1, v1.full, v1.full.pdf, v2.full-text).
+const RXIV = /^(10\.1101\/(?:\d{4}\.\d{2}\.\d{2}\.)?\d{6,})(?:v\d+)?(?:\.[-.\w]*)?$/i;
+// Trims what a DOI can't end with: trailing punctuation, an unbalanced closing parenthesis, a
+// file extension that belongs to the address, not the DOI, and bioRxiv's version and page.
 function tidyDoi(raw) {
   let doi = raw.replace(/\.(pdf|html?|xml|epub)$/i, '');
   for (;;) {
     const before = doi;
     doi = doi.replace(TRAILING, '');
     if (doi.endsWith(')') && (doi.match(/\(/g) || []).length < (doi.match(/\)/g) || []).length) doi = doi.slice(0, -1);
-    if (doi === before) return doi;
+    if (doi === before) return doi.replace(RXIV, '$1');
   }
 }
 
@@ -83,12 +86,22 @@ function isbnIn(url) {
   return '';
 }
 
+// The page publishers name after the DOI in their addresses (/doi/10.1002/x/abstract,
+// /articles/10.3389/x/full, /article/10.1088/…/pdf, /doi/10.1108/x/full/html): not part of the DOI.
+const PAGE_NAME = /\/(?:full|abstract|summary|fulltext|full-text|pdf|epdf|epub|html|meta|references)$/i;
+function addressDoi(text) {
+  let doi = doiIn(text);
+  // A DOI that would be left without its suffix keeps it.
+  while (PAGE_NAME.test(doi) && DOI.test(doi.replace(PAGE_NAME, ''))) doi = tidyDoi(doi.replace(PAGE_NAME, ''));
+  return doi;
+}
+
 // A DOI in the address: doi.org and dx.doi.org paths, /doi/ paths, doi= values, and otherwise
 // anywhere in the path or query, as publishers put them.
 function doiInUrl(url) {
-  if (/^(dx\.)?doi\.org$/i.test(url.hostname)) return doiIn(url.pathname.slice(1));
-  for (const [key, text] of url.searchParams) if (key.toLowerCase() === 'doi') { const found = doiIn(text); if (found) return found; }
-  return doiIn(url.pathname) || doiIn(url.search);
+  if (/^(dx\.)?doi\.org$/i.test(url.hostname)) return addressDoi(url.pathname.slice(1));
+  for (const [key, text] of url.searchParams) if (key.toLowerCase() === 'doi') { const found = addressDoi(text); if (found) return found; }
+  return addressDoi(url.pathname) || addressDoi(url.search);
 }
 
 function addressIdentifiers(link) {

@@ -6,7 +6,8 @@ export const COLUMNS = [
   { key: 'anchorText', label: 'Anchor text' }, { key: 'url', label: 'URL' },
   { key: 'accessibleLabel', label: 'Accessible label' }, { key: 'originalHref', label: 'Original href' },
   { key: 'sourceUrl', label: 'Source page URL' }, { key: 'sourceTitle', label: 'Source page title' },
-  { key: 'frameUrl', label: 'Frame URL' }, { key: 'capturedAt', label: 'Captured at' },
+  // 1.0.0: the page of the PDF a link was read from; empty for links from web pages.
+  { key: 'frameUrl', label: 'Frame URL' }, { key: 'pdfPage', label: 'PDF page' }, { key: 'capturedAt', label: 'Captured at' },
   { key: 'batchId', label: 'Capture batch ID' }, { key: 'id', label: 'Occurrence ID' },
   { key: 'notes', label: 'Notes' }, { key: 'tags', label: 'Tags' },
   // Research columns (0.5.0). Identifiers are derived per link, never stored.
@@ -97,12 +98,27 @@ function normalizeLabel(value) { return String(value || '').replace(/\s+/gu, ' '
 
 const WINDOWS_RESERVED = /^(con|prn|aux|nul|com[1-9]|lpt[1-9])$/i;
 
-// One file-name part: accents folded to plain letters, any other run of characters outside
-// letters, digits, dot, underscore and hyphen becomes one hyphen, with no leading or trailing
-// dot or hyphen (hidden files and Windows trailing dots).
-export function fileNamePart(value, max = 80) {
-  return String(value ?? '').normalize('NFKD').replace(/\p{M}+/gu, '')
-    .replace(/[^\p{L}\p{N}._-]+/gu, '-').replace(/^[.-]+/, '').slice(0, max).replace(/[.-]+$/, '');
+// One file-name part: accents folded off Latin letters only (Café → Cafe; データ and 한국어 keep
+// their marks, recomposed), any other run of characters outside letters, marks, digits, dot,
+// underscore and hyphen becomes one hyphen, with no leading or trailing dot or hyphen (hidden
+// files and Windows trailing dots). It is cut to at most max UTF-16 units and maxBytes UTF-8
+// bytes, never inside a character.
+export function fileNamePart(value, max = 80, maxBytes = Infinity) {
+  const part = String(value ?? '').normalize('NFKD').replace(/(^|\p{Script=Latin}|[^\p{L}\p{M}])\p{M}+/gu, '$1').normalize('NFC')
+    .replace(/[^\p{L}\p{M}\p{N}._-]+/gu, '-').replace(/^[.-]+/, '');
+  return fitText(part, max, maxBytes).replace(/[.-]+$/, '');
+}
+const characters = new Intl.Segmenter('en', { granularity: 'grapheme' }), utf8 = new TextEncoder();
+// The longest start of text, in whole characters (a letter and its marks, a surrogate pair).
+function fitText(text, max, maxBytes) {
+  if (text.length <= max && text.length * 3 <= maxBytes) return text;
+  let fit = '', bytes = 0;
+  for (const { segment } of characters.segment(text)) {
+    bytes += utf8.encode(segment).length;
+    if (fit.length + segment.length > max || bytes > maxBytes) break;
+    fit += segment;
+  }
+  return fit;
 }
 
 function pad(n) { return String(n).padStart(2, '0'); }
@@ -114,14 +130,18 @@ export function exportFileName({ collection = '', extension, settings = {}, date
   if (!(date instanceof Date) || Number.isNaN(date.valueOf())) throw new Error('Export time must be a valid date');
   const { exportPrefix = '', exportTimestamp = true, exportTimestampFormat = 'datetime' } = settings;
   const typed = String(override ?? '').trim().replace(new RegExp(`\\.${extension}$`, 'i'), '');
-  let stem = fileNamePart(typed, 150);
+  // The whole name fits in 255 UTF-8 bytes with room for Chrome's " (100)": a long name in Japanese
+  // or Korean takes three bytes a character. The collection's name gives way first.
+  const budget = 255 - ' (100)'.length - extension.length - 1;
+  let stem = fileNamePart(typed, 150, budget);
   if (!stem) {
-    const parts = [fileNamePart(exportPrefix, 40), fileNamePart(collection) || 'links'];
+    const prefix = fileNamePart(exportPrefix, 40), stamp = [];
     if (exportTimestamp) {
-      parts.push(`${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`);
-      if (exportTimestampFormat !== 'date') parts.push(`${pad(date.getHours())}${pad(date.getMinutes())}`);
+      stamp.push(`${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`);
+      if (exportTimestampFormat !== 'date') stamp.push(`${pad(date.getHours())}${pad(date.getMinutes())}`);
     }
-    stem = parts.filter(Boolean).join('_');
+    const room = budget - utf8.encode([prefix, ...stamp].filter(Boolean).map((part) => `${part}_`).join('')).length;
+    stem = [prefix, fileNamePart(collection, 80, room) || 'links', ...stamp].filter(Boolean).join('_');
   }
   if (WINDOWS_RESERVED.test(stem)) stem += '_';
   return `${stem}.${extension}`;

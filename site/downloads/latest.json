@@ -1,7 +1,7 @@
 {
-  "version": "0.5.0",
-  "file": "downloads/link-meteor-0.5.0.zip",
-  "bytes": 801611,
-  "sha256": "57020852b82b26d8d0562707bddeb00ef4ffcd5875264c23ba0e6da875ff589f",
+  "version": "1.0.0",
+  "file": "downloads/link-meteor-1.0.0.zip",
+  "bytes": 2976335,
+  "sha256": "4c862132f068423231dd66d864ac09b4b8121f7dfe869db50dc9328cae3933bf",
   "minimumChromeVersion": "116"
 }

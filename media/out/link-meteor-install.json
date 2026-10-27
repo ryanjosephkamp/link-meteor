@@ -2,16 +2,16 @@
   "id": "link-meteor-install",
   "title": "Install Link Meteor and make your first capture",
   "file": "site/assets/video/link-meteor-install.mp4",
-  "bytes": 7349304,
-  "sha256": "8896b6a98fa03b7d3427d62c08395f2b53b72a22e44903b7e630febc7710b865",
-  "seconds": 74.46,
+  "bytes": 8296026,
+  "sha256": "843b03380f06c14ef201c7b390e0c455724e51f9bc2c5001fbc1211ece269ff7",
+  "seconds": 74.73,
   "fps": 30,
-  "frames": 2234,
+  "frames": 2242,
   "size": "1920x1080",
   "codec": "H.264 High, yuv420p, no audio track",
   "crf": 24,
-  "renderedAt": "2026-09-26T15:09:54.431Z",
-  "renderSeconds": 65,
+  "renderedAt": "2026-10-26T23:58:06.943Z",
+  "renderSeconds": 58,
   "captions": 18,
   "sources": [
     {
@@ -24,10 +24,11 @@
       "clip": "tut-install",
       "method": "recording",
       "page": "Install · Link Meteor",
-      "version": "0.2.2",
-      "build": "41f6195f64d662843e2d2bfa60e5afb06dd5ed334abae21cc3dd4272a56caeae",
-      "recordedAt": "2026-09-26T15:03:54.203Z",
-      "profile": "task-owned test profile"
+      "version": "1.0.0",
+      "build": "f96de11aa07ad99a92db189416330ad90813d3c847da55d3b8ee4eda0baaf148",
+      "chrome": "Chrome for Testing 151.0.7922.34",
+      "recordedAt": "2026-10-26T23:54:39.122Z",
+      "profile": "task-owned profile media-rehearsal-a"
     },
     {
       "scene": 2,
@@ -39,10 +40,11 @@
       "clip": "tut-ext-before",
       "method": "recording",
       "page": "chrome://extensions",
-      "version": "0.2.2",
-      "build": "41f6195f64d662843e2d2bfa60e5afb06dd5ed334abae21cc3dd4272a56caeae",
-      "recordedAt": "2026-09-26T15:04:59.302Z",
-      "profile": "separate task-owned profile without Link Meteor"
+      "version": "1.0.0",
+      "build": "f96de11aa07ad99a92db189416330ad90813d3c847da55d3b8ee4eda0baaf148",
+      "chrome": "Chrome for Testing 151.0.7922.34",
+      "recordedAt": "2026-10-26T23:55:45.309Z",
+      "profile": "separate task-owned profile media-rehearsal-a-plain, without Link Meteor"
     },
     {
       "scene": 4,
@@ -54,10 +56,11 @@
       "clip": "tut-ext-after",
       "method": "recording",
       "page": "chrome://extensions",
-      "version": "0.2.2",
-      "build": "41f6195f64d662843e2d2bfa60e5afb06dd5ed334abae21cc3dd4272a56caeae",
-      "recordedAt": "2026-09-26T15:04:43.118Z",
-      "profile": "task-owned test profile"
+      "version": "1.0.0",
+      "build": "f96de11aa07ad99a92db189416330ad90813d3c847da55d3b8ee4eda0baaf148",
+      "chrome": "Chrome for Testing 151.0.7922.34",
+      "recordedAt": "2026-10-26T23:55:29.042Z",
+      "profile": "task-owned profile media-rehearsal-a"
     },
     {
       "scene": 6,
@@ -67,23 +70,25 @@
     {
       "scene": 7,
       "clip": "tut-capture",
-      "method": "recording",
-      "capture": "the extension’s own injected script",
+      "method": "reconstruction",
+      "capture": "extension script bridged to the loaded extension",
       "page": "Practice page",
-      "version": "0.2.2",
-      "build": "41f6195f64d662843e2d2bfa60e5afb06dd5ed334abae21cc3dd4272a56caeae",
-      "recordedAt": "2026-09-26T15:04:12.189Z",
-      "profile": "task-owned test profile"
+      "version": "1.0.0",
+      "build": "f96de11aa07ad99a92db189416330ad90813d3c847da55d3b8ee4eda0baaf148",
+      "chrome": "Chrome for Testing 151.0.7922.34",
+      "recordedAt": "2026-10-26T23:54:56.336Z",
+      "profile": "task-owned profile media-rehearsal-a"
     },
     {
       "scene": 8,
       "clip": "tut-panel",
       "method": "recording",
       "page": "Link Meteor side panel (panel width)",
-      "version": "0.2.2",
-      "build": "41f6195f64d662843e2d2bfa60e5afb06dd5ed334abae21cc3dd4272a56caeae",
-      "recordedAt": "2026-09-26T15:04:26.674Z",
-      "profile": "task-owned test profile",
+      "version": "1.0.0",
+      "build": "f96de11aa07ad99a92db189416330ad90813d3c847da55d3b8ee4eda0baaf148",
+      "chrome": "Chrome for Testing 151.0.7922.34",
+      "recordedAt": "2026-10-26T23:55:12.563Z",
+      "profile": "task-owned profile media-rehearsal-a",
       "still": "tut-capture-still.jpg"
     },
     {
@@ -91,20 +96,22 @@
       "clip": "tut-shortcuts",
       "method": "recording",
       "page": "chrome://extensions/shortcuts",
-      "version": "0.2.2",
-      "build": "41f6195f64d662843e2d2bfa60e5afb06dd5ed334abae21cc3dd4272a56caeae",
-      "recordedAt": "2026-09-26T15:04:49.669Z",
-      "profile": "task-owned test profile"
+      "version": "1.0.0",
+      "build": "f96de11aa07ad99a92db189416330ad90813d3c847da55d3b8ee4eda0baaf148",
+      "chrome": "Chrome for Testing 151.0.7922.34",
+      "recordedAt": "2026-10-26T23:55:35.501Z",
+      "profile": "task-owned profile media-rehearsal-a"
     },
     {
       "scene": 10,
       "clip": "tut-about",
       "method": "recording",
       "page": "Link Meteor side panel (panel width)",
-      "version": "0.2.2",
-      "build": "41f6195f64d662843e2d2bfa60e5afb06dd5ed334abae21cc3dd4272a56caeae",
-      "recordedAt": "2026-09-26T15:04:36.020Z",
-      "profile": "task-owned test profile",
+      "version": "1.0.0",
+      "build": "f96de11aa07ad99a92db189416330ad90813d3c847da55d3b8ee4eda0baaf148",
+      "chrome": "Chrome for Testing 151.0.7922.34",
+      "recordedAt": "2026-10-26T23:55:21.951Z",
+      "profile": "task-owned profile media-rehearsal-a",
       "still": "tut-capture-still.jpg"
     },
     {

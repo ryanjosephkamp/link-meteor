@@ -15,9 +15,9 @@ Link Meteor is a free Chrome extension for collecting links with their **actual 
 
 This repository contains the Chrome extension (version 1.0.0) and its [live website](https://ryanjosephkamp.github.io/link-meteor/). Install the extension from the downloadable ZIP using Chrome's **Load unpacked** option. Chrome Web Store submission is planned for a later version. See [testing and compatibility](docs/ACCEPTANCE.md) for the environments and workflows checked so far, and the [changelog](CHANGELOG.md) for what changed.
 
-## Try the development build
+## Install
 
-1. [Download version 1.0.0](https://ryanjosephkamp.github.io/link-meteor/downloads/link-meteor-1.0.0.zip) and extract it to a folder you will keep. The ZIP is a development package, not a store installer.
+1. [Download version 1.0.0](https://ryanjosephkamp.github.io/link-meteor/downloads/link-meteor-1.0.0.zip) (also attached to the [GitHub release](https://github.com/ryanjosephkamp/link-meteor/releases/tag/v1.0.0)) and extract it to a folder you will keep. The ZIP is for Chrome's **Load unpacked**, not a store installer.
 2. Open `chrome://extensions` in Chrome and enable **Developer mode**.
 3. Choose **Load unpacked** and select the extracted folder containing `manifest.json`.
 4. Open an ordinary webpage (try the [practice page](https://ryanjosephkamp.github.io/link-meteor/practice.html)). Use the extension toolbar action for the side panel, or **Option+Shift+L** on Mac / **Alt+Shift+L** on Windows and Linux to select a region. The side panel's welcome card offers **Allow on all sites (recommended)**, so you can hold a key and drag on any site, or **Choose sites later**.
@@ -78,7 +78,7 @@ npm run package
 
 [`AGENTS.md`](AGENTS.md) is the working guide for people and coding agents: the code map, which tests need a person's Allow clicks, test settings, rules and common failures. The same checks without grants run on macOS, Windows and Linux for every pull request (`.github/workflows/check.yml`).
 
-The build copies only packaged extension files. Packaging refuses stale source/build differences and emits a deterministic ZIP plus file hashes and truthful Git identity/dirty flags.
+The build copies only packaged extension files. Packaging refuses stale source/build differences and emits a deterministic ZIP plus a receipt with every file's hash, the source commit and whether `src/` had uncommitted changes.
 
 Browser tests reuse an installed Playwright library and Chromium/Chrome for Testing. No browser or library is downloaded by these scripts. Set `LINK_METEOR_PLAYWRIGHT` to an installed Playwright module if it is not on the normal Node resolution path. Set `LINK_METEOR_CHROME_PATH` to another Chrome for Testing executable, such as 116, to run the suites there.
 
@@ -97,9 +97,15 @@ node tests/access-content.mjs      # the page script with a stubbed chrome objec
 node tests/exports-browser.mjs     # export names, the formatted workbook, bookmark folder controls
 node tests/backup-browser.mjs      # backup, restore with Undo, removing all
 node tests/downloads-browser.mjs   # Download files with Chrome's prompt stubbed; nothing downloads
+node tests/pdf-browser.mjs         # the PDF reader and PDF files in Import links
+node tests/pdf-tab-browser.mjs     # Capture this PDF on a PDF's tab, through Chrome's toolbar action
+node tests/coverage-browser.mjs    # closed components and frames from other sites
+node tests/runs-browser.mjs        # Scroll to the end first, Follow Next and Capture their pages
+node tests/pdf-files-browser.mjs   # chosen PDFs as one ZIP or one combined PDF
+node tests/lookup-browser.mjs      # Page details lookup, with the test answering for the services
 ```
 
-For a changed build, create a new isolated profile and prepare its grants through the product's own permission paths with `LINK_METEOR_TEST_PROFILE=<new-name> node tests/prepare-grants.mjs` (a visible test browser). `LINK_METEOR_GRANTS=all-sites` prepares the all-sites profile that `tests/access-granted.mjs` uses; run it before `tests/permission-browser.mjs`. `tests/downloads-granted.mjs` runs in the per-site profile and keeps every file under `.scratch/`. `node tests/visual-browser.mjs` needs no grants (`LINK_METEOR_VISUAL_PROFILE` picks its profile). `tests/design-preview.mjs` and `tests/overlay-preview.mjs` render the UI with simulated extension APIs for design iteration only; they are not acceptance evidence.
+For a changed build, create a new isolated profile and prepare its grants through the product's own permission paths with `LINK_METEOR_TEST_PROFILE=<new-name> node tests/prepare-grants.mjs` (a visible test browser). `LINK_METEOR_GRANTS=all-sites` prepares the all-sites profile that `tests/access-granted.mjs` uses; run it before `tests/permission-browser.mjs`. `tests/downloads-granted.mjs` runs in the per-site profile and keeps every file under `.scratch/`. `tests/frames-granted.mjs` and `tests/runs-granted.mjs` each show one more Chrome prompt in the per-site profile, after the other suites and before `tests/permission-browser.mjs`. `node tests/visual-browser.mjs` needs no grants (`LINK_METEOR_VISUAL_PROFILE` picks its profile). `tests/design-preview.mjs` and `tests/overlay-preview.mjs` render the UI with simulated extension APIs for design iteration only; they are not acceptance evidence.
 
 Tests store isolated profiles and cache under `.scratch/acceptance-final`, bind the local synthetic fixture server to `127.0.0.1:52478`, and fail if that port is occupied. `LINK_METEOR_TEST_PROFILE` and `LINK_METEOR_FIXTURE_PORT` can change these isolated resources. The browser suite **resets collections in its selected test profile**, so never point it at a personal browser profile. Prepare permission grants through the extension in the isolated browser. The harness records a build fingerprint and refuses reuse after packaged bytes change; prepare a fresh named test profile for a changed build. Headless optional-permission behavior was not accepted as native evidence.
 
@@ -115,7 +121,7 @@ node scripts/sync-site.mjs --check  # verify the site matches the build
 node tests/site-check.mjs           # pages × widths × themes, links, structure, contrast, demo, videos
 ```
 
-The two silent site videos are made from recordings of the development build on the practice page. `media/` holds their recording scripts, timelines and compositor, and [`media/README.md`](media/README.md) explains how each scene was made, how to reproduce them and their limits.
+The two silent site videos are made from recordings of Link Meteor 1.0.0 on the practice page. `media/` holds their recording scripts, timelines and compositor, and [`media/README.md`](media/README.md) explains how each scene was made, how to reproduce them and their limits.
 
 ## Privacy
 
@@ -127,6 +133,6 @@ Read [the privacy explanation](docs/PRIVACY.md), [product overview](docs/PRODUCT
 
 ## License and author
 
-MIT licensed; see [LICENSE](LICENSE). The site's Atkinson Hyperlegible Next and Mono fonts retain their SIL Open Font License notices in `site/assets/fonts/`.
+MIT licensed; see [LICENSE](LICENSE). Link Meteor includes [PDF.js](https://mozilla.github.io/pdf.js/) by Mozilla, unmodified, under the Apache License 2.0, in `src/vendor/pdfjs/` with its license. The site's Atkinson Hyperlegible Next and Mono fonts retain their SIL Open Font License notices in `site/assets/fonts/`.
 
 Created by **[Ryan Kamp](https://github.com/ryanjosephkamp/)**. Link Meteor and all its features are free. Optional support never unlocks features or changes functionality.

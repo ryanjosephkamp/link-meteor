@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.0.0 (unreleased)
+## 1.0.0 (2026-10-27)
 
 "Beyond one page": Link Meteor now reads the links inside PDFs and captures more than one screen or one page, each time you ask and within a stated limit, and it can fill in a paper's details online if you turn that on:
 - the links inside PDFs, from a tab or a file;

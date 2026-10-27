@@ -39,6 +39,7 @@
 ### Website
 
 - The download is now 1.0.0.
+- Both videos and the four product screenshots now show 1.0.0.
 - The guide covers PDFs, the three bounded captures, frames, the lookup and the PDFs as one ZIP or one PDF; the home and install pages cover the new features; the privacy page says what the lookup sends and where.
 
 ### Download

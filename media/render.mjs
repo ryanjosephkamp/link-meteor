@@ -1,7 +1,8 @@
 // Renders a Link Meteor video timeline (media/videos/<id>.mjs) from recorded clips
 // (media/record.mjs) into site/assets/video/<id>.mp4 plus WebVTT captions, a poster, a
-// transcript (injected into site pages between <!-- transcript:<id> --> markers) and a
-// production manifest in media/out/<id>.json.
+// transcript (injected into site pages between <!-- transcript:<id> --> markers), a
+// production manifest in media/out/<id>.json, and the video's length, size and version in the
+// pages' <span data-video="<id>:…"> elements and the table in media/README.md.
 //
 // Usage: node media/render.mjs [demo|install ...] [--proof=1.5,8.2] [--crf=24] [--text-only]
 // --text-only rewrites the WebVTT captions and page transcripts without encoding video.
@@ -52,6 +53,21 @@ async function loadClip(name) {
   return {clip, marks, markData, pointer, downs, frames: clip.frames.map((f) => ({src: `/.scratch/media/rec/${name}/${f.file}`, t: f.t - t0}))};
 }
 const pointerAt = (pointer, t) => { let p = pointer[0]; for (const q of pointer) if (q.t <= t) p = q; return p; };
+// A JPEG's pixel size, from its first start-of-frame marker.
+async function jpegSize(path) {
+  const b = await readFile(path);
+  for (let i = 2; i + 9 < b.length;) {
+    if (b[i] !== 0xff) throw new Error(`${path}: not a JPEG`);
+    const marker = b[i + 1], length = b.readUInt16BE(i + 2);
+    if (marker >= 0xc0 && marker <= 0xcf && ![0xc4, 0xc8, 0xcc].includes(marker)) return {width: b.readUInt16BE(i + 7), height: b.readUInt16BE(i + 5)};
+    i += 2 + length;
+  }
+  throw new Error(`${path}: no frame size`);
+}
+// A recorded value: what a clip's mark logged from the page (its text, or a downloaded file's name).
+async function markValue(clip, mark) { const got = (await loadClip(clip)).markData[mark]; return got?.text ?? got?.file; }
+const expected = (x) => x.equals ?? x.startsWith ?? x.matches;
+const meets = (x, value) => value !== undefined && (x.equals === undefined || value === x.equals) && (x.startsWith === undefined || value.startsWith(x.startsWith)) && (x.matches === undefined || new RegExp(x.matches).test(value));
 
 async function resolveTimeline(tl) {
   try { await access(resolve(introDir, 'frames.json')); } catch { await renderMeteorFrames(root, introDir); }
@@ -65,16 +81,16 @@ async function resolveTimeline(tl) {
       // Numbers and file names in captions must match what the recording logged from the page.
       for (const x of spec.expect || []) {
         const got = c.markData[x.mark]; const value = got?.text ?? got?.file;
-        if (value === undefined || (x.equals !== undefined && value !== x.equals) || (x.startsWith !== undefined && !value.startsWith(x.startsWith))) throw new Error(`${spec.clip}: mark ${x.mark} recorded ${JSON.stringify(value)}, caption expects ${JSON.stringify(x.equals ?? x.startsWith)}`);
+        if (!meets(x, value)) throw new Error(`${spec.clip}: mark ${x.mark} recorded ${JSON.stringify(value)}, caption expects ${JSON.stringify(expected(x))}`);
       }
       Object.assign(s, {frames: c.frames, pointer: c.pointer, downs: c.downs, viewport: c.clip.viewport, from: T(spec.from), to: T(spec.to)});
       if ('armed' in c.marks) s.crosshair = [c.marks.armed, c.marks.released ?? 1e9];
       if (spec.keys) s.keys = {...spec.keys, t0: T(spec.keys.t0), t1: T(spec.keys.t1)};
       s.camera = (spec.camera || []).map((k) => { const t = T(k.t); const p = k.at ? pointerAt(c.pointer, T(k.at)) : null; return {t, zoom: k.zoom, cx: p ? p.x + (k.dx || 0) : k.cx, cy: p ? p.y + (k.dy || 0) : k.cy}; }).sort((a, b) => a.t - b.t);
       s.captions = (spec.captions || []).map((x) => ({...x, t0: T(x.t0), t1: T(x.t1)}));
-      if (spec.still) s.still = {src: `/.scratch/media/rec/${spec.still}`, width: 2560, height: 1440};
+      if (spec.still) s.still = {src: `/.scratch/media/rec/${spec.still}`, ...(await jpegSize(resolve(rec, spec.still)))};
       s.duration = s.to - s.from;
-      sources.push({scene: i, clip: spec.clip, method: c.clip.mode === 'reconstruction' ? 'reconstruction' : 'recording', ...(c.clip.mode ? {capture: c.clip.mode === 'extension' ? 'the extension’s own injected script' : 'extension script bridged to the loaded extension'} : {}), page: c.clip.page, version: c.clip.version, ...(c.clip.build ? {build: c.clip.build} : {}), recordedAt: c.clip.recordedAt, profile: c.clip.profile || 'task-owned test profile', ...(spec.still ? {still: spec.still} : {})});
+      sources.push({scene: i, clip: spec.clip, method: c.clip.mode === 'reconstruction' ? 'reconstruction' : 'recording', ...(c.clip.mode ? {capture: c.clip.mode === 'extension' ? 'the extension’s own injected script' : 'extension script bridged to the loaded extension'} : {}), page: c.clip.page, ...(c.clip.access ? {access: c.clip.access} : {}), version: c.clip.version, ...(c.clip.build ? {build: c.clip.build} : {}), ...(c.clip.chrome ? {chrome: `Chrome for Testing ${c.clip.chrome}`} : {}), recordedAt: c.clip.recordedAt, profile: c.clip.profile || 'task-owned test profile', ...(spec.still ? {still: spec.still} : {})});
     } else {
       s.captions = (spec.captions || []).map((x) => ({...x}));
       if (spec.kind === 'card') { s.art = art; sources.push({scene: i, method: 'artwork', note: 'Approved README artwork with the README animation’s flowing light, rendered at full resolution'}); }
@@ -84,8 +100,14 @@ async function resolveTimeline(tl) {
         const py = 'import json,sys\nfrom openpyxl import load_workbook\nws=load_workbook(sys.argv[1]).active\nprint(json.dumps({"sheet":ws.title,"text":all(c.data_type=="s" for r in ws.iter_rows() for c in r if c.value is not None),"rows":[["" if c.value is None else str(c.value) for c in r] for r in ws.iter_rows()]}))';
         const book = JSON.parse(execFileSync('python3', ['-c', py, resolve(rec, spec.source)]).toString());
         s.rows = book.rows;
+        // The file name shown is the one the recording downloaded.
+        if (typeof spec.file === 'object') s.file = await markValue(spec.file.clip, spec.file.mark);
+        for (const x of spec.expect || []) { const value = await markValue(x.clip, x.mark); if (!meets(x, value)) throw new Error(`${x.clip}: mark ${x.mark} recorded ${JSON.stringify(value)}, sheet expects ${JSON.stringify(expected(x))}`); }
+        // highlight: 'empty' marks the first row whose anchor text cell is empty (the image link).
+        if (spec.highlight === 'empty') { s.highlight = s.rows.findIndex((row, n) => n > 0 && row[0] === ''); if (s.highlight < 1) throw new Error(`${spec.source}: no row with empty anchor text`); }
+        if (spec.rowCount !== undefined && s.rows.length - 1 !== spec.rowCount) throw new Error(`${spec.source}: ${s.rows.length - 1} rows, sheet expects ${spec.rowCount}`);
         s.sub = `Sheet “${book.sheet}”${book.text ? ' · every cell stored as text' : ''}`;
-        sources.push({scene: i, method: 'file rendering', note: `Rows read with openpyxl from the workbook downloaded during recording (${spec.source})`, rows: s.rows.length - 1});
+        sources.push({scene: i, method: 'file rendering', note: `Rows read with openpyxl from the workbook downloaded during recording (${spec.source}, saved as ${s.file})`, rows: s.rows.length - 1});
       }
     }
     s.start = i === 0 ? 0 : cursor - tl.fade; s.end = s.start + s.duration; cursor = s.end;
@@ -126,6 +148,28 @@ async function writeText(tl, r) {
     const a = text.indexOf(open), b = text.indexOf(close);
     if (a >= 0 && b > a) { text = text.slice(0, a + open.length) + '\n          ' + html + '\n          ' + text.slice(b); await writeFile(path, text); }
   }
+}
+
+// The facts the pages and media/README.md state about a rendered video: its length, size and the
+// version it shows. In the site pages they are <span data-video="<id>:seconds|size|version">
+// elements; in the README, the video's row of the table at the top.
+async function writeFacts(tl, info) {
+  const versions = [...new Set(info.sources.map((s) => s.version).filter(Boolean))];
+  const facts = {seconds: String(Math.round(info.seconds)), size: `${(info.bytes / 1e6).toFixed(1)} MB`, version: versions.join(', ')};
+  for (const pageFile of ['site/index.html', 'site/install.html']) {
+    const path = resolve(root, pageFile), text = await readFile(path, 'utf8');
+    const next = text.replace(new RegExp(`(<span data-video="${tl.id}:(\\w+)">)[^<]*(</span>)`, 'g'), (m, open, key, close) => (key in facts ? open + facts[key] + close : m));
+    if (next !== text) await writeFile(path, next);
+  }
+  const readme = resolve(root, 'media/README.md'), text = await readFile(readme, 'utf8');
+  const next = text.split('\n').map((line) => {
+    if (!line.startsWith('|') || !line.includes(`\`${info.file}\``)) return line;
+    const cells = line.split('|');
+    cells[1] = ` ${tl.title} `; cells[3] = ` ${info.seconds.toFixed(1)} s `; cells[4] = ` \`${info.file}\`, ${facts.size} `;
+    return cells.join('|');
+  }).join('\n');
+  if (next !== text) await writeFile(readme, next);
+  return facts;
 }
 
 // One line per caption, each with its own time, after a "Picture" line describing the scene.
@@ -172,7 +216,10 @@ try {
     const bytes = await readFile(mp4);
     const info = {id: tl.id, title: tl.title, file: `site/assets/video/${tl.id}.mp4`, bytes: bytes.length, sha256: createHash('sha256').update(bytes).digest('hex'), seconds: +r.duration.toFixed(2), fps: tl.fps, frames, size: '1920x1080', codec: 'H.264 High, yuv420p, no audio track', crf, renderedAt: new Date().toISOString(), renderSeconds: Math.round((Date.now() - began) / 1000), captions: r.cues.length, sources: r.sources};
     await writeFile(resolve(root, 'media/out', `${tl.id}.json`), JSON.stringify(info, null, 2) + '\n');
-    console.log(JSON.stringify({video: tl.id, seconds: info.seconds, bytes: info.bytes, sha256: info.sha256.slice(0, 12), renderSeconds: info.renderSeconds}));
+    const facts = await writeFacts(tl, info);
+    console.log(JSON.stringify({video: tl.id, seconds: info.seconds, bytes: info.bytes, sha256: info.sha256.slice(0, 12), renderSeconds: info.renderSeconds, pageFacts: facts}));
+    // A reconstruction is for rehearsing; the published videos are recorded in extension mode.
+    if (info.sources.some((s) => s.method === 'reconstruction')) console.log(JSON.stringify({video: tl.id, warning: 'rehearsal: practice-page scenes are reconstructions, not the extension’s own injected script; record with site access before publishing'}));
     await page.close();
   }
 } finally { await browser.close(); server.close(); }

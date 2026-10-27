@@ -24,7 +24,7 @@ export function illustration(kind, box, scene) {
     box.innerHTML = `<svg viewBox="0 0 1520 855">
       <text x="420" y="170" font-size="30" fill="${MUTED}">In Chrome's file picker, choose the folder itself:</text>
       <g transform="translate(420 210)">
-        <rect width="680" height="${110 + entries.length * 52}" rx="20" fill="${CARD}" stroke="${LINE}"/>
+        <rect width="680" height="${160 + entries.length * 52}" rx="20" fill="${CARD}" stroke="${LINE}"/>
         <g transform="translate(30 30)">${folderPath(0, -6, 64, 48, '#5f6f8f')}<text x="84" y="30" font-size="28" fill="${MUTED}">Downloads</text></g>
         <g id="row"><rect x="18" y="86" width="644" height="60" rx="12" fill="rgba(195,243,68,.16)" stroke="${LIME}" stroke-width="3"/>
           <g transform="translate(60 94)">${folderPath(0, -6, 60, 46, '#3d6fd8')}<text x="80" y="31" font-size="30" font-weight="700" fill="${INK}">${scene.folder}</text></g></g>

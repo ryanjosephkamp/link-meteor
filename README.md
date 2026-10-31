@@ -76,7 +76,7 @@ npm run debug                     # the extension in a fresh profile, streaming 
 npm run package
 ```
 
-[`AGENTS.md`](AGENTS.md) is the working guide for people and coding agents: the code map, which tests need a person's Allow clicks, test settings, rules and common failures. The same checks without grants run on macOS, Windows and Linux for every pull request (`.github/workflows/check.yml`).
+The checks that need no grants also run on macOS, Windows and Linux for every pull request (`.github/workflows/check.yml`).
 
 The build copies only packaged extension files. Packaging refuses stale source/build differences and emits a deterministic ZIP plus a receipt with every file's hash, the source commit and whether `src/` had uncommitted changes.
 

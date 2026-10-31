@@ -150,9 +150,14 @@ try {
 
   /* Move to… in a link's details, and Escape. */
   await ui.locator('#clear-selection').click();
-  await row(3).locator('.row-details summary').click();
+  // The list keeps a row's details open from their toggle event, which comes just after the click, so a re-render in
+  // between (the Undo above can still be landing) rebuilds the row closed. Open it until it stays open.
   const detailButton = row(3).locator('.occurrence-move button');
-  await detailButton.waitFor();
+  await until(async () => {
+    if (await detailButton.isVisible()) return true;
+    if (!(await row(3).locator('.row-details').evaluate((details) => details.open))) await row(3).locator('.row-details summary').click();
+    return false;
+  }, 'the link’s details open', 15000);
   assert.equal(await detailButton.getAttribute('aria-label'), 'Move Cool roofs to another collection');
   await detailButton.click();
   await until(() => ui.locator('#move-panel').isVisible(), 'the panel for one link');

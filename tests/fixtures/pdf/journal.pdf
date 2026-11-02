@@ -1,0 +1,66 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Courier /Encoding /WinAnsiEncoding >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [5 0 R 8 0 R] /Count 2 >>
+endobj
+3 0 obj
+<< /Type /Annot /Subtype /Link /Rect [111.6 628.25 184.2 640.35] /Border [0 0 0] /A << /S /URI /URI (https://archive.example.org/study) >> >>
+endobj
+4 0 obj
+<< /Length 416 >>
+stream
+BT /F1 9 Tf 1 0 0 1 72.00 720 Tm (Journal of Fixture Studies 12 \(2026\) 101-102) Tj ET
+BT /F1 18 Tf 1 0 0 1 72.00 706 Tm (A Study of Things That Link) Tj ET
+BT /F1 11 Tf 1 0 0 1 72.00 677 Tm (Ada Example, Ben Sample) Tj ET
+BT /F1 11 Tf 1 0 0 1 72.00 649 Tm (Earlier work \(doi:10.5555/earlier.2019.007\) and a reply \(doi:10.5555/reply.2020.011\).) Tj ET
+BT /F1 11 Tf 1 0 0 1 72.00 631 Tm (Data: the archive) Tj ET
+endstream
+endobj
+5 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 1 0 R >> >> /Contents 4 0 R /Annots [3 0 R] >>
+endobj
+6 0 obj
+<< /Type /Annot /Subtype /Link /Rect [151.2 717.25 190.8 729.35] /Border [0 0 0] /A << /S /URI /URI (https://archive.example.org/study/tables.csv) >> >>
+endobj
+7 0 obj
+<< /Length 61 >>
+stream
+BT /F1 11 Tf 1 0 0 1 72.00 720 Tm (Supplement: tables) Tj ET
+endstream
+endobj
+8 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 1 0 R >> >> /Contents 7 0 R /Annots [6 0 R] >>
+endobj
+9 0 obj
+<< /Type /Metadata /Subtype /XML /Length 627 >>
+stream
+<?xpacket begin="" id="W5M0MpCehiHzreSzNTczkc9d"?><x:xmpmeta xmlns:x="adobe:ns:meta/"><rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"><rdf:Description rdf:about="" xmlns:prism="http://prismstandard.org/namespaces/basic/2.0/" xmlns:dc="http://purl.org/dc/elements/1.1/"><prism:doi>10.5555/journal.2026.042</prism:doi><prism:publicationName>Journal of Fixture Studies</prism:publicationName><prism:publicationDate>2026-03-14</prism:publicationDate><dc:title><rdf:Alt><rdf:li xml:lang="x-default">A Study of Things That Link</rdf:li></rdf:Alt></dc:title></rdf:Description></rdf:RDF></x:xmpmeta><?xpacket end="w"?>
+endstream
+endobj
+10 0 obj
+<< /Type /Catalog /Pages 2 0 R /Metadata 9 0 R >>
+endobj
+11 0 obj
+<< /Title (A Study of Things That Link) /Author (Ada Example; Ben Sample) >>
+endobj
+xref
+0 12
+0000000000 65535 f 
+0000000009 00000 n 
+0000000104 00000 n 
+0000000167 00000 n 
+0000000324 00000 n 
+0000000790 00000 n 
+0000000932 00000 n 
+0000001100 00000 n 
+0000001210 00000 n 
+0000001352 00000 n 
+0000002060 00000 n 
+0000002126 00000 n 
+trailer
+<< /Size 12 /Root 10 0 R /Info 11 0 R >>
+startxref
+2219
+%%EOF

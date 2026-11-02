@@ -1,0 +1,662 @@
+// Review and selection: filters, the link list, occurrence details, selection, removal and Undo.
+// Custom column fields and Fill for selected links come from fields.js; the Insights view from
+// insights.js. Reading status and stars (0.5.0) are set here, in details and for the selection.
+import { queryLinks, pageKey } from '../../core/model.js';
+import { identifiersOf, citationFor, IDENTIFIER_LABELS } from '../../core/identifiers.js';
+import { $, node, icon, button, count, plural, quoted, labelFor, tags, DOCUMENT_TYPES, fileType, appendTextLink, renderUrl, hostOf, formatTime, shortcutKeys, kbdGroup, safeUrl } from './helpers.js';
+import { ui, action, request, mutate, show, currentCollection } from './state.js';
+import { render, onEscape } from './rendering.js';
+import { renderExportTarget } from './export.js';
+import { syncReportAction } from './capture.js';
+import { fieldInputs, hasFieldValues, appendFieldValues, renderFill, bindFill } from './fields.js';
+import { linkDownload } from './downloads.js';
+import { renderInsights, insightsShown, setInsights, bindInsights } from './insights.js';
+import { renderMove, bindMove, detailMove } from './move.js';
+import { renderLookupSelection, detailLookup, lookupNote } from './lookup.js';
+import { renderPages, detailPages } from './runs.js';
+
+const PAGE_SIZE = 100;
+const DETAIL_PAGE_SIZE = 100;
+const ARRIVAL_MS = 2600;
+const filters = ['search', 'domain', 'file-type', 'relation', 'status-filter', 'starred-filter', 'sort', 'direction', 'dedupe'];
+const STATUSES = [['', 'Unread'], ['reading', 'Reading'], ['read', 'Read']];
+// "Remove all in this view" awaiting confirmation: the collection and the exact occurrences shown.
+let pendingViewRemoval = null;
+let shownBatch = '';
+
+export function queryOptions() {
+  return { search: $('search').value, domain: $('domain').value, fileType: $('file-type').value,
+    relation: $('relation').value, status: $('status-filter').value, starred: $('starred-filter').checked, typeGroup: $('type-group').value, site: $('site-filter').value,
+    sort: $('sort').value, direction: $('direction').value, dedupe: $('dedupe').value };
+}
+
+export function renderLinks() {
+  const collection = currentCollection();
+  if (!collection) return;
+  const options = queryOptions();
+  const batchLinks = ui.batchFilter ? collection.links.filter((link) => link.batchId === ui.batchFilter) : null;
+  if (batchLinks && !batchLinks.length) ui.batchFilter = '';
+  const result = queryLinks(ui.batchFilter ? batchLinks : collection.links, options);
+  ui.rows = result.rows;
+  const pageCount = Math.max(1, Math.ceil(result.rows.length / PAGE_SIZE));
+  ui.page = Math.min(ui.page, pageCount - 1);
+  const start = ui.page * PAGE_SIZE;
+  const pageRows = result.rows.slice(start, start + PAGE_SIZE);
+  const ids = new Set(collection.links.map((link) => link.id));
+  ui.selectedIds = new Set([...ui.selectedIds].filter((id) => ids.has(id)));
+  const grouped = options.dedupe !== 'none';
+  const total = collection.links.length;
+  const filtered = result.matchedCount < total;
+  $('result-count').textContent = !total ? '' : grouped
+    ? `${plural(result.rows.length, options.dedupe === 'url' ? 'unique URL' : 'unique pair')} · ${filtered ? `${count(result.matchedCount)} of ${plural(total, 'link')}` : plural(total, 'link')}`
+    : filtered ? `${count(result.matchedCount)} of ${plural(total, 'link')}` : plural(total, 'link');
+  const pageIds = pageRows.flatMap((row) => row.occurrenceIds);
+  const selectedOnPage = pageIds.filter((id) => ui.selectedIds.has(id)).length;
+  $('selection-count').textContent = ui.selectedIds.size ? `${count(ui.selectedIds.size)} selected · ${count(selectedOnPage)} on this page` : '';
+  $('selection-count').classList.toggle('has-selection', !!ui.selectedIds.size);
+  $('clear-selection').hidden = !ui.selectedIds.size;
+  const viewIds = result.rows.reduce((n, row) => n + row.occurrenceIds.length, 0);
+  const selectedInView = result.rows.reduce((n, row) => n + row.occurrenceIds.filter((id) => ui.selectedIds.has(id)).length, 0);
+  // One page: the page checkbox selects everything, so it says so. More pages: "Select all N"
+  // is always offered, and the checkbox covers only the page.
+  $('select-all-label').textContent = pageCount > 1 ? 'Select page' : 'Select all';
+  $('select-everything').hidden = pageCount <= 1;
+  $('select-everything').textContent = `Select all ${count(viewIds)}`;
+  $('select-everything').disabled = !viewIds || selectedInView === viewIds;
+  $('remove').disabled = !selectedInView;
+  renderReadingActions(collection);
+  $('remove-view').disabled = !viewIds;
+  syncViewRemoval(collection);
+  renderFill(collection);
+  renderMove(collection);
+  renderLookupSelection(collection);
+  renderPages(collection);
+  $('select-all').checked = !!pageIds.length && pageIds.every((id) => ui.selectedIds.has(id));
+  $('select-all').indeterminate = pageIds.some((id) => ui.selectedIds.has(id)) && !$('select-all').checked;
+  $('select-all').disabled = !pageIds.length;
+  $('page-range').textContent = result.rows.length ? `${count(start + 1)}–${count(start + pageRows.length)} of ${plural(result.rows.length, 'row')} · Page ${ui.page + 1} of ${pageCount}` : '0 rows';
+  $('page-prev').disabled = ui.page === 0;
+  $('page-next').disabled = ui.page >= pageCount - 1;
+  $('review-pages').hidden = pageCount <= 1;
+  renderEmpty(collection, result);
+  $('review').classList.toggle('is-blank', !total);
+  $('app').classList.toggle('is-blank', !total);
+  renderViewChips();
+  renderSuggestions(collection);
+  renderExportTarget();
+  syncReportAction();
+  const list = $('link-list');
+  const focused = document.activeElement;
+  const focusId = focused?.dataset?.linkId;
+  const focusField = focused?.dataset?.linkField;
+  const focusRowId = focused?.dataset?.rowId;
+  const focusRowControl = focused?.matches?.('.row-select') ? 'checkbox' : focused?.matches?.('.row-details summary') ? 'summary' : '';
+  const selectionStart = focusId ? focused.selectionStart : null;
+  const selectionEnd = focusId ? focused.selectionEnd : null;
+  list.replaceChildren(...pageRows.map(renderRow));
+  if (focusId) {
+    // Text fields keep their caret; the reading status and star controls are found the same way.
+    const replacement = [...list.querySelectorAll('[data-link-id]')].find((control) => control.dataset.linkId === focusId && control.dataset.linkField === focusField);
+    if (replacement) {
+      replacement.focus({ preventScroll: true });
+      if (selectionStart != null && selectionEnd != null) replacement.setSelectionRange(selectionStart, selectionEnd);
+    }
+  } else if (focusRowId && focusRowControl) {
+    const selector = focusRowControl === 'checkbox' ? '.row-select' : '.row-details summary';
+    [...list.querySelectorAll(selector)].find((control) => control.dataset.rowId === focusRowId)?.focus({ preventScroll: true });
+  }
+  // A capture's "Show only these links" shows the list, even from Insights.
+  if (ui.batchFilter && ui.batchFilter !== shownBatch && insightsShown()) setInsights(false);
+  shownBatch = ui.batchFilter;
+  renderInsights(collection);
+}
+
+export function renderEmpty(collection, result) {
+  const empty = $('empty-state');
+  empty.hidden = !!result.rows.length;
+  if (result.rows.length) return;
+  const heading = node('h3');
+  if (!collection.links.length && ui.state.undo?.collectionId === collection.id) {
+    // Emptied by a removal: offer its Undo here, since the list toolbar hides with no links.
+    heading.textContent = 'This collection is empty';
+    const focused = document.activeElement?.id === 'empty-undo';
+    const back = button('Undo removal', 'btn small', 'i-undo');
+    back.id = 'empty-undo';
+    back.addEventListener('click', () => action(undo));
+    empty.replaceChildren(heading, node('p', '', `You removed ${plural(ui.state.undo.links.length, 'link')}. Undo puts them back in their original order.`), back);
+    if (focused) back.focus();
+  } else if (!collection.links.length) {
+    heading.textContent = 'Start this collection';
+    const intro = node('p', '', 'Links you capture are saved here, in this browser only. Each keeps its visible anchor text, its exact URL and the page it came from.');
+    const steps = node('ol', 'empty-steps');
+    const first = node('li'); const firstText = node('span');
+    const keys = shortcutKeys(ui.shortcut);
+    if (keys.length) firstText.append('On a webpage, press ', ...kbdGroup(keys), ' or choose Select a region.');
+    else firstText.append('On a webpage, choose Select a region. You can also set a keyboard shortcut.');
+    first.append(firstText);
+    steps.append(first, node('li', '', 'Drag across the links you want. Scroll while dragging to reach more.'), node('li', '', 'Copy them as two columns, or add them here to review and export.'));
+    empty.replaceChildren(heading, intro, steps);
+  } else {
+    heading.textContent = 'No links match this view';
+    const reset = button('Clear search and filters', 'btn small');
+    reset.addEventListener('click', () => { resetView(); $('search').focus(); });
+    empty.replaceChildren(heading, node('p', '', `This collection has ${plural(collection.links.length, 'link')}. Nothing matches the current search or filters.`), reset);
+  }
+}
+
+export function resetView() {
+  $('search').value = ''; $('domain').value = ''; $('file-type').value = ''; $('relation').value = 'all';
+  $('status-filter').value = 'any'; $('starred-filter').checked = false; $('type-group').value = ''; $('site-filter').value = '';
+  $('sort').value = 'page'; $('direction').value = 'asc'; $('dedupe').value = 'none';
+  ui.batchFilter = ''; ui.directionTouched = false; ui.page = 0;
+  renderLinks();
+}
+
+// Shows the links an Insights choice names: the search and filters are cleared (sorting and
+// grouping stay), then one view option is set: {site} (exact), {typeGroup}, {status} or {starred: true}.
+export function showOnly(choice) {
+  $('search').value = ''; $('domain').value = ''; $('site-filter').value = choice.site || ''; $('file-type').value = ''; $('relation').value = 'all';
+  $('status-filter').value = choice.status || 'any'; $('starred-filter').checked = !!choice.starred; $('type-group').value = choice.typeGroup || '';
+  ui.batchFilter = ''; ui.page = 0;
+  renderLinks();
+}
+
+export function renderViewChips() {
+  const chips = [];
+  const add = (label, clear) => chips.push([label, clear]);
+  if (ui.batchFilter) add('Selected capture', () => { ui.batchFilter = ''; });
+  if ($('domain').value) add(`Domain contains “${$('domain').value}”`, () => { $('domain').value = ''; });
+  if ($('file-type').value) add(`File type: ${$('file-type').value.replace(/^\./, '')}`, () => { $('file-type').value = ''; });
+  if ($('relation').value !== 'all') add($('relation').value === 'internal' ? 'Internal links' : 'External links', () => { $('relation').value = 'all'; });
+  if ($('status-filter').value !== 'any') add(`Reading status: ${$('status-filter').selectedOptions[0].textContent}`, () => { $('status-filter').value = 'any'; });
+  if ($('starred-filter').checked) add('Starred only', () => { $('starred-filter').checked = false; });
+  if ($('type-group').value) add(`Type: ${$('type-group').value}`, () => { $('type-group').value = ''; });
+  if ($('site-filter').value) add(`Site: ${$('site-filter').value}`, () => { $('site-filter').value = ''; });
+  if ($('dedupe').value !== 'none') add($('dedupe').value === 'url' ? 'Grouped by URL' : 'Grouped by URL + anchor text', () => { $('dedupe').value = 'none'; });
+  if ($('sort').value !== 'page' || $('direction').value !== 'asc') add(`Sorted by ${$('sort').selectedOptions[0].textContent.toLowerCase()}, ${$('direction').value === 'asc' ? 'ascending' : 'descending'}`, () => { $('sort').value = 'page'; $('direction').value = 'asc'; ui.directionTouched = false; });
+  const list = $('active-filters');
+  list.hidden = !chips.length;
+  $('filter-count').hidden = !chips.length;
+  $('filter-count').textContent = String(chips.length);
+  list.replaceChildren(...chips.map(([label, clear]) => {
+    const chip = node('li', 'chip');
+    chip.append(node('span', '', label));
+    const remove = node('button'); remove.type = 'button'; remove.setAttribute('aria-label', `Remove: ${label}`); remove.append(icon('i-x'));
+    remove.addEventListener('click', () => { clear(); ui.page = 0; renderLinks(); $('search').focus({ preventScroll: true }); });
+    chip.append(remove);
+    return chip;
+  }));
+  if (chips.length > 1) {
+    const reset = node('li');
+    const all = button('Reset view', 'chip chip-reset');
+    all.addEventListener('click', () => { resetView(); $('search').focus({ preventScroll: true }); });
+    reset.append(all); list.append(reset);
+  }
+}
+
+export function renderSuggestions(collection) {
+  const hosts = new Map(), types = new Map();
+  for (const link of collection.links) {
+    let host = '';
+    try { host = new URL(link.url).hostname; } catch { /* no suggestion */ }
+    if (host) hosts.set(host, (hosts.get(host) || 0) + 1);
+    const type = fileType(link.url);
+    if (type) types.set(type, (types.get(type) || 0) + 1);
+  }
+  const options = (map) => [...map].sort((a, b) => b[1] - a[1]).slice(0, 12).map(([value, n]) => { const option = new Option(`${plural(n, 'link')}`, value); return option; });
+  $('domain-options').replaceChildren(...options(hosts));
+  $('type-options').replaceChildren(...options(types));
+}
+
+export function renderRow(row) {
+  const mode = $('dedupe').value;
+  const wrapper = node('article', 'link-row'); wrapper.setAttribute('role', 'listitem');
+  const elapsed = Date.now() - ui.flashStart;
+  if (ui.flashBatch && elapsed < ARRIVAL_MS && row.occurrences.some((link) => link.batchId === ui.flashBatch)) {
+    wrapper.classList.add('is-new'); wrapper.style.animationDelay = `-${elapsed}ms`;
+  }
+  const checkbox = document.createElement('input');
+  checkbox.type = 'checkbox'; checkbox.className = 'row-select';
+  checkbox.dataset.rowId = row.id;
+  checkbox.setAttribute('aria-label', row.occurrenceIds.length === 1 ? `Select ${labelFor(row)}` : `Select ${plural(row.occurrenceIds.length, 'occurrence')} of ${labelFor(row)}`);
+  checkbox.checked = row.occurrenceIds.every((id) => ui.selectedIds.has(id));
+  checkbox.indeterminate = row.occurrenceIds.some((id) => ui.selectedIds.has(id)) && !checkbox.checked;
+  checkbox.addEventListener('change', () => {
+    for (const id of row.occurrenceIds) checkbox.checked ? ui.selectedIds.add(id) : ui.selectedIds.delete(id);
+    renderLinks();
+  });
+
+  const cells = node('div', 'row-cells');
+  const anchorCell = node('div', 'cell cell-anchor');
+  anchorCell.append(node('span', row.anchorText ? 'anchor' : 'anchor is-empty', row.anchorText || 'No anchor text'));
+  const badges = node('span', 'badges');
+  if (row.occurrences.length > 1) badges.append(node('span', 'badge count', `×${count(row.occurrences.length)}`));
+  // Reading status and star: a grouped row shows a star when any of its occurrences is starred,
+  // and a status when every occurrence has it.
+  if (row.occurrences.some((link) => link.starred)) { const star = node('span', 'badge star'); star.append(icon('i-star'), 'Starred'); badges.append(star); }
+  const status = row.occurrences[0].status || '';
+  if (status && row.occurrences.every((link) => (link.status || '') === status)) badges.append(node('span', 'badge status', status === 'read' ? 'Read' : 'Reading'));
+  const scheme = (() => { try { return new URL(row.url).protocol.replace(':', ''); } catch { return ''; } })();
+  if (scheme === 'mailto' || scheme === 'tel') badges.append(node('span', 'badge', scheme === 'mailto' ? 'EMAIL' : 'PHONE'));
+  const type = fileType(row.url);
+  if (DOCUMENT_TYPES.has(type)) badges.append(node('span', 'badge', type.toUpperCase()));
+  const ids = identifiersOf(row, currentCollection()?.pages);
+  for (const [key, label] of Object.entries(IDENTIFIER_LABELS)) if (ids[key]) badges.append(node('span', 'badge badge-id', label));
+  if (row.occurrences.some((link) => link.imported)) badges.append(node('span', 'badge imported', 'Imported'));
+  if (badges.childNodes.length) anchorCell.append(badges);
+  if (!row.anchorText && row.accessibleLabel) anchorCell.append(node('span', 'aria', `Accessible label: ${row.accessibleLabel}`));
+  if (mode === 'url') {
+    const others = [...new Set(row.occurrences.map((link) => link.anchorText))].filter((label) => label !== row.anchorText);
+    if (others.length) anchorCell.append(node('span', 'also', `Also labeled ${others.slice(0, 2).map(quoted).join(', ')}${others.length > 2 ? ` and ${count(others.length - 2)} more` : ''}`));
+  }
+  const urlCell = node('div', 'cell cell-url'); renderUrl(urlCell, row.url); urlCell.firstChild.title = row.url;
+  const sourceCell = node('div', 'cell cell-source');
+  sourceCell.append(node('span', 'from', 'from'));
+  appendTextLink(sourceCell, row.sourceUrl, row.sourceTitle || row.sourceUrl || '(unknown page)', 'src-title');
+  sourceCell.lastChild.title = row.sourceTitle ? `${row.sourceTitle}\n${row.sourceUrl}` : row.sourceUrl;
+  const sourceHost = hostOf(row.sourceUrl);
+  if (sourceHost) sourceCell.append(node('span', 'src-host', sourceHost));
+  const sourceCount = new Set(row.occurrences.map((link) => link.sourceUrl)).size;
+  if (sourceCount > 1) sourceCell.append(node('span', 'also', `and ${plural(sourceCount - 1, 'other page')}`));
+  cells.append(anchorCell, urlCell, sourceCell);
+  wrapper.append(checkbox, cells);
+
+  if (row.occurrences.length === 1 && (row.notes || row.tags.length || hasFieldValues(row))) {
+    const notes = node('div', 'row-notes');
+    for (const tag of row.tags) notes.append(node('span', 'tag', tag));
+    if (row.notes) notes.append(node('span', 'note', row.notes));
+    appendFieldValues(notes, row);
+    wrapper.append(notes);
+  }
+
+  const detailKey = JSON.stringify(mode === 'none' ? [mode, row.id] : [mode, row.url, mode === 'url-anchor' ? row.anchorText : '']);
+  const details = document.createElement('details'); details.className = 'row-details';
+  details.open = ui.openDetails.has(detailKey);
+  const summary = node('summary');
+  summary.dataset.rowId = row.id;
+  summary.append(icon('i-chevron-right'), node('span', 'summary-text', row.occurrences.length === 1 ? `Source details and notes for ${labelFor(row)}` : `${plural(row.occurrences.length, 'source occurrence')} for ${labelFor(row)}`));
+  summary.title = row.occurrences.length === 1 ? 'Source details and notes' : `${plural(row.occurrences.length, 'source occurrence')}`;
+  details.append(summary);
+  const body = node('div', 'details-body');
+  const occurrences = node('ul', 'occurrence-list');
+  occurrences.id = `occurrences-${row.id}`;
+  const detailRange = node('p', 'detail-range'); detailRange.setAttribute('role', 'status'); detailRange.setAttribute('aria-live', 'polite');
+  const more = node('button', 'btn small detail-more'); more.type = 'button'; more.hidden = true; more.setAttribute('aria-controls', occurrences.id);
+  detailRange.hidden = true;
+  let rendered = 0;
+  function appendOccurrences(until) {
+    const end = Math.min(until, row.occurrences.length);
+    if (end > rendered) occurrences.append(...row.occurrences.slice(rendered, end).map((link) => renderOccurrence(link, row.occurrences.length > 1)));
+    rendered = end;
+    ui.detailLimits.set(detailKey, rendered);
+    detailRange.textContent = `Showing ${count(rendered)} of ${plural(row.occurrences.length, 'source occurrence')}`;
+    detailRange.hidden = row.occurrences.length === 1;
+    more.hidden = rendered >= row.occurrences.length;
+    const nextCount = Math.min(DETAIL_PAGE_SIZE, row.occurrences.length - rendered);
+    more.textContent = `Show next ${nextCount} occurrence${nextCount === 1 ? '' : 's'}`;
+  }
+  more.addEventListener('click', () => {
+    appendOccurrences(rendered + DETAIL_PAGE_SIZE);
+    if (more.hidden) summary.focus({ preventScroll: true });
+  });
+  details.addEventListener('toggle', () => {
+    if (!details.isConnected) return;
+    if (details.open) {
+      ui.openDetails.add(detailKey);
+      appendOccurrences(Math.max(DETAIL_PAGE_SIZE, ui.detailLimits.get(detailKey) || 0));
+    } else {
+      ui.openDetails.delete(detailKey);
+      occurrences.replaceChildren(); rendered = 0; more.hidden = true; detailRange.hidden = true;
+    }
+  });
+  body.append(occurrences, detailRange, more); details.append(body);
+  if (details.open) appendOccurrences(Math.max(DETAIL_PAGE_SIZE, ui.detailLimits.get(detailKey) || 0));
+  wrapper.append(details);
+  return wrapper;
+}
+
+export function fact(list, term, value, { exact = false, empty = 'None' } = {}) {
+  const dt = node('dt', '', term);
+  const dd = node('dd', exact ? 'exact' : '');
+  if (value instanceof Node) dd.append(value);
+  else if (value) dd.textContent = value;
+  else dd.append(node('span', 'none', empty));
+  list.append(dt, dd);
+  return dd;
+}
+
+export function renderOccurrence(link, grouped) {
+  const item = node('li', 'occurrence');
+  const facts = node('dl', 'facts');
+  fact(facts, 'Anchor text', link.anchorText, { empty: 'Empty (the link has no visible text)' });
+  if (link.accessibleLabel) fact(facts, 'Accessible label', link.accessibleLabel);
+  const urlValue = fact(facts, 'URL', '', { exact: true });
+  urlValue.replaceChildren();
+  appendTextLink(urlValue, link.url, link.url);
+  const copyUrl = node('button', 'link-btn inline-copy', 'Copy'); copyUrl.type = 'button'; copyUrl.setAttribute('aria-label', `Copy URL of ${labelFor(link)}`);
+  copyUrl.addEventListener('click', () => action(async () => { await navigator.clipboard.writeText(link.url); show('Copied the URL.'); }));
+  urlValue.append(copyUrl);
+  fact(facts, 'Original href', link.originalHref, { exact: true, empty: 'Empty' });
+  const page = node('span');
+  appendTextLink(page, link.sourceUrl, link.sourceTitle || link.sourceUrl || '(unknown page)');
+  if (link.sourceTitle && link.sourceUrl) { page.append(document.createElement('br')); page.append(node('span', 'exact', link.sourceUrl)); }
+  // 1.0.0: a link read from a PDF says which page of the PDF it is on.
+  if (link.pdfPage) { if (page.childNodes.length) page.append(document.createElement('br')); page.append(node('span', 'pdf-page', `Page ${count(link.pdfPage)} of the PDF`)); }
+  fact(facts, 'Source page', page);
+  if (link.frameUrl && link.frameUrl !== link.sourceUrl) {
+    const frame = node('span'); appendTextLink(frame, link.frameUrl); fact(facts, 'Inside frame', frame);
+  }
+  const time = fact(facts, 'Captured', formatTime(link.capturedAt));
+  time.title = link.capturedAt;
+  fact(facts, 'Capture batch', link.batchId, { exact: true, empty: 'Unknown' });
+  fact(facts, 'Occurrence ID', link.id, { exact: true });
+  const move = node('div', 'occurrence-move'); move.append(detailMove(link));
+  item.append(renderResearch(link), facts, linkDownload(link), move, detailPages(link));
+
+  const form = document.createElement('form'); form.className = 'occurrence-form';
+  const draft = ui.linkDrafts.get(link.id);
+  const noteLabel = node('label', '', 'Note'); const noteInput = document.createElement('input'); noteInput.value = draft?.notes ?? link.notes; noteInput.dataset.linkId = link.id; noteInput.dataset.linkField = 'notes'; noteInput.setAttribute('aria-label', `Note for ${labelFor(link)}`); noteInput.autocomplete = 'off'; noteLabel.append(noteInput);
+  const tagLabel = node('label', '', 'Tags'); const tagInput = document.createElement('input'); tagInput.value = draft?.tags ?? link.tags.join(', '); tagInput.dataset.linkId = link.id; tagInput.dataset.linkField = 'tags'; tagInput.setAttribute('aria-label', `Tags for ${labelFor(link)}`); tagInput.placeholder = 'comma, separated'; tagInput.autocomplete = 'off'; tagLabel.append(tagInput);
+  const custom = fieldInputs(link, draft?.fields);
+  const keepDraft = () => ui.linkDrafts.set(link.id, { notes: noteInput.value, tags: tagInput.value, fields: custom.values() });
+  noteInput.addEventListener('input', keepDraft); tagInput.addEventListener('input', keepDraft); custom.onInput(keepDraft);
+  const save = node('button', 'btn', 'Save'); save.type = 'submit';
+  form.append(noteLabel, tagLabel, ...custom.elements, save);
+  form.classList.toggle('has-fields', !!custom.elements.length);
+  const saved = custom.elements.length ? 'the note, tags and custom columns' : 'the note and tags';
+  form.addEventListener('submit', (event) => { event.preventDefault(); action(async () => { await mutate({ type: 'link.update', id: link.id, patch: { notes: noteInput.value, tags: tags(tagInput.value), ...custom.patch() } }); ui.linkDrafts.delete(link.id); show(grouped ? `Saved ${saved} for this occurrence.` : `Saved ${saved}.`); }); });
+  item.append(form);
+  return item;
+}
+
+/* Research details (0.5.0) ------------------------------------------------------------ */
+// Above a link's facts: its reading status and star, then only the parts it has: the words around
+// it on its page, identifiers in its address, the citation its source page carried, the citation
+// the link itself uses when that's another page's (its own page's, or one borrowed from a page
+// about the same work: citationFor), and where an imported link came from.
+function renderResearch(link) {
+  const pages = currentCollection()?.pages || {};
+  const block = node('div', 'occ-new');
+  block.append(readingControls(link));
+  if (link.context) block.append(occBlock('Context', contextSnippet(link)));
+  const ids = identifiersOf(link, pages);
+  if (Object.keys(ids).length) block.append(occBlock('Identifiers', identifierList(ids)));
+  const cited = pages[pageKey(link.sourceUrl)];
+  if (cited) block.append(occBlock('Cited from', citation(cited, citedNote(cited))));
+  const used = citationFor(link, pages);
+  if (used && used.key !== pageKey(link.sourceUrl)) block.append(occBlock('Citation', citation(used.citation, usedNote(used))));
+  // Page details lookup (1.0.0): offered where the citation the link uses lacks something.
+  const lookup = detailLookup(link);
+  if (lookup) block.append(lookup);
+  if (link.imported) block.append(occBlock('Imported from', node('p', 'imported-from', link.imported)));
+  return block;
+}
+
+function occBlock(label, content) {
+  const block = node('div', 'occ-block'); block.setAttribute('role', 'group'); block.setAttribute('aria-label', label);
+  block.append(node('span', 'occ-label', label), content);
+  return block;
+}
+
+// Unread, Reading and Read as radios, and the Star toggle. Each change saves at once, with Undo.
+function readingControls(link) {
+  const group = node('div', 'reading'); group.setAttribute('role', 'group'); group.setAttribute('aria-label', `Reading status and star for ${labelFor(link)}`);
+  const seg = node('div', 'status-seg'); seg.setAttribute('role', 'radiogroup'); seg.setAttribute('aria-label', 'Reading status');
+  for (const [value, label] of STATUSES) {
+    const option = node('label');
+    const input = document.createElement('input'); input.type = 'radio'; input.name = `status-${link.id}`; input.value = value;
+    input.checked = (link.status || '') === value; input.dataset.linkId = link.id; input.dataset.linkField = `status:${value}`;
+    input.addEventListener('change', () => { if (input.checked) action(() => setReading('status', [link.id], value, quoted(labelFor(link)))); });
+    option.append(input, label);
+    seg.append(option);
+  }
+  const star = node('button', 'star-btn'); star.type = 'button';
+  star.setAttribute('aria-pressed', String(!!link.starred)); star.dataset.linkId = link.id; star.dataset.linkField = 'star';
+  // A fixed label: the pressed look and aria-pressed say whether it's starred, so it isn't announced twice.
+  star.append(icon('i-star'), 'Star');
+  star.addEventListener('click', () => action(() => setReading('starred', [link.id], !link.starred, quoted(labelFor(link)))));
+  group.append(seg, star);
+  return group;
+}
+
+// The snippet with the anchor text marked, and a line naming its page.
+function contextSnippet(link) {
+  const wrap = node('div');
+  const quote = node('blockquote', 'context');
+  const text = link.context, needle = link.anchorText.trim().replace(/\s+/g, ' ');
+  let at = needle ? text.indexOf(needle) : -1;
+  if (at < 0 && needle && text.toLowerCase().length === text.length) at = text.toLowerCase().indexOf(needle.toLowerCase());
+  if (at < 0) quote.textContent = text;
+  else quote.append(text.slice(0, at), node('mark', '', text.slice(at, at + needle.length)), text.slice(at + needle.length));
+  const page = link.sourceTitle || hostOf(link.sourceUrl);
+  wrap.append(quote, node('p', 'context-meta', `The words around the link on ${page ? `“${page}”` : 'its page'}, as captured. Saved in this browser.`));
+  return wrap;
+}
+
+// Each identifier with Copy. A DOI links to doi.org, opened only when clicked.
+function identifierList(ids) {
+  const list = node('ul', 'idents');
+  for (const [key, label] of Object.entries(IDENTIFIER_LABELS)) {
+    const value = ids[key];
+    if (!value) continue;
+    const item = node('li', 'ident');
+    item.append(node('b', '', label));
+    const href = key === 'doi' ? safeUrl(`https://doi.org/${value}`) : '';
+    if (href) { const doi = node('a', 'ident-value', value); doi.href = href; doi.target = '_blank'; doi.rel = 'noopener noreferrer'; doi.title = `Open ${href}`; item.append(doi); }
+    else item.append(node('span', 'ident-value', value));
+    const copy = node('button', 'link-btn', 'Copy'); copy.type = 'button'; copy.setAttribute('aria-label', `Copy ${label} ${value}`);
+    copy.addEventListener('click', () => action(async () => { await navigator.clipboard.writeText(value); show(`Copied the ${label}.`); }));
+    item.append(copy);
+    list.append(item);
+  }
+  return list;
+}
+
+// Where a citation was read, when it wasn't a page's own citation tags: the words for its
+// `source` (1.0.0), or '' for tags. 'pdf' is what a PDF says about itself; a lookup's services
+// have their own note (lookupNote), with the day it was looked up.
+export function citationSourceNote(source) {
+  return source === 'pdf' ? 'Read from the PDF itself.' : '';
+}
+const KEPT = 'Saved in this browser.';
+// Which other source filled in what this reading left empty: "Authors and journal were filled in from Crossref."
+const FILLED_FIELDS = { title: 'title', authors: 'authors', date: 'date', journal: 'journal', publisher: 'publisher', volume: 'volume', issue: 'issue', firstPage: 'pages', lastPage: 'pages', doi: 'DOI', pmid: 'PubMed ID', arxiv: 'arXiv ID', isbn: 'ISBN' };
+const FILLED_SOURCES = { pdf: 'the PDF itself', crossref: 'Crossref', datacite: 'DataCite', pubmed: 'NCBI' };
+export function filledNote(page) {
+  const by = new Map();
+  for (const [field, source] of Object.entries(page?.filled || {})) {
+    const word = FILLED_FIELDS[field];
+    if (!word || !FILLED_SOURCES[source]) continue;
+    if (!by.has(source)) by.set(source, []);
+    if (!by.get(source).includes(word)) by.get(source).push(word);
+  }
+  return [...by].map(([source, words]) => {
+    const list = words.length > 1 ? `${words.slice(0, -1).join(', ')} and ${words.at(-1)}` : words[0];
+    return `${list[0].toUpperCase()}${list.slice(1)} ${words.length > 1 || /s$/.test(words[0]) ? 'were' : 'was'} filled in from ${FILLED_SOURCES[source]}.`;
+  }).join(' ');
+}
+
+// Where a citation that isn't the source page's comes from, for its note.
+const BORROWED = { pdf: 'which names this link as its PDF', doi: 'which has the same DOI', arxiv: 'which has the same arXiv ID' };
+function usedNote({ key, citation: page, reason }) {
+  const read = citationSourceNote(page.source);
+  if (reason === 'own') return read ? `${read} Citation exports use it. ${KEPT}` : `From this page’s own citation tags, read when Link Meteor had it open. Citation exports use it. ${KEPT}`;
+  const name = page.title ? `“${page.title}”` : hostOf(key) || 'a saved page';
+  return `From ${read ? 'what Link Meteor read for' : 'the citation tags of'} ${name}, ${BORROWED[reason]}. ${read ? `${read} ` : ''}Citation exports use it. ${KEPT}`;
+}
+// The note under Cited from: where the source page's citation was read.
+function citedNote(page) {
+  const read = citationSourceNote(page.source);
+  return read ? `${read} ${KEPT}` : SOURCE_NOTE;
+}
+
+// A citation: title, then authors, journal, date and identifiers on one line, and a note saying
+// where it was read: a page's own tags, the PDF itself, or the service a lookup asked (lookupNote),
+// and which other source filled in what that reading left empty (filledNote).
+const SOURCE_NOTE = `From the source page’s own citation tags, read when you captured it. ${KEPT}`;
+function citation(page, note = SOURCE_NOTE) {
+  const box = node('div', 'cited');
+  box.append(node('span', 'cited-title', page.title || (page.source === 'pdf' ? 'Untitled PDF' : 'Untitled page')));
+  const authors = page.authors || [];
+  const named = authors.length > 4 ? `${authors.slice(0, 3).join(', ')} and ${plural(authors.length - 3, 'more author')}` : authors.join(', ');
+  const venue = [page.journal || page.publisher, page.volume && `vol. ${page.volume}`, page.issue && `no. ${page.issue}`,
+    page.firstPage && (page.lastPage ? `pp. ${page.firstPage}–${page.lastPage}` : `p. ${page.firstPage}`)].filter(Boolean).join(', ');
+  const line = [named, venue, page.date, page.doi && `DOI ${page.doi}`, page.arxiv && `arXiv ${page.arxiv}`, page.pmid && `PubMed ${page.pmid}`, page.isbn && `ISBN ${page.isbn}`].filter(Boolean).join(' · ');
+  if (line) box.append(node('span', 'cited-line', line));
+  box.append(node('span', 'cited-note', [lookupNote(page, note !== SOURCE_NOTE) || note, filledNote(page)].filter(Boolean).join(' ')));
+  return box;
+}
+
+/* Reading status and stars (0.5.0) ------------------------------------------------------ */
+// Quick changes: no confirmation, but always Undo in the notice. Undo puts each link's earlier
+// value back, one action per earlier value, as Fill does.
+const READING = {
+  status: { type: 'links.status', of: (link) => link.status || '', done: (value) => `as ${value || 'unread'}` },
+  starred: { type: 'links.star', of: (link) => !!link.starred },
+};
+
+// The selected links in the current view, as Remove uses them.
+function selectedIdsInView() { return ui.rows.flatMap((row) => row.occurrenceIds.filter((id) => ui.selectedIds.has(id))); }
+
+async function setReading(key, ids, value, subject) {
+  const collection = currentCollection();
+  const { type, of } = READING[key];
+  const byId = new Map(collection.links.map((link) => [link.id, link]));
+  const earlier = new Map();
+  for (const id of ids) {
+    const link = byId.get(id);
+    if (link && of(link) !== value) earlier.set(of(link), [...(earlier.get(of(link)) || []), id]);
+  }
+  const what = key === 'status' ? (value || 'unread') : value ? 'starred' : 'not starred';
+  if (!earlier.size) { show(`${ids.length === 1 ? 'The selected link is' : `All ${plural(ids.length, 'selected link')} are`} already ${what}.`); return; }
+  const changed = [...earlier.values()].flat();
+  await mutate({ type, collectionId: collection.id, ids: changed, [key]: value });
+  const message = key === 'status' ? `Marked ${subject} ${READING.status.done(value)}.` : `${value ? 'Starred' : 'Unstarred'} ${subject}.`;
+  const undo = { type, key, collectionId: collection.id, earlier: [...earlier], subject: changed.length === ids.length ? subject : plural(changed.length, 'link') };
+  show(message, 'notice', { actionLabel: 'Undo', onAction: () => undoReading(undo) });
+}
+
+async function undoReading({ type, key, collectionId, earlier, subject }) {
+  for (const [value, ids] of earlier) ui.state = await request({ type: 'state.mutate', action: { type, collectionId, ids, [key]: value } });
+  render();
+  show(`Put back the earlier ${key === 'status' ? 'reading status' : 'stars'} of ${subject}.`);
+}
+
+// Mark as read, Mark as unread, and Star or Unstar, shown while links in this view are selected.
+function renderReadingActions(collection) {
+  const ids = new Set(selectedIdsInView());
+  $('reading-actions').hidden = !ids.size;
+  if (!ids.size) return;
+  const selected = collection.links.filter((link) => ids.has(link.id));
+  $('star-selected-label').textContent = selected.every((link) => link.starred) ? 'Unstar' : 'Star';
+}
+
+function readingForSelection(key, value) {
+  const ids = selectedIdsInView();
+  if (!ids.length) return;
+  const collection = currentCollection();
+  const selected = new Set(ids);
+  const star = !collection.links.filter((link) => selected.has(link.id)).every((link) => link.starred);
+  return setReading(key, ids, key === 'starred' ? star : value, plural(ids.length, 'link'));
+}
+
+// The rows an export, copy, bookmark or open action uses: the selection if there is one,
+// otherwise the whole filtered view.
+export function targetRows() {
+  if (!ui.selectedIds.size) return ui.rows;
+  return ui.rows.flatMap((row) => {
+    const occurrences = row.occurrences.filter((link) => ui.selectedIds.has(link.id));
+    if (!occurrences.length) return [];
+    return [{ ...occurrences[0], occurrences, occurrenceIds: occurrences.map((link) => link.id) }];
+  });
+}
+
+export function requiredRows() {
+  const rows = targetRows();
+  if (!rows.length) throw new Error('No visible links to use. Adjust the filters or selection first.');
+  return rows;
+}
+
+export async function undo() { await mutate({ type: 'links.undo' }); show('Removal undone. The links are back in their original positions.'); }
+
+export function renderUndo() { $('undo').disabled = !ui.state.undo; }
+
+// Every occurrence in the filtered view, across pages and inside grouped rows.
+function viewOccurrenceIds() { return ui.rows.flatMap((row) => row.occurrenceIds); }
+
+function openViewRemoval() {
+  const collection = currentCollection();
+  const ids = viewOccurrenceIds();
+  if (!collection || !ids.length) return;
+  pendingViewRemoval = { collectionId: collection.id, ids, key: ids.join('\n') };
+  const others = collection.links.length - ids.length;
+  const grouped = $('dedupe').value !== 'none' && ids.length > ui.rows.length;
+  $('remove-view-confirm-text').textContent = `Remove all ${plural(ids.length, 'link')} in this view${grouped ? ', including every grouped occurrence' : ''}? `
+    + (others ? `The other ${plural(others, 'link')} in “${collection.name}” stay. ` : `That is every link in “${collection.name}”. `)
+    + 'You can undo this.';
+  $('remove-view-confirm-yes').textContent = `Remove ${plural(ids.length, 'link')}`;
+  $('remove-view-confirm').hidden = false;
+  $('remove-view-confirm-no').focus();
+}
+
+export function closeViewRemoval() {
+  pendingViewRemoval = null;
+  $('remove-view-confirm').hidden = true;
+}
+
+// A confirmation names an exact set of links: if the view changes under it, it closes.
+function syncViewRemoval(collection) {
+  if (!pendingViewRemoval) return;
+  if (pendingViewRemoval.collectionId !== collection.id || pendingViewRemoval.key !== viewOccurrenceIds().join('\n')) closeViewRemoval();
+}
+
+// After a removal, keyboard focus goes to the Undo that is still on screen.
+export function focusUndo() {
+  const target = $('review').classList.contains('is-blank') ? $('empty-undo') : $('undo');
+  target?.focus();
+}
+
+async function confirmViewRemoval() {
+  const pending = pendingViewRemoval;
+  if (!pending) return;
+  closeViewRemoval();
+  await mutate({ type: 'links.remove', collectionId: pending.collectionId, ids: pending.ids });
+  show(`Removed ${plural(pending.ids.length, 'link')} from this view.`, 'notice', { actionLabel: 'Undo', onAction: undo });
+  focusUndo();
+}
+
+export function bindReview() {
+  for (const id of filters) $(id).addEventListener(['search', 'domain', 'file-type'].includes(id) ? 'input' : 'change', () => action(async () => {
+    if (id === 'direction') ui.directionTouched = true;
+    if (id === 'sort' && $('sort').value === 'newest' && !ui.directionTouched) $('direction').value = 'desc';
+    ui.page = 0;
+    renderLinks();
+  }));
+  $('filters-toggle').addEventListener('click', () => {
+    const open = $('filter-panel').hidden;
+    $('filter-panel').hidden = !open;
+    $('filters-toggle').setAttribute('aria-expanded', String(open));
+    if (open) $('domain').focus();
+  });
+  $('select-all').addEventListener('change', (event) => { for (const id of ui.rows.slice(ui.page * PAGE_SIZE, (ui.page + 1) * PAGE_SIZE).flatMap((row) => row.occurrenceIds)) event.target.checked ? ui.selectedIds.add(id) : ui.selectedIds.delete(id); renderLinks(); });
+  $('clear-selection').addEventListener('click', () => { ui.selectedIds.clear(); renderLinks(); $('select-all').focus(); });
+  $('select-everything').addEventListener('click', () => { const ids = ui.rows.flatMap((row) => row.occurrenceIds); for (const id of ids) ui.selectedIds.add(id); renderLinks(); $('select-all').focus(); show(`Selected all ${plural(ids.length, 'link')} in this view.`); });
+  $('page-prev').addEventListener('click', () => { if (ui.page > 0) { ui.page--; renderLinks(); $('review').scrollIntoView({ block: 'start' }); } });
+  $('page-next').addEventListener('click', () => { if ((ui.page + 1) * PAGE_SIZE < ui.rows.length) { ui.page++; renderLinks(); $('review').scrollIntoView({ block: 'start' }); } });
+  $('remove').addEventListener('click', () => action(async () => { const ids = ui.rows.flatMap((row) => row.occurrenceIds.filter((id) => ui.selectedIds.has(id))); if (!ids.length) return; await mutate({ type: 'links.remove', ids }); show(`Removed ${plural(ids.length, 'link')}.`, 'notice', { actionLabel: 'Undo', onAction: undo }); }));
+  $('mark-read').addEventListener('click', () => action(() => readingForSelection('status', 'read')));
+  $('mark-unread').addEventListener('click', () => action(() => readingForSelection('status', '')));
+  $('star-selected').addEventListener('click', () => action(() => readingForSelection('starred')));
+  $('undo').addEventListener('click', () => action(undo));
+  $('remove-view').addEventListener('click', openViewRemoval);
+  $('remove-view-confirm-yes').addEventListener('click', () => action(confirmViewRemoval));
+  $('remove-view-confirm-no').addEventListener('click', () => { closeViewRemoval(); $('remove-view').focus(); });
+  onEscape(() => {
+    if ($('remove-view-confirm').hidden) return false;
+    closeViewRemoval(); $('remove-view').focus();
+    return true;
+  });
+  bindFill();
+  bindMove();
+  bindInsights();
+}

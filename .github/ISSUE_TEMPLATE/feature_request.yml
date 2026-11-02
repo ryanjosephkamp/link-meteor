@@ -1,0 +1,22 @@
+name: Feature suggestion
+description: An idea that would make Link Meteor more useful.
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Suggestions are welcome. Link Meteor stays free and local: no accounts, tracking, paid tiers or servers holding your links. Issues are public, so describe your use with made-up examples rather than private URLs or collection data.
+  - type: textarea
+    id: problem
+    attributes:
+      label: What are you trying to do?
+      description: The task or situation, and where Link Meteor gets in the way today.
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: What would help?
+      description: Your idea, in as much or as little detail as you like.
+    validations:
+      required: true

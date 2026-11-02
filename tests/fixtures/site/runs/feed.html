@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Field notes feed</title>
+<style>
+body{margin:0;font:16px/1.5 system-ui;color:#22302a;background:#f6f3ec}
+header{padding:16px 24px;border-bottom:2px solid #9b2c1f;font-weight:700}
+#feed{max-width:720px;margin:0 auto;padding:8px 24px}
+.item{height:118px;padding:14px 0;border-bottom:1px solid #d9d3c4;overflow:hidden}
+.item a{font-weight:700;color:#1b4f9c}
+#more{padding:24px;text-align:center;color:#6b665a}
+body.boxed{height:100vh;overflow:hidden;display:flex;flex-direction:column}
+body.boxed #scroller{flex:1;overflow-y:auto}
+</style>
+<header>Field notes · a feed for the scrolling checks</header>
+<nav><a href="/site/runs/feed.html?about=1">About this feed</a></nav>
+<div id="scroller"><main id="feed"></main><p id="more" role="status">Loading more…</p></div>
+<script>
+// What the address asks for:
+//   batches  how many batches the feed has (default 3; "inf": it never ends)
+//   per      links in each batch (default 10)
+//   delay    milliseconds the feed takes to answer once its end comes into view (default 0)
+//   keep     the most items kept in the page; older ones are removed (default: all)
+//   box      1: the feed scrolls inside its own box, and the document doesn't scroll
+//   extra    more links in each item, beside its two (default 0)
+const ask=new URLSearchParams(location.search),number=(key,fallback)=>ask.has(key)&&Number(ask.get(key))>=0?Number(ask.get(key)):fallback;
+const batches=ask.get('batches')==='inf'?Infinity:number('batches',3),per=number('per',10),delay=number('delay',0),keep=number('keep',Infinity),extra=number('extra',0);
+const feed=document.getElementById('feed'),more=document.getElementById('more');
+if(ask.get('box')==='1')document.body.classList.add('boxed');
+let added=0,loading=false;
+window.feed={batches:0,requests:0};
+function add(){
+  for(let i=0;i<per;i++){
+    const n=++added,item=document.createElement('article');item.className='item';
+    item.innerHTML=`<a id="note-${n}" href="/site/runs/note.html?n=${n}">Field note ${n}</a><p>Observation ${n}, written the same day, with <a href="/site/runs/note.html?n=${n}#data">its data</a>.</p>${Array.from({length:extra},(_,k)=>`<a href="/site/runs/note.html?n=${n}&amp;ref=${k+1}">[${k+1}]</a>`).join(' ')}`;
+    feed.append(item);
+  }
+  while(feed.children.length>keep)feed.firstElementChild.remove();
+  window.feed.batches++;loading=false;
+  if(window.feed.batches>=batches){more.textContent='The end of the feed.';watcher.disconnect();}
+}
+const watcher=new IntersectionObserver(entries=>{
+  if(!entries.some(entry=>entry.isIntersecting)||loading||window.feed.batches>=batches)return;
+  loading=true;window.feed.requests++;setTimeout(add,delay);
+},{root:ask.get('box')==='1'?document.getElementById('scroller'):null,rootMargin:'0px 0px 200px 0px'});
+add();watcher.observe(more);
+</script>
+</html>

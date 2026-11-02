@@ -1,0 +1,181 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Courier /Encoding /WinAnsiEncoding >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [15 0 R 22 0 R 28 0 R] /Count 3 >>
+endobj
+3 0 obj
+<< /Type /Annot /Subtype /Link /Rect [400 690 409 699] /Border [0 0 0] /A << /S /URI /URI (https://orcid.org/0000-0002-1825-0097) >> >>
+endobj
+4 0 obj
+<< /Type /Annot /Subtype /Link /Rect [171 657.25 276.6 669.35] /Border [0 0 0] /A << /S /URI /URI (https://example.org/code) >> >>
+endobj
+5 0 obj
+<< /Type /Annot /Subtype /Link /Rect [388.8 657.25 415.2 669.35] /Border [0 0 0] /A << /S /URI /URI (https://data.example.org/set?id=7) >> >>
+endobj
+6 0 obj
+<< /Type /Annot /Subtype /Link /Rect [164.4 639.25 197.4 651.35] /Border [0 0 0] /Dest [22 0 R /Fit] >>
+endobj
+7 0 obj
+<< /Type /Annot /Subtype /Link /Rect [303 621.25 428.4 633.35] /Border [0 0 0] /A << /S /URI /URI (https://github.com/example/project) >> >>
+endobj
+8 0 obj
+<< /Type /Annot /Subtype /Link /Rect [72 603.25 171 615.35] /Border [0 0 0] /A << /S /URI /URI (https://github.com/example/project) >> >>
+endobj
+9 0 obj
+<< /Type /Annot /Subtype /Link /Rect [243.6 585.25 415.2 597.35] /Border [0 0 0] /A << /S /URI /URI (https://mono.example.net/a) >> >>
+endobj
+10 0 obj
+<< /Type /Annot /Subtype /Link /Rect [371.64 567.25 487.8 579.35] /Border [0 0 0] /A << /S /URI /URI (http://arxiv.org/abs/1610.10099) >> >>
+endobj
+11 0 obj
+<< /Type /Annot /Subtype /Link /Rect [157.8 549.25 421.8 561.35] /Border [0 0 0] /A << /S /URI /URI (https://doi.org/10.5555/fixture.2026.001) >> >>
+endobj
+12 0 obj
+<< /Type /Annot /Subtype /Link /Rect [138 531.25 177.6 543.35] /Border [0 0 0] /A << /S /JavaScript /JS (app.alert\(1\)) >> >>
+endobj
+13 0 obj
+<< /Type /Annot /Subtype /Link /Rect [303 531.25 355.8 543.35] /Border [0 0 0] /A << /S /GoToR /F (appendix.pdf) /D [0 /Fit] >> >>
+endobj
+14 0 obj
+<< /Length 2111 >>
+stream
+BT /F1 20 Tf 1 0 0 1 72.00 720 Tm (A Small Paper About Links) Tj ET
+BT /F1 11 Tf 1 0 0 1 72.00 688 Tm (Ada Example and Ben Sample) Tj ET
+BT /F1 9 Tf 0 1 -1 0 40 220 Tm (arXiv:2409.11211v1 [cs.CV] 17 Sep 2024) Tj ET
+BT /F1 11 Tf 1 0 0 1 72.00 660 Tm (Our code is at example.org/code and the data is here.) Tj ET
+BT /F1 11 Tf 1 0 0 1 72.00 642 Tm (See Section 2 below for the details of the method.) Tj ET
+BT /F1 11 Tf 1 0 0 1 72.00 624 Tm (The project page has more to read: https://github.com/) Tj ET
+BT /F1 11 Tf 1 0 0 1 72.00 606 Tm (example/project and it ends here.) Tj ET
+BT /F1 11 Tf 1 0 0 1 72.00 588 Tm (Typeset letter by letter: ) Tj ET
+BT /F1 11 Tf 1 0 0 1 243.60 588 Tm (h) Tj ET
+BT /F1 11 Tf 1 0 0 1 250.20 588 Tm (t) Tj ET
+BT /F1 11 Tf 1 0 0 1 256.80 588 Tm (t) Tj ET
+BT /F1 11 Tf 1 0 0 1 263.40 588 Tm (p) Tj ET
+BT /F1 11 Tf 1 0 0 1 270.00 588 Tm (s) Tj ET
+BT /F1 11 Tf 1 0 0 1 276.60 588 Tm (:) Tj ET
+BT /F1 11 Tf 1 0 0 1 283.20 588 Tm (/) Tj ET
+BT /F1 11 Tf 1 0 0 1 289.80 588 Tm (/) Tj ET
+BT /F1 11 Tf 1 0 0 1 296.40 588 Tm (m) Tj ET
+BT /F1 11 Tf 1 0 0 1 303.00 588 Tm (o) Tj ET
+BT /F1 11 Tf 1 0 0 1 309.60 588 Tm (n) Tj ET
+BT /F1 11 Tf 1 0 0 1 316.20 588 Tm (o) Tj ET
+BT /F1 11 Tf 1 0 0 1 322.80 588 Tm (.) Tj ET
+BT /F1 11 Tf 1 0 0 1 329.40 588 Tm (e) Tj ET
+BT /F1 11 Tf 1 0 0 1 336.00 588 Tm (x) Tj ET
+BT /F1 11 Tf 1 0 0 1 342.60 588 Tm (a) Tj ET
+BT /F1 11 Tf 1 0 0 1 349.20 588 Tm (m) Tj ET
+BT /F1 11 Tf 1 0 0 1 355.80 588 Tm (p) Tj ET
+BT /F1 11 Tf 1 0 0 1 362.40 588 Tm (l) Tj ET
+BT /F1 11 Tf 1 0 0 1 369.00 588 Tm (e) Tj ET
+BT /F1 11 Tf 1 0 0 1 375.60 588 Tm (.) Tj ET
+BT /F1 11 Tf 1 0 0 1 382.20 588 Tm (n) Tj ET
+BT /F1 11 Tf 1 0 0 1 388.80 588 Tm (e) Tj ET
+BT /F1 11 Tf 1 0 0 1 395.40 588 Tm (t) Tj ET
+BT /F1 11 Tf 1 0 0 1 402.00 588 Tm (/) Tj ET
+BT /F1 11 Tf 1 0 0 1 408.60 588 Tm (a) Tj ET
+BT /F1 11 Tf 1 0 0 1 72.00 570 Tm ([12] J. Doe. A study of things. arXiv preprint arXiv:1610.10099, 2016.) Tj ET
+BT /F1 11 Tf 1 0 0 1 72.00 552 Tm (Published as https://doi.org/10.5555/fixture.2026.001) Tj ET
+BT /F1 11 Tf 1 0 0 1 72.00 534 Tm (A script: run me and another file: appendix) Tj ET
+endstream
+endobj
+15 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 1 0 R >> >> /Contents 14 0 R /Annots [3 0 R 4 0 R 5 0 R 6 0 R 7 0 R 8 0 R 9 0 R 10 0 R 11 0 R 12 0 R 13 0 R] >>
+endobj
+16 0 obj
+<< /Type /Annot /Subtype /Link /Rect [157.8 695.25 230.4 707.35] /Border [0 0 0] /A << /S /URI /URI (mailto:team@example.org) >> >>
+endobj
+17 0 obj
+<< /Type /Annot /Subtype /Link /Rect [289.8 695.25 362.4 707.35] /Border [0 0 0] /A << /S /URI /URI (tel:+15550100) >> >>
+endobj
+18 0 obj
+<< /Type /Annot /Subtype /Link /Rect [177.6 677.25 283.2 689.35] /Border [0 0 0] /A << /S /URI /URI (https://example.org/code) >> >>
+endobj
+19 0 obj
+<< /Type /Annot /Subtype /Link /Rect [223.8 659.25 263.4 671.35] /Border [0 0 0] /A << /S /URI /URI (https://left.example.org/) >> >>
+endobj
+20 0 obj
+<< /Type /Annot /Subtype /Link /Rect [336 221.25 547.2 233.35] /Border [0 0 0] /A << /S /URI /URI (https://long.example.org/a/very/long/path) >> >>
+endobj
+21 0 obj
+<< /Length 463 >>
+stream
+BT /F1 14 Tf 1 0 0 1 72.00 720 Tm (2 Method) Tj ET
+BT /F1 11 Tf 1 0 0 1 72.00 698 Tm (Second page. Write to us or call +1 555 0100.) Tj ET
+BT /F1 11 Tf 1 0 0 1 72.00 680 Tm (The code again: example.org/code) Tj ET
+BT /F1 11 Tf 1 0 0 1 72.00 662 Tm (Left column words with a link) Tj ET
+BT /F1 11 Tf 1 0 0 1 400.00 662 Tm (Right column words) Tj ET
+BT /F1 11 Tf 1 0 0 1 72.00 224 Tm (A long address at the foot of the page: https://long.example.org/a/very/) Tj ET
+endstream
+endobj
+22 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 1 0 R >> >> /Contents 21 0 R /Annots [16 0 R 17 0 R 18 0 R 19 0 R 20 0 R] >>
+endobj
+23 0 obj
+<< /Type /Annot /Subtype /Link /Rect [72 717.25 131.4 729.35] /Border [0 0 0] /A << /S /URI /URI (https://long.example.org/a/very/long/path) >> >>
+endobj
+24 0 obj
+<< /Type /Annot /Subtype /Link /Rect [369 699.25 527.4 711.35] /Border [0 0 0] /A << /S /URI /URI (https://example.com/ref1) >> >>
+endobj
+25 0 obj
+<< /Type /Annot /Subtype /Link /Rect [342.6 681.25 362.4 693.35] /Border [0 0 0] /A << /S /URI /URI (https://example.com/same) >> >>
+endobj
+26 0 obj
+<< /Type /Annot /Subtype /Link /Rect [369 681.25 388.8 693.35] /Border [0 0 0] /A << /S /URI /URI (https://example.com/same) >> >>
+endobj
+27 0 obj
+<< /Length 287 >>
+stream
+BT /F1 11 Tf 1 0 0 1 72.00 720 Tm (long/path continues from the page before.) Tj ET
+BT /F1 11 Tf 1 0 0 1 72.00 702 Tm ([1] First Author. Some title of a reference. https://example.com/ref1) Tj ET
+BT /F1 11 Tf 1 0 0 1 72.00 684 Tm ([2] Another Author. The same site twice: one two) Tj ET
+endstream
+endobj
+28 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 1 0 R >> >> /Contents 27 0 R /Annots [23 0 R 24 0 R 25 0 R 26 0 R] >>
+endobj
+29 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+30 0 obj
+<< /Title (paper_final_v3.indd) /Author (design08) >>
+endobj
+xref
+0 31
+0000000000 65535 f 
+0000000009 00000 n 
+0000000104 00000 n 
+0000000176 00000 n 
+0000000327 00000 n 
+0000000473 00000 n 
+0000000630 00000 n 
+0000000749 00000 n 
+0000000905 00000 n 
+0000001058 00000 n 
+0000001208 00000 n 
+0000001365 00000 n 
+0000001530 00000 n 
+0000001673 00000 n 
+0000001820 00000 n 
+0000003983 00000 n 
+0000004191 00000 n 
+0000004339 00000 n 
+0000004477 00000 n 
+0000004626 00000 n 
+0000004776 00000 n 
+0000004940 00000 n 
+0000005454 00000 n 
+0000005627 00000 n 
+0000005790 00000 n 
+0000005937 00000 n 
+0000006086 00000 n 
+0000006233 00000 n 
+0000006571 00000 n 
+0000006737 00000 n 
+0000006787 00000 n 
+trailer
+<< /Size 31 /Root 29 0 R /Info 30 0 R >>
+startxref
+6857
+%%EOF

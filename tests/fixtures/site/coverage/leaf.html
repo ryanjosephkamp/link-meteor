@@ -1,0 +1,11 @@
+<!doctype html>
+<html lang="en"><meta charset="utf-8"><title>Leaf frame — coverage fixture</title>
+<style>body{margin:8px;font:14px/1.4 system-ui}a{color:#1f6655}</style>
+<!-- A frame with one link, named after the address it was loaded with. -->
+<p>The frame’s only link, with a few words around it: <a id="leaf-link" href="/f/leaf">Leaf link</a>.</p>
+<script>
+const name = location.search.slice(1) || 'leaf';
+const link = document.getElementById('leaf-link');
+link.textContent = 'Leaf link ' + name; link.setAttribute('href', '/f/leaf-' + name);
+</script>
+</html>

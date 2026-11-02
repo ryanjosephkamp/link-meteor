@@ -1,0 +1,693 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>Link Meteor</title>
+  <link rel="icon" href="../icons/32.png">
+  <link rel="stylesheet" href="workbench.css">
+  <script type="module" src="workbench.js" blocking="render"></script>
+</head>
+<body>
+  <svg class="sprite" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="mark-trail" x1="15.7" y1="8.3" x2="4" y2="20" gradientUnits="userSpaceOnUse"><stop offset="0" style="stop-color:var(--mark-head)"/><stop offset="1" style="stop-color:var(--mark-head);stop-opacity:.2"/></linearGradient>
+      <symbol id="i-mark" viewBox="0 0 24 24"><rect width="24" height="24" rx="6.5" style="fill:var(--mark-tile)"/><g transform="translate(12 12) scale(.78) translate(-12 -12)"><path d="M13.2 4.6 19.4 10.8 4.6 20.4Q3.6 19.4 4.6 18.4Z" fill="url(#mark-trail)"/><circle cx="16.3" cy="7.7" r="4.4" style="fill:var(--mark-head)"/></g></symbol>
+      <symbol id="i-region" viewBox="0 0 20 20"><rect x="2.5" y="2.5" width="11" height="11" rx="1.5" stroke-dasharray="2.4 2.1"/><path d="M11 11l6.3 2.3-2.8 1.2-1.2 2.8Z" fill="currentColor"/></symbol>
+      <symbol id="i-page" viewBox="0 0 20 20"><path d="M5 2.5h6.5l4 4v11H5Z"/><path d="M11.5 2.5v4h4M7.5 10.5h5M7.5 13.5h5"/></symbol>
+      <symbol id="i-tabs" viewBox="0 0 20 20"><path d="M2.5 8.5h15v8a1 1 0 0 1-1 1h-13a1 1 0 0 1-1-1Z"/><path d="M2.5 8.5 3.6 4.4a1 1 0 0 1 1-.9h3.8a1 1 0 0 1 1 .9l1 4.1M10.4 6.5l.5-2.1a1 1 0 0 1 1-.9h3.5a1 1 0 0 1 1 .9l1.1 4.1"/></symbol>
+      <symbol id="i-window" viewBox="0 0 20 20"><rect x="2.5" y="3.5" width="15" height="13" rx="1.5"/><path d="M2.5 7.5h15"/></symbol>
+      <symbol id="i-windows" viewBox="0 0 20 20"><rect x="5.5" y="2.5" width="12" height="10" rx="1.5"/><path d="M5.5 6h12M2.5 7v8a2 2 0 0 0 2 2h9"/></symbol>
+      <symbol id="i-search" viewBox="0 0 20 20"><circle cx="8.75" cy="8.75" r="5.25"/><path d="m12.75 12.75 4 4"/></symbol>
+      <symbol id="i-sliders" viewBox="0 0 20 20"><path d="M3 5.5h7.5M14.5 5.5H17M3 14.5h2.5M9.5 14.5H17"/><circle cx="12.5" cy="5.5" r="2"/><circle cx="7.5" cy="14.5" r="2"/></symbol>
+      <symbol id="i-copy" viewBox="0 0 20 20"><rect x="7" y="7" width="10" height="10.5" rx="1.5"/><path d="M13 7V4a1.5 1.5 0 0 0-1.5-1.5h-7A1.5 1.5 0 0 0 3 4v8.5A1.5 1.5 0 0 0 4.5 14H7"/></symbol>
+      <symbol id="i-download" viewBox="0 0 20 20"><path d="M10 3v10M6 9.5l4 4 4-4M3.5 16.5h13"/></symbol>
+      <symbol id="i-bookmark" viewBox="0 0 20 20"><path d="M5.5 3.5a1 1 0 0 1 1-1h7a1 1 0 0 1 1 1v14L10 14l-4.5 3.5Z"/></symbol>
+      <symbol id="i-external" viewBox="0 0 20 20"><path d="M11.5 3.5h5v5M16.5 3.5l-7 7M14.5 12v3.5a1 1 0 0 1-1 1h-9a1 1 0 0 1-1-1v-9a1 1 0 0 1 1-1H8"/></symbol>
+      <symbol id="i-expand" viewBox="0 0 20 20"><path d="M12 3.5h4.5V8M8 16.5H3.5V12M16.5 3.5l-5 5M3.5 16.5l5-5"/></symbol>
+      <symbol id="i-trash" viewBox="0 0 20 20"><path d="M3.5 5.5h13M8 5.5v-2h4v2M5 5.5l.8 11a1 1 0 0 0 1 1h6.4a1 1 0 0 0 1-1l.8-11"/></symbol>
+      <symbol id="i-undo" viewBox="0 0 20 20"><path d="M7 4.5 3.5 8 7 11.5"/><path d="M3.5 8H12a4.5 4.5 0 0 1 0 9H9.5"/></symbol>
+      <symbol id="i-chevron-down" viewBox="0 0 20 20"><path d="m5.5 8 4.5 4.5L14.5 8"/></symbol>
+      <symbol id="i-chevron-right" viewBox="0 0 20 20"><path d="m8 5.5 4.5 4.5L8 14.5"/></symbol>
+      <symbol id="i-chevron-left" viewBox="0 0 20 20"><path d="M12 5.5 7.5 10l4.5 4.5"/></symbol>
+      <symbol id="i-check" viewBox="0 0 20 20"><path d="m4.5 10.5 3.5 3.5 7.5-8"/></symbol>
+      <symbol id="i-x" viewBox="0 0 20 20"><path d="m5.5 5.5 9 9M14.5 5.5l-9 9"/></symbol>
+      <symbol id="i-alert" viewBox="0 0 20 20"><path d="M9.1 3.6a1 1 0 0 1 1.8 0l6.6 12a1 1 0 0 1-.9 1.4H3.4a1 1 0 0 1-.9-1.4Z"/><path d="M10 8v4M10 14.4v.1"/></symbol>
+      <symbol id="i-info" viewBox="0 0 20 20"><circle cx="10" cy="10" r="7.5"/><path d="M10 9v5M10 6.4v.1"/></symbol>
+      <symbol id="i-ban" viewBox="0 0 20 20"><circle cx="10" cy="10" r="7.5"/><path d="m4.8 15.2 10.4-10.4"/></symbol>
+      <symbol id="i-minus" viewBox="0 0 20 20"><circle cx="10" cy="10" r="7.5"/><path d="M6.5 10h7"/></symbol>
+      <symbol id="i-plus" viewBox="0 0 20 20"><path d="M10 4.5v11M4.5 10h11"/></symbol>
+      <symbol id="i-arrow-up" viewBox="0 0 20 20"><path d="M10 16V4.5M5.5 9 10 4.5 14.5 9"/></symbol>
+      <symbol id="i-arrow-down" viewBox="0 0 20 20"><path d="M10 4v11.5M5.5 11l4.5 4.5 4.5-4.5"/></symbol>
+      <symbol id="i-folders" viewBox="0 0 20 20"><path d="M2.5 6a1 1 0 0 1 1-1h3.8l1.5 1.5h7.7a1 1 0 0 1 1 1V15a1 1 0 0 1-1 1h-13a1 1 0 0 1-1-1Z"/></symbol>
+      <symbol id="i-keyboard" viewBox="0 0 20 20"><rect x="2.5" y="5" width="15" height="10" rx="1.5"/><path d="M5.5 8.2h.1M8.5 8.2h.1M11.5 8.2h.1M14.5 8.2h.1M6.5 11.8h7"/></symbol>
+      <symbol id="i-pencil" viewBox="0 0 20 20"><path d="M12.8 4.2a1.8 1.8 0 0 1 2.6 2.6L7 15.2l-3.5 1 1-3.5Z"/></symbol>
+      <symbol id="i-help" viewBox="0 0 20 20"><circle cx="10" cy="10" r="7.5"/><path d="M7.9 7.7a2.2 2.2 0 0 1 4.3.6c0 1.5-2.2 1.9-2.2 3.2M10 14.3v.1"/></symbol>
+      <symbol id="i-heart" viewBox="0 0 20 20"><path d="M10 16.8S3 12.6 3 7.6A3.6 3.6 0 0 1 10 6a3.6 3.6 0 0 1 7 1.6c0 5-7 9.2-7 9.2Z"/></symbol>
+      <symbol id="i-bug" viewBox="0 0 20 20"><rect x="6" y="6.5" width="8" height="10" rx="4"/><path d="M8 6.8V5.5a2 2 0 0 1 4 0v1.3M10 9.5v7M3.5 9h2.5M14 9h2.5M3.5 13.5H6M14 13.5h2.5M4.5 4.5 6.3 6.3M15.5 4.5l-1.8 1.8"/></symbol>
+      <symbol id="i-book" viewBox="0 0 20 20"><path d="M3.5 4.5a1 1 0 0 1 1-1H9a1 1 0 0 1 1 1v12a1.5 1.5 0 0 0-1.5-1.5h-5ZM16.5 4.5a1 1 0 0 0-1-1H11a1 1 0 0 0-1 1v12a1.5 1.5 0 0 1 1.5-1.5h5Z"/></symbol>
+      <symbol id="i-code" viewBox="0 0 20 20"><path d="m7 6-4 4 4 4M13 6l4 4-4 4"/></symbol>
+      <symbol id="i-globe" viewBox="0 0 20 20"><circle cx="10" cy="10" r="7.5"/><path d="M2.5 10h15M10 2.5c2.1 2.1 3.2 4.6 3.2 7.5s-1.1 5.4-3.2 7.5c-2.1-2.1-3.2-4.6-3.2-7.5s1.1-5.4 3.2-7.5Z"/></symbol>
+      <symbol id="i-lock" viewBox="0 0 20 20"><rect x="4" y="8.5" width="12" height="8.5" rx="1.5"/><path d="M6.5 8.5V6.5a3.5 3.5 0 0 1 7 0v2"/></symbol>
+      <symbol id="i-star" viewBox="0 0 20 20"><path d="M10 2.9 12.25 7.55 17.35 8.2 13.6 11.7 14.5 16.8 10 14.4 5.5 16.8 6.4 11.7 2.65 8.2 7.75 7.55Z"/></symbol>
+      <symbol id="i-clipboard" viewBox="0 0 20 20"><path d="M7.5 3.5h-2a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1v-12a1 1 0 0 0-1-1h-2"/><rect x="7.5" y="2.5" width="5" height="2.5" rx="1"/><path d="M7.5 9.5h5M7.5 12.5h5"/></symbol>
+      <symbol id="i-import" viewBox="0 0 20 20"><path d="M10 2.5v9M6.5 8 10 11.5 13.5 8M3.5 11.5v4a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1v-4"/></symbol>
+    </defs>
+  </svg>
+
+  <div class="app" id="app" data-view="links">
+    <aside class="rail" id="rail" aria-label="Collections and site settings">
+      <div class="rail-head">
+        <div class="brand"><svg class="brand-mark" aria-hidden="true"><use href="#i-mark"/></svg><span>Link Meteor</span></div>
+        <button id="rail-done" class="btn quiet compact-only" type="button"><svg class="icon" aria-hidden="true"><use href="#i-chevron-left"/></svg>Back to links</button>
+      </div>
+
+      <section class="rail-section" aria-labelledby="collections-title">
+        <h2 id="collections-title" class="rail-title">Collections <span id="collection-count" class="count-pill">1</span></h2>
+        <ul id="collection-list" class="collection-list"></ul>
+        <form id="create-collection" class="new-collection">
+          <label class="sr-only" for="new-collection">New collection name</label>
+          <input id="new-collection" maxlength="120" placeholder="New collection name" autocomplete="off" required>
+          <button class="btn icon-btn" type="submit" aria-label="Create collection" title="Create collection"><svg class="icon" aria-hidden="true"><use href="#i-plus"/></svg></button>
+        </form>
+      </section>
+
+      <section class="rail-section site-settings" aria-labelledby="site-title">
+        <h2 id="site-title" class="rail-title">Site access</h2>
+        <div class="hold-row">
+          <input id="all-sites" type="checkbox" role="switch" class="switch" aria-describedby="all-sites-help">
+          <label for="all-sites">Allow on all sites</label>
+        </div>
+        <p id="all-sites-help" class="help">Hold-key drag and Capture this page then work on every website without asking site by site. Link Meteor reads a page’s links only when you capture or drag, and keeps them in this browser.</p>
+        <p id="all-sites-note" class="access-note" role="status" hidden></p>
+        <div id="all-sites-remove" class="confirm" role="group" aria-labelledby="all-sites-remove-text" hidden>
+          <p id="all-sites-remove-text">Chrome still lets Link Meteor read every site. Remove that access too? This can also remove Chrome’s access to sites you allowed one by one. Hold-key drag then stops there until you allow them again.</p>
+          <div class="confirm-actions"><button id="all-sites-remove-yes" class="btn" type="button">Remove Chrome’s access</button><button id="all-sites-remove-no" class="btn quiet" type="button">Keep it</button></div>
+        </div>
+
+        <h3 class="rail-subtitle">This site</h3>
+        <p id="site-origin" class="site-origin">Current site unavailable</p>
+        <div id="site-hold-row" class="hold-row">
+          <input id="hold-enabled" type="checkbox" role="switch" class="switch" aria-describedby="hold-help">
+          <label for="hold-enabled">Hold-key drag on this site</label>
+        </div>
+        <p id="hold-help" class="help">Hold the key below and drag to select links, without opening Link Meteor first. Chrome asks for access to this site only.</p>
+        <div id="site-exception-row" class="hold-row" hidden>
+          <input id="site-exception" type="checkbox" role="switch" class="switch" aria-describedby="site-exception-help">
+          <label for="site-exception">Never on this site</label>
+        </div>
+        <p id="site-exception-help" class="help" hidden>Hold-key drag stays off here even though Link Meteor may run on all sites. Capture this page still works.</p>
+
+        <h3 class="rail-subtitle">Hold to drag</h3>
+        <div class="hold-trigger-row">
+          <label for="hold-trigger">Hold</label>
+          <select id="hold-trigger" aria-describedby="hold-trigger-help"><option value="letter">A letter key</option><option value="modifier">Command</option></select>
+        </div>
+        <div id="hold-letter-row" class="hold-key-row">
+          <label for="hold-key">Hold key</label>
+          <input id="hold-key" class="key-input" maxlength="1" pattern="[A-Za-z]" autocomplete="off" spellcheck="false">
+          <button id="save-hold-key" class="btn small" type="button">Save key</button>
+        </div>
+        <p id="hold-trigger-help" class="help"></p>
+
+        <h3 class="rail-subtitle" id="exceptions-title">Never on these sites <span id="exception-count" class="count-pill">0</span></h3>
+        <ul id="hold-exceptions" class="exception-list" aria-labelledby="exceptions-title"></ul>
+        <p id="hold-exceptions-empty" class="help">No sites yet. Turn on Never on this site while you are on one.</p>
+
+        <div class="shortcut-row">
+          <span class="shortcut-label">Region shortcut</span>
+          <span id="shortcut-keys" class="shortcut-keys"><kbd>Alt</kbd><kbd>Shift</kbd><kbd>L</kbd></span>
+          <button id="shortcut-settings" class="link-btn" type="button">Change<span class="sr-only"> region shortcut in Chrome settings</span></button>
+        </div>
+      </section>
+
+      <section class="rail-section after-drag" aria-labelledby="after-drag-title">
+        <h2 id="after-drag-title" class="rail-title">After a drag</h2>
+        <div class="choice-list" role="radiogroup" aria-labelledby="after-drag-title" aria-describedby="after-drag-help">
+          <label class="choice"><input type="radio" name="after-drag" value="card"><span>Show the card</span></label>
+          <label class="choice"><input type="radio" name="after-drag" value="copy"><span>Copy right away</span></label>
+          <label class="choice"><input type="radio" name="after-drag" value="add"><span>Add right away</span></label>
+        </div>
+        <p id="after-drag-help" class="help"></p>
+        <div id="after-drag-format-row" class="after-drag-format" hidden>
+          <label for="after-drag-format">Copy as</label>
+          <select id="after-drag-format"><option value="tsv">Text + URL table</option><option value="text">URLs</option><option value="markdown">Markdown</option><option value="rich">Rich links</option></select>
+        </div>
+        <label class="rail-check"><input id="content-only" type="checkbox" aria-describedby="content-only-help"><span>Leave out navigation links</span></label>
+        <p id="content-only-help" class="help">Links in menus, headers, footers and sidebars are left unticked, and the card says how many.</p>
+        <label class="rail-check"><input id="skip-saved" type="checkbox" aria-describedby="skip-saved-help"><span>Skip links already saved</span></label>
+        <p id="skip-saved-help" class="help">Adding leaves out links whose address the collection already has.</p>
+        <label class="rail-check"><input id="save-context" type="checkbox" aria-describedby="save-context-help"><span>Save the words around each link</span></label>
+        <p id="save-context-help" class="help">Each captured link keeps up to 400 characters of the text around it on its page. Saved in this browser.</p>
+      </section>
+
+      <section class="rail-section appearance" aria-labelledby="appearance-title">
+        <h2 id="appearance-title" class="rail-title">Appearance</h2>
+        <div id="theme-picker" class="theme-picker" role="radiogroup" aria-label="Theme" aria-describedby="theme-blurb"></div>
+        <p id="theme-blurb" class="help theme-blurb"></p>
+        <div class="scheme-mode" role="radiogroup" aria-label="Light or dark" aria-describedby="appearance-help">
+          <label class="seg"><input type="radio" name="appearance" value="system"><span>System</span></label>
+          <label class="seg"><input type="radio" name="appearance" value="light"><span>Light</span></label>
+          <label class="seg"><input type="radio" name="appearance" value="dark"><span>Dark</span></label>
+        </div>
+        <p id="appearance-help" class="help">The theme also colors the capture card on webpages and the toolbar icon. System follows your computer’s light or dark setting.</p>
+      </section>
+
+      <section id="online-panel" class="rail-section online" aria-labelledby="online-title">
+        <h2 id="online-title" class="rail-title">Online lookups</h2>
+        <p class="help">Link Meteor works without the internet. These are extras: each is off until you turn it on, and each says exactly what it sends.</p>
+        <div class="online-item">
+          <div class="hold-row">
+            <input id="lookup-details" type="checkbox" role="switch" class="switch" aria-describedby="lookup-help lookup-sends">
+            <label for="lookup-details">Page details lookup</label>
+          </div>
+          <p id="lookup-help" class="help">Fills in a paper’s title, authors, date and journal when you click Look up details.</p>
+          <div id="lookup-sends" class="sends">
+            <p class="sends-title">What it sends, and where</p>
+            <p class="sends-what">Page details lookup is off unless you turn it on. When it is on and you click Look up details, Link Meteor sends the paper’s DOI, arXiv ID or PubMed ID, and nothing else, to:</p>
+            <ul>
+              <li><b>Crossref</b> (<code>api.crossref.org</code>) for DOIs</li>
+              <li><b>DataCite</b> (<code>api.datacite.org</code>) for DOIs Crossref doesn’t have, including arXiv’s</li>
+              <li><b>NCBI</b> (<code>eutils.ncbi.nlm.nih.gov</code>) for PubMed IDs</li>
+            </ul>
+            <p class="sends-not">No page address, link text, note or collection name is sent. No cookies are sent or kept.</p>
+            <p class="sends-not">Like any website you visit, those services see your IP address and your browser’s version and language.</p>
+            <p class="sends-not">What they return (title, authors, date, journal) is saved in this browser with the link.</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="import-panel" class="rail-section import-panel" aria-labelledby="import-panel-title">
+        <h2 id="import-panel-title" class="rail-title">Import links</h2>
+        <p id="import-panel-help" class="help">From a spreadsheet, a list, a PDF, a web page or bookmarks file, pasted text or a bookmark folder. You see what will be added before anything is. Files are read in this browser and never uploaded.</p>
+        <div class="import-sources">
+          <input id="import-file" class="import-file sr-only" type="file" accept=".csv,.tsv,.tab,.xlsx,.xlsm,.txt,.text,.md,.markdown,.html,.htm,.json,.pdf,application/pdf,text/csv,text/tab-separated-values,text/plain,text/markdown,text/html,application/json,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet">
+          <label for="import-file" class="btn import-choose"><svg class="icon" aria-hidden="true"><use href="#i-import"/></svg><span>Choose a file…</span></label>
+          <button id="import-paste" class="btn" type="button"><svg class="icon" aria-hidden="true"><use href="#i-clipboard"/></svg><span>Paste links</span></button>
+          <button id="import-bookmarks" class="btn" type="button"><svg class="icon" aria-hidden="true"><use href="#i-bookmark"/></svg><span>From a bookmark folder…</span></button>
+        </div>
+        <p id="import-drop-hint" class="drop-hint"><svg class="icon" aria-hidden="true"><use href="#i-import"/></svg><span>Or drop a file here: a PDF’s links are read with their page numbers.</span></p>
+      </section>
+
+      <section id="backup-panel" class="rail-section backup" aria-labelledby="backup-title">
+        <h2 id="backup-title" class="rail-title">Backup and restore</h2>
+        <p id="backup-help" class="help">One file with every collection, link, note, tag and setting. It is saved to your downloads and goes nowhere else.</p>
+        <p id="backup-remove-note" class="help">Removing Link Meteor from Chrome deletes everything it saved. A backup file keeps it.</p>
+        <p id="backup-last" class="backup-last is-never" aria-live="polite">Last backup: never</p>
+        <div class="backup-actions">
+          <button id="backup-download" class="btn" type="button"><svg class="icon" aria-hidden="true"><use href="#i-download"/></svg><span>Download a backup</span></button>
+          <input id="backup-file" class="backup-file sr-only" type="file" accept=".json,application/json">
+          <label for="backup-file" class="btn backup-choose"><svg class="icon" aria-hidden="true"><use href="#i-folders"/></svg><span>Restore from a backup…</span></label>
+        </div>
+        <p id="storage-help" class="help">Link Meteor can use more than Chrome's usual 10 MB of local storage, so large collections and a restore's Undo fit. It all stays in this browser.</p>
+        <section id="restore-preview" class="restore-preview" aria-labelledby="restore-title" hidden>
+          <h3 id="restore-title" tabindex="-1">Restore this backup?</h3>
+          <p id="restore-source" class="restore-source"></p>
+          <div id="restore-modes" class="restore-modes"></div>
+          <p class="help">Choosing a file changes nothing. Merge or Replace can be undone here afterwards.</p>
+          <div class="restore-actions">
+            <button id="restore-merge" class="btn primary" type="button">Merge</button>
+            <button id="restore-replace" class="btn danger-solid" type="button">Replace</button>
+            <button id="restore-cancel" class="btn quiet" type="button">Cancel</button>
+          </div>
+        </section>
+        <div id="restore-status" class="restore-status" role="group" aria-labelledby="restore-status-text" hidden>
+          <p id="restore-status-text" class="restore-status-text"></p>
+          <p id="restore-status-help" class="help">Undo puts back what was here before, as long as nothing has changed since.</p>
+          <div class="restore-actions">
+            <button id="restore-undo" class="btn" type="button"><svg class="icon" aria-hidden="true"><use href="#i-undo"/></svg>Undo restore</button>
+            <button id="restore-discard" class="btn quiet" type="button">Discard Undo</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="rail-section about" aria-label="About and help">
+        <details id="about-panel" class="about-panel">
+          <summary id="about-summary"><svg class="icon" aria-hidden="true"><use href="#i-help"/></svg><span>About and help</span><span id="about-version" class="about-version"></span></summary>
+          <div class="about-body">
+            <p class="about-credit">Link Meteor <span id="about-version-full"></span>, made by <a href="https://ryanjosephkamp.github.io/" target="_blank" rel="noopener noreferrer">Ryan Kamp</a>.</p>
+            <ul class="about-links">
+              <li><a href="https://ryanjosephkamp.github.io/link-meteor/guide.html" data-site-link target="_blank" rel="noopener noreferrer"><svg class="icon" aria-hidden="true"><use href="#i-book"/></svg>Guide and limits</a></li>
+              <li><a href="https://github.com/ryanjosephkamp/link-meteor/issues" target="_blank" rel="noopener noreferrer"><svg class="icon" aria-hidden="true"><use href="#i-bug"/></svg>Report a bug or suggest a feature</a></li>
+              <li><a href="https://ryanjosephkamp.github.io/link-meteor/" data-site-link target="_blank" rel="noopener noreferrer"><svg class="icon" aria-hidden="true"><use href="#i-globe"/></svg>Link Meteor website</a></li>
+              <li><a href="https://github.com/ryanjosephkamp/link-meteor" target="_blank" rel="noopener noreferrer"><svg class="icon" aria-hidden="true"><use href="#i-code"/></svg>Source code</a></li>
+              <li><a href="https://github.com/sponsors/ryanjosephkamp" target="_blank" rel="noopener noreferrer"><svg class="icon heart" aria-hidden="true"><use href="#i-heart"/></svg>Sponsor on GitHub (optional)</a></li>
+            </ul>
+            <p id="about-pdfjs" class="help">Reads PDFs with PDF.js by Mozilla (Apache License 2.0), which is part of Link Meteor. PDFs are read in this browser and never uploaded.</p>
+            <p class="help">Every feature is free. Sponsoring never unlocks anything. These links open in a new tab only when you choose them.</p>
+            <p class="help">Bug reports are public on GitHub. Leave out private URLs, collection contents and notes; the practice page makes a good example.</p>
+            <div class="about-diagnostics">
+              <button id="copy-diagnostics" class="btn small" type="button" aria-describedby="diagnostics-help"><svg class="icon" aria-hidden="true"><use href="#i-copy"/></svg>Copy diagnostics</button>
+              <p id="diagnostics-help" class="help">Copies versions, settings, permissions and counts for a bug report, never addresses, site names, page titles, notes, tags or collection names.</p>
+            </div>
+          </div>
+        </details>
+      </section>
+
+      <p class="rail-foot"><svg class="icon" aria-hidden="true"><use href="#i-lock"/></svg><span>Saved only in this browser. No account, servers or tracking.</span></p>
+    </aside>
+
+    <main class="main" id="main">
+      <section id="welcome" class="welcome" aria-labelledby="welcome-title" hidden>
+        <div id="welcome-ask" class="welcome-ask">
+          <h2 id="welcome-title" class="welcome-title">Use Link Meteor on every site?</h2>
+          <p>With access to all sites, you can hold <kbd id="welcome-key">Z</kbd> and drag across links on any webpage, and Capture this page works without asking site by site. Chrome asks you once.</p>
+          <p class="help">Link Meteor reads a page’s links only when you capture or drag, and keeps what you save in this browser. You can list sites where it never runs, or turn this off, under Site access.</p>
+          <div class="welcome-actions">
+            <button id="welcome-allow" class="btn primary" type="button">Allow on all sites (recommended)</button>
+            <button id="welcome-later" class="btn" type="button">Choose sites later</button>
+          </div>
+        </div>
+        <div id="welcome-outcome" class="welcome-outcome" hidden>
+          <p id="welcome-outcome-text" role="status"></p>
+          <button id="welcome-done" class="btn small" type="button">Done</button>
+        </div>
+        <button id="welcome-close" class="btn quiet icon-btn welcome-close" type="button" aria-label="Close the welcome card" title="Close"><svg class="icon" aria-hidden="true"><use href="#i-x"/></svg></button>
+      </section>
+
+      <header class="collection-head">
+        <svg class="brand-mark compact-only" aria-hidden="true"><use href="#i-mark"/></svg>
+        <div class="collection-title">
+          <h1 id="collection-heading">My research</h1>
+          <p id="collection-summary" class="collection-summary">No links yet · Saved in this browser</p>
+        </div>
+        <div class="head-actions">
+          <button id="collection-switch" class="btn icon-btn compact-only" type="button" aria-controls="rail" aria-label="Collections and site settings" title="Collections and site settings"><svg class="icon" aria-hidden="true"><use href="#i-folders"/></svg></button>
+          <button id="edit-collection" class="btn icon-btn" type="button" aria-expanded="false" aria-controls="collection-editor" aria-label="Edit collection details" title="Edit collection details"><svg class="icon" aria-hidden="true"><use href="#i-pencil"/></svg></button>
+          <button id="help-toggle" class="btn icon-btn" type="button" aria-controls="about-panel" aria-label="About and help" title="About and help"><svg class="icon" aria-hidden="true"><use href="#i-help"/></svg></button>
+          <button id="open-full" class="btn open-full" type="button" aria-label="Open the full view in a tab" title="Open the full view in a tab"><svg class="icon" aria-hidden="true"><use href="#i-expand"/></svg><span>Full view</span></button>
+        </div>
+      </header>
+      <p id="collection-notes-view" class="collection-notes" hidden></p>
+      <ul id="collection-tags-view" class="tag-list" aria-label="Collection tags" hidden></ul>
+
+      <section id="collection-editor" class="editor" aria-label="Collection details" hidden>
+        <form id="collection-details" class="editor-form">
+          <label>Name <input id="collection-name" maxlength="120" required autocomplete="off"></label>
+          <label>Notes <textarea id="collection-notes" rows="3" placeholder="What is this collection for?"></textarea></label>
+          <label>Tags <input id="collection-tags" placeholder="thesis, chapter 2" aria-describedby="tags-help" autocomplete="off"></label>
+          <small id="tags-help" class="help">Separate tags with commas.</small>
+          <div class="editor-actions">
+            <button class="btn primary" type="submit">Save details</button>
+            <button id="cancel-edit" class="btn quiet" type="button">Close</button>
+            <span class="editor-danger">
+              <button id="empty-collection" class="btn quiet danger" type="button">Empty this collection</button>
+              <button id="delete-collection" class="btn quiet danger" type="button"><svg class="icon" aria-hidden="true"><use href="#i-trash"/></svg>Delete collection</button>
+            </span>
+          </div>
+          <div id="delete-confirm" class="confirm danger-confirm" role="group" aria-labelledby="delete-confirm-text" hidden>
+            <p id="delete-confirm-text"></p>
+            <div class="confirm-actions"><button id="delete-confirm-yes" class="btn danger-solid" type="button">Delete permanently</button><button id="delete-confirm-no" class="btn quiet" type="button">Keep collection</button></div>
+          </div>
+          <div id="empty-confirm" class="confirm danger-confirm" role="group" aria-labelledby="empty-confirm-text" hidden>
+            <p id="empty-confirm-text"></p>
+            <div class="confirm-actions"><button id="empty-confirm-yes" class="btn danger-solid" type="button">Remove all links</button><button id="empty-confirm-no" class="btn quiet" type="button">Keep links</button></div>
+          </div>
+        </form>
+        <section id="fields-editor" class="fields-editor" aria-labelledby="fields-title">
+          <div class="fields-head"><h3 id="fields-title">Custom columns</h3><span id="fields-count" class="fields-count"></span></div>
+          <p id="fields-help" class="help">Your own columns for this collection, such as a deadline or a contact. Fill them in each link’s details. Search, exports and backups include them.</p>
+          <ul id="fields-list" class="fields-list" aria-labelledby="fields-title"></ul>
+          <div id="field-remove-confirm" class="confirm danger-confirm" role="group" aria-labelledby="field-remove-confirm-text" hidden>
+            <p id="field-remove-confirm-text"></p>
+            <div class="confirm-actions"><button id="field-remove-confirm-yes" class="btn danger-solid" type="button">Remove column</button><button id="field-remove-confirm-no" class="btn quiet" type="button">Keep column</button></div>
+          </div>
+          <div id="fields-status" class="fields-status" hidden><p id="fields-status-text"></p><button id="field-undo" class="btn small" type="button"><svg class="icon" aria-hidden="true"><use href="#i-undo"/></svg>Undo</button></div>
+          <form id="field-add" class="field-add">
+            <label for="field-new">New column</label>
+            <div class="field-add-row"><input id="field-new" maxlength="60" placeholder="For example, Deadline" autocomplete="off" aria-describedby="field-add-help"><button id="field-add-button" class="btn" type="submit">Add column</button></div>
+            <p id="field-add-help" class="help" aria-live="polite">Up to 60 characters.</p>
+          </form>
+        </section>
+      </section>
+
+      <section class="capture" aria-labelledby="capture-title">
+        <h2 id="capture-title" class="section-title">Capture</h2>
+        <div class="scope" role="radiogroup" aria-label="Capture scope">
+          <label class="seg"><input type="radio" name="scope" value="current" checked><svg class="icon" aria-hidden="true"><use href="#i-page"/></svg><span>This page</span></label>
+          <label class="seg"><input type="radio" name="scope" value="selected"><svg class="icon" aria-hidden="true"><use href="#i-tabs"/></svg><span>Pick tabs</span></label>
+          <label class="seg"><input type="radio" name="scope" value="window"><svg class="icon" aria-hidden="true"><use href="#i-window"/></svg><span>This window</span></label>
+          <label class="seg"><input type="radio" name="scope" value="all"><svg class="icon" aria-hidden="true"><use href="#i-windows"/></svg><span>All windows</span></label>
+        </div>
+        <div id="capture-what" class="capture-what" role="radiogroup" aria-label="What to capture">
+          <label class="seg"><input type="radio" name="capture-what" value="links" checked><span>Links in the pages</span></label>
+          <label class="seg"><input type="radio" name="capture-what" value="tabs"><span>The tabs themselves</span></label>
+        </div>
+        <p id="scope-access-help" class="help" hidden>Pick tabs and the window scopes ask Chrome once to see your open tabs’ titles and addresses.</p>
+        <p id="scope-preview" class="scope-preview" aria-live="polite">Checking the current page…</p>
+        <fieldset id="tab-picker" class="tab-picker" hidden>
+          <legend>Tabs to capture</legend>
+          <div class="tab-tools"><button id="tabs-all" class="link-btn" type="button">Select all</button><button id="tabs-none" class="link-btn" type="button">Clear</button><span id="tab-picked" class="tab-picked"></span></div>
+          <div id="tab-options" class="tab-options"></div>
+        </fieldset>
+        <div id="capture-further" class="capture-further" role="group" aria-label="Go further than this screen">
+          <label class="name-check"><input id="further-scroll" type="checkbox" aria-describedby="further-scroll-help"><span>Scroll to the end first<small id="further-scroll-help">For pages that load more as you scroll. Stops at the end, at 50 screens, at 5,000 links or after 2 minutes.</small></span></label>
+          <div class="name-check"><input id="further-next" type="checkbox" aria-label="Follow Next" aria-describedby="further-next-help"><span><label for="further-next">Follow Next, up to</label> <input id="follow-pages" class="follow-pages" type="number" min="2" max="20" step="1" value="20" inputmode="numeric" aria-label="Pages to follow, 2 to 20"> <label for="follow-pages">pages</label><small id="further-next-help">Moves this tab to the page’s own Next link and captures each page. Stops when there is no Next or the next page is on a site Link Meteor can’t read.</small></span></div>
+        </div>
+        <div class="capture-actions">
+          <button id="capture" class="btn primary" type="button"><svg class="icon" aria-hidden="true"><use href="#i-download"/></svg><span id="capture-label">Capture this page</span></button>
+          <button id="arm" class="btn" type="button"><svg class="icon" aria-hidden="true"><use href="#i-region"/></svg><span>Select a region</span><span id="arm-keys" class="btn-keys" aria-hidden="true"></span></button>
+        </div>
+        <p id="pdf-note" class="help pdf-note" hidden></p>
+        <div id="run-progress" class="run-progress" role="status" hidden>
+          <div class="run-text"><strong id="run-title"></strong><span id="run-text"></span></div>
+          <button id="run-stop" class="btn small" type="button">Stop</button>
+          <div class="run-bar" aria-hidden="true"><i id="run-bar"></i></div>
+        </div>
+        <div id="capture-report" class="report" hidden></div>
+      </section>
+
+      <section id="import" class="import" aria-labelledby="import-title" hidden>
+        <h2 id="import-title" tabindex="-1">Import links</h2>
+        <p id="import-source" class="source-line"></p>
+        <div id="import-paste-step" class="import-step" hidden>
+          <label for="import-text">Links to import</label>
+          <textarea id="import-text" rows="7" spellcheck="false" autocomplete="off" aria-describedby="import-text-help"></textarea>
+          <p id="import-text-help" class="help">Addresses, Markdown links, HTML, or cells copied from a spreadsheet. Links copied from a web page keep their anchor text.</p>
+          <div class="import-actions"><button id="import-read-text" class="btn" type="button">Preview links</button></div>
+        </div>
+        <div id="import-folder-step" class="import-step" hidden>
+          <label>Find a folder <input id="import-folder-search" type="search" placeholder="Search folder names" autocomplete="off" spellcheck="false" aria-controls="import-folder" aria-describedby="import-folder-status"></label>
+          <label class="sr-only" for="import-folder">Bookmark folders</label>
+          <select id="import-folder" class="bookmark-folders" size="6" aria-describedby="import-folder-status"></select>
+          <p id="import-folder-status" class="help" aria-live="polite"></p>
+          <label class="name-check"><input id="import-subfolders" type="checkbox" checked><span>Include subfolders</span></label>
+          <div class="import-actions"><button id="import-read-folder" class="btn" type="button" disabled>Preview links</button></div>
+        </div>
+        <p id="import-progress" class="import-progress" role="status" hidden></p>
+        <div id="import-plan" class="import-plan" hidden>
+          <dl id="pdf-facts" class="pdf-facts" aria-label="What the PDF says about itself" hidden></dl>
+          <div id="import-options" class="import-options">
+            <label id="import-sheet-row" hidden>Sheet <select id="import-sheet"></select></label>
+            <label id="import-header-row" class="name-check"><input id="import-header" type="checkbox"><span>First row is column names</span></label>
+          </div>
+          <div id="import-map" class="map" role="group" aria-label="Which column fills each part of a link"></div>
+          <p id="import-map-help" class="help" hidden></p>
+          <div class="table-scroll" tabindex="0" role="region" aria-labelledby="import-table-caption">
+            <table id="import-table"><caption id="import-table-caption" class="sr-only">Rows to import, with the reason for each skipped row</caption><thead></thead><tbody></tbody></table>
+          </div>
+          <div class="import-table-foot">
+            <p id="import-table-note" class="help"></p>
+            <label class="name-check"><input id="import-only-skipped" type="checkbox"><span id="import-only-skipped-label">Show only skipped rows</span></label>
+          </div>
+          <div class="import-row">
+            <label>Add to <select id="import-destination"></select></label>
+            <label class="name-check"><input id="import-skip-saved" type="checkbox" checked><span>Skip links already saved there</span></label>
+          </div>
+          <label id="pdf-self-row" class="name-check pdf-self" hidden><input id="pdf-self" type="checkbox"><span id="pdf-self-label"></span></label>
+          <div id="import-summary" class="import-summary" aria-live="polite"><strong id="import-summary-main"></strong><span id="import-summary-skips" class="skips"></span></div>
+        </div>
+        <div class="import-actions">
+          <button id="import-commit" class="btn primary" type="button" hidden><svg class="icon" aria-hidden="true"><use href="#i-import"/></svg><span id="import-commit-label">Import links</span></button>
+          <button id="import-cancel" class="btn quiet" type="button">Cancel</button>
+        </div>
+      </section>
+
+      <section class="review" id="review" aria-labelledby="review-title">
+        <div class="review-head">
+          <h2 id="review-title" class="section-title">Links</h2>
+          <div id="view-switch" class="view-switch" role="group" aria-label="Show links or insights">
+            <button id="show-links" type="button" aria-pressed="true">Links</button>
+            <button id="show-insights" type="button" aria-pressed="false">Insights</button>
+          </div>
+          <p id="result-count" class="result-count" aria-live="polite">0 links</p>
+        </div>
+        <div id="insights" class="insights" hidden></div>
+        <div class="search-row">
+          <label class="search"><span class="sr-only">Search links</span><svg class="icon" aria-hidden="true"><use href="#i-search"/></svg><input id="search" type="search" placeholder="Search text, URL, source, notes" autocomplete="off" spellcheck="false"><kbd class="search-key" aria-hidden="true">/</kbd></label>
+          <button id="filters-toggle" class="btn" type="button" aria-expanded="false" aria-controls="filter-panel"><svg class="icon" aria-hidden="true"><use href="#i-sliders"/></svg><span>View</span><span id="filter-count" class="count-pill" hidden></span></button>
+        </div>
+        <div id="filter-panel" class="filter-panel" hidden>
+          <label>Domain <input id="domain" type="search" placeholder="example.org" list="domain-options" autocomplete="off" spellcheck="false"></label>
+          <label>File type <input id="file-type" type="search" placeholder="pdf" list="type-options" autocomplete="off" spellcheck="false"></label>
+          <label>Relation <select id="relation"><option value="all">Internal and external</option><option value="internal">Internal (same site as source)</option><option value="external">External (other sites)</option></select></label>
+          <label>Reading <select id="status-filter"><option value="any">Any</option><option value="unread">Unread</option><option value="reading">Reading</option><option value="read">Read</option></select></label>
+          <label class="filter-check"><input id="starred-filter" type="checkbox"><span>Starred only</span></label>
+          <input id="type-group" type="hidden" value="">
+          <input id="site-filter" type="hidden" value="">
+          <label>Sort by <select id="sort"><option value="page">Capture order</option><option value="newest">Capture time</option><option value="anchor">Anchor text</option><option value="url">URL</option><option value="domain">Domain</option></select></label>
+          <label>Direction <select id="direction"><option value="asc">Ascending</option><option value="desc">Descending</option></select></label>
+          <label>Group <select id="dedupe"><option value="none">Every occurrence</option><option value="url">Unique URLs</option><option value="url-anchor">Unique URL + anchor text</option></select></label>
+          <p class="help filter-help">Grouping is only a view. Every occurrence, label and source stays saved, and grouped rows list them all.</p>
+          <datalist id="domain-options"></datalist>
+          <datalist id="type-options"></datalist>
+        </div>
+        <ul id="active-filters" class="chips" aria-label="Active view options" hidden></ul>
+
+        <div class="list-toolbar">
+          <label class="select-all"><input id="select-all" type="checkbox"><span id="select-all-label">Select all</span></label>
+          <span id="selection-count" class="selection-count">0 selected</span>
+          <div id="reading-actions" class="reading-actions" role="group" aria-label="Reading status and star for the selected links" hidden>
+            <button id="mark-read" class="btn quiet small" type="button"><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg>Mark as read</button>
+            <button id="mark-unread" class="btn quiet small" type="button">Mark as unread</button>
+            <button id="star-selected" class="btn quiet small" type="button"><svg class="icon" aria-hidden="true"><use href="#i-star"/></svg><span id="star-selected-label">Star</span></button>
+          </div>
+          <div class="toolbar-actions">
+            <button id="select-everything" class="btn quiet small" type="button" hidden>Select all</button>
+            <button id="clear-selection" class="btn quiet small" type="button" hidden>Clear</button>
+            <button id="remove" class="btn quiet small danger" type="button" disabled><svg class="icon" aria-hidden="true"><use href="#i-trash"/></svg>Remove</button>
+            <button id="remove-view" class="btn quiet small danger" type="button" disabled>Remove all in this view</button>
+            <button id="undo" class="btn quiet small" type="button" disabled><svg class="icon" aria-hidden="true"><use href="#i-undo"/></svg>Undo</button>
+            <button id="fill-fields" class="btn quiet small" type="button" aria-expanded="false" aria-controls="fill-panel" hidden>Fill for selected links</button>
+            <button id="move-selected" class="btn quiet small" type="button" aria-expanded="false" aria-controls="move-panel" hidden><svg class="icon" aria-hidden="true"><use href="#i-folders"/></svg>Move to…</button>
+            <button id="copy-selected" class="btn quiet small" type="button" aria-expanded="false" aria-controls="move-panel" hidden><svg class="icon" aria-hidden="true"><use href="#i-copy"/></svg>Copy to…</button>
+            <button id="lookup-selected" class="btn quiet small" type="button" hidden><svg class="icon" aria-hidden="true"><use href="#i-search"/></svg>Look up details</button>
+            <button id="pages-selected" class="btn quiet small" type="button" aria-expanded="false" aria-controls="pages-panel" hidden><svg class="icon" aria-hidden="true"><use href="#i-tabs"/></svg>Capture their pages…</button>
+          </div>
+          <form id="fill-panel" class="fill-panel" aria-labelledby="fill-title" hidden>
+            <p id="fill-title" class="fill-title"></p>
+            <label>Column <select id="fill-field"></select></label>
+            <label>Value <input id="fill-value" autocomplete="off" aria-describedby="fill-help"></label>
+            <p id="fill-help" class="help" aria-live="polite"></p>
+            <div class="confirm-actions"><button id="fill-apply" class="btn primary small" type="submit">Fill</button><button id="fill-cancel" class="btn quiet small" type="button">Cancel</button></div>
+          </form>
+          <form id="move-panel" class="fill-panel move-panel" aria-labelledby="move-title" hidden>
+            <p id="move-title" class="fill-title"></p>
+            <label>To <select id="move-to"></select></label>
+            <label id="move-new-row" hidden>Name <input id="move-new" autocomplete="off" maxlength="200" aria-describedby="move-help"></label>
+            <p id="move-help" class="help" aria-live="polite"></p>
+            <div class="confirm-actions"><button id="move-apply" class="btn primary small" type="submit">Move</button><button id="move-cancel" class="btn quiet small" type="button">Cancel</button></div>
+          </form>
+          <div id="lookup-toolbar-host" class="lookup-host">
+            <div id="lookup-status" class="lookup-status" hidden>
+              <div id="lookup-progress" class="lookup-progress" hidden>
+                <div class="lookup-text"><strong id="lookup-count" role="status"></strong><span>Sending only each DOI, arXiv ID or PubMed ID to Crossref, DataCite and NCBI.</span></div>
+                <button id="lookup-stop" class="btn small" type="button" aria-label="Stop the lookup">Stop</button>
+                <progress id="lookup-bar" max="1" value="0" aria-labelledby="lookup-count"></progress>
+              </div>
+              <p id="lookup-done" class="lookup-done" hidden><span id="lookup-done-text" role="status"></span><button id="lookup-undo" class="link-btn" type="button">Undo<span class="sr-only"> the lookup</span></button><button id="lookup-dismiss" class="link-btn" type="button">Dismiss<span class="sr-only"> the lookup’s result</span></button></p>
+            </div>
+          </div>
+          <form id="pages-panel" class="fill-panel pages-panel" aria-labelledby="pages-title" hidden>
+            <p id="pages-title" class="fill-title"></p>
+            <ul class="pages-facts">
+              <li>Each page opens in a background tab, one at a time, is captured and closed.</li>
+              <li>20 pages at most in one run, 2 seconds apart. You can stop at any time.</li>
+              <li id="pages-only"></li>
+            </ul>
+            <div class="pages-access"><p id="pages-access" aria-live="polite"></p><button id="pages-allow" class="btn small" type="button" hidden></button></div>
+            <label>Add to <select id="pages-destination" aria-describedby="pages-help"></select></label>
+            <label id="pages-new-row" hidden>Name <input id="pages-new" autocomplete="off" maxlength="200" aria-describedby="pages-help"></label>
+            <p id="pages-help" class="help" aria-live="polite"></p>
+            <div class="confirm-actions"><button id="pages-apply" class="btn primary small" type="submit" disabled>Capture pages</button><button id="pages-cancel" class="btn quiet small" type="button">Cancel</button></div>
+          </form>
+          <div id="remove-view-confirm" class="confirm danger-confirm toolbar-confirm" role="group" aria-labelledby="remove-view-confirm-text" hidden>
+            <p id="remove-view-confirm-text"></p>
+            <div class="confirm-actions"><button id="remove-view-confirm-yes" class="btn danger-solid small" type="button">Remove all</button><button id="remove-view-confirm-no" class="btn quiet small" type="button">Keep them</button></div>
+          </div>
+        </div>
+
+        <div class="list-header" aria-hidden="true"><span></span><div class="row-cells"><span>Anchor text</span><span>URL</span><span>Source page</span></div></div>
+        <div id="empty-state" class="empty-state">
+          <h3>No links yet</h3>
+          <p></p>
+        </div>
+        <div id="link-list" class="link-list" role="list" aria-label="Captured links"></div>
+        <nav id="review-pages" class="pager" aria-label="Link result pages">
+          <button id="page-prev" class="btn small" type="button"><svg class="icon" aria-hidden="true"><use href="#i-chevron-left"/></svg>Previous</button>
+          <span id="page-range" role="status" aria-live="polite">0 rows</span>
+          <button id="page-next" class="btn small" type="button">Next<svg class="icon" aria-hidden="true"><use href="#i-chevron-right"/></svg></button>
+        </nav>
+      </section>
+    </main>
+
+    <aside class="export" id="export-panel" aria-labelledby="export-title">
+      <div class="export-head">
+        <h2 id="export-title" class="section-title">Export</h2>
+        <button id="export-done" class="btn quiet compact-only" type="button"><svg class="icon" aria-hidden="true"><use href="#i-chevron-left"/></svg>Back to links</button>
+      </div>
+      <div class="target" aria-live="polite">
+        <p id="export-target" class="target-count">No links yet</p>
+        <p id="export-scope" class="target-note">Exports use the links in the current view.</p>
+      </div>
+
+      <section class="export-group" aria-labelledby="copy-title">
+        <h3 id="copy-title">Copy to clipboard</h3>
+        <div class="copy-grid">
+          <button id="copy-table" class="btn copy-btn" type="button"><svg class="icon" aria-hidden="true"><use href="#i-copy"/></svg><span class="copy-main">Table</span><span id="copy-table-note" class="copy-note">Anchor text · URL</span></button>
+          <button id="copy-urls" class="btn copy-btn" type="button"><svg class="icon" aria-hidden="true"><use href="#i-copy"/></svg><span class="copy-main">URLs</span><span class="copy-note">One per line</span></button>
+          <button id="copy-markdown" class="btn copy-btn" type="button"><svg class="icon" aria-hidden="true"><use href="#i-copy"/></svg><span class="copy-main">Markdown</span><span class="copy-note">[text](URL)</span></button>
+          <button id="copy-rich" class="btn copy-btn" type="button"><svg class="icon" aria-hidden="true"><use href="#i-copy"/></svg><span class="copy-main">Rich links</span><span class="copy-note">Clickable anchor text</span></button>
+        </div>
+      </section>
+
+      <section class="export-group" aria-labelledby="download-title">
+        <h3 id="download-title">Download a file</h3>
+        <label>Format <select id="format">
+          <option value="xlsx">Excel workbook (.xlsx)</option>
+          <option value="csv">CSV (.csv)</option>
+          <option value="tsv">TSV (.tsv)</option>
+          <option value="markdown">Markdown links (.md)</option>
+          <option value="html">HTML table (.html)</option>
+          <option value="json">JSON with full provenance (.json)</option>
+          <option value="text">URL list (.txt)</option>
+          <optgroup label="Citations and notes">
+            <option value="bibtex">BibTeX (.bib)</option>
+            <option value="ris">RIS (.ris)</option>
+            <option value="csl">CSL-JSON (.json)</option>
+            <option value="annotated">Annotated bibliography (.md)</option>
+            <option value="obsidian">Obsidian note (.md)</option>
+          </optgroup>
+        </select></label>
+        <p id="format-help" class="help"></p>
+        <fieldset class="columns" id="columns-fieldset">
+          <legend>Columns, in order</legend>
+          <ol id="columns" class="column-list"></ol>
+          <div class="column-tools">
+            <label class="sr-only" for="add-column">Add export column</label>
+            <select id="add-column"></select>
+            <button id="reset-columns" class="link-btn" type="button">Reset to anchor text + URL</button>
+            <form id="new-column" class="new-column" hidden>
+              <label for="new-column-name">Name of the new column</label>
+              <div class="field-add-row"><input id="new-column-name" maxlength="60" autocomplete="off" aria-describedby="new-column-help"><button id="new-column-add" class="btn primary small" type="submit">Add column</button><button id="new-column-cancel" class="btn quiet small" type="button">Cancel</button></div>
+              <p id="new-column-help" class="help" aria-live="polite"></p>
+            </form>
+          </div>
+          <p id="columns-help" class="help">Used by the Table copy and by CSV, TSV, Excel and HTML files.</p>
+        </fieldset>
+        <div id="cite-block" class="cite-block" hidden>
+          <ul id="cite-facts" class="cite-facts" aria-label="What the file holds"></ul>
+          <div id="lookup-box" class="lookup-box" hidden>
+            <p id="lookup-line" class="lookup-line" hidden><span id="lookup-line-text"></span><button id="lookup-authors" class="btn small" type="button"><svg class="icon" aria-hidden="true"><use href="#i-search"/></svg><span>Look up details</span></button></p>
+            <div id="lookup-export-host" class="lookup-host"></div>
+          </div>
+          <p id="cite-first-label" class="help">First entry</p>
+          <pre id="cite-first" class="cite-preview" tabindex="0" role="region" aria-labelledby="cite-first-label"></pre>
+        </div>
+        <label class="file-name">File name <input id="export-name" type="text" autocomplete="off" spellcheck="false" aria-describedby="export-name-help"></label>
+        <p id="export-name-help" class="help">Type a name for this download, or leave it empty to use the pattern.</p>
+        <details id="name-settings" class="name-settings">
+          <summary>File name pattern</summary>
+          <div class="name-settings-body">
+            <label>Prefix <input id="name-prefix" type="text" maxlength="80" placeholder="Optional, for example lab-notes" autocomplete="off" spellcheck="false" aria-describedby="name-prefix-help"></label>
+            <p id="name-prefix-help" class="help">Letters, digits, dots, underscores and hyphens, up to 40. Other characters become hyphens.</p>
+            <label class="name-check"><input id="name-timestamp" type="checkbox" checked><span>Add the date to file names</span></label>
+            <label>Date format <select id="name-timestamp-format"><option value="datetime">Date and time</option><option value="date">Date only</option></select></label>
+            <p id="name-pattern" class="help name-pattern"></p>
+          </div>
+        </details>
+        <button id="download" class="btn primary wide" type="button"><svg class="icon" aria-hidden="true"><use href="#i-download"/></svg><span id="download-label">Download</span></button>
+        <p id="download-name" class="help download-name"></p>
+      </section>
+
+      <section class="export-group" id="downloads-section" aria-labelledby="downloads-title">
+        <h3 id="downloads-title">Download files</h3>
+        <div id="downloads-pending" class="downloads-pending" role="group" aria-labelledby="downloads-pending-text" hidden>
+          <p id="downloads-pending-text"></p>
+          <div class="confirm-actions"><button id="downloads-pending-start" class="btn primary" type="button" aria-describedby="downloads-access">Download files</button><button id="downloads-pending-dismiss" class="btn quiet" type="button">Dismiss</button></div>
+        </div>
+        <button id="downloads-start" class="btn wide" type="button" aria-describedby="downloads-help downloads-access"><svg class="icon" aria-hidden="true"><use href="#i-download"/></svg><span id="downloads-label">Download files</span></button>
+        <div id="downloads-confirm" class="confirm" role="group" aria-labelledby="downloads-confirm-text" hidden>
+          <p id="downloads-confirm-text"></p>
+          <div class="confirm-actions"><button id="downloads-confirm-yes" class="btn primary" type="button" aria-describedby="downloads-access">Download files</button><button id="downloads-confirm-no" class="btn quiet" type="button">Cancel</button></div>
+        </div>
+        <div id="downloads-progress" class="open-progress" hidden>
+          <p id="downloads-progress-text" role="status"></p>
+          <progress id="downloads-progress-bar" max="1" value="0" aria-labelledby="downloads-progress-text"></progress>
+          <button id="downloads-cancel" class="btn small" type="button">Cancel</button>
+        </div>
+        <div id="downloads-result" class="downloads-result" role="status" hidden></div>
+        <p id="downloads-help" class="help"></p>
+        <p id="downloads-access" class="help downloads-access"></p>
+        <div id="pdf-set" class="pdf-set" role="group" aria-labelledby="pdf-set-title">
+          <p id="pdf-set-title" class="pdf-set-title">PDF files</p>
+          <div class="pdf-set-actions">
+            <button id="pdf-zip" class="btn" type="button" aria-describedby="pdf-set-help pdf-access" hidden><svg class="icon" aria-hidden="true"><use href="#i-download"/></svg><span>Download as one ZIP</span></button>
+            <button id="pdf-combine" class="btn" type="button" aria-expanded="false" aria-controls="combine-panel" aria-describedby="pdf-set-help"><svg class="icon" aria-hidden="true"><use href="#i-import"/></svg><span>Combine into one PDF…</span></button>
+          </div>
+          <p id="pdf-set-help" class="help"></p>
+          <p id="pdf-access" class="help pdf-access" hidden></p>
+          <form id="combine-panel" class="combine-panel" aria-labelledby="combine-title" hidden>
+            <p id="combine-title" class="pdf-set-title">Combine into one PDF, in this order</p>
+            <ol id="combine-list" class="column-list combine-list" aria-labelledby="combine-title"></ol>
+            <p id="combine-empty" class="drop-hint" hidden><svg class="icon" aria-hidden="true"><use href="#i-import"/></svg><span>No PDFs yet. Add PDF files from your computer, or drop them here.</span></p>
+            <div class="pdf-set-actions">
+              <button id="combine-add" class="btn small" type="button"><svg class="icon" aria-hidden="true"><use href="#i-plus"/></svg><span>Add PDF files…</span></button>
+              <span class="help">or drop them on the list</span>
+              <input id="combine-file" type="file" accept=".pdf,application/pdf" multiple tabindex="-1" aria-hidden="true" hidden>
+            </div>
+            <div id="combine-skip" class="combine-skip" role="status" hidden></div>
+            <label for="combine-name">File name <input id="combine-name" maxlength="160" autocomplete="off" spellcheck="false"></label>
+            <p id="combine-total" class="combine-total"></p>
+            <p id="combine-access" class="help pdf-access" hidden></p>
+            <p id="combine-help" class="help" aria-live="polite" hidden></p>
+            <div class="confirm-actions"><button id="combine-apply" class="btn primary" type="submit" aria-describedby="combine-total combine-access combine-help"><svg class="icon" aria-hidden="true"><use href="#i-download"/></svg><span id="combine-apply-label">Combine PDFs</span></button><button id="combine-cancel" class="btn quiet" type="button">Cancel</button></div>
+          </form>
+          <div id="pdf-progress" class="run-progress" role="status" hidden>
+            <div class="run-text"><strong id="pdf-progress-title"></strong><span id="pdf-progress-text"></span></div>
+            <button id="pdf-stop" class="btn small" type="button">Stop</button>
+            <div class="run-bar" aria-hidden="true"><i id="pdf-progress-bar"></i></div>
+          </div>
+          <div id="pdf-result" class="downloads-result pdf-result" role="status" hidden></div>
+        </div>
+      </section>
+
+      <section class="export-group" aria-labelledby="bookmark-title">
+        <h3 id="bookmark-title">Save as bookmarks</h3>
+        <div id="bookmark-mode" class="bookmark-mode" role="radiogroup" aria-label="Bookmark folder">
+          <label class="bookmark-choice"><input type="radio" name="bookmark-mode" value="new" checked><span>New folder</span></label>
+          <label class="bookmark-choice"><input type="radio" name="bookmark-mode" value="existing"><span>Existing folder</span></label>
+        </div>
+        <div id="bookmark-new" class="bookmark-pane">
+          <label>Folder name <input id="bookmark-name" placeholder="Collection name" autocomplete="off"></label>
+        </div>
+        <div id="bookmark-existing" class="bookmark-pane" hidden>
+          <label>Find a folder <input id="bookmark-folder-search" type="search" placeholder="Search folder names" autocomplete="off" spellcheck="false" aria-controls="bookmark-folder" aria-describedby="bookmark-folder-status"></label>
+          <label class="sr-only" for="bookmark-folder">Bookmark folders</label>
+          <select id="bookmark-folder" class="bookmark-folders" size="6" aria-describedby="bookmark-folder-status"></select>
+          <p id="bookmark-folder-status" class="help" aria-live="polite"></p>
+        </div>
+        <label class="name-check"><input id="bookmark-skip-existing" type="checkbox" checked><span>Skip links already in that folder</span></label>
+        <button id="bookmark" class="btn wide" type="button"><svg class="icon" aria-hidden="true"><use href="#i-bookmark"/></svg><span id="bookmark-label">Create bookmark folder</span></button>
+        <p id="bookmark-help" class="help">Creates a new folder in Other bookmarks. Web links only. Chrome may sync bookmarks according to your browser settings.</p>
+      </section>
+
+      <section class="export-group" aria-labelledby="open-title">
+        <h3 id="open-title">Open in tabs</h3>
+        <button id="open-links" class="btn wide" type="button"><svg class="icon" aria-hidden="true"><use href="#i-external"/></svg><span id="open-label">Open links…</span></button>
+        <div class="open-modes"><span class="open-modes-label">Or open in</span><button id="open-window" class="link-btn" type="button">a new window</button><button id="open-group" class="link-btn" type="button" aria-describedby="open-group-help">a tab group</button></div>
+        <div id="open-confirm" class="confirm" role="group" aria-labelledby="open-confirm-text" hidden>
+          <p id="open-confirm-text"></p>
+          <div class="confirm-actions"><button id="open-confirm-yes" class="btn primary" type="button">Open tabs</button><button id="open-confirm-window" class="btn" type="button">Open in a new window</button><button id="open-confirm-group" class="btn" type="button">Open as a tab group</button><button id="open-confirm-no" class="btn quiet" type="button">Cancel</button></div>
+        </div>
+        <div id="open-progress" class="open-progress" hidden>
+          <p id="open-progress-text" role="status"></p>
+          <progress id="open-progress-bar" max="1" value="0" aria-labelledby="open-progress-text"></progress>
+          <button id="open-cancel-progress" class="btn small" type="button">Cancel</button>
+        </div>
+        <p class="help">Opens up to 500 web links in background tabs, a few at a time. Link Meteor asks first above 20.</p>
+        <p id="open-group-help" class="help">A tab group is named after the collection when Chrome lets Link Meteor manage tab groups. Chrome asks the first time you choose one.</p>
+      </section>
+    </aside>
+
+    <div class="dock compact-only" id="dock">
+      <p id="dock-target" class="dock-target">No links yet</p>
+      <button id="dock-copy" class="btn" type="button"><svg class="icon" aria-hidden="true"><use href="#i-copy"/></svg><span id="dock-copy-label">Copy table</span></button>
+      <button id="dock-export" class="btn primary" type="button" aria-controls="export-panel">Export<svg class="icon" aria-hidden="true"><use href="#i-chevron-right"/></svg></button>
+    </div>
+
+    <div class="toasts"><div id="error" class="toast toast-error" role="alert" hidden></div><div id="notice" class="toast" role="status" aria-live="polite" hidden></div></div>
+  </div>
+</body>
+</html>

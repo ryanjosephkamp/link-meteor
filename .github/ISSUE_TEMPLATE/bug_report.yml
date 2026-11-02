@@ -1,0 +1,46 @@
+name: Bug report
+description: Something in Link Meteor doesn't work as described.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a problem. **Issues are public:** please leave out private or work URLs, your collections, notes, screenshots of private pages and anything like a password or token. If you can, reproduce the problem on the [practice page](https://ryanjosephkamp.github.io/link-meteor/practice.html) and describe that instead.
+  - type: input
+    id: version
+    attributes:
+      label: Link Meteor version
+      description: Shown on Link Meteor's card in chrome://extensions (newer versions also show it under About and help).
+      placeholder: "0.2.2"
+    validations:
+      required: true
+  - type: input
+    id: chrome
+    attributes:
+      label: Chrome version and operating system
+      description: From chrome://version.
+      placeholder: "Chrome 140 on macOS 15"
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: What you did, using synthetic or public example pages where possible.
+      placeholder: |
+        1. Open the practice page
+        2. Press Alt+Shift+L and drag across the reading list
+        3. ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected, and what happened instead
+    validations:
+      required: true
+  - type: textarea
+    id: extra
+    attributes:
+      label: Anything else
+      description: For example the capture report's wording or an error message. Check it for private details before posting.

@@ -1,0 +1,267 @@
+# Changelog
+
+## 1.0.0 (2026-10-27)
+
+"Beyond one page": Link Meteor now reads the links inside PDFs and captures more than one screen or one page, each time you ask and within a stated limit, and it can fill in a paper's details online if you turn that on:
+- the links inside PDFs, from a tab or a file;
+- scrolling a page to its end, following its Next link, and capturing the pages behind chosen links;
+- links inside closed components and frames from other sites;
+- an optional page details lookup;
+- the PDFs behind chosen links as one ZIP, or combined into one PDF.
+
+### Extension
+
+- **Capture this PDF.** On a PDF's tab, the capture button reads the links inside the PDF: each with the words under it, the page it is on and the words around it, and in a reference list, its whole reference as context. A preview shows every link before anything is saved, says what was left out and why, and lists what the PDF says about itself (arXiv's stamp, a DOI, the title). Adding saves one batch with Undo, with the PDF itself as a link. The PDF's own site needs no new permission: the toolbar's temporary access covers it.
+- **Import links from a PDF file,** chosen or dropped, the same way, without any access at all. PDFs up to 50 MB and 2,000 pages. A PDF opened from your computer can't be read from its tab, so the panel offers *Choose this PDF…*.
+- **Scroll to the end first,** under *Capture this page*: for pages that load more as you scroll. It stops at the end, at 50 screens, at 5,000 links or after 2 minutes, with a counter and Stop on the page and in the panel.
+- **Follow Next, up to 20 pages:** moves the tab to the page's own Next link and captures each page, 1.5 seconds apart. It stops when there is no Next link, or when the next page is on a site Link Meteor can't read.
+- **Capture their pages…** for up to 20 chosen links: each opens in a background tab, is captured and closed, one at a time. It reads one level deep and never follows the links it finds. Sites Link Meteor can't read yet are named, with one *Allow these N sites*.
+- Each run is one batch with one Undo, and a report of every page and how it ended.
+- **Closed components and frames.** Links inside closed shadow roots are read. *Capture this page* reads frames from other sites that Link Meteor has access to; the report names the sites of the frames it couldn't read and offers *Allow these sites*, which adds their links to the same capture. Frames that hadn't loaded yet are counted and said to be loading.
+- **Page details lookup** (off by default, under *Online lookups*). *Look up details* sends a paper's DOI, arXiv ID or PubMed ID, and nothing else, to Crossref, DataCite or NCBI, and fills in the title, authors, date and journal where they are missing. It says what it filled in and has Undo. It runs from a sandboxed frame, so Link Meteor's own pages still can't reach the network.
+- **The PDFs behind chosen links,** in Export › Download files: *Download as one ZIP*, or *Combine into one PDF…* in an order you choose, with PDF files from your computer added if you want. Up to 20 PDFs and 200 MB; a combined PDF keeps each part's links and bookmarks, up to 5,000 pages. Each PDF is fetched through a page of its own site, as when you click it, and nothing is uploaded.
+- **A PDF page column** for exports, for links read from a PDF.
+- **Backups** use format 4, which adds a link's PDF page and where each citation was read. 1.0.0 restores 0.3.0, 0.4.0 and 0.5.0 backups; 0.5.0 and earlier can't restore a 1.0.0 backup.
+
+### Fixed
+
+- **File names.** A downloaded file whose link text is only a generic word ("pdf", "Download PDF", "Full text") is named after its address instead, so arXiv's PDFs save as `2409.11211v1.pdf`, not `pdf.pdf`. Japanese and Korean names keep their marks, and every name fits in 255 bytes.
+- **Download linked file** in the right-click menu names the file after the link's text again.
+- **One PDF linked at several of its pages** (`#page=3`, `#page=9`) downloads once.
+- **Merge restore** keeps your own citations for addresses you already have, as it did in 0.5.0.
+- **DOIs read from publishers' addresses** leave out the page names they add (`/full`, `/abstract`, bioRxiv's `v1.full`).
+- **Workbooks** stay valid when a cell holds an unusual character (U+FFFE, U+FFFF).
+
+### Permissions
+
+**1.0.0 adds no permission and asks for no browser setting.** Capturing selected pages and frames from other sites uses the optional site access that 0.3.0 added, asked for in that click. The lookup's three services are reached only from its sandboxed frame, only while the setting is on, and only when you click *Look up details*.
+
+### Website
+
+- The download is now 1.0.0.
+- Both videos and the four product screenshots now show 1.0.0.
+- The guide covers PDFs, the three bounded captures, frames, the lookup and the PDFs as one ZIP or one PDF; the home and install pages cover the new features; the privacy page says what the lookup sends and where.
+
+### Download
+
+`link-meteor-1.0.0.zip`, 2,976,335 bytes, SHA-256 `4c862132f068423231dd66d864ac09b4b8121f7dfe869db50dc9328cae3933bf`. To update from 0.5.0, replace the contents of the same folder, then reload Link Meteor at `chrome://extensions`. Your collections stay with that folder. Make a backup first if you might go back to 0.5.0: it can't restore a 1.0.0 backup.
+
+### Known issues
+
+- In a PDF, a link whose address has neither `https://` nor `www.`, such as `example.com`, is left out; the preview counts it. A linked title's words can lose a final question mark, or a colon in the middle.
+- Links in components that other extensions add to a page, such as a password manager's menu, can be captured with the page's own.
+- A frame inside a closed component that moved to another site after loading can't be matched with what was read in it, so its links are reported as not read.
+- Names printed without a comma, such as "Jun Watanabe", stay whole in citations, so reference managers show them as one name.
+- Removing all-sites access can also remove access to sites you allowed one at a time. That is Chrome's behavior, as before.
+- Tested so far:
+  - automated checks without grants in Chrome for Testing 151 on macOS, Windows and Linux;
+  - the checks that need Allow clicks, on macOS;
+  - the checks that need no grants on Chrome for Testing 116, except the toolbar button, which the test tool can't press there, and part of the page-script simulation, where the test tool stops opening pages;
+  - a hands-on check of this build in everyday Chrome on macOS, with real pages and papers, which found no problems.
+
+  The right-click menus can't be opened by automated Chrome, so their automated checks are simulations. Nobody has tried 1.0.0 by hand on Windows or Linux, and screen readers are not yet tested. See [testing and compatibility](docs/ACCEPTANCE.md).
+
+## 0.5.0 (2026-10-01)
+
+"Research tools": Link Meteor now keeps what a research workflow needs around each link, and gets links in and out in more ways:
+- context, page citations and identifiers;
+- reading status, stars and Insights;
+- citation exports;
+- imports;
+- moving and copying links between collections.
+
+### Extension
+
+- **Context.** Each link keeps the words around it on its page, up to 400 characters, where they are a sentence or a paragraph. A bare list of links has none. *Save the words around each link*, under *After a drag*, turns it off. Search includes context.
+- **Page citations.** When a page publishes citation tags (Highwire, PRISM, JSON-LD or Dublin Core), Link Meteor keeps its title, authors, journal, date, pages and identifiers. It reads them from the page you capture from and from tabs you save as links, and never looks anything up online. Saving a tab reads its tags only where Link Meteor already has access to the site.
+- **Identifiers** read from a link's address: DOI, arXiv ID, PubMed and PMC IDs, and ISBN (with its check digit). Rows show them as badges; a link's details list them with *Copy*.
+- **Borrowed citations.** A link uses the citation of a saved page about the same work: a page that names the link as its PDF, or one with the same DOI or arXiv ID. Capturing *View PDF* on an arXiv abstract page gives the PDF link its title, every author and the date.
+- **Reading status and stars.** Mark a link Unread, Reading or Read, and star it, in its details or for a selection, with Undo. *Reading* and *Starred only* filter the list.
+- **Insights.** Switch a collection from *Links* to *Insights* to see its sites, file types, reading status, repeated addresses and captures by week. Choosing an entry shows those links.
+- **Citation exports:** BibTeX, RIS, CSL-JSON, an annotated bibliography and an Obsidian note.
+  - Titles, authors and dates come from each link's citation; without one, the title is the anchor text.
+  - BibTeX braces acronyms and words with inner capitals, so styles keep them as written.
+  - An arXiv link takes its year and month from its ID when nothing else dates it, and every format marks it as an arXiv preprint.
+  - The Export panel shows the first entry, and says how many entries have a DOI or arXiv ID, how many have authors and a date, and how many papers have no authors yet, with how to fill them in.
+- **New export columns:** context, reading status, starred, DOI, arXiv ID, PubMed ID, ISBN and imported from.
+- **Import links** from a CSV, TSV or Excel file, a text or Markdown list, an HTML page or a browser's bookmarks file, a Link Meteor JSON export, pasted text, or a Chrome bookmark folder. Choose which column is which, including new custom columns. A preview lists every skipped row with its reason, and Undo removes the import. Files are read in the browser and never uploaded.
+- **Move to… and Copy to…** send selected links, or one link from its details, to another collection or a new one. Notes, tags, context, reading status, stars, custom column values and citations go with them; a column the other collection lacks is created there. A link that's already there stays where it was, and one Undo puts both collections back.
+- **The toolbar icon closes the side panel** on a second click. The side panel's **Full view** button is labeled, and the panel closes when the full view opens.
+- **Backup and restore shows the date of the last backup,** and says that removing Link Meteor from Chrome deletes everything it saved.
+- **On PDFs and files on your computer,** *Select a region* and *Capture this page* say that Link Meteor can't read the links inside yet. *Add link* in the right-click menu saves the link you clicked.
+- **Ember light's Remove buttons** are now a crimson that no longer looks like Ember's orange links.
+- **Backups** use format 3, which adds context, reading status, stars, imported labels and page citations. 0.5.0 restores 0.3.0 and 0.4.0 backups; earlier versions can't restore a 0.5.0 backup.
+
+### Permissions
+
+**0.5.0 adds no permission.** Importing from a bookmark folder uses the optional `bookmarks` access that 0.3.0 added, asked for in that click.
+
+### Website
+
+- The download is now 0.5.0.
+- The guide has new sections for context and citations and for importing links, and covers reading status, Insights, citation exports, and moving and copying links.
+- The home and install pages cover the new features, and the privacy page describes what 0.5.0 stores.
+
+### Download
+
+`link-meteor-0.5.0.zip`, 801,611 bytes, SHA-256 `57020852b82b26d8d0562707bddeb00ef4ffcd5875264c23ba0e6da875ff589f`. To update from 0.4.0, replace the contents of the same folder, then reload Link Meteor at `chrome://extensions`. Your collections stay with that folder.
+
+### Known issues
+
+- Link Meteor can't read the links inside a PDF yet. Right-click a link in the PDF and choose *Add link* to save it. Capturing every link in a PDF is planned for the next release.
+- A link saved on its own, such as a PDF tab, has no authors until you capture from the paper's own page or save that page as a tab. Nothing is looked up online.
+- Names printed without a comma, such as "Jun Watanabe", stay whole in citations, so reference managers show them as one name.
+- Removing all-sites access can also remove access to sites you allowed one at a time. That is Chrome's behavior, as before.
+- Tested so far:
+  - automated checks without grants in Chrome for Testing 151 on macOS, Windows and Linux;
+  - the checks that need Allow clicks, on macOS;
+  - the checks that need no grants on Chrome for Testing 116, except the toolbar button, which the test tool can't press there;
+  - hands-on checks of two test builds in everyday Chrome on macOS; the problems they found were fixed in this build.
+
+  The right-click menus can't be opened by automated Chrome, so their automated checks are simulations. Screen readers are not yet tested. See [testing and compatibility](docs/ACCEPTANCE.md).
+- The site's videos and product screenshots still show 0.2.2.
+
+## 0.4.0 (2026-09-29)
+
+"Make it yours": themes and a card that works the way you do, plus five additions from the first hands-on check:
+- themes and appearance;
+- what happens after a drag;
+- saving tabs as links;
+- custom columns;
+- downloading the files behind links;
+- more right-click actions.
+
+### Extension
+
+- **Seven themes**, each light and dark: Meteor, Comet, Aurora, Ember, Nebula, Graphite and High contrast. **Appearance** chooses System, Light or Dark. The side panel, full view, capture card, selection highlight and toolbar icon all follow the theme. Meteor looks exactly as before.
+- **After a drag:** *Show the card*, as before; *Copy right away*, as a text and URL table, URLs, Markdown or rich links; or *Add right away*, with Undo in a small notice.
+- **Leave out navigation links.** Links in page-level menus, headers, footers and sidebars start unticked, and the card says how many, with *Include them*. A post's own title link still counts. *Capture this page* leaves them out too and offers *Include them*.
+- **Card filters:** All, Other sites, PDFs and Same site.
+- **Already saved.** Links the collection already has are marked *Saved* on the card. *Skip links already saved* leaves them out when adding.
+- **Copy as rich links**, on the card (shortcut L) and in the Export panel: HTML and plain text that paste into Google Docs, Word or Notion as clickable anchor text.
+- **Save tabs as links.** Besides capturing the links inside tabs, choose *The tabs themselves* to save this tab, picked tabs, or every tab in the window or all windows, one link each, with the tab's title. Pages that aren't web pages are skipped and counted.
+- **Custom columns.** Up to 20 per collection, named in the collection editor and filled in by hand, like notes. They appear in each link's details, in search, in every export and in backups. *Fill for selected links* sets one value on many links, with Undo. A backup merge joins columns with the same name.
+- **Download the files behind links**: PDFs, images, documents and other files. Use the card's *Download N files* (shortcut F), the Export panel's *Download files*, *Download* in a link's details, or *Download linked file* in the right-click menu.
+  - Files are saved in `Downloads/Link Meteor/<collection>/`, named after their anchor text.
+  - Downloads run three at a time. Link Meteor asks first above 10 files, and *Cancel* stops what hasn't finished.
+  - A link that gives a web page instead of a file, often a sign-in page, is reported as such, and a failed download says why.
+- **Highlights stay on their links** while the page scrolls, and unticked links are outlined.
+- **More right-click actions**, under Chrome's *Link Meteor* submenu:
+  - on a link: *Add link to "collection"*, *Copy link text + URL*, *Download linked file* (for file links) and *Select a region*;
+  - on selected text: *Capture links in the selection*;
+  - on the page: *Select a region*, *Capture this page* and *Save this tab as a link*;
+  - on the toolbar icon: *Save this tab as a link*, *Save all tabs in this window as links* and *Open the full view*.
+- **Copy diagnostics**, in About and help, copies versions, settings, permission choices and counts for a bug report, never addresses, site names, titles, notes, tags or collection names.
+- **Backups** use format 2, which adds the new settings and custom columns. 0.4.0 restores 0.3.0 backups; 0.3.0 can't restore a 0.4.0 backup.
+- **Fix:** *Capture links in the selection* and hold-key drag no longer depend on Chrome's collapsed-selection flag, which Chrome 116 reports wrongly inside shadow roots.
+
+### Permissions
+
+- **Optional `downloads`.** Asked the first time you download files, in the full view. Chrome describes it as "Manage your downloads". Link Meteor uses it only to save the files you choose and follow those downloads; it never reads, opens, changes or removes your other downloads.
+- The right-click and toolbar menus use the `contextMenus` permission that 0.3.0 already had.
+
+### Website
+
+- A theme menu with every palette in light and dark. Links from the extension open the site in your theme.
+- The download is now 0.4.0.
+- The privacy page describes the downloads permission and the new menus.
+- The guide, home and install pages cover the new features.
+
+### Download
+
+`link-meteor-0.4.0.zip`, 570,447 bytes, SHA-256 `68105db8e9dc47e1a222a2f668e5cbc22df315f8a24f09d83f57f036f6bc7036`. To update from 0.3.0, replace the contents of the same folder, then reload Link Meteor at `chrome://extensions`. Your collections stay with that folder.
+
+### Known issues
+
+- Ember light's red Remove buttons are close in color to its orange links. They also carry a trash icon and the word Remove. This will be adjusted in the next release.
+- Removing all-sites access can also remove access to sites you allowed one at a time. That is Chrome's behavior, as in 0.3.0.
+- Tested so far:
+  - automated checks without grants in Chrome for Testing 151 on macOS, Windows and Linux;
+  - the checks that need Allow clicks, on macOS;
+  - the checks that need no grants on Chrome for Testing 116, except the toolbar button, which the test tool can't press there;
+  - a hands-on check in everyday Chrome on macOS.
+
+  The right-click menus can't be opened by automated Chrome, so their automated checks are simulations; the hands-on check covered them. Screen readers are not yet tested. See [testing and compatibility](docs/ACCEPTANCE.md).
+- The site's videos and product screenshots still show 0.2.2.
+
+## 0.3.0 (2026-09-27)
+
+A feature release. The main additions:
+- hold-key drag everywhere after one choice;
+- a capture card that can open, copy, download and bookmark;
+- export file names and formatted workbooks;
+- saving into existing bookmark folders;
+- backup and restore.
+
+### Extension
+
+- **Allow on all sites, once.** A welcome card, shown once, offers **Allow on all sites (recommended)**, **Choose sites later** or Close. With all-sites access, hold-key drag and *Capture this page* work on every site. **Never on these sites** lists sites where hold-key drag should never run. Declining keeps the one-site-at-a-time route, and the switch in Site access changes the choice later.
+- **Command or Ctrl as the hold key.** Hold a letter (Z by default), or Command on a Mac and Ctrl elsewhere, and drag. A plain Command-click or Ctrl-click still opens the link.
+- ***Capture this page* after the tab moves to a new site.** With all-sites access it just works. Without it, Link Meteor asks for the new site in the same click. When Chrome hides the page's address, the result offers to allow all sites.
+- **Pages already open when Link Meteor starts.** They get hold-key drag without a reload, including after an install or update.
+- **A fuller capture card:**
+  - it opens links in tabs, a new window or a tab group;
+  - it copies URLs or Markdown, downloads a file, or saves to bookmarks;
+  - its **Adds to** line changes the destination collection;
+  - unticking a link in the preview leaves it out of every action;
+  - one-letter shortcuts work while focus is in the card.
+- **Opening more links.** Up to 500 links at once, in tabs, a new window or a tab group. More than 20 asks first, more than 100 asks with stronger wording, and more than 500 is refused before anything opens. A tab group takes the collection's name when Chrome allows tab groups, and stays unnamed otherwise.
+- **Export file names.** The default name is the collection and the date and time, for example `Urban-heat-islands-sources_2026-09-26_1432.xlsx`. An optional prefix and the date format are in the Export panel, and a File name field names a single export.
+- **Formatted Excel workbooks.** A bold header row that stays visible while scrolling, filter buttons, fitted columns, clickable links whose cell text stays the exact URL, and an About sheet: when, from which collection and view, and with which filters. Every cell is still text.
+- **JSON exports** now wrap the rows as `{about, rows}`, where `rows` is exactly the 0.2.2 array. CSV and TSV are unchanged.
+- **Existing bookmark folders.** Choose any folder by its path, and skip links already there.
+- **Backup and restore.** **Download a backup** saves one file with every collection, link, note, tag and setting. **Restore from a backup** shows a preview first, then merges or replaces, with Undo afterwards. It works on this computer or another one.
+- **Select all** across pages, plus **Remove all in this view** and **Empty this collection**, both with Undo.
+
+### Permissions
+
+- **Optional `tabGroups`.** Asked once, the first time you open links as a tab group, so the group can take the collection's name.
+- **`unlimitedStorage`.** No prompt. It lets large collections, and the Undo kept after a restore, grow past Chrome's default 10 MB for extension storage. The data stays in this browser.
+- **All-sites access** uses the optional `http://*/*` and `https://*/*` permissions that 0.2.2 already declared. It is asked for only through the choice above, never at install.
+
+### Website
+
+- The download is now 0.3.0.
+- The privacy page lists the new permissions and backups.
+- The install page has a **Works in** section and an up-to-date folder listing.
+- The guide covers the new features.
+
+### Download
+
+`link-meteor-0.3.0.zip`, 368,539 bytes, SHA-256 `25463687d2f0a7b9e280de7d4f905753cb9b8cc57b359129937f8ea5e98302c7`. To update from 0.2.2, replace the contents of the same folder, then reload Link Meteor at `chrome://extensions`. Your collections stay with that folder. See the install page's update steps.
+
+### Known issues
+
+- Removing all-sites access, with Link Meteor's **Remove Chrome's access** or with Chrome's own controls, can also remove access to sites you allowed one at a time. That is Chrome's behavior. Link Meteor turns hold-key drag off where it no longer has access, and asks again when needed.
+- Tested on macOS only:
+  - automated checks in Chrome for Testing 151;
+  - hands-on checks in everyday Chrome, Brave and Microsoft Edge;
+  - the checks that need no grants on Chrome for Testing 116.
+
+  Windows, Linux and screen readers are not yet tested. See [testing and compatibility](docs/ACCEPTANCE.md).
+- The site's videos and product screenshots still show 0.2.2.
+
+## 0.2.2 (2026-09-26)
+
+A small release: an About and help area in the extension, and a fuller website. Capture, export and storage work exactly as in 0.2.1.
+
+### Extension
+
+- **About and help.** A closed-by-default area in the side panel and full view shows the version and the creator credit, with links to the guide, bug reports and suggestions, the website, the source code and optional GitHub Sponsors. The new **?** button opens it. The links open in a new tab only when you click one; nothing opens or is sent automatically.
+- No new permissions. The background worker, capture script, export and model code and icons are byte-for-byte the same as 0.2.1.
+
+### Website
+
+- A short demo video on the home page and an install walkthrough on the install page. Both are silent, with captions and a transcript, and play only when you press play.
+- A creator credit with contact links in every footer, and a new About page covering how to report bugs, optional support, credits and how the videos were made.
+- Refreshed product screenshots from 0.2.2.
+- A troubleshooting entry for *Capture this page* after the tab moves to a new site.
+
+### Download
+
+`link-meteor-0.2.2.zip`, 198,835 bytes, SHA-256 `ceb6b778a0f93a6651e9c036fb6535773919ffa78b7ad4b88c692d35983b4e9d`. To update an existing installation, follow the install page's update steps and keep the same folder, so your collections stay with it.
+
+### Known issues
+
+- After the side panel stays open and the tab moves to a new site, *Capture this page* reports that Link Meteor doesn't have access. Click the Link Meteor toolbar icon on the new page first. The next feature release plans a one-time choice to allow all sites.
+- Not yet verified: Windows and Linux, Chrome 116, screen readers, and other Chromium-based browsers. See [testing and compatibility](docs/ACCEPTANCE.md).

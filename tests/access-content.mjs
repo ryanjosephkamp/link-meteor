@@ -1,0 +1,1251 @@
+// SIMULATION: the real content script (src/content/capture.js) loaded into ordinary pages of the
+// local fixture server in Chrome for Testing, with a stub `chrome` object standing in for the
+// extension. Pointer, keyboard and click events are real browser input; every Link Meteor message
+// is answered by the stub, so this checks the page script's own behavior, not the background.
+// 0.4.0: After a drag (card, copy in every format, add with Undo), the notice, content links only
+// with Include them, the filters, already saved, Skip saved and rich copy on the clipboard. Release
+// candidate 2: the menus' page messages (the right-clicked link, the selection's links and the
+// notice after a menu save or copy), and Download N files in the More menu (only file links, a
+// confirmation above 10, progress, Cancel, missing access) with the notice after a menu download.
+// 0.5.0: context snippets (every kind of block, cuts at word boundaries, saveContext off, 20,000
+// links) and page citations (Highwire, PRISM, JSON-LD, Dublin Core, none and odd tags), in scan(),
+// the card's commit and the menus' answers, read the same way as Save tabs as links reads them.
+// 1.0.0: closed shadow roots (with a stand-in for chrome.dom, and without it), in scan(), a region,
+// the right-click lookup and a selection; and frames from other sites, where the script runs in
+// every frame as Chrome would run it and the answers are joined by the background's own joinFrames.
+// Writes access-content-results.json to LINK_METEOR_EVIDENCE_DIR (default .scratch/evidence-access-capture).
+import assert from 'node:assert/strict';
+import {mkdir, mkdtemp, readFile, rm, writeFile} from 'node:fs/promises';
+import {resolve} from 'node:path';
+import {browserHome, chromePath, fixtureServer, headlessArgs, playwright, root, scratch} from './helpers/browser.mjs';
+import {cardTheme} from '../src/core/themes.js';
+import {readCitationTags} from '../src/background/citations.js';
+import {joinFrames} from '../src/background/frame-join.js';
+
+const evidence = resolve(root, process.env.LINK_METEOR_EVIDENCE_DIR || '.scratch/evidence-access-capture');
+const source = await readFile(resolve(root, 'src/content/capture.js'), 'utf8');
+const result = {started: new Date().toISOString(), kind: 'simulation: real page script, stub chrome object, real input events in Chrome for Testing', checks: []};
+let htmlUnread = 0;
+const pass = (name, data = {}) => { result.checks.push({name, ...data}); console.log('PASS', name, Object.keys(data).length ? JSON.stringify(data) : ''); };
+
+// The stub answers like the background would, and records every message.
+// With `dom`, the stub also stands in for chrome.dom.openOrClosedShadowRoot (1.0.0).
+function stub({platform, trigger = 'modifier', key = 'z', dom = false}) {
+  const init = ({platform, trigger, key, dom}) => {
+    if (platform) {
+      Object.defineProperty(Navigator.prototype, 'platform', {get: () => platform, configurable: true});
+      Object.defineProperty(Navigator.prototype, 'userAgentData', {get: () => undefined, configurable: true});
+    }
+    const sent = [], clicks = [], downs = [];
+    let listener = null, batches = 0, lastAdd = {};
+    const collections = [{id: 'c1', name: 'My research', count: 0}, {id: 'c2', name: 'Second collection', count: 3}];
+    // URLs each collection already holds (0.4.0: capture.saved and skipSaved), set by the checks.
+    const held = {c1: [], c2: []};
+    const reply = (message) => {
+      switch (message.type) {
+        case 'settings.get': return {holdKey: key, holdTrigger: trigger, holdScope: 'all', holdOrigins: [], holdExceptions: []};
+        case 'collections.list': return {activeCollectionId: 'c1', collections};
+        case 'collection.active': return {name: 'My research', count: 0};
+        case 'capture.saved': return {saved: [...new Set(message.urls)].filter((url) => held[message.collectionId || 'c1'].includes(url))};
+        case 'capture.commit': {
+          const id = message.collectionId || 'c1', batchId = 'batch-' + ++batches;
+          const kept = message.skipSaved ? message.links.filter((link) => !held[id].includes(link.url)) : message.links;
+          const links = kept.map((link, i) => ({...link, id: 'saved-' + i, batchId}));
+          lastAdd = window.__stub.lastAdd = {batchId, collectionId: id, count: links.length};
+          return {state: {activeCollectionId: 'c1', collections: collections.map(c => ({...c, links: c.id === id ? links : []}))}, count: links.length, skipped: message.links.length - kept.length, batchId: links.length ? batchId : '', collectionId: id, warning: ''};
+        }
+        case 'capture.undoAdd': {
+          if (window.__stub.refuseUndo) throw new Error('These links changed since they were added, so Undo is no longer possible. Remove them in the full view instead.');
+          const add = window.__stub.lastAdd || lastAdd;
+          if (message.batchId !== add.batchId || message.collectionId !== add.collectionId) throw new Error('Unknown add');
+          return {count: add.count};
+        }
+        case 'capture.preference': return {contentOnly: message.contentOnly ?? true, skipSaved: message.skipSaved ?? false};
+        case 'capture.copy': return message.format === 'rich'
+          ? {html: `<ul>${message.links.map((link) => `<li><a href="${link.url}">${link.anchorText || link.url}</a></li>`).join('')}</ul>`, text: message.links.map((link) => link.anchorText ? `${link.anchorText} (${link.url})` : link.url).join('\n')}
+          : {text: message.links.map(link => link.url).join('\n')};
+        case 'capture.open': return {opened: new Set(message.links.map(l => l.url)).size, failed: 0, cancelled: false, ...(message.mode === 'group' ? {groupId: 7, groupTitled: false} : {})};
+        case 'capture.export': return {fileName: 'My-research_2026-09-26_1432.csv', mime: 'text/csv;charset=utf-8', encoding: 'utf8', data: 'Anchor text,URL\r\n'};
+        case 'capture.bookmark': throw new Error('Bookmark access is needed. Open the full view and use Save as bookmarks there; Chrome asks for access once.');
+        case 'capture.download': {
+          if (window.__stub.noDownloadAccess) throw new Error('Download access is needed. Open the full view and choose Download there; Chrome asks for access once.');
+          const n = message.links.length;
+          return {requestId: message.requestId, total: n, done: n, saved: n, webPages: 0, failed: 0, cancelled: 0, held: 0, folder: 'Link Meteor/My-research', results: [], summary: `Saved ${n} files to Link Meteor › My-research in your downloads folder.`};
+        }
+        case 'ui.open': case 'links.cancel': case 'downloads.cancel': return {};
+        default: throw new Error('Unexpected message ' + message.type);
+      }
+    };
+    const chrome = {
+      runtime: {
+        sendMessage: async (message) => { sent.push(JSON.parse(JSON.stringify(message))); try { return {ok: true, data: reply(message)}; } catch (error) { return {ok: false, error: error.message}; } },
+        onMessage: {addListener: (fn) => { listener = fn; }},
+      },
+      storage: {onChanged: {addListener() {}, removeListener() {}}},
+    };
+    // chrome.dom sees into closed shadow roots. Nothing outside an extension can, so this stand-in
+    // remembers each root on its host as the page attaches it. A root declared in the page's HTML is
+    // never attached by a script and stays unseen here; tests/coverage-browser.mjs uses the real API.
+    // Like the real one, it refuses anything that isn't an HTML element.
+    if (dom) {
+      const ROOT = Symbol.for('link-meteor-test-root'), attach = Element.prototype.attachShadow;
+      Element.prototype.attachShadow = function (init) { const root = attach.call(this, init); this[ROOT] = root; return root; };
+      chrome.dom = {openOrClosedShadowRoot: (element) => { if (element?.nodeType !== 1 || element.namespaceURI !== 'http://www.w3.org/1999/xhtml') throw new TypeError('Error in invocation of dom.openOrClosedShadowRoot'); window.__stub.domCalls++; return element[ROOT] || null; }};
+    }
+    window.chrome = chrome; // writable, not configurable
+    // deliver: a message the background sends without waiting; ask: one it waits for (the menus' requests).
+    window.__stub = {sent, clicks, downs, held, domCalls: 0, listening: () => !!listener, deliver: (message) => listener?.(message),
+      ask: (message) => new Promise((resolve) => { listener?.(message, {id: 'stub'}, resolve); setTimeout(() => resolve('no answer'), 100); })};
+    // Page listeners in the bubble phase: they see what the page would see.
+    document.addEventListener('click', (event) => { clicks.push({target: event.target.id || event.target.tagName, meta: event.metaKey, ctrl: event.ctrlKey, prevented: event.defaultPrevented}); if (event.target.closest?.('a')) event.preventDefault(); });
+    document.addEventListener('pointerdown', (event) => { downs.push({target: event.target.id || event.target.tagName, prevented: event.defaultPrevented}); });
+  };
+  return {init, arg: {platform, trigger, key, dom}};
+}
+
+const fixture = await fixtureServer();
+// Page downloads (the card's workbook) land in a task-owned folder under .scratch/, removed afterwards.
+await mkdir(scratch, {recursive: true});
+const downloadsPath = await mkdtemp(resolve(scratch, 'access-content-downloads-'));
+const browser = await playwright.chromium.launch({executablePath: chromePath(), headless: true, args: headlessArgs(), downloadsPath, env: {...process.env, ...browserHome(resolve(downloadsPath, 'home'))}});
+const sleep = (ms) => new Promise((done) => setTimeout(done, ms));
+const card = (page) => page.locator('#link-meteor-overlay');
+async function load(page, path, options) {
+  const {init, arg} = stub(options);
+  await page.addInitScript(init, arg);
+  await page.goto(fixture.base + path);
+  await page.addScriptTag({content: source});
+  await page.waitForFunction(() => window.__stub.sent.some((m) => m.type === 'settings.get'));
+  await sleep(50);
+}
+const sent = (page, type) => page.evaluate((type) => window.__stub.sent.filter((m) => !type || m.type === type), type);
+const clicks = (page) => page.evaluate(() => window.__stub.clicks.splice(0));
+const statusMatches = (page, pattern) => page.waitForFunction((source) => new RegExp(source).test(document.getElementById('link-meteor-overlay')?.shadowRoot.querySelector('.status')?.textContent || ''), pattern.source);
+
+try {
+  await mkdir(evidence, {recursive: true});
+  const context = await browser.newContext({viewport: {width: 1280, height: 900}, acceptDownloads: true});
+
+  /* Modifier trigger on macOS: Command. */
+  const page = await context.newPage();
+  await load(page, '/index.html', {platform: 'MacIntel', trigger: 'modifier'});
+  const paper = await page.locator('#paper-one').boundingBox();
+  const px = paper.x + 10, py = paper.y + paper.height / 2;
+
+  // A plain Command-click passes through: no overlay, the page sees the click and an unprevented press.
+  await page.keyboard.down('Meta'); await page.mouse.click(px, py); await page.keyboard.up('Meta');
+  await sleep(100);
+  assert.equal(await card(page).count(), 0);
+  let seen = await clicks(page);
+  assert.deepEqual(seen, [{target: 'paper-one', meta: true, ctrl: false, prevented: false}]);
+  assert.equal((await page.evaluate(() => window.__stub.downs.at(-1))).prevented, false);
+  pass('Plain Command-click on a link passes through to the page untouched');
+
+  // Below the threshold (5 px), still a click: no selection starts.
+  await page.keyboard.down('Meta'); await page.mouse.move(px, py); await page.mouse.down(); await page.mouse.move(px + 3, py + 4, {steps: 3}); await page.mouse.up(); await page.keyboard.up('Meta');
+  await sleep(100);
+  assert.equal(await card(page).count(), 0);
+  seen = await clicks(page);
+  assert.equal(seen.length, 1); assert.equal(seen[0].target, 'paper-one');
+  pass('A Command-press that moves 5 px stays a click and starts no selection');
+
+  // Without the modifier, dragging never starts a selection.
+  await page.mouse.move(px, py); await page.mouse.down(); await page.mouse.move(px + 60, py + 60, {steps: 6}); await page.mouse.up();
+  await sleep(100);
+  assert.equal(await card(page).count(), 0);
+  await clicks(page);
+  pass('A drag without the modifier does nothing');
+
+  // Command-drag past 6 px from a link starts the selection; the click that ends it is suppressed.
+  const bib = await page.locator('#bibliography').boundingBox();
+  await page.keyboard.down('Meta'); await page.mouse.move(bib.x + 4, bib.y + 4); await page.mouse.down();
+  await page.mouse.move(bib.x + 7, bib.y + 7);
+  assert.equal(await card(page).count(), 0, 'no overlay before 6 px');
+  await page.mouse.move(bib.x + bib.width - 4, bib.y + bib.height - 4, {steps: 12});
+  await page.waitForFunction(() => document.getElementById('link-meteor-overlay')?.shadowRoot.querySelector('.badge')?.textContent === '5 links');
+  await page.mouse.up(); await page.keyboard.up('Meta');
+  await sleep(100);
+  assert.equal(await card(page).locator('.count').innerText(), '5 links selected');
+  assert.deepEqual(await clicks(page), [], 'the click that ends the drag never reaches the page');
+  const selection = await page.evaluate(() => getSelection().toString());
+  pass('Command-drag of 6 px or more starts selection; the ending click is suppressed once', {pageTextSelected: selection.length});
+
+  // The next click is an ordinary click again.
+  await card(page).locator('button.dismiss').click(); await clicks(page);
+  await page.mouse.click(px, py); await sleep(50);
+  assert.equal((await clicks(page)).length, 1);
+  pass('Only one click is suppressed; the next click reaches the page');
+
+  // Command-drag starting on a link opens the selection instead of dragging the link away.
+  await page.keyboard.down('Meta'); await page.mouse.move(px, py); await page.mouse.down();
+  await page.mouse.move(px + 40, py + 90, {steps: 10});
+  await page.waitForFunction(() => !!document.getElementById('link-meteor-overlay'));
+  await page.mouse.up(); await page.keyboard.up('Meta'); await sleep(100);
+  assert.ok(Number.parseInt(await card(page).locator('.count').innerText()) >= 1);
+  await clicks(page);
+  await page.keyboard.press('Escape'); await sleep(50);
+  assert.equal(await card(page).count(), 0);
+  pass('Command-drag that starts on a link selects instead of dragging the link');
+
+  // Editable targets never start a selection.
+  await page.locator('#typing').scrollIntoViewIfNeeded();
+  const typing = await page.locator('#typing').boundingBox();
+  await page.keyboard.down('Meta'); await page.mouse.move(typing.x + 5, typing.y + 5); await page.mouse.down(); await page.mouse.move(typing.x + 80, typing.y + 60, {steps: 8}); await page.mouse.up(); await page.keyboard.up('Meta');
+  await sleep(100);
+  assert.equal(await card(page).count(), 0);
+  await clicks(page);
+  pass('A Command-drag that starts in a text field starts no selection');
+
+  // content.configure turns it off at once, without a reload.
+  await page.evaluate(() => scrollTo(0, 0));
+  await page.evaluate(() => window.__stub.deliver({type: 'content.configure', holdKey: 'z', holdTrigger: 'modifier', enabled: false}));
+  await page.keyboard.down('Meta'); await page.mouse.move(bib.x + 4, bib.y + 4); await page.mouse.down(); await page.mouse.move(bib.x + 200, bib.y + 120, {steps: 8}); await page.mouse.up(); await page.keyboard.up('Meta');
+  await sleep(100);
+  assert.equal(await card(page).count(), 0);
+  assert.equal((await clicks(page)).length, 1, 'with hold-drag off, the drag ends in an ordinary click');
+  await page.evaluate(() => window.__stub.deliver({type: 'content.configure', holdKey: 'q', holdTrigger: 'letter', enabled: true}));
+  await page.keyboard.down('q'); await page.mouse.move(bib.x + 4, bib.y + 4); await page.mouse.down(); await page.mouse.move(bib.x + bib.width - 4, bib.y + bib.height - 4, {steps: 8}); await page.mouse.up(); await page.keyboard.up('q');
+  await sleep(100);
+  assert.equal(await card(page).locator('.count').innerText(), '5 links selected');
+  assert.deepEqual(await clicks(page), []);
+  pass('content.configure switches off, then to the letter Q, without a reload');
+
+  /* The card: ticking, destination, shortcuts, actions. */
+  const shadow = card(page);
+  const boxes = shadow.locator('.preview input[type=checkbox]');
+  assert.equal(await boxes.count(), 5);
+  await boxes.nth(1).uncheck();
+  assert.equal(await shadow.locator('.count').innerText(), '4 of 5 links selected');
+  assert.equal(await shadow.locator('.open-label').innerText(), 'Open 3 in tabs', 'two ticked links share one PDF URL');
+  await shadow.getByRole('button', {name: 'Copy text + URL', exact: true}).click();
+  await page.waitForFunction(() => window.__stub.sent.some((m) => m.type === 'capture.copy'));
+  await statusMatches(page, /^Copied anchor text and URL/);
+  let copy = (await sent(page, 'capture.copy')).at(-1);
+  assert.equal(copy.links.length, 4); assert.equal(copy.format, 'tsv');
+  assert.ok(!copy.links.some((link) => link.originalHref === '/papers/geometry.pdf?edition=2'));
+  pass('Unticking a link in the preview leaves it out of every action', {sent: copy.links.length});
+
+  // One-letter shortcuts work while focus is inside the card, and show in tooltips.
+  const titles = await shadow.locator('button[data-key]').evaluateAll((buttons) => buttons.map((b) => [b.textContent.trim(), b.title, b.getAttribute('aria-keyshortcuts')]));
+  assert.ok(titles.every(([, title, key]) => title.endsWith(`(${key})`)), JSON.stringify(titles));
+  await shadow.locator('button.copy').focus();
+  await page.keyboard.press('u');
+  await page.waitForFunction(() => window.__stub.sent.filter((m) => m.type === 'capture.copy').length === 2);
+  copy = (await sent(page, 'capture.copy')).at(-1);
+  assert.equal(copy.format, 'text');
+  await statusMatches(page, /^Copied 4 URLs, one per line/);
+  await page.keyboard.press('k');
+  await page.waitForFunction(() => window.__stub.sent.filter((m) => m.type === 'capture.copy').length === 3);
+  assert.equal((await sent(page, 'capture.copy')).at(-1).format, 'markdown');
+  await statusMatches(page, /Copied 4 Markdown links/);
+  pass('Shortcuts U and K copy URLs and Markdown while focus is in the card', {shortcuts: titles.map(([, , key]) => key).join('')});
+
+  // Typing in the page never triggers card shortcuts.
+  const before = (await sent(page)).length;
+  await page.locator('#typing').click();
+  await page.keyboard.type('ucokd');
+  await sleep(100);
+  assert.equal((await sent(page)).length, before);
+  assert.equal(await page.locator('#typing').inputValue(), 'ucokd');
+  pass('Typing in the page does not trigger card shortcuts');
+
+  // The More menu: opens, moves with arrow keys, and Escape closes only the menu.
+  await shadow.locator('button.copy').focus();
+  await page.keyboard.press('m');
+  assert.equal(await shadow.locator('.menu').isVisible(), true);
+  assert.equal(await shadow.locator('button.menu-toggle').getAttribute('aria-expanded'), 'true');
+  await page.keyboard.press('ArrowDown');
+  assert.equal(await page.evaluate(() => document.getElementById('link-meteor-overlay').shadowRoot.activeElement.className), 'm-group');
+  await page.keyboard.press('Escape');
+  assert.equal(await shadow.locator('.menu').isVisible(), false);
+  assert.equal(await shadow.locator('.bar').isVisible(), true);
+  const items = await shadow.locator('.menu [role=menuitem]').evaluateAll((list) => list.map((b) => b.firstChild.textContent));
+  assert.deepEqual(items, ['Open in a new window', 'Open as a tab group', 'Copy URLs', 'Copy as Markdown', 'Copy as rich links', 'Download this selection', 'Download 1 file', 'Bookmark this selection']);
+  pass('The More menu lists eight actions (Download 1 file counts the one ticked file address), moves with the arrow keys and closes on Escape', {items});
+
+  // Destination picker on the "Adds to" line.
+  assert.match(await shadow.locator('.dest').innerText(), /^Adds to My research/);
+  await shadow.locator('.dest-change').click();
+  await shadow.locator('.dest-select').selectOption('c2');
+  assert.match(await shadow.locator('.dest').innerText(), /^Adds to Second collection/);
+  await shadow.getByRole('button', {name: 'Add to collection', exact: true}).click();
+  await page.waitForFunction(() => window.__stub.sent.some((m) => m.type === 'capture.commit'));
+  const commit = (await sent(page, 'capture.commit')).at(-1);
+  assert.equal(commit.collectionId, 'c2'); assert.equal(commit.links.length, 4);
+  await statusMatches(page, /Saved 4 links to “Second collection”/);
+  assert.match(await shadow.locator('.dest').innerText(), /^Saved to Second collection/);
+  pass('The destination picker sends collectionId and the receipt names that collection');
+
+  // Review after saving opens the full view at that capture.
+  await shadow.getByRole('button', {name: 'Review', exact: true}).click();
+  await page.waitForFunction(() => window.__stub.sent.some((m) => m.type === 'ui.open'));
+  assert.deepEqual((await sent(page, 'ui.open')).at(-1), {type: 'ui.open', view: 'links', batchId: 'batch-1'});
+  pass('Review after saving opens the full view at that capture (ui.open with view and batchId)');
+
+  // Open N in tabs: 1 to 20 opens without a confirmation.
+  await shadow.locator('button.open').click();
+  await page.waitForFunction(() => window.__stub.sent.some((m) => m.type === 'capture.open'));
+  const open = (await sent(page, 'capture.open')).at(-1);
+  assert.equal(open.mode, 'tabs'); assert.equal(open.confirmed, false); assert.ok(open.requestId); assert.equal(open.collectionId, 'c2');
+  await statusMatches(page, /Opened 3 links in new tabs/);
+  pass('Open 3 in tabs opens at once, with no confirmation');
+
+  // Download this selection saves through a link in the card.
+  const downloading = page.waitForEvent('download');
+  await shadow.locator('button.copy').focus(); await page.keyboard.press('d');
+  const download = await downloading;
+  assert.equal(download.suggestedFilename(), 'My-research_2026-09-26_1432.csv');
+  assert.equal((await sent(page, 'capture.export')).at(-1).format, 'xlsx');
+  pass('Download this selection saves the file name the background chose', {file: download.suggestedFilename()});
+
+  // Bookmarking without access says so and offers the full view.
+  await shadow.locator('button.copy').focus(); await page.keyboard.press('b');
+  await page.waitForFunction(() => /Bookmark access is needed/.test(document.getElementById('link-meteor-overlay').shadowRoot.querySelector('.status').textContent));
+  assert.equal(await shadow.getByRole('button', {name: 'Open the full view', exact: true}).isVisible(), true);
+  await shadow.getByRole('button', {name: 'Open the full view', exact: true}).click();
+  await page.waitForFunction(() => window.__stub.sent.filter((m) => m.type === 'ui.open').length === 2);
+  assert.deepEqual((await sent(page, 'ui.open')).at(-1), {type: 'ui.open', view: 'export', batchId: 'batch-1'});
+  pass('Bookmark without access explains it and offers the full view at the export panel');
+  await page.keyboard.press('Escape'); await sleep(50);
+  assert.equal(await card(page).count(), 0);
+
+  /* Opening tiers on the card, with many links. */
+  async function region(count) {
+    await page.evaluate((count) => {
+      document.body.innerHTML = `<div id="grid" style="display:grid;grid-template-columns:repeat(20,60px);gap:2px;padding:20px">${Array.from({length: count}, (_, i) => `<a href="/many/${i}" style="font:9px/12px sans-serif">L${i}</a>`).join('')}</div>`;
+    }, count);
+    const box = await page.locator('#grid').boundingBox();
+    await page.keyboard.down('q'); await page.mouse.move(box.x + 2, box.y + 2); await page.mouse.down();
+    await page.mouse.move(box.x + box.width - 2, box.y + box.height - 2, {steps: 6}); await page.mouse.up(); await page.keyboard.up('q');
+    await page.waitForFunction((count) => document.getElementById('link-meteor-overlay')?.shadowRoot.querySelector('.count')?.textContent === `${count} links selected`, count);
+  }
+  await region(45);
+  await shadow.locator('button.open').click();
+  assert.equal(await shadow.locator('.confirm').isVisible(), true);
+  assert.equal(await shadow.locator('.confirm-text').innerText(), 'Open 45 links in new tabs?');
+  assert.deepEqual(await shadow.locator('.confirm button:visible').allInnerTexts(), ['Open 45', 'New window', 'Cancel']);
+  const opensBefore = (await sent(page, 'capture.open')).length;
+  await shadow.locator('.confirm-window').click();
+  await page.waitForFunction((n) => window.__stub.sent.filter((m) => m.type === 'capture.open').length === n + 1, opensBefore);
+  const confirmed = (await sent(page, 'capture.open')).at(-1);
+  assert.equal(confirmed.mode, 'window'); assert.equal(confirmed.confirmed, true); assert.equal(confirmed.links.length, 45);
+  pass('45 links: the card confirms (Open 45, New window, Cancel) before opening');
+  await page.keyboard.press('Escape');
+
+  await region(150);
+  await shadow.locator('button.open').click();
+  assert.match(await shadow.locator('.confirm-text').innerText(), /^Open 150 links in new tabs\? That is a lot of tabs at once/);
+  assert.equal(await shadow.locator('.confirm').evaluate((el) => el.classList.contains('strong')), true);
+  await page.keyboard.press('Escape');
+  assert.equal(await shadow.locator('.confirm').isVisible(), false, 'Escape cancels the confirmation first');
+  assert.equal(await shadow.locator('.bar').isVisible(), true);
+  pass('150 links: stronger wording; Escape cancels only the confirmation');
+  await page.keyboard.press('Escape');
+
+  await region(520);
+  const refused = (await sent(page, 'capture.open')).length;
+  await shadow.locator('button.open').click();
+  assert.match(await shadow.locator('.status').innerText(), /at most 500 links at a time, and 520 are ticked/);
+  assert.equal((await sent(page, 'capture.open')).length, refused);
+  pass('520 links: refused before anything is sent');
+  await page.keyboard.press('Escape');
+
+  // Progress and Cancel on the card.
+  await page.evaluate(() => {
+    const original = window.chrome.runtime.sendMessage;
+    window.chrome.runtime.sendMessage = (message) => message.type === 'capture.open'
+      ? new Promise((done) => { window.__finishOpen = (value) => done({ok: true, data: value}); window.__stub.sent.push(message); })
+      : original(message);
+  });
+  await region(30);
+  await shadow.locator('button.open').click(); await shadow.locator('.confirm-yes').click();
+  await page.waitForFunction(() => !!window.__finishOpen);
+  const requestId = (await sent(page, 'capture.open')).at(-1).requestId;
+  await page.evaluate((requestId) => window.__stub.deliver({type: 'links.progress', requestId, opened: 10, failed: 0, total: 30}), requestId);
+  assert.equal(await shadow.locator('.progress-text').innerText(), 'Opening 10 of 30 links…');
+  await shadow.locator('.progress-cancel').click();
+  await page.waitForFunction(() => window.__stub.sent.some((m) => m.type === 'links.cancel'));
+  assert.equal((await sent(page, 'links.cancel')).at(-1).requestId, requestId);
+  await page.evaluate(() => window.__finishOpen({opened: 10, failed: 0, cancelled: true}));
+  await page.waitForFunction(() => /Stopped after opening 10 of 30 links/.test(document.getElementById('link-meteor-overlay').shadowRoot.querySelector('.status').textContent));
+  pass('The card shows progress and cancels its own opening');
+  await page.screenshot({path: resolve(evidence, 'access-content-card.png')});
+  await page.keyboard.press('Escape');
+
+  /* 0.4.0: content links only, filters, already saved, Skip saved, rich copy, and After a drag. */
+  await context.grantPermissions(['clipboard-read', 'clipboard-write'], {origin: fixture.base});
+  await page.bringToFront();
+  const CAPTURE = {afterDrag: 'card', afterDragFormat: 'tsv', contentOnly: false, skipSaved: false};
+  const configure = (capture, card) => page.evaluate(([capture, card]) => window.__stub.deliver({type: 'content.configure', holdKey: 'q', holdTrigger: 'letter', enabled: true, capture, ...(card ? {card} : {})}), [capture, card]);
+  const inCard = (fn, arg) => page.evaluate(([source, arg]) => new Function('root', 'arg', `return (${source})(root, arg)`)(document.getElementById('link-meteor-overlay')?.shadowRoot, arg), [fn.toString(), arg]);
+  const cardText = (selector) => inCard((root, selector) => root?.querySelector(selector)?.textContent ?? null, selector);
+  const cardWait = (fn, arg) => page.waitForFunction(([source, arg]) => { const root = document.getElementById('link-meteor-overlay')?.shadowRoot; return !!root && new Function('root', 'arg', `return (${source})(root, arg)`)(root, arg); }, [fn.toString(), arg]);
+  const rowState = () => inCard((root) => [...root.querySelectorAll('.preview li')].map((li) => ({text: li.querySelector('.t').textContent, on: li.querySelector('input').checked, saved: !li.querySelector('.tag').hidden})));
+  const ticked = async () => (await rowState()).filter((row) => row.on).map((row) => row.text);
+  const readClipboard = () => page.evaluate(async () => { const [item] = await navigator.clipboard.read(); const read = async (type) => item.types.includes(type) ? (await (await item.getType(type)).text()).replace(/\r\n/g, '\n') : ''; return {types: item.types, html: await read('text/html'), text: await read('text/plain')}; }); // Windows keeps CRLF on the clipboard
+  // On another Chrome (LINK_METEOR_CHROME_PATH), such as 116, whose headless clipboard can't be read with
+  // navigator.clipboard.read() even after plain text, the text is read directly and the HTML counts as unread
+  // (types: null). Never on the default Chrome for Testing.
+  const clipboard = async () => {
+    try { return await readClipboard(); } catch (error) {
+      if (!process.env.LINK_METEOR_CHROME_PATH || !/No valid data on clipboard/.test(error.message)) throw error;
+      htmlUnread++;
+      return {types: null, html: null, text: (await page.evaluate(() => navigator.clipboard.readText())).replace(/\r\n/g, '\n')};
+    }
+  };
+  const noticeShown = () => inCard((root) => !!root && !root.querySelector('.notice').hidden);
+  // A page with links in every kind of page chrome, including an open shadow root and a same-origin frame.
+  async function landmarks() {
+    await page.evaluate(() => {
+      document.body.innerHTML = `<div id="landmarks" style="width:760px;padding:16px;font:14px/22px sans-serif">
+        <header><a href="/home">Home</a> · <a href="https://www.example.org/about">About us</a></header>
+        <nav><a href="/section/1">Section one</a> · <a href="/section/2">Section two</a> · <span id="nav-host"></span></nav>
+        <main><p><a href="/papers/one.pdf">Paper one</a> · <a href="/papers/two.PDF?copy=1">Paper two</a> · <a href="https://other.example/report.pdf">Other report</a></p>
+        <p><a href="https://other.example/article">Other article</a> · <a href="/local/page">Local page</a> · <a href="mailto:lab@example.org">Email the lab</a></p>
+        <article><div role="navigation"><a href="/contents">Contents</a></div></article></main>
+        <aside><a href="/related">Related</a><br><iframe id="aside-frame" src="/frame.html" style="width:320px;height:70px;border:0"></iframe></aside>
+        <div role="contentinfo"><a href="/legal">Legal</a></div>
+        <footer><a href="/contact">Contact</a></footer></div>`;
+      document.getElementById('nav-host').attachShadow({mode: 'open'}).innerHTML = '<a href="/shadowed">Shadow link</a>';
+      scrollTo(0, 0);
+    });
+    await page.waitForFunction(() => document.getElementById('aside-frame').contentDocument?.getElementById('frame-link'));
+  }
+  async function dragLandmarks() {
+    const box = await page.locator('#landmarks').boundingBox();
+    await page.keyboard.down('q'); await page.mouse.move(box.x + 2, box.y + 2); await page.mouse.down();
+    await page.mouse.move(box.x + box.width - 2, box.y + box.height - 2, {steps: 6}); await page.mouse.up(); await page.keyboard.up('q');
+  }
+  const CHROME_LINKS = ['Home', 'About us', 'Section one', 'Section two', 'Shadow link', 'Contents', 'Related', 'Source inside a frame', 'Legal', 'Contact'];
+  const CONTENT_LINKS = ['Paper one', 'Paper two', 'Other report', 'Other article', 'Local page', 'Email the lab'];
+  await landmarks();
+  await page.evaluate((base) => { window.__stub.held.c1 = [base + '/papers/one.pdf', base + '/local/page']; window.__stub.held.c2 = ['https://other.example/article']; }, fixture.base);
+  await configure({...CAPTURE, contentOnly: true});
+
+  // Content links only: page chrome starts unticked, with a count and Include them.
+  await dragLandmarks();
+  await cardWait((root) => root.querySelector('.count')?.textContent === '6 of 16 links selected');
+  let rows = await rowState();
+  assert.deepEqual(rows.filter((row) => row.on).map((row) => row.text), CONTENT_LINKS);
+  assert.deepEqual(rows.filter((row) => !row.on).map((row) => row.text), CHROME_LINKS);
+  assert.equal(await cardText('.leftout-text'), 'Left out 10 navigation links.');
+  assert.equal(await shadow.getByRole('button', {name: 'Include them', exact: true}).isVisible(), true);
+  pass('Content links only: header, nav (with its shadow root), role=navigation, aside (with its same-origin frame), contentinfo and footer links start unticked, and the card says how many', {leftOut: CHROME_LINKS.length});
+
+  // Already saved: asked when the card opens (the remembered destination, Second collection), and again when the destination changes.
+  await cardWait((root) => [...root.querySelectorAll('.preview .tag')].some((tag) => !tag.hidden));
+  let check = (await sent(page, 'capture.saved')).at(-1);
+  assert.equal(check.collectionId, 'c2'); assert.equal(check.urls.length, 16);
+  assert.deepEqual((await rowState()).filter((row) => row.saved).map((row) => row.text), ['Other article']);
+  assert.equal(await cardText('.skip-text'), 'Skip the link already saved');
+  assert.equal(await shadow.locator('.skip-saved').isChecked(), false, 'Skip saved starts from the skipSaved setting (off)');
+  await shadow.locator('.dest-change').click();
+  await shadow.locator('.dest-select').selectOption('c1');
+  await cardWait((root) => [...root.querySelectorAll('.preview li')].filter((li) => !li.querySelector('.tag').hidden).length === 2);
+  check = (await sent(page, 'capture.saved')).at(-1);
+  assert.equal(check.collectionId, 'c1');
+  assert.deepEqual((await rowState()).filter((row) => row.saved).map((row) => row.text), ['Paper one', 'Local page']);
+  assert.equal(await cardText('.skip-text'), 'Skip the 2 links already saved');
+  assert.equal(await shadow.locator('.preview li').filter({hasText: 'Paper one'}).locator('.tag').innerText(), 'Saved', 'marked with text, not only color');
+  pass('Already saved: capture.saved is asked for the destination when the card opens and when it changes; matching rows say Saved', {checks: (await sent(page, 'capture.saved')).length});
+
+  // Include them ticks the navigation links again and offers to remember the choice.
+  await shadow.getByRole('button', {name: 'Include them', exact: true}).click();
+  assert.equal(await cardText('.count'), '16 links selected');
+  assert.equal(await cardText('.leftout-text'), 'Included 10 navigation links.');
+  assert.equal(await inCard((root) => root.activeElement?.textContent), 'Always include them', 'focus moves to the offer');
+  await page.keyboard.press('Enter');
+  await page.waitForFunction(() => window.__stub.sent.some((m) => m.type === 'capture.preference'));
+  assert.deepEqual((await sent(page, 'capture.preference')).at(-1), {type: 'capture.preference', contentOnly: false});
+  await cardWait((root) => /^From now on, navigation links are included/.test(root.querySelector('.leftout-text').textContent));
+  pass('Include them ticks the 10 navigation links again; Always include them saves only contentOnly: false (capture.preference)');
+
+  // Filters: chips above the preview, with state shown by aria-pressed and a check mark, by mouse and keyboard.
+  const chips = await inCard((root) => [...root.querySelectorAll('.chips button')].map((chip) => [chip.textContent, chip.getAttribute('aria-pressed')]));
+  assert.deepEqual(chips, [['All', 'true'], ['Other sites', 'false'], ['PDFs', 'false'], ['Same site', 'false']]);
+  assert.ok(await inCard((root) => root.querySelector('.chips').compareDocumentPosition(root.querySelector('.preview')) & Node.DOCUMENT_POSITION_FOLLOWING), 'chips sit above the preview');
+  const chip = (name) => shadow.locator('.chips button').filter({hasText: new RegExp(`^${name}$`)});
+  await chip('PDFs').click();
+  assert.deepEqual(await ticked(), ['Paper one', 'Paper two', 'Other report']);
+  assert.equal(await cardText('.count'), '3 of 16 links selected');
+  const marks = await inCard((root) => [...root.querySelectorAll('.chips button')].map((chip) => [chip.getAttribute('aria-pressed'), getComputedStyle(chip.querySelector('svg')).display]));
+  assert.deepEqual(marks, [['false', 'none'], ['false', 'none'], ['true', 'block'], ['false', 'none']], 'the chosen chip shows a check mark as well as its color');
+  await chip('Other sites').click();
+  assert.deepEqual(await ticked(), ['About us', 'Other report', 'Other article']);
+  await chip('Same site').focus(); await page.keyboard.press('Enter');
+  assert.deepEqual(await ticked(), ['Home', 'Section one', 'Section two', 'Shadow link', 'Paper one', 'Paper two', 'Local page', 'Contents', 'Related', 'Source inside a frame', 'Legal', 'Contact']);
+  assert.equal(await chip('Same site').getAttribute('aria-pressed'), 'true');
+  await shadow.locator('.preview li').filter({hasText: 'Home'}).locator('input').uncheck();
+  assert.equal(await cardText('.count'), '11 of 16 links selected');
+  await chip('All').focus(); await page.keyboard.press('Space');
+  assert.equal(await cardText('.count'), '15 of 16 links selected', 'All ticks what the filters unticked, not what was unticked by hand');
+  assert.deepEqual((await rowState()).filter((row) => !row.on).map((row) => row.text), ['Home']);
+  await chip('PDFs').click(); await chip('PDFs').click();
+  assert.equal(await chip('All').getAttribute('aria-pressed'), 'true', 'choosing a filter again goes back to All');
+  assert.equal(await cardText('.count'), '15 of 16 links selected');
+  await shadow.locator('.preview li').filter({hasText: 'Home'}).locator('input').check();
+  await chip('PDFs').click(); await page.mouse.move(5, 5); await sleep(400);
+  await page.screenshot({path: resolve(evidence, 'access-content-card-filters.png')});
+  await chip('All').click();
+  pass('Filters All, Other sites, PDFs and Same site untick what doesn’t match; All ticks those again; keyboard and aria-pressed work', {chips: chips.map(([name]) => name)});
+
+  // Skip saved: the card's own choice, with an offer to make it the default.
+  assert.equal(await shadow.locator('.skip-remember').isVisible(), false);
+  await shadow.locator('.skip-saved').check();
+  assert.equal(await shadow.locator('.skip-remember').isVisible(), true);
+  await shadow.locator('.skip-remember').click();
+  await page.waitForFunction(() => window.__stub.sent.filter((m) => m.type === 'capture.preference').length === 2);
+  assert.deepEqual((await sent(page, 'capture.preference')).at(-1), {type: 'capture.preference', skipSaved: true});
+  await statusMatches(page, /^From now on, links already saved are skipped when adding/);
+  assert.equal(await shadow.locator('.skip-remember').isVisible(), false);
+  pass('Skip saved starts from the setting; Make this the default saves only skipSaved (capture.preference)');
+
+  // Rich copy on the card: More menu and the L shortcut; HTML and plain text on the clipboard.
+  await shadow.locator('button.copy').focus();
+  await page.keyboard.press('l');
+  await statusMatches(page, /^Copied 16 links as rich links\. Paste into Google Docs, Word or Notion/);
+  assert.equal((await sent(page, 'capture.copy')).at(-1).format, 'rich');
+  let copied = await clipboard();
+  if (copied.types) assert.ok(copied.types.includes('text/html') && copied.types.includes('text/plain'), JSON.stringify(copied.types));
+  if (copied.types) assert.match(copied.html, new RegExp(`<a href="${fixture.base}/papers/one\\.pdf">Paper one</a>`));
+  assert.match(copied.text, new RegExp(`^Home \\(${fixture.base}/home\\)\\n`));
+  await page.evaluate(() => navigator.clipboard.writeText('reset'));
+  const clearStatus = () => inCard((root) => { root.querySelector('.status').textContent = ''; });
+  await clearStatus();
+  await shadow.locator('button.menu-toggle').click();
+  await shadow.getByRole('menuitem', {name: /^Copy as rich links/}).click();
+  await page.waitForFunction(() => window.__stub.sent.filter((m) => m.type === 'capture.copy' && m.format === 'rich').length === 2);
+  await statusMatches(page, /^Copied 16 links as rich links/);
+  copied = await clipboard();
+  if (copied.types) assert.match(copied.html, /Other article<\/a>/);
+  // Where the async clipboard is unavailable (a plain-HTTP page), a copy event still carries both types.
+  await page.evaluate(() => { window.__write = navigator.clipboard.write; navigator.clipboard.write = () => Promise.reject(new Error('unavailable')); return navigator.clipboard.writeText('reset'); });
+  await clearStatus();
+  await shadow.locator('button.copy').focus(); await page.keyboard.press('l');
+  await page.waitForFunction(() => window.__stub.sent.filter((m) => m.type === 'capture.copy' && m.format === 'rich').length === 3);
+  await statusMatches(page, /^Copied 16 links as rich links/);
+  copied = await clipboard();
+  if (copied.types) assert.match(copied.html, /Paper two<\/a>/);
+  assert.match(copied.text, /^Home \(/);
+  await page.evaluate(() => { navigator.clipboard.write = window.__write; });
+  pass('Copy as rich links (More menu and L) puts HTML and plain text on the clipboard, also through the copy-event fallback', {types: copied.types});
+
+  // Adding with Skip saved sends skipSaved and says how many were skipped.
+  await shadow.getByRole('button', {name: 'Add to collection', exact: true}).click();
+  await statusMatches(page, /^Added 14 links to “My research”; 2 were already saved\.$/);
+  const skippedCommit = (await sent(page, 'capture.commit')).at(-1);
+  assert.equal(skippedCommit.skipSaved, true); assert.equal(skippedCommit.collectionId, 'c1'); assert.equal(skippedCommit.links.length, 16);
+  assert.equal(await shadow.locator('.skip').isVisible(), false, 'Skip saved hides once the links are added');
+  pass('Skip saved: capture.commit gets skipSaved, and the receipt says “Added 14 links …; 2 were already saved”');
+  await page.keyboard.press('Escape');
+
+  // The notice follows the card theme: an Ember light card from content.configure.
+  const ember = cardTheme('ember', 'light');
+  await configure({...CAPTURE, afterDrag: 'copy', contentOnly: true}, ember);
+
+  // After a drag: copy right away, with a notice.
+  await dragLandmarks();
+  await cardWait((root) => /^Copied/.test(root.querySelector('.notice-text').textContent));
+  assert.equal(await cardText('.notice-text'), 'Copied 6 links as a table. Left out 10 navigation links.');
+  assert.equal(await inCard((root) => getComputedStyle(root.querySelector('.bar')).display), 'none', 'no card');
+  let copyRequest = (await sent(page, 'capture.copy')).at(-1);
+  assert.equal(copyRequest.format, 'tsv'); assert.deepEqual(copyRequest.links.map((link) => link.anchorText), CONTENT_LINKS);
+  assert.equal((await clipboard()).text, copyRequest.links.map((link) => link.url).join('\n'));
+  assert.deepEqual(await inCard((root) => [...root.querySelectorAll('.notice button')].filter((b) => !b.hidden).map((b) => b.getAttribute('aria-label') || b.textContent)), ['Show links', 'Close notice']);
+  await sleep(400); await page.screenshot({path: resolve(evidence, 'access-content-notice-ember-light.png')});
+  const themed = await inCard((root) => [getComputedStyle(root.querySelector('.notice')).backgroundColor, getComputedStyle(root.querySelector('.notice-text')).color]);
+  const resolved = await page.evaluate((colors) => colors.map((color) => { const probe = document.createElement('i'); probe.style.color = color; document.body.append(probe); const value = getComputedStyle(probe).color; probe.remove(); return value; }), [ember.light['--k-ground'], ember.light['--k-strong']]);
+  assert.deepEqual(themed, resolved, 'the notice uses the card roles --k-ground and --k-strong');
+  await shadow.getByRole('button', {name: 'Show links', exact: true}).click();
+  assert.equal(await shadow.locator('.bar').isVisible(), true);
+  assert.equal(await shadow.locator('.notice').isVisible(), false);
+  assert.equal(await cardText('.count'), '6 of 16 links selected', 'Show links opens the card with the same links');
+  assert.equal(await cardText('.leftout-text'), 'Left out 10 navigation links.');
+  assert.equal(await inCard((root) => root.activeElement?.className), 'copy primary');
+  await page.keyboard.press('Escape');
+  assert.equal(await card(page).count(), 0);
+  pass('After a drag, copy: copies the content links as a table at once; the notice is themed like the card (Ember light), and Show links opens the card with the same links', {notice: themed});
+
+  for (const [format, as] of [['text', 'as URLs'], ['markdown', 'as Markdown'], ['rich', 'as rich links']]) {
+    await configure({...CAPTURE, afterDrag: 'copy', afterDragFormat: format, contentOnly: true});
+    const before = (await sent(page, 'capture.copy')).length;
+    await dragLandmarks();
+    await page.waitForFunction((n) => window.__stub.sent.filter((m) => m.type === 'capture.copy').length === n + 1, before);
+    await cardWait((root, as) => root.querySelector('.notice-text').textContent.includes(as), as);
+    assert.equal(await cardText('.notice-text'), `Copied 6 links ${as}. Left out 10 navigation links.`);
+    assert.equal((await sent(page, 'capture.copy')).at(-1).format, format);
+    if (format === 'rich') { const copiedRich = await clipboard(); if (copiedRich.types) assert.match(copiedRich.html, /<a href="[^"]+\/papers\/one\.pdf">Paper one<\/a>/); }
+    if (format === 'markdown') { await shadow.getByRole('button', {name: 'Close notice', exact: true}).click(); assert.equal(await card(page).count(), 0); }
+    else { await page.keyboard.press('Escape'); assert.equal(await card(page).count(), 0, 'Escape closes the notice'); }
+  }
+  pass('After a drag, copy in every format (URLs, Markdown, rich links); the close button and Escape close the notice');
+
+  // The notice closes itself after about 8 seconds, unless it has focus; a new drag replaces it.
+  await configure({...CAPTURE, afterDrag: 'copy'});
+  await dragLandmarks();
+  await page.waitForFunction(() => /^Copied 16 links as a table\.$/.test(document.getElementById('link-meteor-overlay')?.shadowRoot.querySelector('.notice-text')?.textContent || ''));
+  const shown = Date.now();
+  await page.waitForFunction(() => !document.getElementById('link-meteor-overlay'), null, {timeout: 12000});
+  const lasted = Date.now() - shown;
+  assert.ok(lasted >= 7000 && lasted < 10000, `closed after ${lasted} ms`);
+  await dragLandmarks();
+  await cardWait((root) => /^Copied/.test(root.querySelector('.notice-text').textContent));
+  await inCard((root) => root.querySelector('.notice-show').focus());
+  const copies = (await sent(page, 'capture.copy')).length;
+  await dragLandmarks();
+  await page.waitForFunction((n) => window.__stub.sent.filter((m) => m.type === 'capture.copy').length === n + 1, copies);
+  assert.equal(await page.evaluate(() => document.querySelectorAll('#link-meteor-overlay').length), 1, 'a new drag replaces the notice');
+  await cardWait((root) => /^Copied/.test(root.querySelector('.notice-text').textContent));
+  await inCard((root) => root.querySelector('.notice-show').focus());
+  await sleep(9000);
+  assert.equal(await noticeShown(), true, 'still open after 9 seconds with focus');
+  await page.keyboard.press('Escape');
+  assert.equal(await card(page).count(), 0);
+  pass('The notice closes itself after about 8 seconds, stays while it has focus, and a new drag replaces it', {closedAfterMs: lasted});
+
+  // After a drag: add right away, with Undo and Show links.
+  await configure({...CAPTURE, afterDrag: 'add', skipSaved: true});
+  await dragLandmarks();
+  await cardWait((root) => /^Added/.test(root.querySelector('.notice-text').textContent));
+  assert.equal(await cardText('.notice-text'), 'Added 14 links to “My research”; 2 were already saved.');
+  const quickCommit = (await sent(page, 'capture.commit')).at(-1);
+  assert.equal(quickCommit.skipSaved, true); assert.equal(quickCommit.collectionId, 'c1'); assert.equal(quickCommit.links.length, 16);
+  assert.deepEqual(await inCard((root) => [...root.querySelectorAll('.notice button')].filter((b) => !b.hidden).map((b) => b.getAttribute('aria-label') || b.textContent)), ['Undo', 'Show links', 'Close notice']);
+  await shadow.getByRole('button', {name: 'Undo', exact: true}).click();
+  await cardWait((root) => /^Removed/.test(root.querySelector('.notice-text').textContent));
+  assert.equal(await cardText('.notice-text'), 'Removed 14 links from “My research”.');
+  const added = await page.evaluate(() => window.__stub.lastAdd);
+  assert.deepEqual((await sent(page, 'capture.undoAdd')).at(-1), {type: 'capture.undoAdd', collectionId: 'c1', batchId: added.batchId}, 'Undo names the batch that add created');
+  assert.equal(await shadow.locator('.notice-undo').isVisible(), false);
+  assert.equal(await inCard((root) => root.activeElement?.textContent), 'Show links', 'focus moves from Undo to Show links');
+  await page.keyboard.press('Enter');
+  assert.equal(await shadow.locator('.bar').isVisible(), true);
+  assert.equal(await shadow.getByRole('button', {name: 'Add to collection', exact: true}).isEnabled(), true, 'after Undo the card can add again');
+  assert.match(await shadow.locator('.dest').innerText(), /^Adds to My research/);
+  await page.keyboard.press('Escape');
+  pass('After a drag, add: commits at once with skipSaved; the notice has Undo (capture.undoAdd) and Show links; after Undo the card can add again');
+
+  // Undo from the card after Show links, and a refused Undo explains itself.
+  await configure({...CAPTURE, afterDrag: 'add'});
+  await dragLandmarks();
+  await cardWait((root) => /^Added 16 links to “My research”\.$/.test(root.querySelector('.notice-text').textContent));
+  await shadow.getByRole('button', {name: 'Show links', exact: true}).click();
+  assert.match(await cardText('.status'), /^Added 16 links to “My research”\.Undo$/);
+  assert.match(await shadow.locator('.dest').innerText(), /^Saved to My research/);
+  const undos = (await sent(page, 'capture.undoAdd')).length;
+  await shadow.locator('.status button').click();
+  await statusMatches(page, /^Removed 16 links from “My research”\.$/);
+  assert.equal((await sent(page, 'capture.undoAdd')).length, undos + 1);
+  await page.keyboard.press('Escape');
+  await page.evaluate(() => { window.__stub.refuseUndo = true; });
+  await dragLandmarks();
+  await cardWait((root) => /^Added/.test(root.querySelector('.notice-text').textContent));
+  await shadow.getByRole('button', {name: 'Undo', exact: true}).click();
+  await cardWait((root) => /changed since they were added/.test(root.querySelector('.notice-text').textContent));
+  assert.equal(await shadow.locator('.notice-undo').isVisible(), false);
+  await page.keyboard.press('Escape');
+  await page.evaluate(() => { window.__stub.refuseUndo = false; });
+  await configure(CAPTURE);
+  pass('Undo also works from the card after Show links; a refused Undo says why in the notice');
+
+  /* After release, highlights stay on their links while the page scrolls; unticked links are outlined. */
+  const scrolling = await context.newPage();
+  await load(scrolling, '/index.html', {platform: 'MacIntel', trigger: 'letter', key: 'q'});
+  const sbib = await scrolling.locator('#bibliography').boundingBox();
+  await scrolling.keyboard.down('q'); await scrolling.mouse.move(sbib.x + 4, sbib.y + 4); await scrolling.mouse.down(); await scrolling.mouse.move(sbib.x + sbib.width - 4, sbib.y + sbib.height - 4, {steps: 8}); await scrolling.mouse.up(); await scrolling.keyboard.up('q');
+  await scrolling.waitForFunction(() => document.getElementById('link-meteor-overlay')?.shadowRoot.querySelector('.count')?.textContent === '5 links selected');
+  // Each highlight's top edge against its link's, for the first link in the selection.
+  const place = () => scrolling.evaluate(() => {
+    const root = document.getElementById('link-meteor-overlay').shadowRoot, first = root.querySelector('.hit');
+    const link = [...document.querySelectorAll('#bibliography a[href]')][0].getClientRects()[0];
+    return {hit: Math.round(first.getBoundingClientRect().top), link: Math.round(link.top), count: root.querySelectorAll('.hit').length, off: root.querySelectorAll('.hit.off').length};
+  });
+  const placed = await place();
+  assert.equal(placed.hit, placed.link, 'the highlight starts on its link');
+  await scrolling.evaluate(() => scrollBy(0, 120));
+  await scrolling.evaluate(() => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done))));
+  const scrolled = await place();
+  assert.equal(scrolled.link, placed.link - 120, 'the page scrolled');
+  assert.equal(scrolled.hit, scrolled.link, 'the highlight moved with its link');
+  assert.equal(placed.off, 0);
+  await card(scrolling).locator('.preview input').first().uncheck();
+  await scrolling.evaluate(() => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done))));
+  assert.ok((await place()).off >= 1, 'an unticked link is outlined, not filled');
+  await scrolling.close();
+  pass('After release, highlights stay on their links while the page scrolls, and an unticked link is only outlined', {placed, scrolled});
+
+  /* Page chrome is judged like HTML's landmarks: a header or footer counts only at page level. */
+  const articlePage = await context.newPage();
+  await load(articlePage, '/index.html', {platform: 'MacIntel', trigger: 'modifier'});
+  const chromeFlags = await articlePage.evaluate(() => {
+    document.body.innerHTML = `<header><a href="/site">Site home</a></header>
+      <main><article><header><h1><a href="/post">Post title</a></h1></header><p><a href="/cited">Cited paper</a></p><footer><a href="/tags">Post tags</a></footer></article>
+      <section><header><a href="/section-top">Section top</a></header></section></main>
+      <footer><a href="/about">About the site</a></footer>`;
+    return Object.fromEntries(globalThis.__linkMeteor.scan().links.map((link) => [new URL(link.url).pathname, !!link.pageChrome]));
+  });
+  assert.deepEqual(chromeFlags, {'/site': true, '/post': false, '/cited': false, '/tags': false, '/section-top': false, '/about': true});
+  await articlePage.close();
+  pass('Content links only keeps a post’s own header and footer links: only page-level headers and footers are page chrome', chromeFlags);
+
+  /* 0.4.0 release candidate 2: Download N files from the card, and the right-click menu's notice. */
+  const filesPage = await context.newPage();
+  await load(filesPage, '/files.html?many', {platform: 'MacIntel', trigger: 'letter', key: 'q'});
+  const fcard = card(filesPage);
+  const fsent = (type) => sent(filesPage, type);
+  const fstatus = (pattern) => filesPage.waitForFunction((source) => new RegExp(source).test(document.getElementById('link-meteor-overlay')?.shadowRoot.querySelector('.status')?.textContent || ''), pattern.source);
+  async function dragAcross(selector, count) {
+    await filesPage.locator(selector).scrollIntoViewIfNeeded();
+    const box = await filesPage.locator(selector).boundingBox();
+    await filesPage.keyboard.down('q'); await filesPage.mouse.move(box.x + 2, box.y + 2); await filesPage.mouse.down();
+    await filesPage.mouse.move(box.x + box.width - 2, box.y + box.height - 2, {steps: 8}); await filesPage.mouse.up(); await filesPage.keyboard.up('q');
+    await filesPage.waitForFunction((count) => document.getElementById('link-meteor-overlay')?.shadowRoot.querySelector('.count')?.textContent === `${count} links selected`, count);
+  }
+  await dragAcross('#files', 7);
+  const filesItem = fcard.locator('button.m-files');
+  await fcard.locator('button.menu-toggle').click();
+  assert.deepEqual(await filesItem.evaluate((b) => [b.firstChild.textContent, b.getAttribute('role'), b.getAttribute('aria-keyshortcuts'), b.title.endsWith('(F)'), b.querySelector('kbd').textContent, b.previousElementSibling.className]),
+    ['Download 6 files', 'menuitem', 'F', true, 'F', 'm-download']);
+  await fcard.locator('.preview input').first().uncheck();
+  assert.equal(await filesItem.locator('.m-files-label').innerText(), 'Download 5 files', 'the count follows the ticks');
+  await fcard.locator('.preview input').first().check();
+  await filesItem.click();
+  await filesPage.waitForFunction(() => window.__stub.sent.some((m) => m.type === 'capture.download'));
+  let fdown = (await fsent('capture.download')).at(-1);
+  assert.deepEqual(fdown.links.map((l) => new URL(l.url).pathname + new URL(l.url).search), ['/files/paper.pdf', '/files/figure.png', '/files/paywalled.pdf', '/files/paper', '/files/missing.pdf', '/files/paper.pdf?copy=2'], 'only the file links, not the page link');
+  assert.equal(fdown.links[3].anchorText, '[PDF] fixture.test');
+  assert.equal(fdown.confirmed, false); assert.ok(fdown.requestId);
+  await fstatus(/^Saved 6 files to Link Meteor › My-research in your downloads folder\.$/);
+  pass('Download 6 files in the More menu (F) sends only the file links among the ticked ones and shows what was saved', {sent: fdown.links.length});
+
+  // Progress in the card's status, and Cancel for this card's own request.
+  await filesPage.evaluate(() => {
+    const original = window.chrome.runtime.sendMessage;
+    window.chrome.runtime.sendMessage = (message) => message.type === 'capture.download' && !window.__stub.noDownloadAccess
+      ? new Promise((done) => { window.__finishDownload = (value) => done({ok: true, data: value}); window.__stub.sent.push(message); })
+      : original(message);
+  });
+  await fcard.locator('button.copy').focus(); await filesPage.keyboard.press('f');
+  await filesPage.waitForFunction(() => !!window.__finishDownload);
+  const frequest = (await fsent('capture.download')).at(-1).requestId;
+  assert.equal(await filesItem.isDisabled(), true, 'one download at a time from the card');
+  await filesPage.evaluate((requestId) => window.__stub.deliver({type: 'downloads.progress', requestId, total: 6, done: 2, saved: 2, webPages: 0, failed: 0, cancelled: 0, held: 0}), frequest);
+  assert.equal(await fcard.locator('.fstatus-text').innerText(), 'Downloading 6 files: 2 done…');
+  await filesPage.evaluate(() => window.__stub.deliver({type: 'downloads.progress', requestId: 'someone-else', total: 9, done: 8}));
+  assert.equal(await fcard.locator('.fstatus-text').innerText(), 'Downloading 6 files: 2 done…', 'other requests’ progress is ignored');
+  await fcard.getByRole('button', {name: 'Cancel', exact: true}).click();
+  await filesPage.waitForFunction(() => window.__stub.sent.some((m) => m.type === 'downloads.cancel'));
+  assert.deepEqual((await fsent('downloads.cancel')).at(-1), {type: 'downloads.cancel', requestId: frequest});
+  await filesPage.evaluate(() => window.__finishDownload({total: 6, done: 6, saved: 2, webPages: 0, failed: 0, cancelled: 4, held: 0, results: [], summary: 'Saved 2 files to Link Meteor › My-research in your downloads folder. Canceled 4 downloads that hadn’t finished.'}));
+  await fstatus(/Canceled 4 downloads that hadn’t finished/);
+  assert.equal(await filesItem.isDisabled(), false);
+  pass('The card shows download progress for its own request only, and Cancel sends downloads.cancel');
+  await filesPage.evaluate(() => { delete window.__finishDownload; });
+  await filesPage.keyboard.press('Escape');
+
+  // Above 10 files the card asks first; Escape closes only the question.
+  await dragAcross('#many', 12);
+  await fcard.locator('button.copy').focus();
+  const before12 = (await fsent('capture.download')).length;
+  await filesPage.keyboard.press('f');
+  assert.equal(await fcard.locator('.fconfirm').isVisible(), true);
+  assert.equal(await fcard.locator('.fconfirm-text').innerText(), 'Download 12 files into your downloads folder?');
+  assert.deepEqual(await fcard.locator('.fconfirm button').allInnerTexts(), ['Download 12', 'Cancel']);
+  assert.equal(await filesPage.evaluate(() => document.getElementById('link-meteor-overlay').shadowRoot.activeElement.className), 'fconfirm-yes primary');
+  await filesPage.keyboard.press('Escape');
+  assert.equal(await fcard.locator('.fconfirm').isVisible(), false); assert.equal(await fcard.locator('.bar').isVisible(), true);
+  assert.equal((await fsent('capture.download')).length, before12, 'nothing sent before the confirmation');
+  await filesPage.keyboard.press('f');
+  await fcard.locator('.fconfirm-yes').click();
+  await filesPage.waitForFunction((n) => window.__stub.sent.filter((m) => m.type === 'capture.download').length === n + 1, before12);
+  await filesPage.waitForFunction(() => !!window.__finishDownload);
+  fdown = (await fsent('capture.download')).at(-1);
+  assert.equal(fdown.links.length, 12); assert.equal(fdown.confirmed, true);
+  await filesPage.evaluate(() => window.__finishDownload({total: 12, done: 12, saved: 12, results: [], summary: 'Saved 12 files to Link Meteor › My-research in your downloads folder.'}));
+  await fstatus(/^Saved 12 files/);
+  pass('12 files: the card asks “Download 12 files into your downloads folder?” first; Escape closes only the question');
+
+  // Without download access, the card explains and offers the full view, where Chrome can ask.
+  await filesPage.evaluate(() => { window.__stub.noDownloadAccess = true; });
+  await fcard.locator('.preview input').evaluateAll((boxes) => boxes.slice(2).forEach((box) => box.click()));
+  await fcard.locator('button.copy').focus(); await filesPage.keyboard.press('f');
+  await fstatus(/^Download access is needed\. Open the full view and choose Download there; Chrome asks for access once\./);
+  const openFull = fcard.getByRole('button', {name: 'Open the full view', exact: true});
+  assert.equal(await openFull.evaluate((b) => b === b.getRootNode().activeElement), true, 'focus moves to the offer');
+  const opensBeforeFiles = (await fsent('ui.open')).length;
+  await openFull.click();
+  await filesPage.waitForFunction((n) => window.__stub.sent.filter((m) => m.type === 'ui.open').length === n + 1, opensBeforeFiles);
+  assert.deepEqual((await fsent('ui.open')).at(-1), {type: 'ui.open'});
+  pass('Without download access the card says so and opens the full view, where the files wait with Chrome’s question');
+  await filesPage.keyboard.press('Escape'); await sleep(50);
+  assert.equal(await fcard.count(), 0);
+
+  // After Download linked file from the right-click menu, with no card open: a small notice says what arrived.
+  const menuText = 'The link gave a web page instead of a file, often a sign-in page. It was saved as “Paywalled-article.html”.';
+  await filesPage.evaluate((text) => window.__stub.deliver({type: 'downloads.progress', requestId: 'menu-1', total: 1, done: 1, saved: 0, webPages: 1, failed: 0, cancelled: 0, held: 0, final: true, text}), menuText);
+  const menuNotice = filesPage.locator('#link-meteor-download-notice');
+  assert.equal(await menuNotice.locator('.notice-text').innerText(), menuText);
+  const noticeFacts = await menuNotice.evaluate((host) => {
+    const root = host.shadowRoot, text = root.querySelector('.notice-text'), panel = root.querySelector('.panel');
+    const rgb = (value) => value.match(/[\d.]+/g).slice(0, 3).map(Number);
+    const lum = ([r, g, b]) => { const f = (c) => { c /= 255; return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4; }; return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b); };
+    const [a, b] = [lum(rgb(getComputedStyle(text).color)), lum(rgb(getComputedStyle(panel).backgroundColor))];
+    return {marked: host.hasAttribute('data-link-meteor'), role: text.getAttribute('role'), close: root.querySelector('.notice-close').getAttribute('aria-label'), contrast: Math.round(((Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05)) * 100) / 100};
+  });
+  assert.equal(noticeFacts.marked, true, 'excluded from capture like the card'); assert.equal(noticeFacts.role, 'status'); assert.equal(noticeFacts.close, 'Close notice');
+  assert.ok(noticeFacts.contrast >= 4.5, `notice text contrast ${noticeFacts.contrast}`);
+  assert.equal(await filesPage.evaluate(() => globalThis.__linkMeteor.scan().links.length), 19, 'the notice adds no links to a capture');
+  await menuNotice.locator('.notice-close').click();
+  assert.equal(await menuNotice.count(), 0);
+  pass('After the right-click menu’s Download linked file, a notice in the card’s colors says what arrived, and closes', noticeFacts);
+  await filesPage.close();
+
+  /* Ctrl elsewhere: a Windows platform uses Ctrl, and Command does nothing. */
+  const windows = await context.newPage();
+  await load(windows, '/index.html', {platform: 'Win32', trigger: 'modifier'});
+  const wbib = await windows.locator('#bibliography').boundingBox();
+  await windows.keyboard.down('Meta'); await windows.mouse.move(wbib.x + 4, wbib.y + 4); await windows.mouse.down(); await windows.mouse.move(wbib.x + 200, wbib.y + 150, {steps: 8}); await windows.mouse.up(); await windows.keyboard.up('Meta');
+  await sleep(100);
+  assert.equal(await card(windows).count(), 0);
+  await windows.keyboard.down('Control'); await windows.mouse.move(wbib.x + 4, wbib.y + 4); await windows.mouse.down(); await windows.mouse.move(wbib.x + wbib.width - 4, wbib.y + wbib.height - 4, {steps: 12}); await windows.mouse.up(); await windows.keyboard.up('Control');
+  await windows.waitForFunction(() => document.getElementById('link-meteor-overlay')?.shadowRoot.querySelector('.count')?.textContent === '5 links selected');
+  pass('On Windows and Linux the modifier is Ctrl, not Command');
+
+  /* Release candidate 2: the menus' page messages. */
+  const menuPage = await context.newPage();
+  await load(menuPage, '/index.html', {platform: 'MacIntel', trigger: 'letter', key: 'q'});
+  await menuPage.bringToFront();
+  const ask = (message) => menuPage.evaluate((message) => window.__stub.ask(message), message);
+  const inMenu = (fn, arg) => menuPage.evaluate(([source, arg]) => new Function('root', 'arg', `return (${source})(root, arg)`)(document.getElementById('link-meteor-overlay')?.shadowRoot, arg), [fn.toString(), arg]);
+  const menuShadow = menuPage.locator('#link-meteor-overlay');
+  await menuPage.evaluate(() => {
+    document.body.innerHTML = `<main id="menu-fixture" style="font:16px/24px sans-serif;padding:20px;width:640px">
+      <p id="para-one">Read <a id="dup-one" href="/same">First text</a> and <a href="/other">Other link</a> here.</p>
+      <p id="para-two">Then <a id="dup-two" href="/same">Second
+        text</a>, <span id="menu-host"></span>, and <a href="mailto:lab@example.org">Email the lab</a>.</p>
+      <p><a id="outside" href="/outside">Outside the selection</a></p>
+      <iframe id="menu-frame" src="/frame.html" style="width:400px;height:80px;border:0"></iframe></main>`;
+    document.getElementById('menu-host').attachShadow({mode: 'open'}).innerHTML = '<a id="shadow-menu" href="/shadow-menu">Shadow <b>menu</b> link</a>';
+  });
+  await menuPage.waitForFunction(() => document.getElementById('menu-frame').contentDocument?.getElementById('frame-link'));
+  const rightClick = async (selector) => { const box = await menuPage.locator(selector).boundingBox(); await menuPage.mouse.click(box.x + 4, box.y + box.height / 2, {button: 'right'}); };
+
+  // The right-clicked link: recorded by a contextmenu listener, answered when its address matches.
+  await rightClick('#dup-two');
+  let answer = await ask({type: 'content.contextLink', url: fixture.base + '/same'});
+  assert.equal(answer.ok, true);
+  const {context: around, ...fields} = answer.data.link;
+  assert.deepEqual(fields, {anchorText: 'Second text', accessibleLabel: '', url: fixture.base + '/same', originalHref: '/same', sourceUrl: fixture.base + '/index.html', sourceTitle: 'Meteor Research Lab — deterministic fixture', frameUrl: fixture.base + '/index.html'}, 'the right-clicked one of two links with that address, with its text collapsed');
+  // 0.5.0: its context, and the page's citation (none on this page). Its paragraph is mostly other
+  // links ("Then Second text, , and Email the lab."), with too few plain words to be context.
+  assert.deepEqual([around, answer.data.page], ['', null]);
+  answer = await ask({type: 'content.contextLink', url: fixture.base + '/other'});
+  assert.equal(answer.data.link.anchorText, 'Other link', 'another address: the first link with it');
+  await rightClick('#outside');
+  assert.equal((await ask({type: 'content.contextLink', url: fixture.base + '/same'})).data.link.anchorText, 'First text', 'a recorded link with another address is not used');
+  await menuPage.locator('#menu-host').evaluate((host) => host.shadowRoot.getElementById('shadow-menu').dispatchEvent(new MouseEvent('contextmenu', {bubbles: true, composed: true, button: 2})));
+  assert.equal((await ask({type: 'content.contextLink', url: fixture.base + '/shadow-menu'})).data.link.anchorText, 'Shadow menu link', 'through an open shadow root');
+  answer = await ask({type: 'content.contextLink', url: fixture.base + '/frame-source'});
+  assert.deepEqual([answer.data.link.anchorText, answer.data.link.frameUrl], ['Source inside a frame', fixture.base + '/frame.html'], 'in a same-origin frame, by address');
+  assert.deepEqual(await ask({type: 'content.contextLink', url: 'https://nowhere.example/'}), {ok: true, data: {link: null, page: null}}, 'no such link: nothing is invented');
+  assert.equal(await card(menuPage).count(), 0, 'answering shows nothing');
+  pass('content.contextLink answers the right-clicked link’s fields, or the first link with that address (page, shadow root, frame), or null');
+
+  // The selection's links: every link that intersects it, through open shadow roots and same-origin frames.
+  const selectionTexts = async () => { const reply = await ask({type: 'content.selectionLinks'}); assert.equal(reply.ok, true); return reply.data.links.map((link) => link.anchorText); };
+  await menuPage.evaluate(() => {
+    const two = document.getElementById('para-two'), range = document.createRange();
+    range.setStart(document.getElementById('para-one').firstChild, 2);
+    range.setEnd([...two.childNodes].find((node) => node.nodeType === 3 && node.textContent.includes(', and')), 2);
+    getSelection().removeAllRanges(); getSelection().addRange(range);
+  });
+  assert.deepEqual(await selectionTexts(), ['First text', 'Other link', 'Second text', 'Shadow menu link'], 'links partly or wholly selected, and a selected shadow host’s links');
+  await menuPage.evaluate(() => { const text = document.getElementById('dup-one').firstChild; getSelection().setBaseAndExtent(text, 1, text, 4); });
+  assert.deepEqual(await selectionTexts(), ['First text'], 'a few letters of one link');
+  await menuPage.locator('#menu-host').evaluate((host) => { const bold = host.shadowRoot.querySelector('b').firstChild; getSelection().setBaseAndExtent(bold, 0, bold, 4); });
+  assert.deepEqual(await selectionTexts(), ['Shadow menu link'], 'a selection inside a shadow root');
+  // Chrome 116 reports that same selection as collapsed although its range isn't; the ranges decide.
+  await menuPage.evaluate(() => { window.__isCollapsed = Object.getOwnPropertyDescriptor(Selection.prototype, 'isCollapsed'); Object.defineProperty(Selection.prototype, 'isCollapsed', {configurable: true, get: () => true}); });
+  try { assert.deepEqual(await selectionTexts(), ['Shadow menu link'], 'a shadow-root selection that Chrome misreports as collapsed'); }
+  finally { await menuPage.evaluate(() => Object.defineProperty(Selection.prototype, 'isCollapsed', window.__isCollapsed)); }
+  await menuPage.evaluate(() => { getSelection().removeAllRanges(); const doc = document.getElementById('menu-frame').contentDocument, link = doc.getElementById('frame-link'); doc.getSelection().selectAllChildren(link); });
+  assert.deepEqual(await selectionTexts(), ['Source inside a frame'], 'a selection in a same-origin frame');
+  await menuPage.evaluate(() => { document.getElementById('menu-frame').contentDocument.getSelection().removeAllRanges(); getSelection().removeAllRanges(); });
+  assert.deepEqual(await selectionTexts(), [], 'no selection, no links');
+  pass('content.selectionLinks answers every link that intersects the selection: in the page, a shadow root (also when Chrome misreports it as collapsed, as Chrome 116 does) and a same-origin frame');
+
+  // The notice after a menu save: no selection or card, the page stays usable, Undo and Show links.
+  answer = await ask({type: 'content.notice', text: 'Added 1 link to “Thesis sources”.', added: {collectionId: 'c1', batchId: 'menu-batch', name: 'Thesis sources'}});
+  assert.deepEqual(answer, {ok: true, data: {}});
+  await menuPage.waitForFunction(() => document.getElementById('link-meteor-overlay')?.shadowRoot.querySelector('.notice-text')?.textContent === 'Added 1 link to “Thesis sources”.');
+  assert.deepEqual(await inMenu((root) => [...root.querySelectorAll('.notice button')].filter((b) => !b.hidden).map((b) => b.getAttribute('aria-label') || b.textContent)), ['Undo', 'Show links', 'Close notice']);
+  assert.deepEqual(await inMenu((root) => ['.shield', '.hint', '.bar', '.rect', '.badge'].map((selector) => getComputedStyle(root.querySelector(selector)).display)), ['none', 'none', 'none', 'none', 'none'], 'no selection layer and no card');
+  await menuPage.evaluate(() => window.__stub.clicks.splice(0));
+  await menuPage.locator('#outside').click();
+  assert.deepEqual((await menuPage.evaluate(() => window.__stub.clicks.splice(0))).map((c) => c.target), ['outside'], 'the page takes clicks while the notice shows');
+  await menuPage.evaluate(() => { window.__stub.lastAdd = {collectionId: 'c1', batchId: 'menu-batch', count: 1}; });
+  await menuShadow.getByRole('button', {name: 'Undo', exact: true}).click();
+  await menuPage.waitForFunction(() => /^Removed/.test(document.getElementById('link-meteor-overlay')?.shadowRoot.querySelector('.notice-text')?.textContent || ''));
+  assert.equal(await inMenu((root) => root.querySelector('.notice-text').textContent), 'Removed 1 link from “Thesis sources”.');
+  assert.deepEqual((await sent(menuPage, 'capture.undoAdd')).at(-1), {type: 'capture.undoAdd', collectionId: 'c1', batchId: 'menu-batch'});
+  await ask({type: 'content.notice', text: 'Saved 3 tabs as links in “Thesis sources”; 1 skipped: not a web page.', added: {collectionId: 'c1', batchId: 'tabs-batch', name: 'Thesis sources'}});
+  assert.equal(await menuPage.evaluate(() => document.querySelectorAll('#link-meteor-overlay').length), 1, 'a new notice replaces the last one');
+  await menuShadow.getByRole('button', {name: 'Show links', exact: true}).click();
+  await menuPage.waitForFunction(() => window.__stub.sent.some((m) => m.type === 'ui.open' && m.batchId === 'tabs-batch'));
+  assert.deepEqual((await sent(menuPage, 'ui.open')).at(-1), {type: 'ui.open', view: 'links', batchId: 'tabs-batch'}, 'Show links opens the full view at those links');
+  await menuPage.keyboard.press('Escape');
+  assert.equal(await card(menuPage).count(), 0, 'Escape closes the notice');
+  pass('content.notice after a menu save: the notice alone, the page still takes clicks, Undo sends capture.undoAdd, Show links opens the full view at that save');
+
+  // The notice after Copy link text + URL: the text goes on the clipboard, with no Undo or Show links.
+  await menuPage.evaluate(() => navigator.clipboard.writeText('reset'));
+  const tsv = `Anchor text\tURL\r\nSecond text\t${fixture.base}/same\r\n`;
+  await ask({type: 'content.notice', text: 'Copied anchor text and URL as two spreadsheet columns.', copy: tsv});
+  await menuPage.waitForFunction(() => document.getElementById('link-meteor-overlay')?.shadowRoot.querySelector('.notice-text')?.textContent.startsWith('Copied'));
+  assert.equal((await menuPage.evaluate(() => navigator.clipboard.readText())).replace(/\r\n/g, '\n'), tsv.replace(/\r\n/g, '\n'));
+  assert.deepEqual(await inMenu((root) => [...root.querySelectorAll('.notice button')].filter((b) => !b.hidden).map((b) => b.getAttribute('aria-label') || b.textContent)), ['Close notice']);
+  // Without the async clipboard (a plain-HTTP page), the copy goes through the hidden text area.
+  await menuPage.evaluate(() => { window.__writeText = navigator.clipboard.writeText; navigator.clipboard.writeText = () => Promise.reject(new Error('unavailable')); });
+  await ask({type: 'content.notice', text: 'Copied anchor text and URL as two spreadsheet columns.', copy: 'Anchor text\tURL\r\nFallback\thttps://example.org/\r\n'});
+  await menuPage.waitForFunction(() => document.getElementById('link-meteor-overlay')?.shadowRoot.querySelector('.notice-text')?.textContent.startsWith('Copied'));
+  await menuPage.evaluate(() => { navigator.clipboard.writeText = window.__writeText; });
+  assert.match(await menuPage.evaluate(() => navigator.clipboard.readText()), /^Anchor text\tURL\r?\nFallback\thttps:\/\/example\.org\//);
+  await menuShadow.getByRole('button', {name: 'Close notice', exact: true}).click();
+  assert.equal(await card(menuPage).count(), 0);
+  pass('content.notice after Copy link text + URL puts the two columns on the clipboard (also through the text-area fallback) and offers only Close');
+  // Chrome 116 accepts closing this page and then never closes it, so the wait is bounded.
+  await Promise.race([menuPage.close(), sleep(8000)]);
+
+  /* 0.5.0: context snippets in every kind of block. */
+  const research = await context.newPage();
+  await load(research, '/research/highwire.html', {platform: 'MacIntel', trigger: 'letter', key: 'q'});
+  const contextsOf = (links) => Object.fromEntries(links.map((link) => [new URL(link.url).pathname, link.context]));
+  const scanned = await research.evaluate(() => globalThis.__linkMeteor.scan());
+  const contexts = contextsOf(scanned.links);
+  const SHORT = {
+    '/r/canopy': 'Across forty mid-sized cities, the canopy study found that shaded blocks stayed cooler in the afternoon.',
+    '/r/data': 'Dataset: urban heat records (2019 to 2023)',
+    '/r/only': '',
+    '/r/td': 'Heat index district table by month',
+    '/r/survey': 'Results from the street survey in 2024',
+    '/r/quote': 'As one planner put it, trees are infrastructure, not decoration.',
+    '/r/figure': 'Figure 2. Tree cover by block, from the city inventory.',
+    '/r/appendix': 'See also the appendix for the methods.',
+    '/r/sep': 'Heat and health: a field guide Read the guide',
+    '/r/br': 'First line of the note second line link',
+    '/r/script': 'Before the script scripted link after it',
+    '/r/hidden': 'Look at the visible label here.',
+  };
+  assert.deepEqual(Object.fromEntries(Object.keys(SHORT).map((path) => [path, contexts[path]])), SHORT);
+  // A list of links is not context: a bare run of links, or a line of citations with a few words
+  // between them, gives none, while a sentence that cites two sources keeps its words.
+  const lists = await context.newPage();
+  await load(lists, '/research/lists.html', {platform: 'MacIntel', trigger: 'letter', key: 'q'});
+  const listContexts = contextsOf((await lists.evaluate(() => globalThis.__linkMeteor.scan())).links);
+  assert.deepEqual(listContexts, {'/r/list-1': '', '/r/list-2': '', '/r/list-3': '', '/r/cite-1': '', '/r/cite-2': '', '/r/cite-3': '',
+    '/r/prose-1': 'Shade matters most in the afternoon, as the canopy study and a later survey both found across dozens of neighborhoods.',
+    '/r/prose-2': 'Shade matters most in the afternoon, as the canopy study and a later survey both found across dozens of neighborhoods.'});
+  await lists.close();
+  // A long paragraph is cut on both sides at word boundaries, around the link, within 400 characters.
+  const paragraph = await research.evaluate(() => document.getElementById('ctx-long').textContent.replace(/\s+/g, ' ').trim());
+  const long = contexts['/r/comparison'], inner = long.slice(1, -1), at = paragraph.indexOf(inner);
+  assert.ok(long.length <= 400 && long.startsWith('…') && long.endsWith('…'), long);
+  assert.ok(at > 0 && /\s/.test(paragraph[at - 1]) && /\s/.test(paragraph[at + inner.length]), 'whole words at both cuts');
+  const [left, right] = inner.split('a comparison of twelve interventions');
+  assert.ok(left.length > 150 && right.length > 150, 'the link sits near the middle');
+  // A link at the start of a long paragraph gives all the room to the words after it.
+  const start = contexts['/r/start'];
+  assert.ok(start.startsWith('Opening link at the very start') && start.endsWith('…') && start.length <= 400 && start.length > 380, start);
+  pass('Context: the nearest block (p, li, td, a heading, blockquote, figcaption, or the parent), spaces between blocks and line breaks, no script text or hidden anchor text, empty when the block holds only the link, and long paragraphs cut at word boundaries within 400 characters', {long: long.length, start: start.length});
+
+  /* 0.5.0: page citations, read the same way as Save tabs as links reads them. */
+  const tabReader = `(${readCitationTags.toString()})()`;
+  const CITATIONS = {
+    highwire: {title: 'Cooling cities: a review of street-level interventions', authors: ['Okafor, Adaeze', 'Lindqvist, Tove', 'Ramírez-Soto, Julián'], date: '2024/03/15',
+      journal: 'Journal of Synthetic Urban Climate', publisher: 'Meteor Fixture Press', volume: '12', issue: '3', firstPage: '201', lastPage: '219',
+      doi: 'doi:10.5555/cool.2024.0312', pmid: '31234567', isbn: '978-0-262-03384-8', pdfUrl: `${fixture.base}/research/cooling.pdf`},
+    prism: {title: 'Soil moisture and shade in dense neighborhoods', authors: ['Haddad, Samir', 'Ng, Wei Ling'], date: '2023-06-01', journal: 'Synthetic Hydrology Letters',
+      publisher: 'Meteor Fixture Press', volume: '8', issue: '2', firstPage: '45', lastPage: '61', doi: '10.5555/shl.2023.045'},
+    jsonld: {title: 'Wind corridors and night-time cooling', authors: ['Eriksen, Mads', 'Priya Raman'], date: '2022-11-20', journal: 'Synthetic Atmospheric Review',
+      publisher: 'Meteor Fixture Press', volume: '31', issue: '4', firstPage: '9', lastPage: '27', doi: '10.5555/wind.2022.009'},
+    dublin: {title: 'Rooftop gardens: a community report', authors: ['Mensah, Kofi', 'Olsen, Ingrid'], date: '2021', publisher: 'Meteor Fixture Community Trust', doi: '10.5555/roof.2021.7'},
+    none: null,
+  };
+  assert.deepEqual(scanned.page, CITATIONS.highwire, 'Highwire comes first, before Dublin Core and JSON-LD on the same page');
+  assert.deepEqual(await research.evaluate(tabReader), scanned.page, 'Save tabs as links reads it the same way');
+  const citationPage = await context.newPage();
+  for (const name of ['prism', 'jsonld', 'dublin', 'none', 'odd']) {
+    await load(citationPage, `/research/${name}.html`, {platform: 'MacIntel', trigger: 'letter', key: 'q'});
+    const {page: read, links} = await citationPage.evaluate(() => globalThis.__linkMeteor.scan());
+    assert.deepEqual(await citationPage.evaluate(tabReader), read, `${name}: both readers agree`);
+    assert.equal(links.length, 1, `${name}: the page's link is captured as usual`);
+    if (name !== 'odd') { assert.deepEqual(read, CITATIONS[name], name); continue; }
+    // Odd tags: a huge title is cut, 80 authors become the first 50 (a 300-character name is left out),
+    // and a long date, a long DOI, a blank journal and a script address are left out, without an error.
+    assert.ok(read.title.length <= 300 && read.title.endsWith('…') && read.title.startsWith('word0 word1 word2'), read.title);
+    assert.equal(read.authors.length, 50);
+    assert.ok(!read.authors.some((author) => author.length > 200) && read.authors[2] === 'Author 3, Given');
+    assert.deepEqual(Object.keys(read), ['title', 'authors']);
+  }
+  await citationPage.close();
+  pass('Page citations: Highwire (several authors, a relative PDF address), PRISM with Dublin Core’s title, JSON-LD ScholarlyArticle (DOI from identifier, after bad JSON-LD), Dublin Core in any case, none, and odd tags cut or skipped; both readers agree', {fixtures: 6});
+
+  /* 0.5.0: the card's commit and the menus' answers carry context and the page citation. */
+  const blocks = await research.locator('#blocks').boundingBox();
+  const regionDrag = async () => {
+    await research.bringToFront(); await research.evaluate(() => scrollTo(0, 0));
+    const box = await research.locator('#blocks').boundingBox();
+    await research.keyboard.down('q'); await research.mouse.move(box.x + 4, box.y + 4); await research.mouse.down();
+    await research.mouse.move(box.x + box.width - 4, box.y + box.height - 4, {steps: 8}); await research.mouse.up(); await research.keyboard.up('q');
+    await research.waitForFunction(() => document.getElementById('link-meteor-overlay')?.shadowRoot.querySelector('.count')?.textContent === '12 links selected');
+  };
+  const commitWith = async () => {
+    await card(research).locator('button.add').click();
+    await research.waitForFunction(() => window.__stub.sent.some((m) => m.type === 'capture.commit'));
+    const [commit] = await research.evaluate(() => window.__stub.sent.splice(0).filter((m) => m.type === 'capture.commit'));
+    await research.keyboard.press('Escape');
+    return commit;
+  };
+  assert.ok(blocks.height < 880, `the blocks fit in the window: ${blocks.height}`);
+  await regionDrag();
+  const committed = await commitWith();
+  assert.deepEqual(committed.page, CITATIONS.highwire);
+  assert.deepEqual(contextsOf(committed.links), Object.fromEntries(Object.entries(SHORT).map(([path, text]) => [path, text])), 'each ticked link with its context');
+  const askResearch = (message) => research.evaluate((message) => window.__stub.ask(message), message);
+  const clicked = await askResearch({type: 'content.contextLink', url: `${fixture.base}/r/quote`});
+  assert.deepEqual([clicked.data.link.context, clicked.data.page.title], [SHORT['/r/quote'], CITATIONS.highwire.title]);
+  await research.evaluate(() => { const range = document.createRange(); range.selectNodeContents(document.getElementById('ctx-p')); getSelection().removeAllRanges(); getSelection().addRange(range); });
+  const chosen = await askResearch({type: 'content.selectionLinks'});
+  assert.deepEqual([chosen.data.links.map((link) => link.context), chosen.data.page.title], [[SHORT['/r/canopy']], CITATIONS.highwire.title]);
+  await research.evaluate(() => getSelection().removeAllRanges());
+  pass('The card’s commit sends each ticked link’s context and the page citation (page); content.contextLink and content.selectionLinks answer them too');
+
+  // With saveContext off (content.configure), nothing reads or sends context; citations still go.
+  await research.evaluate(() => window.__stub.deliver({type: 'content.configure', holdKey: 'q', holdTrigger: 'letter', enabled: true, capture: {saveContext: false}}));
+  const off = await research.evaluate(() => globalThis.__linkMeteor.scan());
+  assert.equal(off.links.some((link) => 'context' in link), false);
+  assert.deepEqual(off.page, CITATIONS.highwire);
+  assert.equal(contextsOf((await research.evaluate(() => globalThis.__linkMeteor.scan({context: true}))).links)['/r/canopy'], SHORT['/r/canopy'], 'the background may still ask for it (scan options)');
+  await regionDrag();
+  const committedOff = await commitWith();
+  assert.equal(committedOff.links.some((link) => 'context' in link), false);
+  assert.deepEqual(committedOff.page, CITATIONS.highwire);
+  assert.equal('context' in (await askResearch({type: 'content.contextLink', url: `${fixture.base}/r/quote`})).data.link, false);
+  await research.close();
+  pass('saveContext off: scan, the card’s commit and the menus’ answers carry no context; the page citation still goes');
+
+  // 20,000 links: context stays fast because it reads text nodes around each link, not innerText.
+  const many = await context.newPage();
+  await load(many, '/empty.html', {platform: 'MacIntel', trigger: 'letter', key: 'q'});
+  const timing = await many.evaluate(() => {
+    const words = 'shade water wind street tree roof block heat'.split(' ');
+    document.body.innerHTML = Array.from({length: 2000}, (_, p) => `<p>${Array.from({length: 10}, (_, j) => `Some ${words[j % 8]} words before <a href="/l/${p * 10 + j}">Source ${p * 10 + j}</a> and after it.`).join(' ')}</p>`).join('')
+      + `<div>${Array.from({length: 2000}, (_, i) => `loose ${words[i % 8]} text <a href="/d/${i}">Loose ${i}</a> `).join('')}</div>`;
+    globalThis.__linkMeteor.scan({context: false});
+    const t0 = performance.now(); const plain = globalThis.__linkMeteor.scan({context: false}); const t1 = performance.now();
+    const withContext = globalThis.__linkMeteor.scan({context: true}); const t2 = performance.now();
+    return {links: plain.links.length, withoutMs: Math.round(t1 - t0), withMs: Math.round(t2 - t1), longest: Math.max(...withContext.links.map((link) => link.context.length)), empty: withContext.links.filter((link) => !link.context).length};
+  });
+  await many.close();
+  assert.equal(timing.links, 20000);
+  assert.ok(timing.longest <= 400 && timing.empty === 0, JSON.stringify(timing));
+  assert.ok(timing.withMs < 5000, `scan with context took ${timing.withMs} ms`);
+  pass('20,000 links: every link gets its context, at most 400 characters, in one scan', timing);
+
+  /* 1.0.0: closed shadow roots. */
+  const folder = '/site/coverage/', here = `${fixture.base}${folder}components.html`;
+  const texts = (links) => links.map((link) => link.anchorText);
+  const letter = {platform: 'MacIntel', trigger: 'letter', key: 'q'};
+  // Without chrome.dom (a Chrome that lacks it), only what the page shows openly is read.
+  const plain = await context.newPage();
+  await load(plain, `${folder}components.html`, letter);
+  assert.deepEqual(texts((await plain.evaluate(() => globalThis.__linkMeteor.scan())).links), ['Light link', 'Open link', 'Slotted link'], 'element.shadowRoot alone');
+  await plain.close();
+  const closedPage = await context.newPage();
+  await load(closedPage, `${folder}components.html`, {...letter, dom: true});
+  const closedScan = await closedPage.evaluate(() => globalThis.__linkMeteor.scan());
+  const CLOSED = ['Light link', 'Closed one', 'Closed two', 'Closed one, again', 'Outer closed link', 'Inner closed link', 'Open link', 'Closed inside open', 'Custom element link', 'Slotted link', 'Navigation link in a closed component'];
+  assert.deepEqual(texts(closedScan.links), CLOSED, 'every link once, in page order; nothing from the hidden component');
+  assert.deepEqual(closedScan.links.filter((link) => link.pageChrome).map((link) => link.anchorText), ['Navigation link in a closed component'], 'page chrome is seen out through a closed root');
+  assert.ok(closedScan.links.every((link) => link.frameUrl === here && link.sourceUrl === here));
+  assert.equal(closedScan.links[2].context, 'The first source the component names is Closed one, and then Closed two, the same address as Closed one, again.');
+  assert.deepEqual([closedScan.frames, closedScan.inaccessibleFrames, closedScan.warnings, closedScan.at, closedScan.malformed, closedScan.capped], [[], 0, [], '', 0, false]);
+  // Only elements that can hold a shadow root are asked about: the stand-in refuses anything else.
+  const asked = await closedPage.evaluate(() => { window.__stub.domCalls = 0; document.querySelector('main').insertAdjacentHTML('beforeend', '<svg id="drawn" width="20" height="20"><a href="/c/drawn"><text y="14">S</text></a></svg>'); const scanned = globalThis.__linkMeteor.scan(); document.getElementById('drawn').remove(); return {calls: window.__stub.domCalls, drawn: scanned.links.filter((link) => link.url.endsWith('/c/drawn')).length, hosts: document.querySelectorAll('article,aside,blockquote,body,div,footer,h1,h2,h3,h4,h5,h6,header,main,nav,p,section,span').length}; });
+  assert.ok(asked.drawn === 1 && asked.calls > 0 && asked.calls <= asked.hosts + 12, JSON.stringify(asked));
+  pass('Closed shadow roots: scan reads the links inside them (one, nested, inside an open root, a custom element, a slotted link once, one in navigation as page chrome), with their context; without chrome.dom only open roots are read', {withDom: CLOSED.length, without: 3, asked});
+
+  // A region over three sections, with the hold key: the closed links are selected and highlighted.
+  const dragOver = async (page, first, last, count) => {
+    await page.bringToFront(); await page.evaluate(() => scrollTo(0, 0));
+    const a = await page.locator(first).boundingBox(), b = await page.locator(last).boundingBox();
+    await page.keyboard.down('q'); await page.mouse.move(a.x + 2, a.y + 2); await page.mouse.down();
+    await page.mouse.move(b.x + b.width - 2, b.y + b.height - 2, {steps: 10}); await page.mouse.up(); await page.keyboard.up('q');
+    await page.waitForFunction((count) => document.getElementById('link-meteor-overlay')?.shadowRoot.querySelector('.count')?.textContent === `${count} links selected`, count);
+  };
+  await dragOver(closedPage, '#closed', '#mixed', 7);
+  const regionCard = await closedPage.evaluate(() => {
+    const root = document.getElementById('link-meteor-overlay').shadowRoot, hits = [...root.querySelectorAll('.hit')].map((hit) => hit.getBoundingClientRect());
+    return {rows: [...root.querySelectorAll('.preview .t')].map((row) => row.textContent), hits: hits.length, warning: root.querySelector('.warning').textContent,
+      placed: window.fixtureBoxes().every((box) => hits.some((hit) => Math.abs(hit.left - box.left) < 1.5 && Math.abs(hit.top - box.top) < 1.5 && Math.abs(hit.width - box.width) < 1.5))};
+  });
+  assert.deepEqual(regionCard, {rows: CLOSED.slice(1, 8), hits: 7, warning: '', placed: true});
+  await card(closedPage).locator('button.add').click();
+  await closedPage.waitForFunction(() => window.__stub.sent.some((m) => m.type === 'capture.commit'));
+  const [regionCommit] = await closedPage.evaluate(() => window.__stub.sent.splice(0).filter((m) => m.type === 'capture.commit'));
+  assert.deepEqual([texts(regionCommit.links), regionCommit.links[1].context, regionCommit.inaccessibleFrames], [CLOSED.slice(1, 8), closedScan.links[2].context, 0]);
+  await closedPage.keyboard.press('Escape');
+  pass('Closed shadow roots: a hold-key region selects their links, highlights each where it is drawn, and commits them with their context', {rows: regionCard.rows});
+
+  // The right-click lookup and the selection's links, inside closed roots.
+  const askClosed = (message) => closedPage.evaluate((message) => window.__stub.ask(message), message);
+  const boxAt = async (index) => (await closedPage.evaluate(() => window.fixtureBoxes()))[index];
+  const againBox = await boxAt(2);
+  await closedPage.mouse.click(againBox.left + 4, againBox.top + againBox.height / 2, {button: 'right'});
+  assert.equal((await askClosed({type: 'content.contextLink', url: `${fixture.base}/c/closed-one`})).data.link.anchorText, 'Closed one, again', 'the right-clicked one of two links with that address, inside a closed root');
+  const innerBox = await boxAt(4);
+  await closedPage.mouse.click(innerBox.left + 4, innerBox.top + innerBox.height / 2, {button: 'right'});
+  assert.equal((await askClosed({type: 'content.contextLink', url: `${fixture.base}/c/inner`})).data.link.anchorText, 'Inner closed link', 'inside a closed root inside a closed root');
+  assert.equal((await askClosed({type: 'content.contextLink', url: `${fixture.base}/c/closed-in-open`})).data.link.anchorText, 'Closed inside open', 'another address: found by walking the roots');
+  await closedPage.locator('#slotted-link').click({button: 'right'});
+  assert.equal((await askClosed({type: 'content.contextLink', url: `${fixture.base}/c/slotted`})).data.link.anchorText, 'Slotted link', 'a link the page hands to a closed component');
+  // `first` is the fixture's own reference to its first closed root.
+  await closedPage.evaluate(() => { const text = first.getElementById('closed-two').firstChild; getSelection().setBaseAndExtent(text, 0, text, 6); });
+  const selectedClosed = await askClosed({type: 'content.selectionLinks'});
+  assert.deepEqual(texts(selectedClosed.data.links), ['Closed two'], 'a selection inside a closed root');
+  await closedPage.evaluate(() => getSelection().removeAllRanges());
+  await closedPage.close();
+  pass('Closed shadow roots: content.contextLink answers the link under the pointer inside a closed root (also a nested one, and a slotted link), and content.selectionLinks the links a selection inside one touches');
+
+  /* 1.0.0: frames from other sites. The script runs in every frame, as Chrome runs it where Link
+     Meteor has access, and the background's joinFrames joins the answers. */
+  const otherSite = fixture.other, thirdSite = `http://third.localhost:${new URL(fixture.base).port}`;
+  const framed = await context.newPage();
+  await load(framed, `${folder}frames.html`, {...letter, dom: true});
+  await framed.waitForFunction(() => window.fixtureFramesLoaded() && window.length === 7);
+  for (const frame of framed.frames()) await frame.waitForLoadState('load');
+  await sleep(400);
+  // Every frame gets the script (the sandboxed frame runs no scripts of its own, so it is given the
+  // stub the same way), and answers scan; a frame that defined nothing answers null.
+  const {init: frameInit, arg: frameArg} = stub({...letter, dom: true});
+  const answers = [];
+  for (const [index, frame] of framed.frames().entries()) {
+    const top = frame === framed.mainFrame();
+    if (!top) {
+      if (!await frame.evaluate(() => !!window.__stub)) await frame.evaluate(frameInit, frameArg);
+      await frame.evaluate(source);
+    }
+    const answer = await frame.evaluate(() => ({result: globalThis.__linkMeteor?.scan?.({context: true}) ?? null, keys: Object.keys(globalThis.__linkMeteor || {}), sent: window.__stub.sent.map((m) => m.type), listening: window.__stub.listening()}));
+    answers.push({frameId: top ? 0 : index, url: frame.url(), ...answer});
+  }
+  const short = (url) => { if (url.startsWith('about:')) return url; const at = new URL(url); return (at.origin === fixture.base ? '' : at.host.split(':')[0]) + at.pathname.replace(folder, '/') + at.search; };
+  const byUrl = Object.fromEntries(answers.map((answer) => [short(answer.url), answer]));
+  // A frame the document around it can read holds no copy; a frame from another site holds one that
+  // only scans: it asks for no settings, listens for no messages and reads no citation tags.
+  const idle = ['/inner.html?same', '/leaf.html?same-nested-this', 'about:srcdoc', 'localhost/leaf.html?other-nested-other'];
+  assert.deepEqual(idle.map((name) => [byUrl[name].result, byUrl[name].keys, byUrl[name].sent, byUrl[name].listening]), idle.map(() => [null, [], [], false]));
+  const alone = ['localhost/inner.html?other', '/leaf.html?other-nested-this', 'localhost/leaf.html?same-nested-other', 'third.localhost/leaf.html?third', 'localhost/leaf.html?aside', 'localhost/leaf.html?component', '/leaf.html?sandboxed', 'localhost/leaf.html?hidden'];
+  assert.deepEqual(alone.map((name) => [byUrl[name].keys, byUrl[name].sent, byUrl[name].listening, byUrl[name].result.page]), alone.map(() => [['scan', 'alive', 'dispose'], [], false, null]));
+  assert.deepEqual(Object.fromEntries(alone.map((name) => [name, byUrl[name].result.at])), {'localhost/inner.html?other': '1', '/leaf.html?other-nested-this': '1.0', 'localhost/leaf.html?same-nested-other': '0.1',
+    'third.localhost/leaf.html?third': '2', 'localhost/leaf.html?aside': '3', 'localhost/leaf.html?component': null, '/leaf.html?sandboxed': '4', 'localhost/leaf.html?hidden': '6'});
+  await framed.keyboard.down('q'); await framed.keyboard.up('q');
+  assert.equal(await card(framed).count(), 0);
+  // What the top document says about the frames it couldn't read: each one's site, place and whether
+  // it is page chrome; a sealed one and the address of one without a place; each with its own key and its area.
+  const topAnswer = byUrl['/frames.html'].result;
+  const listed = (frames) => frames.map(({key, area, ...rest}) => rest);
+  assert.deepEqual(listed(topAnswer.frames), [{site: otherSite, at: '0.1', chrome: false}, {site: otherSite, at: '1', chrome: false}, {site: thirdSite, at: '2', chrome: false}, {site: otherSite, at: '3', chrome: true},
+    {site: otherSite, at: null, chrome: false, url: `${otherSite}${folder}leaf.html?component`}, {site: fixture.base, at: '4', chrome: false, sealed: true}]);
+  assert.ok(topAnswer.frames.every((frame) => /^[a-z0-9]+\.\d+$/.test(frame.key) && frame.area > 1000), 'each frame has a key and covers part of the page');
+  assert.equal(new Set(topAnswer.frames.map((frame) => frame.key)).size, 6);
+  assert.deepEqual([texts(topAnswer.links), topAnswer.at, topAnswer.inaccessibleFrames, topAnswer.url, topAnswer.title], [['Top link', 'Inner link same', 'Leaf link same-nested-this', 'Written link'], '', 6, `${fixture.base}${folder}frames.html`, 'Frames from other sites — coverage fixture']);
+  pass('Frames: a frame its parent can read holds no copy of the script; a frame from another site holds one that only scans (no settings request, no message listener, no citation); each says where it sits, and the top document lists the frames it couldn’t read with their sites', {places: alone.map((name) => [name, byUrl[name].result.at])});
+
+  // Joined as the background joins them, for the access Link Meteor may have. Chrome runs the script
+  // only in frames it has access to, so each case passes on only those frames' answers.
+  const joinFor = (allowed, options) => joinFrames(answers.filter((answer) => answer.frameId === 0 || allowed(answer)).map(({frameId, result}) => ({frameId, result})), options);
+  const named = (joined) => joined.links.map((link) => [link.anchorText, short(link.frameUrl)]);
+  const TOP = [['Top link', '/frames.html'], ['Inner link same', '/inner.html?same'], ['Leaf link same-nested-this', '/leaf.html?same-nested-this'], ['Written link', 'about:srcdoc']];
+  const OTHER = [['Leaf link same-nested-other', 'localhost/leaf.html?same-nested-other'], ['Inner link other', 'localhost/inner.html?other'], ['Leaf link other-nested-other', 'localhost/leaf.html?other-nested-other'], ['Leaf link other-nested-this', '/leaf.html?other-nested-this']];
+  const everywhere = joinFor(() => true);
+  assert.deepEqual(named(everywhere), [...TOP, ...OTHER, ['Leaf link third', 'third.localhost/leaf.html?third'], ['Leaf link aside', 'localhost/leaf.html?aside'], ['Leaf link component', 'localhost/leaf.html?component'], ['Leaf link', '/leaf.html?sandboxed']], 'all sites: every frame’s links once, with its frameUrl; nothing from the hidden frame');
+  assert.deepEqual([everywhere.read, everywhere.unread, everywhere.links.filter((link) => link.pageChrome).map((link) => link.anchorText)], [7, [], ['Leaf link aside']]);
+  assert.ok(everywhere.links.every((link) => link.sourceUrl === topAnswer.url && link.sourceTitle === topAnswer.title), 'a frame’s links take the page as their source');
+  assert.equal(new Set(everywhere.links.map((link) => `${link.url} ${link.frameUrl}`)).size, everywhere.links.length, 'no link twice');
+  assert.equal(everywhere.links.find((link) => link.anchorText === 'Inner link other').context, 'Words around the frame’s own link: Inner link other.', 'context is read inside the frame');
+  // The toolbar's temporary access: the top document alone.
+  const toolbar = joinFor(() => false);
+  const LEFT = [{site: otherSite, at: '0.1'}, {site: otherSite, at: '1'}, {site: thirdSite, at: '2'}, {site: otherSite, at: '3'}, {site: otherSite, at: null}, {site: fixture.base, at: '4'}];
+  const places = (frames) => frames.map(({site, at}) => ({site, at}));
+  assert.deepEqual([named(toolbar), toolbar.read, places(toolbar.unread)], [TOP, 0, LEFT]);
+  // The other site allowed (and the page's own, as the toolbar gives it, which doesn't reach its sandboxed frame).
+  const some = joinFor((answer) => !answer.url.startsWith(thirdSite) && !answer.url.includes('?sandboxed'));
+  assert.deepEqual([named(some), some.read, places(some.unread)], [[...TOP, ...OTHER, ['Leaf link aside', 'localhost/leaf.html?aside'], ['Leaf link component', 'localhost/leaf.html?component']], 5, [LEFT[2], LEFT[5]]]);
+  // Allow these sites, after the toolbar's reading: only the links in the frames that reading left
+  // unread and that are read now, and in the frames inside them.
+  const fresh = joinFor((answer) => !answer.url.startsWith(thirdSite) && !answer.url.includes('?sandboxed'), {left: toolbar.unread});
+  assert.deepEqual([named(fresh), fresh.fresh, fresh.read], [[...OTHER, ['Leaf link aside', 'localhost/leaf.html?aside'], ['Leaf link component', 'localhost/leaf.html?component']], 5, 5]);
+  // Then the page's own site, for its sandboxed frame: that frame alone is new. The frame of the
+  // page's own site inside the other site's frame was read before, and is not read twice.
+  const sealed = joinFor((answer) => !answer.url.startsWith(thirdSite), {left: some.unread, seen: some.seen});
+  assert.deepEqual([named(sealed), sealed.fresh, places(sealed.unread)], [[['Leaf link', '/leaf.html?sandboxed']], 1, [LEFT[2]]]);
+  // A frame inside a frame that wasn't read is left out, even where Link Meteor could read it.
+  const inside = joinFor((answer) => answer.url.includes('?other-nested-this'));
+  assert.deepEqual([named(inside), inside.read, inside.unread.length], [TOP, 0, 6]);
+  await framed.close();
+  pass('Frames joined: with all sites every frame is read once (nested, in a closed component, sandboxed, in a sidebar as page chrome) and a hidden frame not at all; with the toolbar’s access only the top document, and each unread frame’s site; with one site allowed, its frames and those inside them; a frame inside an unread frame is left out', {all: everywhere.links.length, toolbar: toolbar.links.length, oneSite: some.links.length, fresh: fresh.links.length});
+
+  /* 1.0.0: frames at the edges. A frame the page sent to another site without an address of its
+     own, frames with no size or placed off the page, and frames inside a closed component: a
+     sandboxed one written in the page, a hidden one and a visible one from the other site. */
+  const edges = await context.newPage();
+  await load(edges, `${folder}edges.html`, {...letter, dom: true});
+  await edges.waitForFunction(() => window.fixtureFramesLoaded());
+  for (const frame of edges.frames()) await frame.waitForLoadState('load');
+  await sleep(400);
+  // Every frame's answer, as Chrome would gather them where Link Meteor has access to every site.
+  const gather = async () => {
+    const all = [];
+    for (const [index, frame] of edges.frames().entries()) {
+      const top = frame === edges.mainFrame();
+      if (!top) {
+        if (!await frame.evaluate(() => !!window.__stub)) await frame.evaluate(frameInit, frameArg);
+        await frame.evaluate(source);
+      }
+      all.push({frameId: top ? 0 : index + 1, url: frame.url(), result: await frame.evaluate(() => globalThis.__linkMeteor?.scan?.({context: false}) ?? null)});
+    }
+    return all;
+  };
+  const edgeAnswers = await gather();
+  const edgeTop = edgeAnswers[0].result;
+  assert.deepEqual(listed(edgeTop.frames), [{site: otherSite, at: '0', chrome: false}, {site: otherSite, at: '1', chrome: false}, {site: '', at: '2', chrome: false},
+    {site: fixture.base, at: null, chrome: false, sealed: true, url: 'about:srcdoc'}, {site: otherSite, at: null, chrome: false, url: `${otherSite}${folder}leaf.html?edges-visible`}],
+    'the frame sent away has no site to name; the frames with no size or off the page and the hidden one are not listed; the sandboxed one is sealed');
+  const edgeJoin = (answers, allowed, options) => joinFrames(answers.filter((answer) => answer.frameId === 0 || allowed(answer)).map(({frameId, result}) => ({frameId, result})), options);
+  const allEdges = edgeJoin(edgeAnswers, () => true);
+  assert.deepEqual([named(allEdges), allEdges.unread], [[['Edges top link', '/edges.html'], ['Leaf link edges-notice', 'localhost/leaf.html?edges-notice'], ['Leaf link edges-other', 'localhost/leaf.html?edges-other'], ['Leaf link edges-away', 'localhost/leaf.html?edges-away'],
+    ['Sealed srcdoc link', 'about:srcdoc'], ['Leaf link edges-visible', 'localhost/leaf.html?edges-visible']], []], 'with every site: the sealed frame inside the component is paired by its address, and the visible one gets its own answer, not the hidden one’s');
+  // The toolbar's access; then, before Allow these sites, the page removes the notice, so the frames
+  // after it move up a place, and adds a frame. The frames left unread are still known by their
+  // keys, and the added frame isn't one of them.
+  const firstEdges = edgeJoin(edgeAnswers, () => false);
+  await edges.evaluate(() => window.fixtureChange());
+  await edges.waitForFunction(() => window.fixtureFramesLoaded() && document.querySelector('iframe[title="Added later"]').contentDocument === null);
+  await sleep(300);
+  const shifted = await gather();
+  assert.deepEqual(listed(shifted[0].result.frames).map((frame) => frame.at), ['4', '0', '1', null, null], 'the frames after the notice moved up; the added frame comes after the others');
+  const allowedEdges = edgeJoin(shifted, () => true, {left: firstEdges.unread, seen: firstEdges.seen});
+  assert.deepEqual([named(allowedEdges), allowedEdges.fresh], [[['Leaf link edges-other', 'localhost/leaf.html?edges-other'], ['Leaf link edges-away', 'localhost/leaf.html?edges-away'],
+    ['Sealed srcdoc link', 'about:srcdoc'], ['Leaf link edges-visible', 'localhost/leaf.html?edges-visible']], 4]);
+  await edges.close();
+  pass('Frames at the edges: a frame sent to another site without an address has no site to name; frames with no size, off the page or hidden are neither read nor listed; inside a closed component a sandboxed frame is paired by its address and a visible frame gets its own answer; after the page removes a frame ahead of them, the frames left unread are known again by their keys', {before: places(firstEdges.unread), fresh: allowedEdges.fresh});
+
+  if (htmlUnread) result.limits = [`This Chrome's headless clipboard can't be read with navigator.clipboard.read(): ${htmlUnread} clipboard reads checked the plain text only, not the HTML.`];
+  result.result = 'PASS';
+} catch (error) {
+  result.result = 'FAIL'; result.error = error.stack; console.error(error); process.exitCode = 1;
+} finally {
+  await browser.close(); await fixture.close(); await rm(downloadsPath, {recursive: true, force: true});
+  result.finished = new Date().toISOString();
+  await writeFile(resolve(evidence, 'access-content-results.json'), JSON.stringify(result, null, 2) + '\n');
+}

@@ -1,0 +1,113 @@
+{
+ "data": {
+  "id": "10.48550/arxiv.2409.11211",
+  "type": "dois",
+  "attributes": {
+   "doi": "10.48550/arxiv.2409.11211",
+   "identifiers": [
+    {
+     "identifier": "2409.11211",
+     "identifierType": "arXiv"
+    }
+   ],
+   "creators": [
+    {
+     "name": "Mihajlovic, Marko",
+     "nameType": "Personal",
+     "givenName": "Marko",
+     "familyName": "Mihajlovic",
+     "affiliation": [],
+     "nameIdentifiers": []
+    },
+    {
+     "name": "Prokudin, Sergey",
+     "nameType": "Personal",
+     "givenName": "Sergey",
+     "familyName": "Prokudin",
+     "affiliation": [],
+     "nameIdentifiers": []
+    },
+    {
+     "name": "Tang, Siyu",
+     "nameType": "Personal",
+     "givenName": "Siyu",
+     "familyName": "Tang",
+     "affiliation": [],
+     "nameIdentifiers": []
+    },
+    {
+     "name": "Maier, Robert",
+     "nameType": "Personal",
+     "givenName": "Robert",
+     "familyName": "Maier",
+     "affiliation": [],
+     "nameIdentifiers": []
+    },
+    {
+     "name": "Bogo, Federica",
+     "nameType": "Personal",
+     "givenName": "Federica",
+     "familyName": "Bogo",
+     "affiliation": [],
+     "nameIdentifiers": []
+    },
+    {
+     "name": "Tung, Tony",
+     "nameType": "Personal",
+     "givenName": "Tony",
+     "familyName": "Tung",
+     "affiliation": [],
+     "nameIdentifiers": []
+    },
+    {
+     "name": "Boyer, Edmond",
+     "nameType": "Personal",
+     "givenName": "Edmond",
+     "familyName": "Boyer",
+     "affiliation": [],
+     "nameIdentifiers": []
+    }
+   ],
+   "titles": [
+    {
+     "title": "SplatFields: Neural Gaussian Splats for Sparse 3D and 4D Reconstruction"
+    }
+   ],
+   "publisher": "arXiv",
+   "container": {},
+   "publicationYear": 2024,
+   "dates": [
+    {
+     "date": "2024-09-17T14:04:20Z",
+     "dateType": "Submitted",
+     "dateInformation": "v1"
+    },
+    {
+     "date": "2024-09-18T00:49:35Z",
+     "dateType": "Updated",
+     "dateInformation": "v1"
+    },
+    {
+     "date": "2024-09",
+     "dateType": "Available",
+     "dateInformation": "v1"
+    },
+    {
+     "date": "2024",
+     "dateType": "Issued"
+    }
+   ],
+   "types": {
+    "ris": "GEN",
+    "bibtex": "misc",
+    "citeproc": "article",
+    "schemaOrg": "CreativeWork",
+    "resourceType": "Article",
+    "resourceTypeGeneral": "Preprint"
+   },
+   "relatedIdentifiers": [],
+   "version": "1",
+   "url": "https://arxiv.org/abs/2409.11211"
+  }
+ }
+}

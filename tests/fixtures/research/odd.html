@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en"><meta charset="utf-8">
+<title>Odd citation tags fixture</title>
+<script type="application/ld+json">{"@graph": [{"@type": "ScholarlyArticle", "headline": {"not": "text"}</script>
+<script>
+// Values a careless page might publish: a huge title, 80 authors (one far too long), a date and a
+// DOI longer than any real one, and a PDF address that isn't a web address.
+const add = (name, content) => { const meta = document.createElement('meta'); meta.name = name; meta.content = content; document.head.append(meta); };
+add('citation_title', Array.from({length: 600}, (_, i) => `word${i}`).join('   '));
+for (let i = 0; i < 80; i++) add('citation_author', i === 2 ? 'x'.repeat(300) : `Author ${i}, Given`);
+add('citation_date', 'Published on a date described at great length, 2020');
+add('citation_doi', '10.5555/' + 'y'.repeat(400));
+add('citation_pdf_url', 'javascript:alert(1)');
+add('citation_journal_title', '   ');
+</script>
+<style>body{font:16px/1.6 system-ui;margin:32px}</style>
+<h1>Odd tags</h1>
+<p>The reader keeps going past <a id="odd-link" href="/r/odd">odd values</a> without an error.</p>
+</html>

@@ -100,4 +100,4 @@ The **About and help** area lists links to the guide, GitHub issues, the website
 
 The [project website](https://ryanjosephkamp.github.io/link-meteor/) has its own privacy page. It uses no cookies, analytics, advertising or third-party requests; fonts are self-hosted; its demo and export preview run entirely in the visitor's browser. A theme chosen from its menu is kept in that browser's local storage for the site and is never sent anywhere. GitHub Pages hosts the site; GitHub operates those servers under its own privacy statement.
 
-This document describes the current development build. Installation uses the downloadable ZIP and Chrome's Load unpacked option. Browser-store distribution is deferred.
+Installation uses the downloadable ZIP and Chrome's Load unpacked option. Browser-store distribution is deferred.

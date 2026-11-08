@@ -1,5 +1,7 @@
 # Link Meteor
 
+Capture the trail. Keep the source.
+
 <picture>
   <source media="(prefers-reduced-motion: reduce)" srcset="assets/demo/link-meteor-demo.png">
   <img src="assets/demo/link-meteor-demo.gif" alt="Link Meteor 1.0.0 on its practice page: a drag selects a reading list's 7 links, Add to collection saves them, the full view shows each link's anchor text, URL, and source page in separate fields, with an image link's anchor text left empty, and the downloaded Excel workbook has two columns, anchor text and URL.">
@@ -9,11 +11,9 @@ A 28-second demo on the [practice page](https://ryanjosephkamp.github.io/link-me
 
 [Website](https://ryanjosephkamp.github.io/link-meteor/) · [Installation guide](https://ryanjosephkamp.github.io/link-meteor/install.html) · [Report a bug or suggest a feature](https://github.com/ryanjosephkamp/link-meteor/issues)
 
-Capture the trail. Keep the source.
+**Link Meteor is a free, open-source Chrome extension for collecting links.** Drag across any part of a webpage, and each link is saved with its **actual anchor text and URL in separate fields**, plus the page it came from. Then review the collection and export it to Excel, CSV, Markdown, BibTeX, and more. There is no account, no ads, no telemetry, no paid tier, and no server.
 
-Link Meteor is a free Chrome extension for collecting links with their **actual anchor text and URL in separate fields**, reviewing their sources, and exporting a useful research collection. It has no account, ads, telemetry, paid tier, or backend dependency.
-
-This repository contains the Chrome extension (version 1.0.0) and its [live website](https://ryanjosephkamp.github.io/link-meteor/). Install the extension from the downloadable ZIP using Chrome's **Load unpacked** option. Chrome Web Store submission is planned for a later version. See [testing and compatibility](docs/ACCEPTANCE.md) for the environments and workflows checked so far, and the [changelog](CHANGELOG.md) for what changed.
+This repository holds the extension (version 1.0.0) and its [website](https://ryanjosephkamp.github.io/link-meteor/). Link Meteor isn't in the Chrome Web Store, so you install it from the downloadable ZIP with Chrome's **Load unpacked** option. See [testing and compatibility](docs/ACCEPTANCE.md) for the environments and workflows checked so far, and the [changelog](CHANGELOG.md) for what changed in each version.
 
 ## Install
 
@@ -21,7 +21,8 @@ This repository contains the Chrome extension (version 1.0.0) and its [live webs
 2. Open `chrome://extensions` in Chrome and enable **Developer mode**.
 3. Choose **Load unpacked** and select the extracted folder containing `manifest.json`.
 4. Open an ordinary webpage (try the [practice page](https://ryanjosephkamp.github.io/link-meteor/practice.html)). Use the extension toolbar action for the side panel, or **Option+Shift+L** on Mac / **Alt+Shift+L** on Windows and Linux to select a region. The side panel's welcome card offers **Allow on all sites (recommended)**, so you can hold a key and drag on any site, or **Choose sites later**.
-5. Drag across links, then choose **Copy text + URL**, **Add to collection**, **Review**, or **Add another region**. The card's **Adds to** line names the collection the links will go to, and its menu can also open, copy, download, or bookmark them, or download the files behind them. Escape cancels selection. You can scroll while dragging, and the highlights stay on their links. **After a drag** in the settings can copy or add right away instead of showing the card. Right-click a link, a selection, the page, or the toolbar icon for more Link Meteor actions.
+5. Drag across links, then choose **Copy text + URL**, **Add to collection**, **Review**, or **Add another region**. The card's **Adds to** line names the collection the links will go to, and its menu can also open, copy, download, or bookmark them, or download the files behind them. Press Escape to cancel. You can scroll while dragging, and the highlights stay on their links.
+6. To skip the card, change **After a drag** in the settings to copy or add right away. Right-click a link, a selection, the page, or the toolbar icon for more Link Meteor actions.
 
 Chrome manages shortcut assignments at `chrome://extensions/shortcuts`. A shortcut can conflict with another extension or system shortcut; use **Change shortcut** in Link Meteor to inspect it. Reload the extension at `chrome://extensions` after rebuilding, then reload test webpages so their injected script is current.
 
@@ -135,4 +136,4 @@ Read [the privacy explanation](docs/PRIVACY.md), [product overview](docs/PRODUCT
 
 MIT licensed; see [LICENSE](LICENSE). Link Meteor includes [PDF.js](https://mozilla.github.io/pdf.js/) by Mozilla, unmodified, under the Apache License 2.0, in `src/vendor/pdfjs/` with its license. The site's Atkinson Hyperlegible Next and Mono fonts retain their SIL Open Font License notices in `site/assets/fonts/`.
 
-Created by **[Ryan Kamp](https://github.com/ryanjosephkamp/)**. Link Meteor and all its features are free. Optional support never unlocks features or changes functionality.
+Created by **[Ryan Kamp](https://github.com/ryanjosephkamp/)**. Link Meteor and all its features are free. If it saves you time, you can [sponsor Ryan on GitHub](https://github.com/sponsors/ryanjosephkamp); support is optional and never unlocks features or changes how the extension works.

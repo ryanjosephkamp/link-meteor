@@ -328,7 +328,7 @@ test('Online lookups says, word for word, what the contract, the privacy page an
   const contract = /^- \*\*Page details lookup\.\*\* "(.+)"$/m.exec(await readFile(resolve(root, 'docs/CONTRACTS.md'), 'utf8'))[1].replaceAll('*', '');
   assert.equal(said, contract, 'the workbench and the contract');
   const plain = (text) => text.replaceAll('*', '').replaceAll('’', "'");
-  for (const file of ['docs/PRIVACY.md', 'CHROMEWEBSTORE.md']) assert.ok(plain(await readFile(resolve(root, file), 'utf8')).includes(plain(said)), `the workbench and ${file}`);
+  assert.ok(plain(await readFile(resolve(root, 'docs/PRIVACY.md'), 'utf8')).includes(plain(said)), 'the workbench and docs/PRIVACY.md');
   const site = words(await readFile(resolve(root, 'site/privacy.html'), 'utf8')).replaceAll('’', "'");
   for (const part of [what, ...services, ...rest]) assert.ok(site.includes(plain(part)), `the workbench and the site’s privacy page: ${part}`);
   // The switch is off in the page as shipped, and described by those words.

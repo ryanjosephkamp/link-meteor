@@ -67,7 +67,15 @@ CSV/TSV prefix formula-like strings with an apostrophe for safer spreadsheet imp
 
 ## Develop and verify
 
-Building from source requires Node.js 22 or newer. There are no package dependencies to install. Load the resulting `dist` folder with Chrome's **Load unpacked** option.
+Building from source requires Node.js 22 or newer. The extension itself has no package dependencies, so `npm run build`, `npm test`, and `npm run package` need no install. Load the resulting `dist` folder with Chrome's **Load unpacked** option.
+
+The browser suites, `npm run check`, and `node tests/site-check.mjs` need Playwright and its Chromium, and the workbook check needs Python's openpyxl. Install them once, without adding them to `package.json` (these are the versions CI uses):
+
+```sh
+npm install --no-save --no-package-lock playwright@1.62.1
+npx playwright install chromium
+python3 -m pip install openpyxl==3.1.5
+```
 
 ```sh
 npm run build
@@ -81,7 +89,7 @@ The checks that need no grants also run on macOS, Windows, and Linux for every p
 
 The build copies only packaged extension files. Packaging refuses stale source/build differences and emits a deterministic ZIP plus a receipt with every file's hash, the source commit, and whether `src/` had uncommitted changes.
 
-Browser tests reuse an installed Playwright library and Chromium/Chrome for Testing. No browser or library is downloaded by these scripts. Set `LINK_METEOR_PLAYWRIGHT` to an installed Playwright module if it is not on the normal Node resolution path. Set `LINK_METEOR_CHROME_PATH` to another Chrome for Testing executable, such as 116, to run the suites there.
+Browser tests use the Playwright library and Chromium (or Chrome for Testing) installed above. The test scripts never download a browser or library themselves. Set `LINK_METEOR_PLAYWRIGHT` to an installed Playwright module if it is not on the normal Node resolution path. Set `LINK_METEOR_CHROME_PATH` to another Chrome for Testing executable, such as 116, to run the suites there.
 
 ```sh
 # One isolated test browser; allow synthetic 127.0.0.1 access and bookmarks when requested.

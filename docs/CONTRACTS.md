@@ -246,7 +246,7 @@ These keep the envelope and sender rules of the Browser message API above. "Work
 | Optional `tabGroups` | New | When the person first chooses to open links as a named tab group. |
 | `unlimitedStorage` | New, required | No prompt. |
 
-Every permission also needs a reason in the UI, in [PRIVACY.md](PRIVACY.md) and in `CHROMEWEBSTORE.md` before it ships. Extension pages keep `connect-src 'none'`.
+Every permission also needs a reason in the UI, in [PRIVACY.md](PRIVACY.md), and in the store listing before it ships. Extension pages keep `connect-src 'none'`.
 
 ### Stable element IDs for 0.3.0 suites
 
@@ -1054,7 +1054,7 @@ Ember light's `danger` becomes `oklch(0.42 0.17 355)`, with `danger-wash` `oklch
 - Files to import are read in the browser and never uploaded.
 - Context snippets, page citations, reading status and stars are stored with the collections in this browser. They go into backups and exports only when you make them.
 
-`docs/PRIVACY.md`, `site/privacy.html` and `CHROMEWEBSTORE.md` say so in the foundation. The UI says "Saved in this browser" beside the new data, as for notes.
+`docs/PRIVACY.md` and `site/privacy.html` say so in the foundation. The UI says "Saved in this browser" beside the new data, as for notes.
 
 ### Automatic backups and settings sync: not in 0.5.0
 
@@ -1700,7 +1700,7 @@ Off by default (`lookupDetails`). It fills in a paper's title, authors, date and
 
 **Turning it on.** `#online-panel` (*Online lookups*) in the rail, before *Import links*:
 - `#lookup-details`, a switch saved as `lookupDetails` with `settings.update`, described by `#lookup-help` and `#lookup-sends`.
-- `#lookup-sends` holds [the words to use](#permissions-browser-settings-and-network-requests), word for word, with the three services as a list (`.sends-what`, three `li`, three `.sends-not`). A unit test compares the page with this file, `docs/PRIVACY.md`, `CHROMEWEBSTORE.md` and `site/privacy.html`.
+- `#lookup-sends` holds [the words to use](#permissions-browser-settings-and-network-requests), word for word, with the three services as a list (`.sends-what`, three `li`, three `.sends-not`). A unit test compares the page with this file, `docs/PRIVACY.md`, and `site/privacy.html`.
 - Turning it on says "Page details lookup is on. Nothing is sent until you click Look up details."; turning it off, "Page details lookup is off. Link Meteor requests nothing from any service."
 - **A click with the switch off** (every one, not only the first) requests nothing and creates no frame. It shows the rail on narrow widths, scrolls `#online-panel` into view, moves focus to `#lookup-details`, and says "Page details lookup is off, so nothing was sent. Online lookups says what it sends and where. Turn it on there, then click Look up details again." The saved setting is read again at every click.
 
@@ -1764,7 +1764,7 @@ Off by default (`lookupDetails`). It fills in a paper's title, authors, date and
 | PDF files requested for a ZIP or a combined PDF | New requests | See below. Saving them needs no permission: the file is handed to Chrome's download, as exports are. |
 | Page details lookup | New, optional, off by default | See below. |
 
-**The words to use.** `docs/PRIVACY.md`, `site/privacy.html` and `CHROMEWEBSTORE.md` say these in the foundation, and the workbench shows the same words where each feature starts.
+**The words to use.** `docs/PRIVACY.md` and `site/privacy.html` say these in the foundation, and the workbench shows the same words where each feature starts.
 
 - **PDFs.** "To read the links in a PDF that is open in a tab, Link Meteor asks Chrome for the file again from the same address, as that page. Chrome usually answers from its own cache; otherwise the site is asked again, as when you reload the tab. The PDF is read inside your browser by PDF.js, which is part of Link Meteor. It is never uploaded. A PDF you choose from your computer is read the same way, and Link Meteor needs no access for it."
 - **Auto-scroll.** "*Scroll to the end first* scrolls the page for you, so the page loads the rest of itself as it would if you scrolled. It stops at the end, at 50 screens, at 5,000 links, after 2 minutes, or when you press Stop."
@@ -1772,7 +1772,7 @@ Off by default (`lookupDetails`). It fills in a paper's title, authors, date and
 - **Capture selected pages.** "*Capture their pages* opens each page you chose in a background tab, one at a time, saves its links and closes the tab: 20 pages at most, with a pause between pages. Each page loads as it would if you opened it yourself, signed in as you are. Link Meteor asks first for access to the sites it will read, unless you allowed all sites. It never follows the links it finds."
 - **One ZIP, or one combined PDF.** "*Download as one ZIP* and *Combine into one PDF* get each PDF you chose through a page of its own site, as when you click the link, signed in as you are: 20 PDFs at most, one at a time. Where that needs a background tab, Link Meteor asks first for access to the sites it will read, unless you allowed all sites. The files are put together inside your browser by Link Meteor and saved through Chrome's download. They are never uploaded, and Link Meteor keeps no copy."
 - **Page details lookup.** "*Page details lookup* is off unless you turn it on. When it is on and you click *Look up details*, Link Meteor sends the paper’s DOI, arXiv ID or PubMed ID, and nothing else, to: Crossref (api.crossref.org) for DOIs; DataCite (api.datacite.org) for DOIs Crossref doesn’t have, including arXiv’s; and NCBI (eutils.ncbi.nlm.nih.gov) for PubMed IDs. No page address, link text, note or collection name is sent. No cookies are sent or kept. Like any website you visit, those services see your IP address and your browser’s version and language. What they return (title, authors, date, journal) is saved in this browser with the link."
-- **`CHROMEWEBSTORE.md`** adds, under remote code: "Link Meteor includes PDF.js (Mozilla, Apache-2.0) as files inside the package. It loads no code from anywhere else." Under data use: the lookup's sentence above, and that it is optional and off by default.
+- **The store listing** adds, under remote code: "Link Meteor includes PDF.js (Mozilla, Apache-2.0) as files inside the package. It loads no code from anywhere else." Under data use: the lookup's sentence above, and that it is optional and off by default.
 
 ### Later, stated now so the wording is settled
 

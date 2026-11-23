@@ -17,7 +17,7 @@ The results below are summaries. The logs and result files of each run are not p
 
 - Package: [`artifacts/link-meteor-1.0.0.zip`](../artifacts/link-meteor-1.0.0.zip), 2976335 bytes.
 - SHA-256: `4c862132f068423231dd66d864ac09b4b8121f7dfe869db50dc9328cae3933bf`.
-- Product source: `src/` as last changed at `8e8f998bb91f70c0ea60f814db2aea9558150c05` (release candidate 2), unchanged when packaged at `6b370571740842dd47f2132b75f6c872f63eac9d`.
+- Product source: `src/` as last changed in release candidate 2, unchanged when packaged.
 - [Per-file receipt](../artifacts/link-meteor-1.0.0.sha256.json): 79 package members, each matching `src/`. The ZIP's contents are byte-identical to the copy checked by hand.
 - It includes PDF.js 6.3.289 (Apache-2.0) as two unmodified files, checked by `tests/vendor.test.mjs` against the hashes recorded beside them.
 
@@ -46,7 +46,7 @@ The results below are summaries. The logs and result files of each run are not p
 | `tests/visual-browser.mjs` | 15 checks, pass | Widths from 320 px, labels, focus and measured contrast, for every theme in light and dark. |
 | `tests/site-check.mjs`, `scripts/sync-site.mjs --check` | Pass | The website's pages, and its match with the packaged build. |
 
-**On Windows and Linux**, and on macOS again, GitHub's runners ran the same checks on this source (workflow run 40427345688). All passed. An earlier CI run had found one test problem on Windows and Linux: a test drag that started inside a frame from another site went into that frame, so the test now starts on the heading above it.
+**On Windows and Linux**, and on macOS again, GitHub's runners ran the same checks on this source. All passed. An earlier CI run had found one test problem on Windows and Linux: a test drag that started inside a frame from another site went into that frame, so the test now starts on the heading above it.
 
 ### Allow clicks and granted suites
 
@@ -112,7 +112,7 @@ Windows, Linux, Brave and Edge were not part of this walkthrough.
 
 - Package: `link-meteor-0.5.0.zip`, 801611 bytes.
 - SHA-256: `57020852b82b26d8d0562707bddeb00ef4ffcd5875264c23ba0e6da875ff589f`.
-- Product source: `src/` as tested at `91e851b6d2d8b8e9bcd7cd0348da1be2a66a88ea` (release candidate 3), unchanged when packaged at `83e76e09f5a20df1e7286a56b526e6908226e72f`.
+- Product source: `src/` as tested in release candidate 3, unchanged when packaged.
 - Per-file receipt: 57 package members, each matching `src/`. The ZIP's contents are also byte-identical to the release candidate 3 copy.
 - Evidence: the run's result files, with its Chrome 116 run. Earlier stages:
   - release candidate 2, built from the first hands-on check;
@@ -145,7 +145,7 @@ Headless Chrome for Testing 151, fresh task-owned profiles.
 | `tests/visual-browser.mjs` | 15 checks, pass | Widths from 320 px, labels, focus and measured contrast, for every theme in light and dark, including link details and Insights. Results. |
 | `tests/site-check.mjs` | Pass | See the release evidence. |
 
-**On Windows and Linux**, and on macOS again, GitHub's runners ran the same checks on release candidate 3 (workflow run 36895608399). All passed.
+**On Windows and Linux**, and on macOS again, GitHub's runners ran the same checks on release candidate 3. All passed.
 
 ### Allow clicks and granted suites
 
@@ -186,7 +186,7 @@ The project author checked two release candidates by hand in everyday Google Chr
 
 | Walkthrough | What it covered | Result |
 | --- | --- | --- |
-| Release candidate 1, September 30, 2026 | The 0.5.0 features on real pages, with the handback's checklist: context and citations on article pages, saving tabs as links, reading status and stars, Insights, citation exports, imports and Ember light. | No failures. Six observations, which release candidate 2 answers: moving links between collections; the toolbar icon closing the panel; a warning about removal; fuller citations for a link to a PDF; capturing inside PDFs (planned for 0.6.0); and DOIs for open PDFs. |
+| Release candidate 1, September 30, 2026 | The 0.5.0 features on real pages, with a checklist: context and citations on article pages, saving tabs as links, reading status and stars, Insights, citation exports, imports and Ember light. | No failures. Six observations, which release candidate 2 answers: moving links between collections; the toolbar icon closing the panel; a warning about removal; fuller citations for a link to a PDF; capturing inside PDFs (planned for 0.6.0); and DOIs for open PDFs. |
 | Release candidate 2, October 1, 2026 | The new parts: the last backup's date, the toolbar icon, Move to… and Copy to…, an arXiv paper's citation, the message on PDFs, and the Star label. | Three findings, which release candidate 3 answers. Nothing could be saved from a PDF: *Add link* was stopped by release candidate 2's own gate. A saved PDF tab exported without authors, as designed; capturing *View PDF* from the abstract page gave every author. The side panel stayed open beside the full view. Everything else worked. |
 
 Release candidate 3 differs from the checked copy in the three changes above, which its automated checks cover. Windows, Linux, Brave and Edge were not part of these walkthroughs.
@@ -197,7 +197,7 @@ Release candidate 3 differs from the checked copy in the three changes above, wh
 
 - Package: `link-meteor-0.4.0.zip`, 570447 bytes.
 - SHA-256: `68105db8e9dc47e1a222a2f668e5cbc22df315f8a24f09d83f57f036f6bc7036`.
-- Product source: `src/` as tested at `02e6b3d04710e333d99ade610319ebd4d171f166` (release candidate 3), unchanged when packaged at `4ea3614915b3ffdbe200ff5a493f62a073de3f11`.
+- Product source: `src/` as tested in release candidate 3, unchanged when packaged.
 - Per-file receipt: 45 package members, each matching `src/`. The ZIP's contents are also byte-identical to the release candidate 3 copy.
 - Evidence: the run's result files. Earlier stages:
   - release candidate 2, whose Chrome 116 run found the bug release candidate 3 fixes;
@@ -224,7 +224,7 @@ Headless Chrome for Testing 151, fresh task-owned profiles, run with `npm run ch
 | `tests/visual-browser.mjs` | 14 checks, pass | Widths from 320 px, labels, focus and measured contrast; for every theme in light and dark, contrast at least 4.5:1, no overflow at 320 px and a side-panel screenshot, plus the toolbar icon each theme draws. Results. |
 | `tests/site-check.mjs` | Pass | See the release evidence. |
 
-**On Windows and Linux**, and on macOS again, GitHub's runners ran the same checks on release candidate 3 (workflow run 36584095139). All passed.
+**On Windows and Linux**, and on macOS again, GitHub's runners ran the same checks on release candidate 3. All passed.
 
 ### Allow clicks and granted suites
 
@@ -276,7 +276,7 @@ Release candidate 3 differs from the checked copy only in the fix above, which i
 
 - Package: `link-meteor-0.3.0.zip`, 368539 bytes.
 - SHA-256: `25463687d2f0a7b9e280de7d4f905753cb9b8cc57b359129937f8ea5e98302c7`.
-- Product source: `src/` as tested at `bd3f6b59123868f6534a9a7a25135442859a7eae` (release candidate 2), unchanged when packaged at `a1901dbc5af70ac50b66134a19c22a8bf434dd6a`.
+- Product source: `src/` as tested in release candidate 2, unchanged when packaged.
 - Per-file receipt: 35 package members, each matching `src/`. The ZIP's contents are also byte-identical to the copy checked by hand.
 - Evidence: the run's result files. Earlier stages: release candidate 1, whose granted run found three issues that release candidate 2 fixes, and the foundation.
 
@@ -347,7 +347,6 @@ Windows and Linux were not part of this check.
 
 - Package: `link-meteor-0.2.2.zip`, 198835 bytes.
 - SHA-256: `ceb6b778a0f93a6651e9c036fb6535773919ffa78b7ad4b88c692d35983b4e9d`.
-- Product source: `4b5261477381c4036d9bcd48e5e3bbd0ec5ec699`.
 - Per-file receipt: 13 package members. Changed from 0.2.1: `manifest.json`, `ui/workbench.html`, `ui/workbench.css`, `ui/workbench.js`.
 
 | Check | Result | What it establishes and its limits |
@@ -384,7 +383,6 @@ These results come from the project author using 0.2.2 by hand in everyday Googl
 
 - Package: `link-meteor-0.2.1.zip`, 193346 bytes.
 - SHA-256: `231f454f60a7aba45ad6834b559268e1ddaabc66304ce55be4a9e783a7d219e9`.
-- Product source: `e8e69cf734ed750ee6b792cc3cae1f9bf898ce62`.
 - Per-file receipt: all 13 package members match the extension source. Later documentation changes do not change the packaged product.
 
 Tests used isolated Chrome for Testing profiles on macOS with synthetic webpages and collection data. Functional suites exercised the loaded extension, not a reconstruction of its UI. Scripted API failures and presentation previews are identified separately below.
